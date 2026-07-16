@@ -1,0 +1,354 @@
+/**
+ * Jobs Routes — CRUD using service_records table
+ * DB: service_records(id, client_id, technician_id, service_type, status, job_description,
+ *     technician_notes, equipment_used, before_photo, after_photo, arrival_time,
+ *     completion_time, ..., created_at, updated_at)
+ * clients(id, company_name, contact_person, address, phone, amc_status, ...)
+ * technicians(id, name, nickname, role, ...)
+ */
+
+import { success, error } from '../utils/response.js';
+import { verifyToken } from '../utils/jwt.js';
+
+function register(router, env) {
+  const db = env.DB;
+
+  async function authenticate(request) {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+    return verifyToken(authHeader.slice(7));
+  }
+
+  // Base SELECT with joins for all job queries
+  const BASE_SELECT = `
+    SELECT
+      j.*,
+      c.company_name,
+      c.phone    AS client_phone,
+      c.address  AS client_address,
+      c.amc_status,
+      t.name     AS tech_name,
+      t.nickname AS tech_nickname,
+      t.phone    AS tech_phone
+    FROM service_records j
+    LEFT JOIN clients    c ON j.client_id     = c.id
+    LEFT JOIN technicians t ON j.technician_id = t.id
+  `;
+
+  // ── GET /api/jobs ─────────────────────────────────────────────────────
+  router.get('/api/jobs', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const url = new URL(request.url);
+      const status    = url.searchParams.get('status');
+      const techId    = url.searchParams.get('technician_id');
+      const clientId  = url.searchParams.get('client_id');
+      const dateFrom  = url.searchParams.get('date_from');
+      const dateTo    = url.searchParams.get('date_to');
+      const search    = url.searchParams.get('search');
+      const page      = parseInt(url.searchParams.get('page') || '1');
+      const limit     = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+      const offset    = (page - 1) * limit;
+
+      let where = 'WHERE 1=1';
+      const params: any[] = [];
+      let countWhere = 'WHERE 1=1';
+      const countParams: any[] = [];
+
+      if (status) {
+        where += ' AND j.status = ?';       params.push(status);
+        countWhere += ' AND j.status = ?';  countParams.push(status);
+      }
+      if (techId) {
+        where += ' AND j.technician_id = ?';      params.push(techId);
+        countWhere += ' AND j.technician_id = ?'; countParams.push(techId);
+      }
+      if (clientId) {
+        where += ' AND j.client_id = ?';      params.push(clientId);
+        countWhere += ' AND j.client_id = ?'; countParams.push(clientId);
+      }
+      if (dateFrom) {
+        where += ' AND j.created_at >= ?';      params.push(dateFrom);
+        countWhere += ' AND j.created_at >= ?'; countParams.push(dateFrom);
+      }
+      if (dateTo) {
+        where += ' AND j.created_at <= ?';      params.push(dateTo);
+        countWhere += ' AND j.created_at <= ?'; countParams.push(dateTo);
+      }
+      if (search) {
+        const like = `%${search}%`;
+        where += ' AND (j.id LIKE ? OR j.service_type LIKE ? OR j.job_description LIKE ? OR c.company_name LIKE ?)';
+        params.push(like, like, like, like);
+        countWhere += ' AND (j.id LIKE ? OR j.service_type LIKE ? OR j.job_description LIKE ? OR c.company_name LIKE ?)';
+        countParams.push(like, like, like, like);
+      }
+
+      // Non-admin see only their own jobs
+      if (user.role?.toLowerCase() !== 'admin') {
+        where += ' AND j.technician_id = ?';      params.push(user.id);
+        countWhere += ' AND j.technician_id = ?'; countParams.push(user.id);
+      }
+
+      const query = BASE_SELECT + where + ' ORDER BY j.created_at DESC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+
+      const countQuery = `SELECT COUNT(*) as total FROM service_records j LEFT JOIN clients c ON j.client_id = c.id ${countWhere}`;
+
+      const [jobsResult, countResult] = await Promise.all([
+        db.prepare(query).bind(...params).all(),
+        db.prepare(countQuery).bind(...countParams).first(),
+      ]);
+
+      return success({
+        jobs: jobsResult.results,
+        total: countResult?.total ?? 0,
+        page,
+        limit,
+        totalPages: Math.ceil((countResult?.total ?? 0) / limit),
+      });
+    } catch (err) {
+      return error('Failed to fetch jobs: ' + err.message, 500);
+    }
+  });
+
+  // ── GET /api/jobs/active ──────────────────────────────────────────────
+  router.get('/api/jobs/active', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const activeStatuses = ['Pending', 'In Progress'];
+      let where = `WHERE j.status IN (${activeStatuses.map(() => '?').join(',')})`;
+      const params: any[] = [...activeStatuses];
+
+      if (user.role?.toLowerCase() !== 'admin') {
+        where += ' AND j.technician_id = ?';
+        params.push(user.id);
+      }
+
+      const result = await db
+        .prepare(BASE_SELECT + where + ' ORDER BY j.created_at DESC')
+        .bind(...params)
+        .all();
+      return success(result.results);
+    } catch (err) {
+      return error('Failed to fetch active jobs: ' + err.message, 500);
+    }
+  });
+
+  // ── GET /api/jobs/calendar ────────────────────────────────────────────
+  router.get('/api/jobs/calendar', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const url = new URL(request.url);
+      const dateFrom = url.searchParams.get('date_from') || new Date().toISOString().split('T')[0];
+      const dateTo   = url.searchParams.get('date_to');
+
+      let where = 'WHERE j.created_at >= ?';
+      const params: any[] = [dateFrom];
+
+      if (dateTo)  { where += ' AND j.created_at <= ?'; params.push(dateTo); }
+      if (user.role?.toLowerCase() !== 'admin') { where += ' AND j.technician_id = ?'; params.push(user.id); }
+
+      const result = await db
+        .prepare(BASE_SELECT + where + ' ORDER BY j.created_at ASC')
+        .bind(...params)
+        .all();
+      return success(result.results);
+    } catch (err) {
+      return error('Failed to fetch calendar: ' + err.message, 500);
+    }
+  });
+
+  // ── GET /api/jobs/receipt ────────────────────────────────────────────
+  // MUST be registered before /:id to avoid wildcard capture
+  router.get('/api/jobs/receipt', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const url = new URL(request.url);
+      const job_id = url.searchParams.get('job_id');
+      if (!job_id) return success(null);
+
+      const job = await db
+        .prepare(
+          `SELECT j.*, c.company_name, c.address, c.phone as client_phone, c.amc_status,
+                  t.name as tech_name, t.phone as tech_phone
+           FROM service_records j
+           LEFT JOIN clients c ON j.client_id = c.id
+           LEFT JOIN technicians t ON j.technician_id = t.id
+           WHERE j.id = ?`
+        )
+        .bind(job_id)
+        .first();
+
+      return success(job || null);
+    } catch (err) {
+      return error('Failed to fetch receipt: ' + err.message, 500);
+    }
+  });
+
+  // ── GET /api/jobs/:id ─────────────────────────────────────────────────
+  router.get('/api/jobs/:id', async (request, params) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const job = await db
+        .prepare(BASE_SELECT + 'WHERE j.id = ?')
+        .bind(params.id)
+        .first();
+
+      if (!job) return error('Job not found', 404);
+
+      if (user.role?.toLowerCase() !== 'admin' && job.technician_id !== user.id) {
+        return error('Forbidden', 403);
+      }
+
+      return success(job);
+    } catch (err) {
+      return error('Failed to fetch job: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/jobs ────────────────────────────────────────────────────
+  router.post('/api/jobs', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json() as any);
+      const { service_type, job_description, client_id, technician_id } = body;
+
+      if (!service_type || !client_id || !job_description) {
+        return error('Missing required fields: service_type, client_id, job_description', 400);
+      }
+
+      const id = 'SR-' + Date.now().toString(36).toUpperCase();
+
+      await db
+        .prepare(
+          "INSERT INTO service_records (id, client_id, technician_id, service_type, job_description, status) VALUES (?, ?, ?, ?, ?, 'Pending')"
+        )
+        .bind(id, client_id, technician_id || null, service_type, job_description)
+        .run();
+
+      return success({ id, service_type, status: 'Pending' }, 201);
+    } catch (err) {
+      return error('Failed to create job: ' + err.message, 500);
+    }
+  });
+
+  // ── PUT /api/jobs/:id ─────────────────────────────────────────────────
+  router.put('/api/jobs/:id', async (request, params) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json() as any);
+      const existing = await db.prepare('SELECT * FROM service_records WHERE id = ?').bind(params.id).first();
+      if (!existing) return error('Job not found', 404);
+
+      if (user.role?.toLowerCase() !== 'admin' && existing.technician_id !== user.id) {
+        return error('Forbidden', 403);
+      }
+
+      const allowed = [
+        'service_type', 'job_description', 'client_id', 'technician_id',
+        'status', 'technician_notes', 'equipment_used',
+        'arrival_time', 'completion_time',
+      ];
+      const updates: string[] = [];
+      const values: any[] = [];
+
+      for (const field of allowed) {
+        if (body[field] !== undefined) {
+          updates.push(`${field} = ?`);
+          values.push(body[field]);
+        }
+      }
+
+      if (updates.length === 0) return error('No fields to update', 400);
+
+      updates.push("updated_at = CURRENT_TIMESTAMP");
+      values.push(params.id);
+
+      await db
+        .prepare(`UPDATE service_records SET ${updates.join(', ')} WHERE id = ?`)
+        .bind(...values)
+        .run();
+
+      return success({ message: 'Job updated' });
+    } catch (err) {
+      return error('Failed to update job: ' + err.message, 500);
+    }
+  });
+
+  // ── DELETE /api/jobs/:id ──────────────────────────────────────────────
+  router.delete('/api/jobs/:id', async (request, params) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
+
+      const existing = await db.prepare('SELECT id FROM service_records WHERE id = ?').bind(params.id).first();
+      if (!existing) return error('Job not found', 404);
+
+      await db.prepare('DELETE FROM service_records WHERE id = ?').bind(params.id).run();
+      return success({ message: 'Job deleted' });
+    } catch (err) {
+      return error('Failed to delete job: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/jobs/:id/status ─────────────────────────────────────────
+  router.post('/api/jobs/:id/status', async (request, params) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const { status, notes } = (await request.json() as any);
+      if (!status) return error('Missing status', 400);
+
+      const validStatuses = ['Pending', 'In Progress', 'Completed', 'Cancelled'];
+      if (!validStatuses.includes(status)) {
+        return error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`, 400);
+      }
+
+      const existing = await db.prepare('SELECT * FROM service_records WHERE id = ?').bind(params.id).first();
+      if (!existing) return error('Job not found', 404);
+
+      if (user.role?.toLowerCase() !== 'admin' && existing.technician_id !== user.id) {
+        return error('Forbidden', 403);
+      }
+
+      const updateFields: string[] = ['status = ?', 'updated_at = CURRENT_TIMESTAMP'];
+      const updateValues: any[] = [status];
+
+      if (notes) { updateFields.push('technician_notes = ?'); updateValues.push(notes); }
+      if (status === 'In Progress' && !existing.arrival_time) {
+        updateFields.push('arrival_time = CURRENT_TIMESTAMP');
+      }
+      if (status === 'Completed' && !existing.completion_time) {
+        updateFields.push('completion_time = CURRENT_TIMESTAMP');
+      }
+      updateValues.push(params.id);
+
+      await db
+        .prepare(`UPDATE service_records SET ${updateFields.join(', ')} WHERE id = ?`)
+        .bind(...updateValues)
+        .run();
+
+      return success({ id: params.id, previous_status: existing.status, new_status: status });
+    } catch (err) {
+      return error('Failed to update job status: ' + err.message, 500);
+    }
+  });
+}
+
+export { register };

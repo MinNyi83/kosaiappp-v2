@@ -1,0 +1,2 @@
+UPDATE technicians SET email = 'admin', pin = '$sha256$1234567890abcdef$b0c2e374dff1965a4ce7e147d069c7b84d4e44e8958dfbd24fb664d38d370e59' WHERE id = 'ADMIN-001';
+INSERT OR IGNORE INTO technicians (id, name, role, email, active, pin, permissions) VALUES ('admin', 'Admin', 'Admin', 'admin', 1, '$sha256$1234567890abcdef$b0c2e374dff1965a4ce7e147d069c7b84d4e44e8958dfbd24fb664d38d370e59', 'read_write');

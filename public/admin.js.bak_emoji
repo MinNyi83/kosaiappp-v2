@@ -867,7 +867,7 @@ function initLeafletMap() {
   const hq = loadHQConfig();
   map = L.map('map').setView([hq.lat, hq.lng], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
+    attribution: 'Â© OpenStreetMap',
   }).addTo(map);
   const mapContainer = document.getElementById('map');
   if (mapContainer) mapContainer.classList.add('dark-map-theme');
@@ -1092,7 +1092,7 @@ function populateMasterDropdowns() {
     if (el) {
       const placeholder = id.includes('filter')
         ? '<option value="">All Categories</option>'
-        : '<option value="">— Select —</option>';
+        : '<option value="">â€” Select â€”</option>';
       el.innerHTML = placeholder + catOpts;
     }
   });
@@ -1101,7 +1101,7 @@ function populateMasterDropdowns() {
   const subCatEl = document.getElementById('catalog-sub-category');
   if (subCatEl) {
     subCatEl.innerHTML =
-      '<option value="">— Select —</option>' +
+      '<option value="">â€” Select â€”</option>' +
       masterSubCategories
         .map(
           (s) =>
@@ -1114,7 +1114,7 @@ function populateMasterDropdowns() {
   const brandEl = document.getElementById('catalog-brand');
   if (brandEl) {
     brandEl.innerHTML =
-      '<option value="">— Select —</option>' +
+      '<option value="">â€” Select â€”</option>' +
       masterBrands.map((b) => `<option value="${b.name}">${b.name}</option>`).join('');
   }
 
@@ -1122,7 +1122,7 @@ function populateMasterDropdowns() {
   const parentEl = document.getElementById('new-subcat-parent');
   if (parentEl) {
     parentEl.innerHTML =
-      '<option value="">— Select Category —</option>' +
+      '<option value="">â€” Select Category â€”</option>' +
       masterCategories.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
   }
 
@@ -1132,7 +1132,7 @@ function populateMasterDropdowns() {
     .join('');
   const catalogUmEl = document.getElementById('catalog-um');
   if (catalogUmEl)
-    catalogUmEl.innerHTML = '<option value="">— Select Unit —</option>' + unitOpts;
+    catalogUmEl.innerHTML = '<option value="">â€” Select Unit â€”</option>' + unitOpts;
 }
 
 function renderMasterLists() {
@@ -1147,7 +1147,7 @@ function renderMasterLists() {
         .map(
           (c, i) => `
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${c.code || '—'}</td>
+                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${c.code || 'â€”'}</td>
                             <td class="px-3 py-2 text-[11px] text-white font-medium">${c.name}</td>
                             <td class="px-3 py-2 flex items-center gap-2">
                                 <button onclick="window.editCategoryPrompt(${c.id}, window.escapeHTML('${c.name.replace(/'/g, "\\'")}'), window.escapeHTML('${(c.code || '').replace(/'/g, "\\'")}'))" class="text-[9px] text-sky-400 hover:text-sky-300 transition-all">Edit</button>
@@ -1170,9 +1170,9 @@ function renderMasterLists() {
         .map(
           (s) => `
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${s.code || '—'}</td>
+                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${s.code || 'â€”'}</td>
                             <td class="px-3 py-2 text-[11px] text-white font-medium">${s.name}</td>
-                            <td class="px-3 py-2 text-[9px] text-slate-500">${s.category_name || '—'}</td>
+                            <td class="px-3 py-2 text-[9px] text-slate-500">${s.category_name || 'â€”'}</td>
                             <td class="px-3 py-2 flex items-center gap-2">
                                 <button onclick="window.editSubCategoryPrompt(${s.id}, window.escapeHTML('${s.name.replace(/'/g, "\\'")}'), window.escapeHTML('${(s.code || '').replace(/'/g, "\\'")}'), ${s.category_id || 'null'})" class="text-[9px] text-sky-400 hover:text-sky-300 transition-all">Edit</button>
                                 <button onclick="deleteMasterItem('sub-categories',${s.id})" class="text-[9px] text-rose-400 hover:text-rose-300 transition-all">Remove</button>
@@ -1194,7 +1194,7 @@ function renderMasterLists() {
         .map(
           (b, i) => `
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${b.code || '—'}</td>
+                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${b.code || 'â€”'}</td>
                             <td class="px-3 py-2 text-[11px] text-white font-medium">${b.name}</td>
                             <td class="px-3 py-2 flex items-center gap-2">
                                 <button onclick="window.editBrandPrompt(${b.id}, window.escapeHTML('${b.name.replace(/'/g, "\\'")}'), window.escapeHTML('${(b.code || '').replace(/'/g, "\\'")}'))" class="text-[9px] text-sky-400 hover:text-sky-300 transition-all">Edit</button>
@@ -1247,19 +1247,6 @@ window.switchInvModule = function (module) {
   const active = document.getElementById(`inv-panel-${module}`);
   if (active) active.classList.remove('hidden');
 
-  // Reset register form if entering add-model normally
-  if (module === 'add-model') {
-    const titleEl = document.getElementById('add-model-title');
-    if (titleEl) titleEl.innerText = 'Register Device Model';
-    const form = document.getElementById('catalog-add-form');
-    if (form) form.reset();
-    const codeInput = document.getElementById('catalog-item-code');
-    if (codeInput) {
-      codeInput.readOnly = false;
-      codeInput.style.opacity = '1';
-    }
-  }
-
   // Update sidebar active state for all nav module buttons
   const navMods = [
     'batches',
@@ -1287,46 +1274,7 @@ window.switchInvModule = function (module) {
 // Keep old alias for backward compat
 window.setInventoryTab = window.switchInvModule;
 
-window.editInventoryItem = function (item_code) {
-  const item = activeCatalogList.find(i => i.item_code === item_code);
-  if (!item) return;
-
-  window.switchInvModule('add-model');
-
-  // Set title
-  const titleEl = document.getElementById('add-model-title');
-  if (titleEl) titleEl.innerText = 'Edit Device Model';
-
-  // Populate fields
-  const nameInput = document.getElementById('catalog-item-name');
-  if (nameInput) nameInput.value = item.item_name || '';
-
-  const codeInput = document.getElementById('catalog-item-code');
-  if (codeInput) {
-    codeInput.value = item.item_code;
-    codeInput.readOnly = true;
-    codeInput.style.opacity = '0.5';
-  }
-
-  const catSelect = document.getElementById('catalog-item-category');
-  if (catSelect) {
-    catSelect.value = item.category || '';
-    window.loadSubCategoriesForForm(item.category || '');
-  }
-
-  setTimeout(() => {
-    const subCatSelect = document.getElementById('catalog-sub-category');
-    if (subCatSelect) subCatSelect.value = item.sub_category_id || '';
-
-    const brandSelect = document.getElementById('catalog-brand');
-    if (brandSelect) brandSelect.value = item.brand_id || '';
-
-    const umSelect = document.getElementById('catalog-um');
-    if (umSelect) umSelect.value = item.stocking_um || '';
-  }, 100);
-};
-
-// ── Master Data submit handlers ──
+// â”€â”€ Master Data submit handlers â”€â”€
 window.submitMasterData = async function (type, e) {
   e.preventDefault();
   const baseUrl = document.getElementById('api-base').value;
@@ -1534,11 +1482,11 @@ window.loadSubCategoriesForForm = function (categoryName) {
     (s) => !categoryName || s.category_name === categoryName
   );
   subCatEl.innerHTML =
-    '<option value="">— Select —</option>' +
+    '<option value="">â€” Select â€”</option>' +
     filtered.map((s) => `<option value="${s.name}">${s.name}</option>`).join('');
 };
 
-// ── Generic master list search ──
+// â”€â”€ Generic master list search â”€â”€
 window.filterMasterTable = function (tbodyId, inputId) {
   const q = (document.getElementById(inputId)?.value || '').toLowerCase();
   const rows = document.querySelectorAll(`#${tbodyId} tr`);
@@ -1547,7 +1495,7 @@ window.filterMasterTable = function (tbodyId, inputId) {
   });
 };
 
-// ── Pricing table search & filter ──
+// â”€â”€ Pricing table search & filter â”€â”€
 window.filterPricingTable = function () {
   const q = (document.getElementById('pricing-search-input')?.value || '').toLowerCase();
   const cat = (document.getElementById('pricing-filter-category')?.value || '').toLowerCase();
@@ -1587,7 +1535,7 @@ window.filterPricingByCategory = function (val) {
   window.filterPricingTable();
 };
 
-// ── Catalog table search & filter ──
+// â”€â”€ Catalog table search & filter â”€â”€
 window.filterCatalogTable = function () {
   const q = (document.getElementById('catalog-search-input')?.value || '').toLowerCase();
   const cat = (document.getElementById('catalog-filter-category')?.value || '').toLowerCase();
@@ -1627,7 +1575,7 @@ window.filterCatalogByCategory = function (val) {
   window.filterCatalogTable();
 };
 
-// ── Excel Export ──
+// â”€â”€ Excel Export â”€â”€
 window.exportTableToExcel = function (tableId, filename) {
   // Load SheetJS if not already loaded
   function doExport() {
@@ -1660,7 +1608,7 @@ function loadXLSX(cb) {
   document.head.appendChild(s);
 }
 
-// ── Import: Pricing ──
+// â”€â”€ Import: Pricing â”€â”€
 window.importPricingExcel = function (input) {
   const file = input.files[0];
   if (!file) return;
@@ -1701,7 +1649,7 @@ window.importPricingExcel = function (input) {
   });
 };
 
-// ── Import: Catalog ──
+// â”€â”€ Import: Catalog â”€â”€
 window.importCatalogExcel = function (input) {
   const file = input.files[0];
   if (!file) return;
@@ -1748,7 +1696,7 @@ window.importCatalogExcel = function (input) {
   });
 };
 
-// ── Import: Batch ──
+// â”€â”€ Import: Batch â”€â”€
 window.importBatchExcel = function (input) {
   const file = input.files[0];
   if (!file) return;
@@ -2082,7 +2030,7 @@ function renderBatchesTable() {
       ? b.serials.filter((s) => s.status === 'Active').length
       : b.remaining_qty || 0;
     const soldUnits = totalUnits - availableUnits;
-    const importDate = b.created_at ? b.created_at.substring(0, 10) : '—';
+    const importDate = b.created_at ? b.created_at.substring(0, 10) : 'â€”';
 
     let serialsHtml = '';
     if (isSerial) {
@@ -2106,23 +2054,23 @@ function renderBatchesTable() {
                         onclick="document.getElementById('serials-row-${idx}').classList.toggle('hidden'); const a = this.querySelector('.expand-arrow'); if(a) a.style.transform = a.style.transform === 'rotate(90deg)' ? '' : 'rotate(90deg)';">
                         <td class="pl-3 pr-2 py-2.5">
                             <div class="w-5 h-5 rounded flex items-center justify-center transition-all" style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.15);">
-                                <span class="expand-arrow text-emerald-500 text-[10px] inline-block transition-transform duration-200 font-bold">›</span>
+                                <span class="expand-arrow text-emerald-500 text-[10px] inline-block transition-transform duration-200 font-bold">â€º</span>
                             </div>
                         </td>
                         <td class="px-4 py-2.5">
                             <span class="font-mono text-[11px] font-bold text-white tracking-wide">${b.batch_code}</span>
                         </td>
                         <td class="px-4 py-2.5">
-                            <span class="text-[11px] text-slate-300 font-medium">${b.item_name || '—'}</span>
+                            <span class="text-[11px] text-slate-300 font-medium">${b.item_name || 'â€”'}</span>
                         </td>
                         <td class="px-4 py-2.5">
-                            <span class="cat-pill">${b.category || '—'}</span>
+                            <span class="cat-pill">${b.category || 'â€”'}</span>
                         </td>
                         <td class="px-4 py-2.5">
                             <span class="font-mono text-[12px] font-bold text-sky-400">$${parseFloat(b.buying_price || 0).toFixed(2)}</span>
                             <span class="text-[8px] text-slate-600 ml-0.5">/unit</span>
                         </td>
-                        <td class="px-4 py-2.5 text-[10px] text-slate-500">${b.supplier || '—'}</td>
+                        <td class="px-4 py-2.5 text-[10px] text-slate-500">${b.supplier || 'â€”'}</td>
                         <td class="px-4 py-2.5 text-center">
                             <span class="font-mono text-[13px] font-black text-slate-300">${totalUnits} ${b.stocking_um || 'pcs'}</span>
                         </td>
@@ -2133,7 +2081,7 @@ function renderBatchesTable() {
                             </span>
                         </td>
                         <td class="px-4 py-2.5 text-center">
-                            <span class="font-mono text-[11px] ${soldUnits > 0 ? 'text-amber-400' : 'text-slate-700'}">${soldUnits > 0 ? soldUnits : '—'}</span>
+                            <span class="font-mono text-[11px] ${soldUnits > 0 ? 'text-amber-400' : 'text-slate-700'}">${soldUnits > 0 ? soldUnits : 'â€”'}</span>
                         </td>
                         <td class="px-4 py-2.5 text-[10px] text-slate-600">${importDate}</td>
                         <td class="px-4 py-2.5 text-center" onclick="event.stopPropagation(); event.preventDefault();">
@@ -2147,7 +2095,7 @@ function renderBatchesTable() {
                         <td colspan="11" class="px-5 py-3" style="background: rgba(0,0,0,0.25); border-bottom: 1px solid rgba(16,185,129,0.1);">
                             <div class="flex items-center gap-2 mb-2">
                                 <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                <p class="text-[8px] font-black text-emerald-600 uppercase tracking-[0.15em]">${isSerial ? 'Serial Numbers' : 'Quantity batch'} · ${b.batch_code} · ${availableUnits}/${totalUnits} Available</p>
+                                <p class="text-[8px] font-black text-emerald-600 uppercase tracking-[0.15em]">${isSerial ? 'Serial Numbers' : 'Quantity batch'} Â· ${b.batch_code} Â· ${availableUnits}/${totalUnits} Available</p>
                             </div>
                             <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-8 gap-1">
                                 ${serialsHtml}
@@ -2183,7 +2131,7 @@ function renderSalesPricing() {
 
   let batchSelectHtml = '<option value="">-- Choose Model --</option>';
   let updateSelectHtml = '<option value="">-- Choose Device --</option>';
-  let filterSelectHtml = '<option value="">— All Models —</option>';
+  let filterSelectHtml = '<option value="">â€” All Models â€”</option>';
   let pricingRowsHtml = '';
   let catalogRowsHtml = '';
 
@@ -2198,10 +2146,10 @@ function renderSalesPricing() {
     if (i < limit) {
       const priceUSD = item.unit_price
         ? `$${parseFloat(item.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : '—';
+        : 'â€”';
       const priceMMK = item.unit_price_mmk
         ? `Ks ${parseInt(item.unit_price_mmk).toLocaleString()}`
-        : '—';
+        : 'â€”';
       const usdColor = item.unit_price ? 'text-emerald-400' : 'text-slate-600';
       const mmkColor = item.unit_price_mmk ? 'text-amber-400' : 'text-slate-600';
 
@@ -2227,8 +2175,8 @@ function renderSalesPricing() {
                             onmouseleave="this.style.background=''; this.style.borderLeftColor='transparent';">
                             <td class="px-4 py-2.5 font-mono text-[10px] font-bold text-sky-400">${item.item_code}</td>
                             <td class="px-4 py-2.5 text-white font-medium">${item.item_name}</td>
-                            <td class="px-4 py-2.5"><span class="cat-pill">${item.category || '—'}</span></td>
-                            <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || '—'}</td>
+                            <td class="px-4 py-2.5"><span class="cat-pill">${item.category || 'â€”'}</span></td>
+                            <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || 'â€”'}</td>
                             <td class="px-4 py-2.5 text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${stockColor}" style="background: ${inStock > 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'}; border: 1px solid ${inStock > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}">
                                     <span class="w-1.5 h-1.5 rounded-full inline-block" style="background: currentColor;"></span>
@@ -2256,9 +2204,9 @@ function renderSalesPricing() {
                             onmouseleave="this.style.background=''; this.style.borderLeftColor='transparent';">
                             <td class="px-4 py-2.5 font-mono text-[10px] font-bold text-sky-400">${item.item_code}</td>
                             <td class="px-4 py-2.5 text-white font-medium">${item.item_name}</td>
-                            <td class="px-4 py-2.5"><span class="cat-pill">${item.category || '—'}</span></td>
-                            <td class="px-4 py-2.5 text-[10px] text-slate-500">${item.sub_category_id || '—'}</td>
-                            <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || '—'}</td>
+                            <td class="px-4 py-2.5"><span class="cat-pill">${item.category || 'â€”'}</span></td>
+                            <td class="px-4 py-2.5 text-[10px] text-slate-500">${item.sub_category_id || 'â€”'}</td>
+                            <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || 'â€”'}</td>
                             <td class="px-4 py-2.5 font-mono text-[10px] text-violet-400">${um}</td>
                             <td class="px-4 py-2.5 text-center">
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${stockColor}" style="background: ${inStock > 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'}; border: 1px solid ${inStock > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}">
@@ -2266,9 +2214,7 @@ function renderSalesPricing() {
                                     ${inStock} ${um}
                                 </span>
                             </td>
-                            <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                <button onclick="editInventoryItem('${window.escapeHTML(item.item_code)}')" class="px-2.5 py-1 text-[9px] font-bold text-amber-400 rounded transition-all mr-1"
-                                    style="background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15);">Edit</button>
+                            <td class="px-4 py-2.5 text-right">
                                 <button onclick="deleteInventoryItem('${item.item_code}')" class="px-2.5 py-1 text-[9px] font-bold text-rose-400 rounded transition-all"
                                     style="background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.15);">Remove</button>
                             </td>
@@ -2751,7 +2697,7 @@ async function loadRMAData() {
                                 </td>
                                 <td class="py-2.5 text-right">
                                     <button onclick="resolveRMAClaim('${item.serial_number}')" class="text-slate-400 hover:text-emerald-400 text-sm" title="Mark Resolved">
-                                        ✔
+                                        âœ”
                                     </button>
                                 </td>
                             </tr>
@@ -2861,7 +2807,7 @@ function renderDistributorsTable(list) {
                         <td class="py-2.5 text-slate-400">${d.product_lines}</td>
                         <td class="py-2.5 text-right">
                             <button onclick="deleteDistributor(${d.id})" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-1 text-xs">
-                                🗑️
+                                ðŸ—‘ï¸
                             </button>
                         </td>
                     </tr>
@@ -3067,8 +3013,8 @@ async function loadTechniciansData() {
                             <td class="py-2.5">${roleSelect}</td>
                             <td class="py-2.5">${statusBadge}</td>
                             <td class="py-2.5 text-right space-x-1 whitespace-nowrap">
-                                <button onclick="openTechHistoryModal('${t.id}', '${t.name.replace(/'/g, "\\'")}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[10px] px-2 py-1 rounded transition-all">📜 History</button>
-                                <button onclick="openTechIdCard('${t.id}', '${t.name.replace(/'/g, "\\'")}', '${t.role}', '${t.phone || ''}', '${t.email || ''}', '${t.nickname || ''}', ${t.active}, '${t.photo || ''}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 font-bold text-[10px] px-2 py-1 rounded transition-all">🪪 ID Card</button>
+                                <button onclick="openTechHistoryModal('${t.id}', '${t.name.replace(/'/g, "\\'")}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[10px] px-2 py-1 rounded transition-all">ðŸ“œ History</button>
+                                <button onclick="openTechIdCard('${t.id}', '${t.name.replace(/'/g, "\\'")}', '${t.role}', '${t.phone || ''}', '${t.email || ''}', '${t.nickname || ''}', ${t.active}, '${t.photo || ''}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 font-bold text-[10px] px-2 py-1 rounded transition-all">ðŸªª ID Card</button>
                                 <button onclick="saveTechnicianRole('${t.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg">Save Role</button>
                                 <button onclick="openEditTechModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', '${(t.nickname || '').replace(/'/g, "\\'")}', '${t.phone || ''}', '${t.email || ''}', '${t.username || ''}', '${t.pin || ''}', '${t.role}', '${(t.telegram_username || '').replace(/'/g, "\\'")}')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg">Edit</button>
                                 <button onclick="deleteTechnician('${t.id}')" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg">Delete</button>
@@ -3164,19 +3110,19 @@ window.closeEditTechModal = function () {
   document.getElementById('edit-tech-modal').classList.add('hidden');
 };
 
-// ─── 🪪 ID CARD SYSTEM ─────────────────────────────────────────────────
+// â”€â”€â”€ ðŸªª ID CARD SYSTEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 let _idCardCurrentTech = null;
 
 window.openTechIdCard = function (id, name, role, phone, email, nickname, active, photo) {
   _idCardCurrentTech = { id, name, role, phone, email, nickname, active, _photoDataUrl: photo };
 
   // Populate info panel
-  document.getElementById('id-info-name').textContent = name || '—';
-  document.getElementById('id-info-id').textContent = id || '—';
-  document.getElementById('id-info-role').textContent = role || '—';
-  document.getElementById('id-info-phone').textContent = phone || '—';
-  document.getElementById('id-info-email').textContent = email || '—';
-  document.getElementById('id-info-status').textContent = active ? 'Active ✓' : 'Inactive';
+  document.getElementById('id-info-name').textContent = name || 'â€”';
+  document.getElementById('id-info-id').textContent = id || 'â€”';
+  document.getElementById('id-info-role').textContent = role || 'â€”';
+  document.getElementById('id-info-phone').textContent = phone || 'â€”';
+  document.getElementById('id-info-email').textContent = email || 'â€”';
+  document.getElementById('id-info-status').textContent = active ? 'Active âœ“' : 'Inactive';
   document.getElementById('id-info-status').className = active
     ? 'text-emerald-400 font-bold'
     : 'text-rose-400 font-bold';
@@ -3185,8 +3131,8 @@ window.openTechIdCard = function (id, name, role, phone, email, nickname, active
   document.getElementById('id-card-name-front').textContent = name.toUpperCase();
   document.getElementById('id-card-role-front').textContent = role;
   document.getElementById('id-card-id-front').textContent = id;
-  document.getElementById('id-card-phone-front').textContent = phone || '—';
-  document.getElementById('id-card-email-back').textContent = email || '—';
+  document.getElementById('id-card-phone-front').textContent = phone || 'â€”';
+  document.getElementById('id-card-email-back').textContent = email || 'â€”';
 
   // Reset card flip state
   const flipper = document.getElementById('id-card-flipper');
@@ -3200,7 +3146,7 @@ window.openTechIdCard = function (id, name, role, phone, email, nickname, active
     photoEl.style.backgroundSize = 'cover';
     photoEl.style.backgroundPosition = 'center';
   } else {
-    photoEl.innerHTML = '👷';
+    photoEl.innerHTML = 'ðŸ‘·';
     photoEl.style.backgroundImage = '';
   }
 
@@ -3315,13 +3261,13 @@ window.downloadTechIdPdf = function () {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>ID Card — ${name}</title>
+    <title>ID Card â€” ${name}</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        /* CR80 card: 85.6 Ã� 53.98 mm at 96 DPI → px ratio */
+        /* CR80 card: 85.6 Ã— 53.98 mm at 96 DPI â†’ px ratio */
         .id-card { width: 323px; height: 204px; position: relative; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #1a1a2e, #0f0f1a); border: 1px solid rgba(245,158,11,0.25); box-shadow: 0 8px 24px rgba(0,0,0,0.4); break-inside: avoid; }
         .gold-bar { position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b); }
         .grid-overlay { position: absolute; inset: 0; background-image: linear-gradient(rgba(245,158,11,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,0.03) 1px,transparent 1px); background-size: 14px 14px; }
@@ -3345,18 +3291,18 @@ window.downloadTechIdPdf = function () {
         <div class="gold-bar"></div>
         <div class="grid-overlay"></div>
         <div class="card-body">
-            <div class="photo">${_photoDataUrl ? `<img src="${_photoDataUrl}">` : '👷'}</div>
+            <div class="photo">${_photoDataUrl ? `<img src="${_photoDataUrl}">` : 'ðŸ‘·'}</div>
             <div class="info">
                 <div class="brand">Awesome Myanmar</div>
                 <div class="emp-name">${name}</div>
-                <div class="emp-role">${role}${nickname ? ` · "${nickname}"` : ''}</div>
+                <div class="emp-role">${role}${nickname ? ` Â· "${nickname}"` : ''}</div>
                 <div class="emp-id">${id}</div>
             </div>
             <div class="qr-mini"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}" width="50" height="50" style="border-radius:3px;background:#fff;padding:2px;display:block;" alt="QR"></div>
         </div>
         <div class="bottom-bar">
             <span class="phone-txt">${phone || ''}</span>
-            <span class="status-txt">${active ? 'Field Tech • Active' : 'Field Tech • Inactive'}</span>
+            <span class="status-txt">${active ? 'Field Tech â€¢ Active' : 'Field Tech â€¢ Inactive'}</span>
         </div>
     </div>
     <script>
@@ -3368,7 +3314,7 @@ window.downloadTechIdPdf = function () {
 </html>`);
   printWin.document.close();
 };
-// ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 window.submitEditTechnician = async function (e) {
   e.preventDefault();
@@ -3453,7 +3399,7 @@ window.openTechHistoryModal = async function (techId, techName) {
     '<p class="text-xs text-slate-500 py-4 text-center">Pulling service logs...</p>';
   detailsContainer.innerHTML = `
                 <div class="text-center text-slate-500 py-12">
-                    <span class="text-3xl block mb-2">🎫</span>
+                    <span class="text-3xl block mb-2">ðŸŽ«</span>
                     <p class="text-xs font-medium">Select an assigned job ticket from the list to inspect operational details.</p>
                 </div>
             `;
@@ -3485,7 +3431,7 @@ window.openTechHistoryModal = async function (techId, techName) {
                         <div onclick="renderTechHistoryDetails('${j.id}')" class="bg-white/5 border border-white/5 hover:border-amber-500/30 p-3 rounded-xl cursor-pointer transition-all flex justify-between items-center group">
                             <div>
                                 <div class="font-mono font-bold text-white text-[11px] group-hover:text-amber-500 transition-colors">${j.id}</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">${j.service_type} • ${j.created_at ? j.created_at.split(' ')[0] : '-'}</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">${j.service_type} â€¢ ${j.created_at ? j.created_at.split(' ')[0] : '-'}</div>
                             </div>
                             <span class="px-2 py-0.5 rounded-full font-bold text-[8px] uppercase ${statusBadge}">${j.status}</span>
                         </div>
@@ -3522,7 +3468,7 @@ window.renderTechHistoryDetails = function (jobId) {
                                   .map(
                                     ([key, val]) => `
                                     <div class="flex items-center gap-1.5 text-slate-300">
-                                        <span>${val ? '✅' : '❌'}</span>
+                                        <span>${val ? 'âœ…' : 'âŒ'}</span>
                                         <span class="capitalize">${key.replace(/_/g, ' ')}</span>
                                     </div>
                                 `
@@ -3543,7 +3489,7 @@ window.renderTechHistoryDetails = function (jobId) {
                         </div>
                         <div class="text-right">
                             <div class="text-[10px] text-slate-400">Target Client</div>
-                            <div class="text-[10px] font-bold text-white mt-0.5">🏢 ${job.company_name || 'Individual Client'}</div>
+                            <div class="text-[10px] font-bold text-white mt-0.5">ðŸ¢ ${job.company_name || 'Individual Client'}</div>
                         </div>
                     </div>
 
@@ -3575,7 +3521,7 @@ window.renderTechHistoryDetails = function (jobId) {
                       job.before_photo || job.after_photo
                         ? `
                         <div class="space-y-1.5 border-t border-white/5 pt-3">
-                            <span class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">📸 Deployment Site Proofs</span>
+                            <span class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">ðŸ“¸ Deployment Site Proofs</span>
                             <div class="grid grid-cols-2 gap-2">
                                 ${
                                   job.before_photo
@@ -4001,14 +3947,14 @@ function renderFullJobsTable(jobs) {
     rowsHtml += `
                     <tr class="clickable-row border-b border-white/5 hover:bg-white/5 transition-all text-slate-300 align-middle cursor-pointer" onclick="if(!event.target.closest('button') && !event.target.closest('img') && !event.target.closest('a')) { this.classList.toggle('expanded'); document.getElementById('details-${j.id}').classList.toggle('hidden'); }">
                         <td class="py-2.5 font-mono text-amber-500 font-bold">
-                            <span class="row-expand-arrow">▶</span>${j.id}
+                            <span class="row-expand-arrow">â–¶</span>${j.id}
                         </td>
                         <td class="py-2.5 font-semibold text-white">${j.company_name || 'Client'}</td>
                         <td class="py-2.5">${j.tech_name || 'Tech'}</td>
                         <td class="py-2.5 text-slate-400">${j.service_type}</td>
                         <td class="py-2.5"><span class="px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${statusBadge}">${j.status}</span></td>
                         <td class="py-2.5 text-right space-x-1" onclick="event.stopPropagation()">
-                            <button onclick="aiPolishJobNotes('${j.id}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[9px] px-2 py-1 rounded transition-all">✨ AI Polish</button>
+                            <button onclick="aiPolishJobNotes('${j.id}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[9px] px-2 py-1 rounded transition-all">âœ¨ AI Polish</button>
                             <button onclick="openEditTicketModal('${j.id}', '${j.client_id}', '${j.technician_id}', '${j.service_type}', '${j.status}', '${j.job_description.replace(/'/g, "\\'")}', '${j.maps_url || ''}', '${j.arrival_lat || ''}', '${j.arrival_lng || ''}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold text-[9px] px-2 py-1 rounded transition-all">Edit</button>
                             <button onclick="cancelJob('${j.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-[9px] px-2 py-1 rounded transition-all">Cancel</button>
                         </td>
@@ -4120,7 +4066,7 @@ function plotJobsOnMap(jobs) {
   // 1. Draw HQ Marker
   const hq = loadHQConfig();
   const hqIcon = L.divIcon({
-    html: `<div style="background-color: #ef4444; border: 2px solid #f59e0b; border-radius: 50%; width: 16px; height: 16px; box-shadow: 0 0 12px #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 9px;">🏢</div>`,
+    html: `<div style="background-color: #ef4444; border: 2px solid #f59e0b; border-radius: 50%; width: 16px; height: 16px; box-shadow: 0 0 12px #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 9px;">ðŸ¢</div>`,
     className: 'custom-leaflet-marker-hq',
     iconSize: [16, 16],
   });
@@ -4499,9 +4445,9 @@ function renderClientsTable(list) {
                             ${amcRange}
                         </td>
                         <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
-                            <button onclick="openClientHistoryModal('${c.id}', '${c.company_name.replace(/'/g, "\\'")}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[10px] px-2 py-1 rounded transition-all">📜 History</button>
-                            <button onclick="openEditClient('${c.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold text-[10px] px-2 py-1 rounded transition-all">✏️ Edit</button>
-                            <button onclick="deleteClient('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-[10px] px-2 py-1 rounded transition-all">🗑️ Delete</button>
+                            <button onclick="openClientHistoryModal('${c.id}', '${c.company_name.replace(/'/g, "\\'")}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[10px] px-2 py-1 rounded transition-all">ðŸ“œ History</button>
+                            <button onclick="openEditClient('${c.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 font-bold text-[10px] px-2 py-1 rounded transition-all">âœï¸ Edit</button>
+                            <button onclick="deleteClient('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-[10px] px-2 py-1 rounded transition-all">ðŸ—‘ï¸ Delete</button>
                         </td>
                     </tr>
                 `;
@@ -4526,7 +4472,7 @@ window.openEditClient = function (id) {
   document.getElementById('client-status-field').value = client.amc_status;
 
   document.getElementById('client-form-title').innerHTML =
-    '<span class="text-amber-500">✏️</span> Edit Client Profile';
+    '<span class="text-amber-500">âœï¸</span> Edit Client Profile';
   document.getElementById('client-cancel-edit-btn').classList.remove('hidden');
 };
 
@@ -4535,7 +4481,7 @@ window.resetClientForm = function () {
   document.getElementById('client-id-field').readOnly = false;
   document.getElementById('client-form').reset();
   document.getElementById('client-form-title').innerHTML =
-    '<span class="text-amber-500">🏢</span> Provision Client Profile';
+    '<span class="text-amber-500">ðŸ¢</span> Provision Client Profile';
   document.getElementById('client-cancel-edit-btn').classList.add('hidden');
 };
 
@@ -4606,7 +4552,7 @@ window.openClientHistoryModal = async function (clientId, companyName) {
     '<p class="text-xs text-slate-500 py-4 text-center">Pulling service logs...</p>';
   detailsContainer.innerHTML = `
                 <div class="text-center text-slate-500 py-12">
-                    <span class="text-3xl block mb-2">🎫</span>
+                    <span class="text-3xl block mb-2">ðŸŽ«</span>
                     <p class="text-xs font-medium">Select a service ticket from the list to inspect operational details.</p>
                 </div>
             `;
@@ -4638,7 +4584,7 @@ window.openClientHistoryModal = async function (clientId, companyName) {
                         <div onclick="renderClientHistoryDetails('${j.id}')" class="bg-white/5 border border-white/5 hover:border-amber-500/30 p-3 rounded-xl cursor-pointer transition-all flex justify-between items-center group">
                             <div>
                                 <div class="font-mono font-bold text-white text-[11px] group-hover:text-amber-500 transition-colors">${j.id}</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">${j.service_type} • ${j.created_at ? j.created_at.split(' ')[0] : '-'}</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">${j.service_type} â€¢ ${j.created_at ? j.created_at.split(' ')[0] : '-'}</div>
                             </div>
                             <span class="px-2 py-0.5 rounded-full font-bold text-[8px] uppercase ${statusBadge}">${j.status}</span>
                         </div>
@@ -4676,7 +4622,7 @@ window.renderClientHistoryDetails = function (jobId) {
                                   .map(
                                     ([key, val]) => `
                                     <div class="flex items-center gap-1.5 text-slate-300">
-                                        <span>${val ? '✅' : '❌'}</span>
+                                        <span>${val ? 'âœ…' : 'âŒ'}</span>
                                         <span class="capitalize">${key.replace(/_/g, ' ')}</span>
                                     </div>
                                 `
@@ -4697,7 +4643,7 @@ window.renderClientHistoryDetails = function (jobId) {
                         </div>
                         <div class="text-right">
                             <div class="text-[10px] text-slate-400">Technician</div>
-                            <div class="text-[10px] font-bold text-white mt-0.5">🛠️ ${job.tech_name || 'Unassigned'}</div>
+                            <div class="text-[10px] font-bold text-white mt-0.5">ðŸ› ï¸ ${job.tech_name || 'Unassigned'}</div>
                         </div>
                     </div>
 
@@ -4729,7 +4675,7 @@ window.renderClientHistoryDetails = function (jobId) {
                       job.before_photo || job.after_photo
                         ? `
                         <div class="space-y-1.5 border-t border-white/5 pt-3">
-                            <span class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">📸 Deployment Site Proofs</span>
+                            <span class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">ðŸ“¸ Deployment Site Proofs</span>
                             <div class="grid grid-cols-2 gap-2">
                                 ${
                                   job.before_photo
@@ -5358,7 +5304,7 @@ async function generateCustomReport() {
   }
 }
 
-// ─── AI COPILOT WORKSPACE SCRIPT HANDLERS ───
+// â”€â”€â”€ AI COPILOT WORKSPACE SCRIPT HANDLERS â”€â”€â”€
 let lastSuggestedDomain = '';
 let lastSuggestedTechId = '';
 let copilotMap = null;
@@ -5453,14 +5399,14 @@ function initCopilotMap() {
   const hq = loadHQConfig();
   copilotMap = L.map('copilot-map').setView([hq.lat, hq.lng], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
+    attribution: 'Â© OpenStreetMap',
   }).addTo(copilotMap);
   document.getElementById('copilot-map').classList.add('dark-map-theme');
 
   // Add HQ Office pin
   L.marker([hq.lat, hq.lng])
     .addTo(copilotMap)
-    .bindPopup('🏫 <strong>AwesomeMyanmar Office (Start/End)</strong>')
+    .bindPopup('ðŸ« <strong>AwesomeMyanmar Office (Start/End)</strong>')
     .openPopup();
 
   // Populate the selector dropdown
@@ -5576,7 +5522,7 @@ async function sendCopilotChat() {
   const loadingId = 'chat-loading-' + Date.now();
   stream.innerHTML += `
                 <div class="flex gap-3 max-w-[85%]" id="${loadingId}">
-                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">🤖</div>
+                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">ðŸ¤–</div>
                     <div class="bg-white/5 border border-white/5 rounded-2xl px-4 py-2.5 text-xs text-amber-500 animate-pulse">
                         Querying database engine...
                     </div>
@@ -5630,7 +5576,7 @@ async function sendCopilotChat() {
 
       stream.innerHTML += `
                         <div class="flex gap-3 max-w-[85%]">
-                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">🤖</div>
+                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">ðŸ¤–</div>
                             <div class="bg-white/5 border border-white/5 rounded-2xl px-4 py-2.5 text-xs text-slate-300 leading-relaxed w-full">
                                 <div class="font-mono text-[9px] text-emerald-400 mb-2">Executed Query: ${data.query}</div>
                                 <div class="mb-2">${data.summary}</div>
@@ -5641,7 +5587,7 @@ async function sendCopilotChat() {
     } else {
       stream.innerHTML += `
                         <div class="flex gap-3 max-w-[85%]">
-                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">🤖</div>
+                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">ðŸ¤–</div>
                             <div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl px-4 py-2.5 text-xs text-rose-400 leading-relaxed">
                                 Failed to process request: ${data.error}
                             </div>
@@ -5653,7 +5599,7 @@ async function sendCopilotChat() {
     if (loader) loader.remove();
     stream.innerHTML += `
                     <div class="flex gap-3 max-w-[85%]">
-                        <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">🤖</div>
+                        <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">ðŸ¤–</div>
                         <div class="bg-rose-500/10 border border-rose-500/20 rounded-2xl px-4 py-2.5 text-xs text-rose-400 leading-relaxed">
                             Connection failed: ${e.message}
                         </div>
@@ -5712,7 +5658,7 @@ async function toggleVoiceRecording() {
       isRecording = true;
       btn.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
       btn.classList.remove('bg-red-500/10', 'text-red-400', 'border-red-500/20');
-      icon.textContent = '⏹️';
+      icon.textContent = 'â¹ï¸';
       text.textContent = 'Stop Recording';
     } catch (err) {
       alert('Microphone access denied: ' + err.message);
@@ -5727,7 +5673,7 @@ async function toggleVoiceRecording() {
     isRecording = false;
     btn.classList.remove('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
     btn.classList.add('bg-red-500/10', 'text-red-400', 'border-red-500/20');
-    icon.textContent = '🎙️';
+    icon.textContent = 'ðŸŽ™ï¸';
     text.textContent = 'Record Voice';
   }
 }
@@ -5773,14 +5719,14 @@ window.editServiceFee = function (id, serviceType, amount, currency, desc) {
   document.getElementById('fee-currency').value = currency;
   document.getElementById('fee-desc').value = desc;
 
-  document.getElementById('fee-form-title').innerHTML = '<span>💵</span> Edit Service Rate';
+  document.getElementById('fee-form-title').innerHTML = '<span>ðŸ’µ</span> Edit Service Rate';
   document.getElementById('btn-fee-reset').classList.remove('hidden');
 };
 
 window.resetFeeForm = function () {
   document.getElementById('fee-id').value = '';
   document.getElementById('service-fee-form').reset();
-  document.getElementById('fee-form-title').innerHTML = '<span>💵</span> Add Service Rate';
+  document.getElementById('fee-form-title').innerHTML = '<span>ðŸ’µ</span> Add Service Rate';
   document.getElementById('btn-fee-reset').classList.add('hidden');
 };
 
@@ -5849,9 +5795,9 @@ window.saveHQConfig = saveHQConfig;
 window.resolveMapsUrlToCoords = resolveMapsUrlToCoords;
 window.loadHQConfig = loadHQConfig;
 
-// ─────────────────────────────────────────────────────────────────────
-// 🛒 POINT OF SALE (POS) SYSTEM IMPLEMENTATION
-// ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ðŸ›’ POINT OF SALE (POS) SYSTEM IMPLEMENTATION
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 window.posCart = [];
 window.posCatalog = [];
 window.posClients = [];
@@ -6401,7 +6347,7 @@ window.renderPosCart = function () {
                         </div>
                         <div class="flex items-center gap-0.5 shrink-0">
                             <button onclick="window.updateCartQty('${item.item_code}', ${item.qty - 1})"
-                                class="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/8 transition font-black text-xs leading-none">−</button>
+                                class="w-5 h-5 rounded flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/8 transition font-black text-xs leading-none">âˆ’</button>
                             <input type="number" value="${item.qty}" min="1" max="${item.stock_qty}"
                                 onchange="window.updateCartQty('${item.item_code}', this.value)"
                                 class="w-8 bg-black/40 border border-white/10 rounded text-center text-white font-mono text-[10px] focus:border-emerald-500/40 focus:outline-none py-0.5">
@@ -6676,7 +6622,7 @@ window.printInvoicePdf = function (tx) {
 
   let y = 10;
 
-  // ─── HEADER BANNER DRAW ───
+  // â”€â”€â”€ HEADER BANNER DRAW â”€â”€â”€
   if (isThermal) {
     // Compact text-only receipt header
     doc.setTextColor(rgb[0], rgb[1], rgb[2]);
@@ -6781,7 +6727,7 @@ window.printInvoicePdf = function (tx) {
     }
   }
 
-  // ─── BILL TO ───
+  // â”€â”€â”€ BILL TO â”€â”€â”€
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(isThermal ? 7.5 : 9.5);
@@ -6802,7 +6748,7 @@ window.printInvoicePdf = function (tx) {
 
   y += isThermal ? 2 : 4;
 
-  // ─── ITEMS TABLE ───
+  // â”€â”€â”€ ITEMS TABLE â”€â”€â”€
   doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]);
   doc.rect(margin, y, contentWidth, isThermal ? 6 : 8, 'F');
   doc.setTextColor(255, 255, 255);
@@ -6851,7 +6797,7 @@ window.printInvoicePdf = function (tx) {
     y += isThermal ? 6 : 8;
   });
 
-  // ─── TOTALS SECTION ───
+  // â”€â”€â”€ TOTALS SECTION â”€â”€â”€
   y += 2;
   doc.setDrawColor(180, 180, 180);
   doc.line(margin, y, pageWidth - margin, y);
@@ -6879,7 +6825,7 @@ window.printInvoicePdf = function (tx) {
 
   doc.setFont('helvetica', 'normal');
 
-  // ─── PAYMENT DETAILS ───
+  // â”€â”€â”€ PAYMENT DETAILS â”€â”€â”€
   if (cfg.show_payment) {
     y += isThermal ? 6 : 8;
     doc.setFontSize(isThermal ? 6 : 8);
@@ -6914,7 +6860,7 @@ window.printInvoicePdf = function (tx) {
     }
   }
 
-  // ─── TERMS AND CONDITIONS ───
+  // â”€â”€â”€ TERMS AND CONDITIONS â”€â”€â”€
   if (cfg.show_terms && cfg.terms) {
     y += isThermal ? 6 : 8;
     doc.setFontSize(isThermal ? 5.5 : 7.5);
@@ -6931,7 +6877,7 @@ window.printInvoicePdf = function (tx) {
     });
   }
 
-  // ─── SIGNATURE BLOCK ───
+  // â”€â”€â”€ SIGNATURE BLOCK â”€â”€â”€
   if (cfg.show_sig) {
     y += isThermal ? 10 : 15;
     doc.setDrawColor(200, 200, 200);
@@ -6944,7 +6890,7 @@ window.printInvoicePdf = function (tx) {
     doc.text('AUTHORIZED SIGNATURE', sigX + (isThermal ? 4 : 10), y);
   }
 
-  // ─── FOOTER TEXT ───
+  // â”€â”€â”€ FOOTER TEXT â”€â”€â”€
   y += isThermal ? 8 : 10;
   doc.setFontSize(isThermal ? 6 : 8);
   doc.setTextColor(100, 110, 120);
@@ -7061,10 +7007,10 @@ window.reprintInvoicePdf = function (id, notes, amount, currency, rate) {
   });
 };
 
-// ─────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────
-// 🎨 RECEIPT PDF DESIGN BUILDER FUNCTIONS
-// ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ðŸŽ¨ RECEIPT PDF DESIGN BUILDER FUNCTIONS
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 window.pdfBuilderConfig = {
   company: 'AWESOME MYANMAR',
   subtitle: 'POINT OF SALE INVOICE RECEIPT',
@@ -7386,9 +7332,9 @@ window.loadPdfBuilderConfig = async function () {
   }
 };
 
-// ─────────────────────────────────────────────────────────────────────
-// 🛡️ ROLE-BASED ACCESS CONTROL (RBAC) CONTROLLER
-// ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ðŸ›¡ï¸ ROLE-BASED ACCESS CONTROL (RBAC) CONTROLLER
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 window.globalRolesList = [];
 window.rbacActiveRole = null;
 
@@ -7450,7 +7396,7 @@ window.loadRbacSettings = async function () {
                 : 'bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white';
             return `
                                 <button onclick="selectRbacRole('${r.name}')" class="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-all ${activeClass}">
-                                    🔑 ${r.name}
+                                    ðŸ”‘ ${r.name}
                                 </button>
                             `;
           })
@@ -7526,19 +7472,19 @@ window.renderRbacMatrix = function () {
                         <td class="py-3 px-3 text-center">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="radio" name="perm-${mod.id}" value="write" ${isWriteChecked} ${disabledAttr} class="rounded-full bg-black/40 border-white/10 text-emerald-500 focus:ring-0">
-                                <span class="text-[10px] text-emerald-400 ml-1.5 font-bold">Write 🟢</span>
+                                <span class="text-[10px] text-emerald-400 ml-1.5 font-bold">Write ðŸŸ¢</span>
                             </label>
                         </td>
                         <td class="py-3 px-3 text-center">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="radio" name="perm-${mod.id}" value="read" ${isReadChecked} ${disabledAttr} class="rounded-full bg-black/40 border-white/10 text-amber-500 focus:ring-0">
-                                <span class="text-[10px] text-amber-400 ml-1.5 font-bold">Read 🟡</span>
+                                <span class="text-[10px] text-amber-400 ml-1.5 font-bold">Read ðŸŸ¡</span>
                             </label>
                         </td>
                         <td class="py-3 px-3 text-center">
                             <label class="inline-flex items-center cursor-pointer">
                                 <input type="radio" name="perm-${mod.id}" value="none" ${isNoneChecked} ${disabledAttr} class="rounded-full bg-black/40 border-white/10 text-rose-500 focus:ring-0">
-                                <span class="text-[10px] text-rose-400 ml-1.5 font-bold">None 🔴</span>
+                                <span class="text-[10px] text-rose-400 ml-1.5 font-bold">None ðŸ”´</span>
                             </label>
                         </td>
                     </tr>
@@ -7662,7 +7608,7 @@ window.deleteActiveRbacRole = async function () {
   }
 };
 
-// ── Generic Excel Column Filters Utility ──
+// â”€â”€ Generic Excel Column Filters Utility â”€â”€
 window.initExcelTableFilters = function (tableId) {
   const table = document.getElementById(tableId);
   if (!table) return;
@@ -7735,7 +7681,7 @@ function openExcelFilterPopover(tableId, colIndex, th, btn) {
     'linear-gradient(135deg, rgba(20, 20, 28, 0.98) 0%, rgba(12, 12, 18, 0.98) 100%)';
   popover.style.backdropFilter = 'blur(16px)';
 
-  const headerTitle = th.textContent.replace(/[▼▲\s]/g, '').trim();
+  const headerTitle = th.textContent.replace(/[â–¼â–²\s]/g, '').trim();
 
   let itemsHtml = sortedValues
     .map((val) => {
@@ -7834,7 +7780,7 @@ function openExcelFilterPopover(tableId, colIndex, th, btn) {
   setTimeout(() => document.addEventListener('click', onDocClick), 0);
 }
 
-// ── Export complete inventory lists directly from memory ──
+// â”€â”€ Export complete inventory lists directly from memory â”€â”€
 window.exportInventoryToExcel = function (type) {
   loadXLSX(() => {
     let data = [];
@@ -7920,7 +7866,7 @@ window.exportInventoryToExcel = function (type) {
   });
 };
 
-// ── Generic Table Excel Filter Application ──
+// â”€â”€ Generic Table Excel Filter Application â”€â”€
 window.applyExcelFiltersToTable = function (tableId) {
   const table = document.getElementById(tableId);
   if (!table || !table.activeExcelFilters) return;
@@ -7972,7 +7918,7 @@ window.applyExcelFiltersToTable = function (tableId) {
   });
 };
 
-// ── Tickets log search & filter ──
+// â”€â”€ Tickets log search & filter â”€â”€
 window.filterTicketTable = function () {
   const q = (document.getElementById('ticket-search-input')?.value || '').toLowerCase().trim();
   const domain = (document.getElementById('ticket-filter-domain')?.value || '').toLowerCase();

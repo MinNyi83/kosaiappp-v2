@@ -1,0 +1,66 @@
+﻿1095|        : '<option value="">â€” Select â€”</option>';
+1104|      '<option value="">â€” Select â€”</option>' +
+1117|      '<option value="">â€” Select â€”</option>' +
+1125|      '<option value="">â€” Select Category â€”</option>' +
+1135|    catalogUmEl.innerHTML = '<option value="">â€” Select Unit â€”</option>' + unitOpts;
+1150|                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${c.code || 'â€”'}</td>
+1173|                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${s.code || 'â€”'}</td>
+1175|                            <td class="px-3 py-2 text-[9px] text-slate-500">${s.category_name || 'â€”'}</td>
+1197|                            <td class="px-3 py-2 text-[10px] text-slate-400 font-mono">${b.code || 'â€”'}</td>
+1485|    '<option value="">â€” Select â€”</option>' +
+2033|    const importDate = b.created_at ? b.created_at.substring(0, 10) : 'â€”';
+2057|                                <span class="expand-arrow text-emerald-500 text-[10px] inline-block transition-transform duration-200 font-bold">â€º</span>
+2064|                            <span class="text-[11px] text-slate-300 font-medium">${b.item_name || 'â€”'}</span>
+2067|                            <span class="cat-pill">${b.category || 'â€”'}</span>
+2073|                        <td class="px-4 py-2.5 text-[10px] text-slate-500">${b.supplier || 'â€”'}</td>
+2084|                            <span class="font-mono text-[11px] ${soldUnits > 0 ? 'text-amber-400' : 'text-slate-700'}">${soldUnits > 0 ? soldUnits : 'â€”'}</span>
+2134|  let filterSelectHtml = '<option value="">â€” All Models â€”</option>';
+2149|        : 'â€”';
+2152|        : 'â€”';
+2178|                            <td class="px-4 py-2.5"><span class="cat-pill">${item.category || 'â€”'}</span></td>
+2179|                            <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || 'â€”'}</td>
+2207|                            <td class="px-4 py-2.5"><span class="cat-pill">${item.category || 'â€”'}</span></td>
+2208|                            <td class="px-4 py-2.5 text-[10px] text-slate-500">${item.sub_category_id || 'â€”'}</td>
+2209|                            <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || 'â€”'}</td>
+2810|                                ðŸ—‘ï¸
+3016|                                <button onclick="openTechHistoryModal('${t.id}', '${t.name.replace(/'/g, "\\'")}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-[10px]
+3017|                                <button onclick="openTechIdCard('${t.id}', '${t.name.replace(/'/g, "\\'")}', '${t.role}', '${t.phone || ''}', '${t.email || ''}', '${t.nickname || ''}', ${t.active}, '$
+3113|// â”€â”€â”€ ðŸªª ID CARD SYSTEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+3120|  document.getElementById('id-info-name').textContent = name || 'â€”';
+3121|  document.getElementById('id-info-id').textContent = id || 'â€”';
+3122|  document.getElementById('id-info-role').textContent = role || 'â€”';
+3123|  document.getElementById('id-info-phone').textContent = phone || 'â€”';
+3124|  document.getElementById('id-info-email').textContent = email || 'â€”';
+3134|  document.getElementById('id-card-phone-front').textContent = phone || 'â€”';
+3135|  document.getElementById('id-card-email-back').textContent = email || 'â€”';
+3149|    photoEl.innerHTML = 'ðŸ‘·';
+3264|    <title>ID Card â€” ${name}</title>
+3294|            <div class="photo">${_photoDataUrl ? `<img src="${_photoDataUrl}">` : 'ðŸ‘·'}</div>
+3305|            <span class="status-txt">${active ? 'Field Tech â€¢ Active' : 'Field Tech â€¢ Inactive'}</span>
+3402|                    <span class="text-3xl block mb-2">ðŸŽ«</span>
+3434|                                <div class="text-[10px] text-slate-400 mt-0.5">${j.service_type} â€¢ ${j.created_at ? j.created_at.split(' ')[0] : '-'}</div>
+3492|                            <div class="text-[10px] font-bold text-white mt-0.5">ðŸ¢ ${job.company_name || 'Individual Client'}</div>
+3524|                            <span class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">ðŸ“¸ Deployment Site Proofs</span>
+4069|    html: `<div style="background-color: #ef4444; border: 2px solid #f59e0b; border-radius: 50%; width: 16px; height: 16px; box-shadow: 0 0 12px #f59e0b; display: flex; align-items: center; justify-co
+4448|                            <button onclick="openClientHistoryModal('${c.id}', '${c.company_name.replace(/'/g, "\\'")}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-
+4450|                            <button onclick="deleteClient('${c.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-[10px] px-2 py-1 rounded transition-all">ðŸ—‘ï¸ Delete</b
+4484|    '<span class="text-amber-500">ðŸ¢</span> Provision Client Profile';
+4555|                    <span class="text-3xl block mb-2">ðŸŽ«</span>
+4587|                                <div class="text-[10px] text-slate-400 mt-0.5">${j.service_type} â€¢ ${j.created_at ? j.created_at.split(' ')[0] : '-'}</div>
+4646|                            <div class="text-[10px] font-bold text-white mt-0.5">ðŸ› ï¸ ${job.tech_name || 'Unassigned'}</div>
+4678|                            <span class="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">ðŸ“¸ Deployment Site Proofs</span>
+5409|    .bindPopup('ðŸ« <strong>AwesomeMyanmar Office (Start/End)</strong>')
+5525|                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">ðŸ¤–</div>
+5579|                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">ðŸ¤–</div>
+5590|                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">ðŸ¤–</div>
+5602|                        <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs shrink-0">ðŸ¤–</div>
+5676|    icon.textContent = 'ðŸŽ™ï¸';
+5722|  document.getElementById('fee-form-title').innerHTML = '<span>ðŸ’µ</span> Edit Service Rate';
+5729|  document.getElementById('fee-form-title').innerHTML = '<span>ðŸ’µ</span> Add Service Rate';
+5799|// ðŸ›’ POINT OF SALE (POS) SYSTEM IMPLEMENTATION
+7012|// ðŸŽ¨ RECEIPT PDF DESIGN BUILDER FUNCTIONS
+7336|// ðŸ›¡ï¸ ROLE-BASED ACCESS CONTROL (RBAC) CONTROLLER
+7399|                                    ðŸ”‘ ${r.name}
+7475|                                <span class="text-[10px] text-emerald-400 ml-1.5 font-bold">Write ðŸŸ¢</span>
+7481|                                <span class="text-[10px] text-amber-400 ml-1.5 font-bold">Read ðŸŸ¡</span>
+7487|                                <span class="text-[10px] text-rose-400 ml-1.5 font-bold">None ðŸ”´</span>

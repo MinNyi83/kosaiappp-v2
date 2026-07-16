@@ -1,0 +1,1 @@
+INSERT INTO technicians (id, name, role, email, active, pin, permissions) VALUES ('ADMIN-001', 'Admin', 'Admin', 'admin@example.com', 1, '$sha256$1234567890abcdef$9d6f0210c5d3c278a002f4bd43f72e61be93edf214ab37638c0bca616ea6b09c', 'read_write');
