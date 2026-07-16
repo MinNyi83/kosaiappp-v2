@@ -180,7 +180,12 @@ function register(router, env) {
     try {
       const urlObj = new URL(request.url);
       const url = urlObj.searchParams.get('url');
-      if (!url) return error('Missing Google Maps URL', 400);
+      if (!url) {
+        return new Response(JSON.stringify({ success: false, error: 'Missing Google Maps URL' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
 
       let targetUrl = url;
       if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
@@ -197,10 +202,13 @@ function register(router, env) {
 
       const coordsMatch = targetUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
       if (coordsMatch) {
-        return success({
-          latitude: parseFloat(coordsMatch[1]),
-          longitude: parseFloat(coordsMatch[2]),
+        return new Response(JSON.stringify({
+          success: true,
+          lat: parseFloat(coordsMatch[1]),
+          lng: parseFloat(coordsMatch[2]),
           source: 'parsed',
+        }), {
+          headers: { 'Content-Type': 'application/json' }
         });
       }
 
@@ -210,18 +218,27 @@ function register(router, env) {
         );
         const geoData = (await geoResp.json()) as any;
         if (geoData.results?.[0]?.geometry?.location) {
-          return success({
-            latitude: geoData.results[0].geometry.location.lat,
-            longitude: geoData.results[0].geometry.location.lng,
+          return new Response(JSON.stringify({
+            success: true,
+            lat: geoData.results[0].geometry.location.lat,
+            lng: geoData.results[0].geometry.location.lng,
             formatted_address: geoData.results[0].formatted_address,
             source: 'geocoding',
+          }), {
+            headers: { 'Content-Type': 'application/json' }
           });
         }
       }
 
-      return error('Could not resolve coordinates from URL', 400);
+      return new Response(JSON.stringify({ success: false, error: 'Could not resolve coordinates from URL' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     } catch (err) {
-      return error('Failed to resolve Maps URL: ' + err.message, 500);
+      return new Response(JSON.stringify({ success: false, error: 'Failed to resolve Maps URL: ' + err.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
   });
 
