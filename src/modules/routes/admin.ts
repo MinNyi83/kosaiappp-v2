@@ -396,6 +396,53 @@ const backup: any = {};
     }
   });
 
+  // ── POST /api/admin/hq-config ─────────────────────────────────────────
+  router.post('/api/admin/hq-config', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const hq = (await request.json() as any);
+      if (!hq) return error('Missing configuration data', 400);
+
+      const lat = parseFloat(hq.lat);
+      const lng = parseFloat(hq.lng);
+      const address = hq.address || '';
+
+      // 1. Update landing_page table for public website coordinates & address
+      const existingLanding = await db.prepare('SELECT id FROM landing_page WHERE id = 1').first();
+      if (existingLanding) {
+        await db.prepare('UPDATE landing_page SET map_lat = ?, map_lng = ?, contact_address = ? WHERE id = 1')
+          .bind(lat, lng, address)
+          .run();
+      } else {
+        await db.prepare('INSERT INTO landing_page (id, map_lat, map_lng, contact_address) VALUES (1, ?, ?, ?)')
+          .bind(lat, lng, address)
+          .run();
+      }
+
+      // 2. Update system_config key-value store for internal settings syncing
+      const serialized = JSON.stringify(hq);
+      const existingConfig = await db.prepare('SELECT config_key FROM system_config WHERE config_key = ?')
+        .bind('hq_config')
+        .first();
+
+      if (existingConfig) {
+        await db.prepare('UPDATE system_config SET config_value = ? WHERE config_key = ?')
+          .bind(serialized, 'hq_config')
+          .run();
+      } else {
+        await db.prepare('INSERT INTO system_config (config_key, config_value) VALUES (?, ?)')
+          .bind('hq_config', serialized)
+          .run();
+      }
+
+      return success({ message: 'HQ Configuration saved and synchronized successfully' });
+    } catch (err) {
+      return error('Failed to save HQ configuration: ' + err.message, 500);
+    }
+  });
+
   // ── GET /api/admin/config ─────────────────────────────────────────────
   // Key-value config store. ?key=pdf_builder_config etc.
   router.get('/api/admin/config', async (request) => {
