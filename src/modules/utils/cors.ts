@@ -3,6 +3,8 @@
  * Returns a plain object of header key-value pairs.
  */
 const ALLOWED_ORIGINS = [
+  'https://cctv-service-system.nyinyimin2007.workers.dev',
+  'https://awesomemyanmar.pages.dev',
   'https://awesomemyanmar.com',
   'https://kosai-admin.pages.dev',
   'tauri://localhost',
@@ -18,7 +20,12 @@ export function getCorsHeaders(origin?: string) {
     'Access-Control-Max-Age': '86400',
   };
 
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  let allowed = ALLOWED_ORIGINS[0];
+  if (origin) {
+    if (ALLOWED_ORIGINS.includes(origin) || (origin.endsWith('.pages.dev') && origin.includes('awesomemyanmar'))) {
+      allowed = origin;
+    }
+  }
 
   if (origin) {
     headers['Access-Control-Allow-Origin'] = allowed;
