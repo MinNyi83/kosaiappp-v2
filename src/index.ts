@@ -85,35 +85,47 @@ export default {
     }
 
     // ── Match and execute route ─────────────────────────────────────────
+    const origin = request.headers.get('Origin') || undefined;
     const match = router.match(method, url.pathname);
     if (match) {
       try {
         const response = await match.handler(request, match.params);
-        return wrapResponse(response);
+        return wrapResponse(response, origin);
       } catch (err) {
         console.error(`Route error [${method} ${url.pathname}]:`, err);
-        return wrapResponse(error('Internal server error', 500));
+        return wrapResponse(error('Internal server error', 500), origin);
       }
     }
 
     // ── 404 fallback ────────────────────────────────────────────────────
-    return wrapResponse(error(`Not found: ${method} ${url.pathname}`, 404));
+    return wrapResponse(error(`Not found: ${method} ${url.pathname}`, 404), origin);
   },
 };
 
 /**
  * Wrap a response object or plain data into a proper Response.
  */
-function wrapResponse(data) {
-  if (data instanceof Response) return data;
+function wrapResponse(data, origin?: string) {
+  const corsHeaders = getCorsHeaders(origin);
+
+  if (data instanceof Response) {
+    const newHeaders = new Headers(data.headers);
+    Object.entries(corsHeaders).forEach(([key, val]) => {
+      newHeaders.set(key, val);
+    });
+    return new Response(data.body, {
+      status: data.status,
+      statusText: data.statusText,
+      headers: newHeaders,
+    });
+  }
 
   const body = JSON.stringify(data);
-  const headers = getCorsHeaders();
   return new Response(body, {
     status: data?.statusCode || 200,
     headers: {
       'Content-Type': 'application/json',
-      ...headers,
+      ...corsHeaders,
     },
   });
 }
