@@ -13,31 +13,31 @@
  *   cors, response, jwt, router, telegram, viber, google, gemini
  */
 
-import { Router } from "./modules/utils/router.js";
-import { getCorsHeaders } from "./modules/utils/cors.js";
-import { error } from "./modules/utils/response.js";
+import { Router } from './modules/utils/router.js';
+import { getCorsHeaders } from './modules/utils/cors.js';
+import { error } from './modules/utils/response.js';
 
 // ── Route module registry ────────────────────────────────────────────────
-import * as authRoutes from "./modules/routes/auth.js";
-import * as techniciansRoutes from "./modules/routes/technicians.js";
-import * as clientsRoutes from "./modules/routes/clients.js";
-import * as jobsRoutes from "./modules/routes/jobs.js";
-import * as inventoryRoutes from "./modules/routes/inventory.js";
-import * as invoicesRoutes from "./modules/routes/invoices.js";
-import * as expensesRoutes from "./modules/routes/expenses.js";
-import * as attendanceRoutes from "./modules/routes/attendance.js";
-import * as reportsRoutes from "./modules/routes/reports.js";
-import * as adminRoutes from "./modules/routes/admin.js";
-import * as aiRoutes from "./modules/routes/ai.js";
-import * as telegramRoutes from "./modules/routes/telegram.js";
-import * as publicRoutes from "./modules/routes/public.js";
-import * as googleRoutes from "./modules/routes/google.js";
-import * as batchesRoutes from "./modules/routes/batches.js";
-import * as rmaRoutes from "./modules/routes/rma.js";
-import * as distributorsRoutes from "./modules/routes/distributors.js";
-import * as cashsafeRoutes from "./modules/routes/cashsafe.js";
-import * as servicefeesRoutes from "./modules/routes/servicefees.js";
-import * as landingRoutes from "./modules/routes/landing.js";
+import * as authRoutes from './modules/routes/auth.js';
+import * as techniciansRoutes from './modules/routes/technicians.js';
+import * as clientsRoutes from './modules/routes/clients.js';
+import * as jobsRoutes from './modules/routes/jobs.js';
+import * as inventoryRoutes from './modules/routes/inventory.js';
+import * as invoicesRoutes from './modules/routes/invoices.js';
+import * as expensesRoutes from './modules/routes/expenses.js';
+import * as attendanceRoutes from './modules/routes/attendance.js';
+import * as reportsRoutes from './modules/routes/reports.js';
+import * as adminRoutes from './modules/routes/admin.js';
+import * as aiRoutes from './modules/routes/ai.js';
+import * as telegramRoutes from './modules/routes/telegram.js';
+import * as publicRoutes from './modules/routes/public.js';
+import * as googleRoutes from './modules/routes/google.js';
+import * as batchesRoutes from './modules/routes/batches.js';
+import * as rmaRoutes from './modules/routes/rma.js';
+import * as distributorsRoutes from './modules/routes/distributors.js';
+import * as cashsafeRoutes from './modules/routes/cashsafe.js';
+import * as servicefeesRoutes from './modules/routes/servicefees.js';
+import * as landingRoutes from './modules/routes/landing.js';
 
 const routeModules = [
   authRoutes,
@@ -68,7 +68,7 @@ export default {
     const method = request.method;
 
     // ── CORS preflight ──────────────────────────────────────────────────
-    if (method === "OPTIONS") {
+    if (method === 'OPTIONS') {
       return new Response(null, { headers: getCorsHeaders() });
     }
 
@@ -86,7 +86,7 @@ export default {
         return wrapResponse(response);
       } catch (err) {
         console.error(`Route error [${method} ${url.pathname}]:`, err);
-        return wrapResponse(error("Internal server error", 500));
+        return wrapResponse(error('Internal server error', 500));
       }
     }
 
@@ -105,7 +105,7 @@ function wrapResponse(data) {
   return new Response(body, {
     status: data?.statusCode || 200,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       ...getCorsHeaders(),
     },
   });

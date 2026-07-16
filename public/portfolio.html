@@ -1,478 +1,592 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Portfolio - Awesome Myanmar</title>
-    <link rel="stylesheet" href="tailwind.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tailwind.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        * { scroll-behavior: smooth; }
-        
-        body {
-            font-family: "Plus Jakarta Sans", sans-serif;
-            background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.05), transparent 45%),
-                        radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 40%),
-                        #09090b;
-        }
-        
-        .glass-panel {
-            background: rgba(18, 18, 24, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .glass-panel:hover {
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        .portfolio-card {
-            position: relative;
-            overflow: hidden;
-            border-radius: 16px;
-            cursor: pointer;
-        }
-        
-        .portfolio-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%);
-            z-index: 1;
-        }
-        
-        .portfolio-card:hover .portfolio-img {
-            transform: scale(1.05);
-        }
-        
-        .portfolio-img {
-            transition: transform 0.5s ease;
-        }
-        
-        .filter-btn.active {
-            background: rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-            border-color: rgba(245, 158, 11, 0.5);
-        }
-        
-        /* Modal */
-        .modal {
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .modal.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .modal-content {
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        
-        .modal.active .modal-content {
-            transform: scale(1);
-        }
-        
-        /* Before/After Slider */
-        .ba-slider {
-            position: relative;
-            overflow: hidden;
-            cursor: ew-resize;
-        }
-        
-        .ba-before, .ba-after {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .ba-before {
-            clip-path: inset(0 50% 0 0);
-        }
-        
-        .ba-slider .ba-handle {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: #f59e0b;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-        }
-        
-        .ba-slider .ba-handle::before,
-        .ba-slider .ba-handle::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-style: solid;
-        }
-        
-        .ba-slider .ba-handle::before {
-            top: 50%;
-            transform: translate(-50%, -50%);
-            border-width: 8px 12px 8px 0;
-            border-color: transparent #f59e0b transparent transparent;
-            left: -8px;
-        }
-        
-        .ba-slider .ba-handle::after {
-            top: 50%;
-            transform: translate(-50%, -50%);
-            border-width: 8px 0 8px 12px;
-            border-color: transparent transparent transparent #f59e0b;
-            left: 8px;
-        }
-        
-        /* Hamburger Menu */
-        #hamburger-btn.active .hamburger-line:nth-child(1) {
-            transform: translateY(8px) rotate(45deg);
-        }
-        #hamburger-btn.active .hamburger-line:nth-child(2) {
-            opacity: 0;
-            transform: scaleX(0);
-        }
-        #hamburger-btn.active .hamburger-line:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg);
-        }
-        
-        #mobile-menu {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        #mobile-menu.open { max-height: 400px; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-    </style>
-</head>
-<body class="text-slate-200 min-h-screen flex flex-col">
+      * {
+        scroll-behavior: smooth;
+      }
 
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background:
+          radial-gradient(circle at top right, rgba(245, 158, 11, 0.05), transparent 45%),
+          radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 40%), #09090b;
+      }
+
+      .glass-panel {
+        background: rgba(18, 18, 24, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .glass-panel:hover {
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .portfolio-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        cursor: pointer;
+      }
+
+      .portfolio-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 60%);
+        z-index: 1;
+      }
+
+      .portfolio-card:hover .portfolio-img {
+        transform: scale(1.05);
+      }
+
+      .portfolio-img {
+        transition: transform 0.5s ease;
+      }
+
+      .filter-btn.active {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border-color: rgba(245, 158, 11, 0.5);
+      }
+
+      /* Modal */
+      .modal {
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .modal.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      }
+
+      .modal.active .modal-content {
+        transform: scale(1);
+      }
+
+      /* Before/After Slider */
+      .ba-slider {
+        position: relative;
+        overflow: hidden;
+        cursor: ew-resize;
+      }
+
+      .ba-before,
+      .ba-after {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .ba-before {
+        clip-path: inset(0 50% 0 0);
+      }
+
+      .ba-slider .ba-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #f59e0b;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+      }
+
+      .ba-slider .ba-handle::before,
+      .ba-slider .ba-handle::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-style: solid;
+      }
+
+      .ba-slider .ba-handle::before {
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-width: 8px 12px 8px 0;
+        border-color: transparent #f59e0b transparent transparent;
+        left: -8px;
+      }
+
+      .ba-slider .ba-handle::after {
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border-width: 8px 0 8px 12px;
+        border-color: transparent transparent transparent #f59e0b;
+        left: 8px;
+      }
+
+      /* Hamburger Menu */
+      #hamburger-btn.active .hamburger-line:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+      }
+      #hamburger-btn.active .hamburger-line:nth-child(2) {
+        opacity: 0;
+        transform: scaleX(0);
+      }
+      #hamburger-btn.active .hamburger-line:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+      }
+
+      #mobile-menu {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      #mobile-menu.open {
+        max-height: 400px;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="text-slate-200 min-h-screen flex flex-col">
     <!-- Header Navigation -->
     <header class="border-b border-white/5 bg-black/30 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-amber-500 text-xl">⚙️</span>
-                <span class="font-extrabold text-white tracking-wider text-sm uppercase">Awesome Myanmar</span>
-            </div>
-            <nav class="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
-                <a href="/" class="text-slate-400 hover:text-white transition">Home</a>
-                <a href="/portfolio.html" class="text-amber-500">Portfolio</a>
-                <a href="/portal.html" class="text-slate-400 hover:text-white transition">Portal</a>
-                <a href="/contact.html" class="text-slate-400 hover:text-white transition">Contact</a>
-                <a href="/admin.html" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-1.5 rounded-lg transition">Staff Console</a>
-            </nav>
-            <button id="hamburger-btn" class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5" aria-label="Toggle menu">
-                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-            </button>
+      <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-500 text-xl">⚙️</span>
+          <span class="font-extrabold text-white tracking-wider text-sm uppercase"
+            >Awesome Myanmar</span
+          >
         </div>
-        <div id="mobile-menu" class="md:hidden hidden border-t border-white/5 bg-black/50 backdrop-blur-md">
-            <nav class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 text-xs font-bold uppercase tracking-wider">
-                <a href="/" class="text-slate-400 hover:text-white transition py-2">Home</a>
-                <a href="/portfolio.html" class="text-amber-500 py-2">Portfolio</a>
-                <a href="/portal.html" class="text-slate-400 hover:text-white transition py-2">Portal</a>
-                <a href="/contact.html" class="text-slate-400 hover:text-white transition py-2">Contact</a>
-                <a href="/admin.html" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-2 rounded-lg transition text-center mt-2">Staff Console</a>
-            </nav>
-        </div>
+        <nav class="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
+          <a href="/" class="text-slate-400 hover:text-white transition">Home</a>
+          <a href="/portfolio.html" class="text-amber-500">Portfolio</a>
+          <a href="/portal.html" class="text-slate-400 hover:text-white transition">Portal</a>
+          <a href="/contact.html" class="text-slate-400 hover:text-white transition">Contact</a>
+          <a
+            href="/admin.html"
+            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-1.5 rounded-lg transition"
+            >Staff Console</a
+          >
+        </nav>
+        <button
+          id="hamburger-btn"
+          class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5"
+          aria-label="Toggle menu"
+        >
+          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+        </button>
+      </div>
+      <div
+        id="mobile-menu"
+        class="md:hidden hidden border-t border-white/5 bg-black/50 backdrop-blur-md"
+      >
+        <nav
+          class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 text-xs font-bold uppercase tracking-wider"
+        >
+          <a href="/" class="text-slate-400 hover:text-white transition py-2">Home</a>
+          <a href="/portfolio.html" class="text-amber-500 py-2">Portfolio</a>
+          <a href="/portal.html" class="text-slate-400 hover:text-white transition py-2">Portal</a>
+          <a href="/contact.html" class="text-slate-400 hover:text-white transition py-2"
+            >Contact</a
+          >
+          <a
+            href="/admin.html"
+            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-2 rounded-lg transition text-center mt-2"
+            >Staff Console</a
+          >
+        </nav>
+      </div>
     </header>
 
     <!-- Hero Section -->
     <section class="py-12 md:py-16">
-        <div class="max-w-6xl mx-auto px-4 text-center">
-            <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.3em] mb-3">Our Work</p>
-            <h1 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">Portfolio</h1>
-            <p class="text-slate-400 text-sm md:text-base max-w-xl mx-auto">
-                Explore our completed projects across Myanmar. From CCTV installations to enterprise networking solutions.
-            </p>
-        </div>
+      <div class="max-w-6xl mx-auto px-4 text-center">
+        <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.3em] mb-3">Our Work</p>
+        <h1 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">
+          Portfolio
+        </h1>
+        <p class="text-slate-400 text-sm md:text-base max-w-xl mx-auto">
+          Explore our completed projects across Myanmar. From CCTV installations to enterprise
+          networking solutions.
+        </p>
+      </div>
     </section>
 
     <!-- Stats -->
     <section class="max-w-6xl mx-auto px-4 mb-8">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="glass-panel p-4 rounded-xl text-center">
-                <p class="text-2xl font-black text-amber-500" id="total-projects">0</p>
-                <p class="text-xs text-slate-400 uppercase tracking-wider">Total Projects</p>
-            </div>
-            <div class="glass-panel p-4 rounded-xl text-center">
-                <p class="text-2xl font-black text-emerald-400" id="cctv-projects">0</p>
-                <p class="text-xs text-slate-400 uppercase tracking-wider">CCTV</p>
-            </div>
-            <div class="glass-panel p-4 rounded-xl text-center">
-                <p class="text-2xl font-black text-sky-400" id="network-projects">0</p>
-                <p class="text-xs text-slate-400 uppercase tracking-wider">Networking</p>
-            </div>
-            <div class="glass-panel p-4 rounded-xl text-center">
-                <p class="text-2xl font-black text-violet-400" id="other-projects">0</p>
-                <p class="text-xs text-slate-400 uppercase tracking-wider">Other</p>
-            </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass-panel p-4 rounded-xl text-center">
+          <p class="text-2xl font-black text-amber-500" id="total-projects">0</p>
+          <p class="text-xs text-slate-400 uppercase tracking-wider">Total Projects</p>
         </div>
+        <div class="glass-panel p-4 rounded-xl text-center">
+          <p class="text-2xl font-black text-emerald-400" id="cctv-projects">0</p>
+          <p class="text-xs text-slate-400 uppercase tracking-wider">CCTV</p>
+        </div>
+        <div class="glass-panel p-4 rounded-xl text-center">
+          <p class="text-2xl font-black text-sky-400" id="network-projects">0</p>
+          <p class="text-xs text-slate-400 uppercase tracking-wider">Networking</p>
+        </div>
+        <div class="glass-panel p-4 rounded-xl text-center">
+          <p class="text-2xl font-black text-violet-400" id="other-projects">0</p>
+          <p class="text-xs text-slate-400 uppercase tracking-wider">Other</p>
+        </div>
+      </div>
     </section>
 
     <!-- Filters -->
     <section class="max-w-6xl mx-auto px-4 mb-8">
-        <div class="flex flex-wrap justify-center gap-2">
-            <button onclick="filterPortfolio('all')" class="filter-btn active px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 transition" data-filter="all">All Projects</button>
-            <button onclick="filterPortfolio('CCTV')" class="filter-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 text-slate-400 hover:text-white transition" data-filter="CCTV">CCTV</button>
-            <button onclick="filterPortfolio('Networking')" class="filter-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 text-slate-400 hover:text-white transition" data-filter="Networking">Networking</button>
-            <button onclick="filterPortfolio('NAS')" class="filter-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 text-slate-400 hover:text-white transition" data-filter="NAS">NAS Storage</button>
-            <button onclick="filterPortfolio('WiFi')" class="filter-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 text-slate-400 hover:text-white transition" data-filter="WiFi">WiFi</button>
-        </div>
+      <div class="flex flex-wrap justify-center gap-2">
+        <button
+          onclick="filterPortfolio('all')"
+          class="filter-btn active px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 transition"
+          data-filter="all"
+        >
+          All Projects
+        </button>
+        <button
+          onclick="filterPortfolio('CCTV')"
+          class="filter-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 text-slate-400 hover:text-white transition"
+          data-filter="CCTV"
+        >
+          CCTV
+        </button>
+        <button
+          onclick="filterPortfolio('Networking')"
+          class="filter-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 text-slate-400 hover:text-white transition"
+          data-filter="Networking"
+        >
+          Networking
+        </button>
+        <button
+          onclick="filterPortfolio('NAS')"
+          class="filter-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 text-slate-400 hover:text-white transition"
+          data-filter="NAS"
+        >
+          NAS Storage
+        </button>
+        <button
+          onclick="filterPortfolio('WiFi')"
+          class="filter-btn px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-white/10 text-slate-400 hover:text-white transition"
+          data-filter="WiFi"
+        >
+          WiFi
+        </button>
+      </div>
     </section>
 
     <!-- Portfolio Grid -->
     <section class="max-w-6xl mx-auto px-4 pb-16">
-        <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Projects will be loaded here -->
-        </div>
-        
-        <div id="empty-state" class="hidden text-center py-16">
-            <div class="text-4xl mb-4">📷</div>
-            <p class="text-slate-400 text-sm">No projects found</p>
-        </div>
+      <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Projects will be loaded here -->
+      </div>
+
+      <div id="empty-state" class="hidden text-center py-16">
+        <div class="text-4xl mb-4">📷</div>
+        <p class="text-slate-400 text-sm">No projects found</p>
+      </div>
     </section>
 
     <!-- Project Modal -->
-    <div id="project-modal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-        <div class="modal-content glass-panel rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-6">
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <span id="modal-badge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-amber-500/20 text-amber-500"></span>
-                        <h2 id="modal-title" class="text-xl font-bold text-white mt-2"></h2>
-                    </div>
-                    <button onclick="closeModal()" class="text-slate-400 hover:text-white text-2xl">&times;</button>
-                </div>
-                
-                <p id="modal-description" class="text-sm text-slate-400 mb-6"></p>
-                
-                <!-- Before/After Slider -->
-                <div id="ba-container" class="mb-6 hidden">
-                    <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">Drag to compare before/after</p>
-                    <div id="ba-slider" class="ba-slider rounded-xl h-64 md:h-80 relative">
-                        <img id="ba-after" class="ba-after" src="" alt="After">
-                        <img id="ba-before" class="ba-before" src="" alt="Before">
-                        <div class="ba-handle"></div>
-                    </div>
-                </div>
-                
-                <!-- Project Details -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div class="bg-black/30 rounded-xl p-3">
-                        <p class="text-[10px] text-slate-500 uppercase">Client</p>
-                        <p id="modal-client" class="text-sm font-semibold text-white"></p>
-                    </div>
-                    <div class="bg-black/30 rounded-xl p-3">
-                        <p class="text-[10px] text-slate-500 uppercase">Location</p>
-                        <p id="modal-location" class="text-sm font-semibold text-white"></p>
-                    </div>
-                    <div class="bg-black/30 rounded-xl p-3">
-                        <p class="text-[10px] text-slate-500 uppercase">Date</p>
-                        <p id="modal-date" class="text-sm font-semibold text-white"></p>
-                    </div>
-                    <div class="bg-black/30 rounded-xl p-3">
-                        <p class="text-[10px] text-slate-500 uppercase">Technician</p>
-                        <p id="modal-tech" class="text-sm font-semibold text-white"></p>
-                    </div>
-                </div>
-                
-                <!-- Gallery -->
-                <div id="modal-gallery" class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                </div>
+    <div
+      id="project-modal"
+      class="modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+    >
+      <div
+        class="modal-content glass-panel rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <span
+                id="modal-badge"
+                class="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-amber-500/20 text-amber-500"
+              ></span>
+              <h2 id="modal-title" class="text-xl font-bold text-white mt-2"></h2>
             </div>
+            <button onclick="closeModal()" class="text-slate-400 hover:text-white text-2xl">
+              &times;
+            </button>
+          </div>
+
+          <p id="modal-description" class="text-sm text-slate-400 mb-6"></p>
+
+          <!-- Before/After Slider -->
+          <div id="ba-container" class="mb-6 hidden">
+            <p class="text-xs text-slate-500 uppercase tracking-wider mb-2">
+              Drag to compare before/after
+            </p>
+            <div id="ba-slider" class="ba-slider rounded-xl h-64 md:h-80 relative">
+              <img id="ba-after" class="ba-after" src="" alt="After" />
+              <img id="ba-before" class="ba-before" src="" alt="Before" />
+              <div class="ba-handle"></div>
+            </div>
+          </div>
+
+          <!-- Project Details -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-black/30 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 uppercase">Client</p>
+              <p id="modal-client" class="text-sm font-semibold text-white"></p>
+            </div>
+            <div class="bg-black/30 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 uppercase">Location</p>
+              <p id="modal-location" class="text-sm font-semibold text-white"></p>
+            </div>
+            <div class="bg-black/30 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 uppercase">Date</p>
+              <p id="modal-date" class="text-sm font-semibold text-white"></p>
+            </div>
+            <div class="bg-black/30 rounded-xl p-3">
+              <p class="text-[10px] text-slate-500 uppercase">Technician</p>
+              <p id="modal-tech" class="text-sm font-semibold text-white"></p>
+            </div>
+          </div>
+
+          <!-- Gallery -->
+          <div id="modal-gallery" class="grid grid-cols-2 md:grid-cols-3 gap-2"></div>
         </div>
+      </div>
     </div>
 
     <!-- Footer -->
     <footer class="border-t border-white/5 bg-black/50 py-8 mt-auto">
-        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 space-y-4">
-            <div class="flex items-center justify-center gap-2">
-                <span class="text-amber-500">⚙️</span>
-                <span class="font-bold text-white tracking-wider uppercase">Awesome Myanmar</span>
-            </div>
-            <p>&copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.</p>
+      <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 space-y-4">
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-amber-500">⚙️</span>
+          <span class="font-bold text-white tracking-wider uppercase">Awesome Myanmar</span>
         </div>
+        <p>
+          &copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.
+        </p>
+      </div>
     </footer>
 
     <script>
-        // Mobile Menu
-        const hamburgerBtn = document.getElementById('hamburger-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        hamburgerBtn.addEventListener('click', () => {
-            hamburgerBtn.classList.toggle('active');
-            mobileMenu.classList.toggle('hidden');
-            mobileMenu.classList.toggle('open');
+      // Mobile Menu
+      const hamburgerBtn = document.getElementById('hamburger-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      hamburgerBtn.addEventListener('click', () => {
+        hamburgerBtn.classList.toggle('active');
+        mobileMenu.classList.toggle('hidden');
+        mobileMenu.classList.toggle('open');
+      });
+
+      const API_BASE_URL = window.location.origin;
+      let allProjects = [];
+      let currentFilter = 'all';
+
+      // Sample portfolio data (in production, this would come from the API)
+      const sampleProjects = [
+        {
+          id: 1,
+          title: 'Hotel Security Overhaul',
+          client: 'Oak Palace Hotel',
+          location: 'Yangon',
+          service_type: 'CCTV',
+          description:
+            'Complete 64-camera IP surveillance system with AI-powered motion detection and 30-day cloud backup. Integrated with existing access control system.',
+          date: '2024-01-15',
+          technician: 'Tech Team Alpha',
+          before_image:
+            'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop',
+          after_image:
+            'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&h=600&fit=crop',
+          gallery: [
+            'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=300&fit=crop',
+          ],
+        },
+        {
+          id: 2,
+          title: 'Office Network Infrastructure',
+          client: 'Myanmar Tech Solutions',
+          location: 'Yangon',
+          service_type: 'Networking',
+          description:
+            'Enterprise-grade fiber optic backbone with redundant switches and 10Gbps uplinks. Implemented zero-trust security architecture.',
+          date: '2024-02-20',
+          technician: 'Tech Team Beta',
+          before_image:
+            'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop',
+          after_image:
+            'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=600&fit=crop',
+          gallery: [
+            'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=300&fit=crop',
+          ],
+        },
+        {
+          id: 3,
+          title: 'Warehouse NAS Deployment',
+          client: 'Golden Storage Co.',
+          location: 'Mandalay',
+          service_type: 'NAS',
+          description:
+            'High-capacity 100TB NAS cluster with automated backups and disaster recovery. Real-time replication to offsite location.',
+          date: '2024-03-10',
+          technician: 'Tech Team Alpha',
+          before_image:
+            'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop',
+          after_image:
+            'https://images.unsplash.com/photo-1597852074816-d933c7d2b988?w=800&h=600&fit=crop',
+          gallery: [
+            'https://images.unsplash.com/photo-1597852074816-d933c7d2b988?w=400&h=300&fit=crop',
+          ],
+        },
+        {
+          id: 4,
+          title: 'Campus WiFi Coverage',
+          client: 'Yangon International School',
+          location: 'Yangon',
+          service_type: 'WiFi',
+          description:
+            'Full campus wireless coverage with enterprise-grade access points. Seamless roaming and parental controls implemented.',
+          date: '2024-04-05',
+          technician: 'Tech Team Gamma',
+          before_image:
+            'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=600&fit=crop',
+          after_image:
+            'https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=800&h=600&fit=crop',
+          gallery: [
+            'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=400&h=300&fit=crop',
+          ],
+        },
+        {
+          id: 5,
+          title: 'Shopping Mall Surveillance',
+          client: 'Junction City Mall',
+          location: 'Yangon',
+          service_type: 'CCTV',
+          description:
+            '200+ camera installation across 5 floors with centralized NVR system. AI analytics for crowd monitoring and security alerts.',
+          date: '2024-05-12',
+          technician: 'Tech Team Alpha',
+          before_image:
+            'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&h=600&fit=crop',
+          after_image:
+            'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop',
+          gallery: [
+            'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop',
+          ],
+        },
+        {
+          id: 6,
+          title: 'Factory Network Upgrade',
+          client: 'Myanmar Manufacturing Ltd',
+          location: 'Industrial Zone',
+          service_type: 'Networking',
+          description:
+            'Complete network overhaul for 50,000 sq ft facility. Industrial-grade switches and fiber backbone for IoT integration.',
+          date: '2024-06-18',
+          technician: 'Tech Team Beta',
+          before_image:
+            'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=800&h=600&fit=crop',
+          after_image:
+            'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop',
+          gallery: [
+            'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=300&fit=crop',
+            'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop',
+          ],
+        },
+      ];
+
+      // Load projects
+      function loadProjects() {
+        allProjects = sampleProjects;
+        updateStats();
+        renderPortfolio();
+      }
+
+      function updateStats() {
+        document.getElementById('total-projects').textContent = allProjects.length;
+        document.getElementById('cctv-projects').textContent = allProjects.filter(
+          (p) => p.service_type === 'CCTV'
+        ).length;
+        document.getElementById('network-projects').textContent = allProjects.filter(
+          (p) => p.service_type === 'Networking'
+        ).length;
+        document.getElementById('other-projects').textContent = allProjects.filter(
+          (p) => !['CCTV', 'Networking'].includes(p.service_type)
+        ).length;
+      }
+
+      function filterPortfolio(type) {
+        currentFilter = type;
+        document.querySelectorAll('.filter-btn').forEach((btn) => {
+          btn.classList.remove('active');
+          if (btn.dataset.filter === type) {
+            btn.classList.add('active');
+          }
         });
+        renderPortfolio();
+      }
 
-        const API_BASE_URL = window.location.origin;
-        let allProjects = [];
-        let currentFilter = 'all';
+      function renderPortfolio() {
+        const grid = document.getElementById('portfolio-grid');
+        const emptyState = document.getElementById('empty-state');
 
-        // Sample portfolio data (in production, this would come from the API)
-        const sampleProjects = [
-            {
-                id: 1,
-                title: "Hotel Security Overhaul",
-                client: "Oak Palace Hotel",
-                location: "Yangon",
-                service_type: "CCTV",
-                description: "Complete 64-camera IP surveillance system with AI-powered motion detection and 30-day cloud backup. Integrated with existing access control system.",
-                date: "2024-01-15",
-                technician: "Tech Team Alpha",
-                before_image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop",
-                after_image: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&h=600&fit=crop",
-                gallery: [
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop",
-                    "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&h=300&fit=crop",
-                    "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=300&fit=crop"
-                ]
-            },
-            {
-                id: 2,
-                title: "Office Network Infrastructure",
-                client: "Myanmar Tech Solutions",
-                location: "Yangon",
-                service_type: "Networking",
-                description: "Enterprise-grade fiber optic backbone with redundant switches and 10Gbps uplinks. Implemented zero-trust security architecture.",
-                date: "2024-02-20",
-                technician: "Tech Team Beta",
-                before_image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop",
-                after_image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=600&fit=crop",
-                gallery: [
-                    "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop",
-                    "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=300&fit=crop"
-                ]
-            },
-            {
-                id: 3,
-                title: "Warehouse NAS Deployment",
-                client: "Golden Storage Co.",
-                location: "Mandalay",
-                service_type: "NAS",
-                description: "High-capacity 100TB NAS cluster with automated backups and disaster recovery. Real-time replication to offsite location.",
-                date: "2024-03-10",
-                technician: "Tech Team Alpha",
-                before_image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop",
-                after_image: "https://images.unsplash.com/photo-1597852074816-d933c7d2b988?w=800&h=600&fit=crop",
-                gallery: [
-                    "https://images.unsplash.com/photo-1597852074816-d933c7d2b988?w=400&h=300&fit=crop"
-                ]
-            },
-            {
-                id: 4,
-                title: "Campus WiFi Coverage",
-                client: "Yangon International School",
-                location: "Yangon",
-                service_type: "WiFi",
-                description: "Full campus wireless coverage with enterprise-grade access points. Seamless roaming and parental controls implemented.",
-                date: "2024-04-05",
-                technician: "Tech Team Gamma",
-                before_image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=600&fit=crop",
-                after_image: "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=800&h=600&fit=crop",
-                gallery: [
-                    "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&h=300&fit=crop",
-                    "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?w=400&h=300&fit=crop"
-                ]
-            },
-            {
-                id: 5,
-                title: "Shopping Mall Surveillance",
-                client: "Junction City Mall",
-                location: "Yangon",
-                service_type: "CCTV",
-                description: "200+ camera installation across 5 floors with centralized NVR system. AI analytics for crowd monitoring and security alerts.",
-                date: "2024-05-12",
-                technician: "Tech Team Alpha",
-                before_image: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&h=600&fit=crop",
-                after_image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop",
-                gallery: [
-                    "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&h=300&fit=crop",
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=300&fit=crop"
-                ]
-            },
-            {
-                id: 6,
-                title: "Factory Network Upgrade",
-                client: "Myanmar Manufacturing Ltd",
-                location: "Industrial Zone",
-                service_type: "Networking",
-                description: "Complete network overhaul for 50,000 sq ft facility. Industrial-grade switches and fiber backbone for IoT integration.",
-                date: "2024-06-18",
-                technician: "Tech Team Beta",
-                before_image: "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=800&h=600&fit=crop",
-                after_image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop",
-                gallery: [
-                    "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=400&h=300&fit=crop",
-                    "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop"
-                ]
-            }
-        ];
+        let filtered =
+          currentFilter === 'all'
+            ? allProjects
+            : allProjects.filter((p) => p.service_type === currentFilter);
 
-        // Load projects
-        function loadProjects() {
-            allProjects = sampleProjects;
-            updateStats();
-            renderPortfolio();
+        if (filtered.length === 0) {
+          grid.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
         }
 
-        function updateStats() {
-            document.getElementById('total-projects').textContent = allProjects.length;
-            document.getElementById('cctv-projects').textContent = allProjects.filter(p => p.service_type === 'CCTV').length;
-            document.getElementById('network-projects').textContent = allProjects.filter(p => p.service_type === 'Networking').length;
-            document.getElementById('other-projects').textContent = allProjects.filter(p => !['CCTV', 'Networking'].includes(p.service_type)).length;
-        }
-
-        function filterPortfolio(type) {
-            currentFilter = type;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.filter === type) {
-                    btn.classList.add('active');
-                }
-            });
-            renderPortfolio();
-        }
-
-        function renderPortfolio() {
-            const grid = document.getElementById('portfolio-grid');
-            const emptyState = document.getElementById('empty-state');
-            
-            let filtered = currentFilter === 'all' 
-                ? allProjects 
-                : allProjects.filter(p => p.service_type === currentFilter);
-
-            if (filtered.length === 0) {
-                grid.innerHTML = '';
-                emptyState.classList.remove('hidden');
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            grid.innerHTML = filtered.map((project, i) => `
+        emptyState.classList.add('hidden');
+        grid.innerHTML = filtered
+          .map(
+            (project, i) => `
                 <div class="portfolio-card glass-panel fade-in" style="animation-delay: ${i * 0.1}s" onclick="openModal(${project.id})">
                     <div class="aspect-[4/3] overflow-hidden">
                         <img src="${project.after_image}" alt="${project.title}" class="portfolio-img w-full h-full object-cover">
@@ -483,94 +597,112 @@
                         <p class="text-xs text-slate-400">${project.client} • ${project.location}</p>
                     </div>
                 </div>
-            `).join('');
+            `
+          )
+          .join('');
+      }
+
+      function getServiceColor(type) {
+        const colors = {
+          CCTV: 'bg-emerald-500/20 text-emerald-400',
+          Networking: 'bg-sky-500/20 text-sky-400',
+          NAS: 'bg-violet-500/20 text-violet-400',
+          WiFi: 'bg-amber-500/20 text-amber-400',
+        };
+        return colors[type] || 'bg-slate-500/20 text-slate-400';
+      }
+
+      function openModal(id) {
+        const project = allProjects.find((p) => p.id === id);
+        if (!project) return;
+
+        const modal = document.getElementById('project-modal');
+        document.getElementById('modal-title').textContent = project.title;
+        document.getElementById('modal-badge').textContent = project.service_type;
+        document.getElementById('modal-description').textContent = project.description;
+        document.getElementById('modal-client').textContent = project.client;
+        document.getElementById('modal-location').textContent = project.location;
+        document.getElementById('modal-date').textContent = new Date(
+          project.date
+        ).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('modal-tech').textContent = project.technician;
+
+        // Before/After
+        const baContainer = document.getElementById('ba-container');
+        if (project.before_image && project.after_image) {
+          baContainer.classList.remove('hidden');
+          document.getElementById('ba-before').src = project.before_image;
+          document.getElementById('ba-after').src = project.after_image;
+          initSlider();
+        } else {
+          baContainer.classList.add('hidden');
         }
 
-        function getServiceColor(type) {
-            const colors = {
-                'CCTV': 'bg-emerald-500/20 text-emerald-400',
-                'Networking': 'bg-sky-500/20 text-sky-400',
-                'NAS': 'bg-violet-500/20 text-violet-400',
-                'WiFi': 'bg-amber-500/20 text-amber-400'
-            };
-            return colors[type] || 'bg-slate-500/20 text-slate-400';
-        }
-
-        function openModal(id) {
-            const project = allProjects.find(p => p.id === id);
-            if (!project) return;
-
-            const modal = document.getElementById('project-modal');
-            document.getElementById('modal-title').textContent = project.title;
-            document.getElementById('modal-badge').textContent = project.service_type;
-            document.getElementById('modal-description').textContent = project.description;
-            document.getElementById('modal-client').textContent = project.client;
-            document.getElementById('modal-location').textContent = project.location;
-            document.getElementById('modal-date').textContent = new Date(project.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('modal-tech').textContent = project.technician;
-
-            // Before/After
-            const baContainer = document.getElementById('ba-container');
-            if (project.before_image && project.after_image) {
-                baContainer.classList.remove('hidden');
-                document.getElementById('ba-before').src = project.before_image;
-                document.getElementById('ba-after').src = project.after_image;
-                initSlider();
-            } else {
-                baContainer.classList.add('hidden');
-            }
-
-            // Gallery
-            const gallery = document.getElementById('modal-gallery');
-            if (project.gallery && project.gallery.length > 0) {
-                gallery.innerHTML = project.gallery.map(img => `
+        // Gallery
+        const gallery = document.getElementById('modal-gallery');
+        if (project.gallery && project.gallery.length > 0) {
+          gallery.innerHTML = project.gallery
+            .map(
+              (img) => `
                     <img src="${img}" alt="Gallery" class="rounded-lg w-full h-32 object-cover hover:opacity-80 transition">
-                `).join('');
-            } else {
-                gallery.innerHTML = '';
-            }
-
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+                `
+            )
+            .join('');
+        } else {
+          gallery.innerHTML = '';
         }
 
-        function closeModal() {
-            document.getElementById('project-modal').classList.remove('active');
-            document.body.style.overflow = '';
-        }
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
 
-        // Close modal on escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
+      function closeModal() {
+        document.getElementById('project-modal').classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      // Close modal on escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+      });
+
+      // Before/After Slider
+      function initSlider() {
+        const slider = document.getElementById('ba-slider');
+        const before = document.getElementById('ba-before');
+        const handle = slider.querySelector('.ba-handle');
+        let isDown = false;
+
+        const updatePosition = (x) => {
+          const rect = slider.getBoundingClientRect();
+          let pos = ((x - rect.left) / rect.width) * 100;
+          pos = Math.max(0, Math.min(100, pos));
+          before.style.clipPath = `inset(0 ${100 - pos}% 0 0)`;
+          handle.style.left = pos + '%';
+        };
+
+        slider.addEventListener('mousedown', (e) => {
+          isDown = true;
+          updatePosition(e.clientX);
         });
+        slider.addEventListener('mousemove', (e) => {
+          if (isDown) updatePosition(e.clientX);
+        });
+        slider.addEventListener('mouseup', () => (isDown = false));
+        slider.addEventListener('mouseleave', () => (isDown = false));
 
-        // Before/After Slider
-        function initSlider() {
-            const slider = document.getElementById('ba-slider');
-            const before = document.getElementById('ba-before');
-            const handle = slider.querySelector('.ba-handle');
-            let isDown = false;
+        slider.addEventListener('touchstart', (e) => {
+          isDown = true;
+          updatePosition(e.touches[0].clientX);
+        });
+        slider.addEventListener('touchmove', (e) => {
+          if (isDown) updatePosition(e.touches[0].clientX);
+        });
+        slider.addEventListener('touchend', () => (isDown = false));
+      }
 
-            const updatePosition = (x) => {
-                const rect = slider.getBoundingClientRect();
-                let pos = ((x - rect.left) / rect.width) * 100;
-                pos = Math.max(0, Math.min(100, pos));
-                before.style.clipPath = `inset(0 ${100 - pos}% 0 0)`;
-                handle.style.left = pos + '%';
-            };
-
-            slider.addEventListener('mousedown', (e) => { isDown = true; updatePosition(e.clientX); });
-            slider.addEventListener('mousemove', (e) => { if (isDown) updatePosition(e.clientX); });
-            slider.addEventListener('mouseup', () => isDown = false);
-            slider.addEventListener('mouseleave', () => isDown = false);
-            
-            slider.addEventListener('touchstart', (e) => { isDown = true; updatePosition(e.touches[0].clientX); });
-            slider.addEventListener('touchmove', (e) => { if (isDown) updatePosition(e.touches[0].clientX); });
-            slider.addEventListener('touchend', () => isDown = false);
-        }
-
-        // Load on start
-        loadProjects();
+      // Load on start
+      loadProjects();
     </script>
-</body>
+  </body>
 </html>

@@ -1,149 +1,272 @@
 <div id="view-warranty" class="space-y-8 tab-view">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-            <h1 class="text-2xl font-black text-white uppercase tracking-tight">Warranty & RMA Claims</h1>
-            <p class="text-xs text-slate-400 mt-1">Track hardware serial number warranties and dispatch defective goods to distributors for RMA processing.</p>
-        </div>
-        <div class="flex gap-3">
-            <button onclick="openRegisterWarrantyModal()" class="bg-transparent border border-white/20 hover:border-white/40 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition">
-                Register Customer Warranty
-            </button>
-            <button onclick="openRaiseRMAModal()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md">
-                Raise Distributor RMA Claim
-            </button>
-        </div>
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-white uppercase tracking-tight">Warranty & RMA Claims</h1>
+      <p class="text-xs text-slate-400 mt-1">
+        Track hardware serial number warranties and dispatch defective goods to distributors for RMA
+        processing.
+      </p>
+    </div>
+    <div class="flex gap-3">
+      <button
+        onclick="openRegisterWarrantyModal()"
+        class="bg-transparent border border-white/20 hover:border-white/40 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition"
+      >
+        Register Customer Warranty
+      </button>
+      <button
+        onclick="openRaiseRMAModal()"
+        class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md"
+      >
+        Raise Distributor RMA Claim
+      </button>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-8">
+    <!-- Left: Customer Product Warranties Table -->
+    <div class="glass-panel p-6 rounded-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-white/5 pb-2">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+          Customer Product Warranties
+        </h2>
+        <button
+          type="button"
+          onclick="exportTableToExcel('warranties-table', 'Customer_Warranties')"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+        >
+          <svg
+            class="w-3 h-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Excel
+        </button>
+      </div>
+      <div class="table-scroll-container overflow-x-auto bg-black/30 p-4">
+        <table id="warranties-table" class="w-full text-xs text-left">
+          <thead>
+            <tr class="text-slate-500 border-b border-white/5 pb-2">
+              <th class="pb-2">SERIAL NO.</th>
+              <th class="pb-2">PRODUCT</th>
+              <th class="pb-2">CUSTOMER</th>
+              <th class="pb-2">EXPIRY</th>
+              <th class="pb-2">STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="warranty-list-body">
+            <tr>
+              <td colspan="5" class="py-4 text-center text-slate-600">Loading warranties...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-8">
-        <!-- Left: Customer Product Warranties Table -->
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-white/5 pb-2">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Customer Product Warranties</h2>
-                <button type="button" onclick="exportTableToExcel('warranties-table','Customer_Warranties')" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Excel
-                </button>
-            </div>
-            <div class="table-scroll-container overflow-x-auto bg-black/30 p-4">
-                <table id="warranties-table" class="w-full text-xs text-left">
-                    <thead>
-                        <tr class="text-slate-500 border-b border-white/5 pb-2">
-                            <th class="pb-2">SERIAL NO.</th>
-                            <th class="pb-2">PRODUCT</th>
-                            <th class="pb-2">CUSTOMER</th>
-                            <th class="pb-2">EXPIRY</th>
-                            <th class="pb-2">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="warranty-list-body">
-                        <tr>
-                            <td colspan="5" class="py-4 text-center text-slate-600">Loading warranties...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Right: Active Distributor RMA Claims Table -->
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-white/5 pb-2">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Active Distributor RMA / Claims</h2>
-                <button type="button" onclick="exportTableToExcel('rma-table','RMA_Claims')" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Excel
-                </button>
-            </div>
-            <div class="table-scroll-container overflow-x-auto bg-black/30 p-4">
-                <table id="rma-table" class="w-full text-xs text-left">
-                    <thead>
-                        <tr class="text-slate-500 border-b border-white/5 pb-2">
-                            <th class="pb-2">RMA ID</th>
-                            <th class="pb-2">SERIAL / PRODUCT</th>
-                            <th class="pb-2">DISTRIBUTOR</th>
-                            <th class="pb-2">SENT DATE</th>
-                            <th class="pb-2">STATUS</th>
-                            <th class="pb-2 text-right">ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rma-list-body">
-                        <tr>
-                            <td colspan="6" class="py-4 text-center text-slate-600">Loading RMA dispatches...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Right: Active Distributor RMA Claims Table -->
+    <div class="glass-panel p-6 rounded-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-white/5 pb-2">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+          Active Distributor RMA / Claims
+        </h2>
+        <button
+          type="button"
+          onclick="exportTableToExcel('rma-table', 'RMA_Claims')"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+        >
+          <svg
+            class="w-3 h-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Excel
+        </button>
+      </div>
+      <div class="table-scroll-container overflow-x-auto bg-black/30 p-4">
+        <table id="rma-table" class="w-full text-xs text-left">
+          <thead>
+            <tr class="text-slate-500 border-b border-white/5 pb-2">
+              <th class="pb-2">RMA ID</th>
+              <th class="pb-2">SERIAL / PRODUCT</th>
+              <th class="pb-2">DISTRIBUTOR</th>
+              <th class="pb-2">SENT DATE</th>
+              <th class="pb-2">STATUS</th>
+              <th class="pb-2 text-right">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="rma-list-body">
+            <tr>
+              <td colspan="6" class="py-4 text-center text-slate-600">Loading RMA dispatches...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- MODAL: REGISTER CUSTOMER WARRANTY -->
-<div id="modal-register-warranty" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
-        <div class="flex justify-between items-center">
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Register Customer Warranty</h3>
-            <button onclick="closeRegisterWarrantyModal()" class="text-slate-400 hover:text-white">✕</button>
-        </div>
-        <form method="POST" onsubmit="submitRegisterWarranty(event)" class="space-y-3">
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Serial Number</label>
-                <input type="text" name="serial_number" required placeholder="e.g. SN-HDD-99381" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-            </div>
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Product / Device Name</label>
-                <input type="text" name="device_name" required placeholder="e.g. Seagate IronWolf 4TB HDD" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-            </div>
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Customer / Client Account</label>
-                <select id="modal-warranty-client" name="client_id" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"></select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Installed Date</label>
-                    <input type="date" name="installed_date" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Warranty Months</label>
-                    <input type="number" name="warranty_months" value="12" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                </div>
-            </div>
-            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition">Register Warranty</button>
-        </form>
+<div
+  id="modal-register-warranty"
+  class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden"
+>
+  <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
+    <div class="flex justify-between items-center">
+      <h3 class="text-sm font-bold text-white uppercase tracking-wider">
+        Register Customer Warranty
+      </h3>
+      <button onclick="closeRegisterWarrantyModal()" class="text-slate-400 hover:text-white">
+        ✕
+      </button>
     </div>
+    <form method="POST" onsubmit="submitRegisterWarranty(event)" class="space-y-3">
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >Serial Number</label
+        >
+        <input
+          type="text"
+          name="serial_number"
+          required
+          placeholder="e.g. SN-HDD-99381"
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+        />
+      </div>
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >Product / Device Name</label
+        >
+        <input
+          type="text"
+          name="device_name"
+          required
+          placeholder="e.g. Seagate IronWolf 4TB HDD"
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+        />
+      </div>
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >Customer / Client Account</label
+        >
+        <select
+          id="modal-warranty-client"
+          name="client_id"
+          required
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+        ></select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+            >Installed Date</label
+          >
+          <input
+            type="date"
+            name="installed_date"
+            required
+            class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+          />
+        </div>
+        <div class="space-y-1">
+          <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+            >Warranty Months</label
+          >
+          <input
+            type="number"
+            name="warranty_months"
+            value="12"
+            required
+            class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+          />
+        </div>
+      </div>
+      <button
+        type="submit"
+        class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition"
+      >
+        Register Warranty
+      </button>
+    </form>
+  </div>
 </div>
 
 <!-- MODAL: RAISE DISTRIBUTOR RMA CLAIM -->
-<div id="modal-raise-rma" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-    <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
-        <div class="flex justify-between items-center">
-            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Raise Distributor RMA Claim</h3>
-            <button onclick="closeRaiseRMAModal()" class="text-slate-400 hover:text-white">✕</button>
-        </div>
-        <form method="POST" onsubmit="submitRaiseRMA(event)" class="space-y-3">
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Select Serial Number</label>
-                <select id="modal-rma-serial" name="serial_number" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"></select>
-            </div>
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Distributor / Supplier</label>
-                <input type="text" name="distributor" required placeholder="e.g. KST Hardware Solutions" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-            </div>
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">RMA ID / Tracking Reference</label>
-                <input type="text" name="rma_id" required placeholder="e.g. RMA-3001" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-            </div>
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sent Date</label>
-                <input type="date" name="sent_date" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-            </div>
-            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-black uppercase tracking-wider transition">Raise Claim</button>
-        </form>
+<div
+  id="modal-raise-rma"
+  class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden"
+>
+  <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
+    <div class="flex justify-between items-center">
+      <h3 class="text-sm font-bold text-white uppercase tracking-wider">
+        Raise Distributor RMA Claim
+      </h3>
+      <button onclick="closeRaiseRMAModal()" class="text-slate-400 hover:text-white">✕</button>
     </div>
+    <form method="POST" onsubmit="submitRaiseRMA(event)" class="space-y-3">
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >Select Serial Number</label
+        >
+        <select
+          id="modal-rma-serial"
+          name="serial_number"
+          required
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+        ></select>
+      </div>
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >Distributor / Supplier</label
+        >
+        <input
+          type="text"
+          name="distributor"
+          required
+          placeholder="e.g. KST Hardware Solutions"
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+        />
+      </div>
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >RMA ID / Tracking Reference</label
+        >
+        <input
+          type="text"
+          name="rma_id"
+          required
+          placeholder="e.g. RMA-3001"
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+        />
+      </div>
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >Sent Date</label
+        >
+        <input
+          type="date"
+          name="sent_date"
+          required
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+        />
+      </div>
+      <button
+        type="submit"
+        class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-black uppercase tracking-wider transition"
+      >
+        Raise Claim
+      </button>
+    </form>
+  </div>
 </div>

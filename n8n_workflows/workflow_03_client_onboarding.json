@@ -28,9 +28,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -104,7 +102,10 @@
         "bodyParameters": {
           "parameters": [
             { "name": "type", "value": "client_onboarding" },
-            { "name": "description", "value": "Onboarding started for client {{ $json.client.name }} (ID: {{ $json.client.id }})" },
+            {
+              "name": "description",
+              "value": "Onboarding started for client {{ $json.client.name }} (ID: {{ $json.client.id }})"
+            },
             { "name": "reference_type", "value": "client" },
             { "name": "reference_id", "value": "={{ $json.client.id }}" }
           ]
@@ -142,9 +143,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -165,28 +164,34 @@
   ],
   "connections": {
     "Webhook - Client Created": {
-      "main": [[ { "node": "GET /api/clients/{id}", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "GET /api/clients/{id}", "type": "main", "index": 0 }]]
     },
     "GET /api/clients/{id}": {
-      "main": [[ { "node": "Prepare Onboarding Data", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Prepare Onboarding Data", "type": "main", "index": 0 }]]
     },
     "Prepare Onboarding Data": {
-      "main": [[ { "node": "POST /api/tickets (welcome)", "type": "main", "index": 0 }, { "node": "Telegram - Welcome Client", "type": "main", "index": 1 }, { "node": "POST /api/activity (onboarding)", "type": "main", "index": 2 } ]]
+      "main": [
+        [
+          { "node": "POST /api/tickets (welcome)", "type": "main", "index": 0 },
+          { "node": "Telegram - Welcome Client", "type": "main", "index": 1 },
+          { "node": "POST /api/activity (onboarding)", "type": "main", "index": 2 }
+        ]
+      ]
     },
     "POST /api/tickets (welcome)": {
-      "main": [[ { "node": "Wait 24 Hours", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Wait 24 Hours", "type": "main", "index": 0 }]]
     },
     "Telegram - Welcome Client": {
-      "main": [[ { "node": "Wait 24 Hours", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Wait 24 Hours", "type": "main", "index": 0 }]]
     },
     "POST /api/activity (onboarding)": {
-      "main": [[ { "node": "Wait 24 Hours", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Wait 24 Hours", "type": "main", "index": 0 }]]
     },
     "Wait 24 Hours": {
-      "main": [[ { "node": "GET /api/clients/{id} (follow-up)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "GET /api/clients/{id} (follow-up)", "type": "main", "index": 0 }]]
     },
     "GET /api/clients/{id} (follow-up)": {
-      "main": [[ { "node": "Telegram - Follow-up", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Telegram - Follow-up", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

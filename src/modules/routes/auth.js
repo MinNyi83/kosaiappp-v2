@@ -3,9 +3,10 @@
  * Extracted from src/index.js for modularity
  */
 
-import { getCorsHeaders } from "../utils/cors.js";
-import { success, error } from "../utils/response.js";
-import { signToken, verifyToken } from "../utils/jwt.js";
+import { getCorsHeaders } from '../utils/cors.js';
+import { success, error } from '../utils/response.js';
+import { signToken, verifyToken } from '../utils/jwt.js';
+import { checkRateLimit } from '../utils/rate-limit.js';
 
 /**
  * Register all auth routes on the router.
@@ -16,26 +17,31 @@ function register(router, env) {
   const db = env.DB;
 
   // ── POST /api/auth/login ──────────────────────────────────────────────
-  router.post("/api/auth/login", async (request) => {
+  router.post('/api/auth/login', async (request) => {
     try {
+      const rateLimitRes = await checkRateLimit(request);
+      if (rateLimitRes.blocked) {
+        return error('Too many requests, try again later.', 429);
+      }
+
       const { id, pin } = await request.json();
       if (!id) {
-        return error("Missing account ID", 400);
+        return error('Missing account ID', 400);
       }
 
       const tech = await db
-        .prepare("SELECT * FROM technicians WHERE id = ? AND active = 1")
+        .prepare('SELECT * FROM technicians WHERE id = ? AND active = 1')
         .bind(id)
         .first();
 
       if (!tech) {
-        return error("Technician not found", 404);
+        return error('Technician not found', 404);
       }
 
       // Verify PIN
       const pinValid = await verifyPin(pin, tech.pin);
       if (!pinValid) {
-        return error("Invalid PIN", 401);
+        return error('Invalid PIN', 401);
       }
 
       // Update last login
@@ -64,70 +70,70 @@ function register(router, env) {
         },
       });
     } catch (err) {
-      return error("Login failed: " + err.message, 500);
+      return error('Login failed: ' + err.message, 500);
     }
   });
 
   // ── POST /api/auth/verify ─────────────────────────────────────────────
-  router.post("/api/auth/verify", async (request) => {
+  router.post('/api/auth/verify', async (request) => {
     try {
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return error("Missing or invalid token", 401);
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return error('Missing or invalid token', 401);
       }
 
       const token = authHeader.slice(7);
       const payload = await verifyToken(token);
       if (!payload) {
-        return error("Invalid or expired token", 401);
+        return error('Invalid or expired token', 401);
       }
 
       // Verify technician still exists and is active
       const tech = await db
-        .prepare("SELECT id, name, email, phone, role FROM technicians WHERE id = ? AND active = 1")
+        .prepare('SELECT id, name, email, phone, role FROM technicians WHERE id = ? AND active = 1')
         .bind(payload.id)
         .first();
 
       if (!tech) {
-        return error("Technician not found or inactive", 401);
+        return error('Technician not found or inactive', 401);
       }
 
       return success({ valid: true, technician: tech });
     } catch (err) {
-      return error("Verification failed: " + err.message, 500);
+      return error('Verification failed: ' + err.message, 500);
     }
   });
 
   // ── POST /api/auth/logout ─────────────────────────────────────────────
-  router.post("/api/auth/logout", async () => {
+  router.post('/api/auth/logout', async () => {
     // Stateless JWT — client discards token.
     // For a blocklist, extend this endpoint to record revoked tokens.
-    return success({ message: "Logged out successfully" });
+    return success({ message: 'Logged out successfully' });
   });
 
   // ── GET /api/auth/profile ─────────────────────────────────────────────
-  router.get("/api/auth/profile", async (request) => {
+  router.get('/api/auth/profile', async (request) => {
     try {
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return error("Missing or invalid token", 401);
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return error('Missing or invalid token', 401);
       }
 
       const token = authHeader.slice(7);
       const payload = await verifyToken(token);
       if (!payload) {
-        return error("Invalid or expired token", 401);
+        return error('Invalid or expired token', 401);
       }
 
       const tech = await db
         .prepare(
-          "SELECT id, name, email, phone, role, specialties, active, created_at, last_login FROM technicians WHERE id = ?"
+          'SELECT id, name, email, phone, role, specialties, active, created_at, last_login FROM technicians WHERE id = ?'
         )
         .bind(payload.id)
         .first();
 
       if (!tech) {
-        return error("Technician not found", 404);
+        return error('Technician not found', 404);
       }
 
       return success({
@@ -135,7 +141,7 @@ function register(router, env) {
         specialties: tech.specialties ? JSON.parse(tech.specialties) : [],
       });
     } catch (err) {
-      return error("Failed to fetch profile: " + err.message, 500);
+      return error('Failed to fetch profile: ' + err.message, 500);
     }
   });
 }
@@ -148,22 +154,22 @@ async function verifyPin(plainPin, storedHash) {
   if (!plainPin || !storedHash) return false;
 
   // bcrypt check — use Web Crypto API (bcryptjs not available in Workers)
-  if (storedHash.startsWith("$2b$") || storedHash.startsWith("$2a$")) {
+  if (storedHash.startsWith('$2b$') || storedHash.startsWith('$2a$')) {
     // Compare using timing-safe method
     const encoder = new TextEncoder();
     const data = encoder.encode(plainPin + storedHash.slice(0, 29));
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
     return hashHex.length > 0; // Simplified — in production, use a bcrypt polyfill or migrate hashes
   }
 
   // Legacy SHA-256 fallback
   const encoder = new TextEncoder();
   const data = encoder.encode(plainPin);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   return hashHex === storedHash;
 }
 

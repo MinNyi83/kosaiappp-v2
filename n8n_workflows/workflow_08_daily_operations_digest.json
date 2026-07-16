@@ -29,15 +29,11 @@
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
-          "parameters": [
-            { "name": "date", "value": "today" }
-          ]
+          "parameters": [{ "name": "date", "value": "today" }]
         },
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -54,15 +50,11 @@
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
-          "parameters": [
-            { "name": "status", "value": "active" }
-          ]
+          "parameters": [{ "name": "status", "value": "active" }]
         },
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -79,15 +71,11 @@
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
-          "parameters": [
-            { "name": "status", "value": "pending" }
-          ]
+          "parameters": [{ "name": "status", "value": "pending" }]
         },
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -104,15 +92,11 @@
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
-          "parameters": [
-            { "name": "low_stock", "value": "true" }
-          ]
+          "parameters": [{ "name": "low_stock", "value": "true" }]
         },
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -143,22 +127,29 @@
   ],
   "connections": {
     "Cron - Daily 7 AM": {
-      "main": [[ { "node": "GET /api/jobs?date=today", "type": "main", "index": 0 }, { "node": "GET /api/workers?status=active", "type": "main", "index": 1 }, { "node": "GET /api/invoices?status=pending", "type": "main", "index": 2 }, { "node": "GET /api/inventory?low_stock=true", "type": "main", "index": 3 } ]]
+      "main": [
+        [
+          { "node": "GET /api/jobs?date=today", "type": "main", "index": 0 },
+          { "node": "GET /api/workers?status=active", "type": "main", "index": 1 },
+          { "node": "GET /api/invoices?status=pending", "type": "main", "index": 2 },
+          { "node": "GET /api/inventory?low_stock=true", "type": "main", "index": 3 }
+        ]
+      ]
     },
     "GET /api/jobs?date=today": {
-      "main": [[ { "node": "Build Daily Digest", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Build Daily Digest", "type": "main", "index": 0 }]]
     },
     "GET /api/workers?status=active": {
-      "main": [[ { "node": "Build Daily Digest", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Build Daily Digest", "type": "main", "index": 0 }]]
     },
     "GET /api/invoices?status=pending": {
-      "main": [[ { "node": "Build Daily Digest", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Build Daily Digest", "type": "main", "index": 0 }]]
     },
     "GET /api/inventory?low_stock=true": {
-      "main": [[ { "node": "Build Daily Digest", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Build Daily Digest", "type": "main", "index": 0 }]]
     },
     "Build Daily Digest": {
-      "main": [[ { "node": "Telegram → Operations Group", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Telegram → Operations Group", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

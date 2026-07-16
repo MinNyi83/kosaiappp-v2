@@ -28,9 +28,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -105,7 +103,10 @@
         "bodyParameters": {
           "parameters": [
             { "name": "type", "value": "job_status_notified" },
-            { "name": "description", "value": "Client {{ $json.clientName }} notified of job #{{ $json.jobId }} status change: {{ $json.oldStatus }} → {{ $json.newStatus }}" },
+            {
+              "name": "description",
+              "value": "Client {{ $json.clientName }} notified of job #{{ $json.jobId }} status change: {{ $json.oldStatus }} → {{ $json.newStatus }}"
+            },
             { "name": "reference_type", "value": "job" },
             { "name": "reference_id", "value": "={{ $json.jobId }}" }
           ]
@@ -129,16 +130,21 @@
   ],
   "connections": {
     "Webhook - Job Status Change": {
-      "main": [[ { "node": "GET /api/jobs/{id}", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "GET /api/jobs/{id}", "type": "main", "index": 0 }]]
     },
     "GET /api/jobs/{id}": {
-      "main": [[ { "node": "Build Status Message", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Build Status Message", "type": "main", "index": 0 }]]
     },
     "Build Status Message": {
-      "main": [[ { "node": "Telegram → Client", "type": "main", "index": 0 }, { "node": "Job Completed?", "type": "main", "index": 1 } ]]
+      "main": [
+        [
+          { "node": "Telegram → Client", "type": "main", "index": 0 },
+          { "node": "Job Completed?", "type": "main", "index": 1 }
+        ]
+      ]
     },
     "Telegram → Client": {
-      "main": [[ { "node": "POST /api/activity (status change)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/activity (status change)", "type": "main", "index": 0 }]]
     },
     "Job Completed?": {
       "main": [
@@ -147,10 +153,10 @@
       ]
     },
     "Telegram → Feedback Request": {
-      "main": [[ { "node": "POST /api/activity (status change)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/activity (status change)", "type": "main", "index": 0 }]]
     },
     "Skip Feedback": {
-      "main": [[ { "node": "POST /api/activity (status change)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/activity (status change)", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

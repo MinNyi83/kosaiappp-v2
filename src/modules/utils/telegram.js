@@ -8,14 +8,14 @@ export async function sendTelegramNotification(env, text) {
     const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text, parse_mode: 'Markdown' })
+      body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text, parse_mode: 'Markdown' }),
     });
     const data = await res.json();
     if (!data.ok) {
-      console.error("Telegram sendTelegramNotification failed:", data.description);
+      console.error('Telegram sendTelegramNotification failed:', data.description);
     }
-  } catch(e) {
-    console.error("Failed to send Telegram notification:", e.message);
+  } catch (e) {
+    console.error('Failed to send Telegram notification:', e.message);
   }
 }
 
@@ -24,14 +24,14 @@ export async function sendTelegramMessage(env, chatId, text) {
     const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "Markdown" })
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
     });
     const data = await res.json();
     if (!data.ok) {
-      console.error("Telegram sendTelegramMessage failed:", data.description);
+      console.error('Telegram sendTelegramMessage failed:', data.description);
     }
-  } catch(e) {
-    console.error("Failed to send Telegram message:", e.message);
+  } catch (e) {
+    console.error('Failed to send Telegram message:', e.message);
   }
 }
 
@@ -68,8 +68,8 @@ export async function sendTelegramPhotoNotification(env, photoSource, caption) {
           body: JSON.stringify({
             chat_id: env.TELEGRAM_CHAT_ID,
             text: `${caption || '📸 Photo'}\n[View on Google Drive](${photoSource})`,
-            parse_mode: 'Markdown'
-          })
+            parse_mode: 'Markdown',
+          }),
         });
         return;
       }
@@ -93,7 +93,7 @@ export async function sendTelegramPhotoNotification(env, photoSource, caption) {
 
     const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendPhoto`, {
       method: 'POST',
-      body: formData
+      body: formData,
     });
     const resData = await res.json();
 
@@ -111,16 +111,19 @@ export async function sendTelegramPhotoNotification(env, photoSource, caption) {
         docFormData.append('caption', caption);
         docFormData.append('parse_mode', 'Markdown');
       }
-      const docRes = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendDocument`, {
-        method: 'POST',
-        body: docFormData
-      });
+      const docRes = await fetch(
+        `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendDocument`,
+        {
+          method: 'POST',
+          body: docFormData,
+        }
+      );
       const docResData = await docRes.json();
       if (!docResData.ok) {
         console.error('Telegram sendDocument fallback also failed:', docResData.description);
       }
     }
-  } catch(e) {
+  } catch (e) {
     console.error('Failed to send Telegram photo/document:', e.message);
   }
 }
@@ -129,7 +132,7 @@ export function arrayBufferToBase64(buffer) {
   if (typeof Buffer !== 'undefined') {
     return Buffer.from(buffer).toString('base64');
   }
-  let binary = "";
+  let binary = '';
   const bytes = new Uint8Array(buffer);
   const len = bytes.byteLength;
   for (let i = 0; i < len; i++) {

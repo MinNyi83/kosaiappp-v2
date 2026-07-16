@@ -1,1256 +1,2140 @@
-<div id="view-inventory" class="tab-view flex gap-0 -mx-4 -mt-4" style="min-height: calc(100vh - 120px);">
+<div
+  id="view-inventory"
+  class="tab-view flex gap-0 -mx-4 -mt-4"
+  style="min-height: calc(100vh - 120px)"
+>
+  <!-- ═══ LEFT SIDEBAR ═══ -->
+  <div
+    class="w-52 shrink-0 flex flex-col py-4 px-2.5 gap-0.5 overflow-y-auto"
+    style="
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    "
+  >
+    <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-2 mt-1">
+      Core Ledger
+    </p>
 
-    <!-- ═══ LEFT SIDEBAR ═══ -->
-    <div class="w-52 shrink-0 flex flex-col py-4 px-2.5 gap-0.5 overflow-y-auto"
-        style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%); border-right: 1px solid rgba(255,255,255,0.05);">
+    <button
+      onclick="switchInvModule('batches')"
+      id="inv-mod-batches"
+      class="inv-mod-btn active-inv-mod group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200"
+    >
+      <div
+        class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all duration-200"
+        style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.3)"
+      >
+        <svg
+          class="w-3.5 h-3.5 text-emerald-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+          />
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+          <line x1="12" y1="22.08" x2="12" y2="12" />
+        </svg>
+      </div>
+      <span class="inv-mod-label text-emerald-400">Stock Batches</span>
+    </button>
 
-        <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-2 mt-1">Core Ledger</p>
+    <button
+      onclick="switchInvModule('pricing')"
+      id="inv-mod-pricing"
+      class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
+    >
+      <div
+        class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200"
+      >
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <line x1="12" y1="1" x2="12" y2="23" />
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      </div>
+      <span class="inv-mod-label">Sales Pricing</span>
+    </button>
 
-        <button onclick="switchInvModule('batches')" id="inv-mod-batches"
-            class="inv-mod-btn active-inv-mod group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200">
-            <div class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all duration-200"
-                style="background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3);">
-                <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <path
-                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                    <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
-            </div>
-            <span class="inv-mod-label text-emerald-400">Stock Batches</span>
-        </button>
+    <button
+      onclick="switchInvModule('catalog')"
+      id="inv-mod-catalog"
+      class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
+    >
+      <div
+        class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200"
+      >
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+        </svg>
+      </div>
+      <span class="inv-mod-label">Device Catalog</span>
+    </button>
 
-        <button onclick="switchInvModule('pricing')" id="inv-mod-pricing"
-            class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white">
-            <div
-                class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="1" x2="12" y2="23" />
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-            </div>
-            <span class="inv-mod-label">Sales Pricing</span>
-        </button>
+    <!-- Master Data Divider -->
+    <div class="mx-2 my-3 border-t border-white/5"></div>
+    <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-1.5">
+      Inventory Setup
+    </p>
 
-        <button onclick="switchInvModule('catalog')" id="inv-mod-catalog"
-            class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white">
-            <div
-                class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-            </div>
-            <span class="inv-mod-label">Device Catalog</span>
-        </button>
+    <button
+      onclick="switchInvModule('categories')"
+      id="inv-mod-categories"
+      class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
+    >
+      <div
+        class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200"
+      >
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="2" y="7" width="20" height="14" rx="2" />
+          <path d="M16 3H8L6 7h12l-2-4z" />
+        </svg>
+      </div>
+      <span class="inv-mod-label">Categories</span>
+    </button>
 
-        <!-- Master Data Divider -->
-        <div class="mx-2 my-3 border-t border-white/5"></div>
-        <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-1.5">Inventory Setup</p>
+    <button
+      onclick="switchInvModule('subcategories')"
+      id="inv-mod-subcategories"
+      class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
+    >
+      <div
+        class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200"
+      >
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </div>
+      <span class="inv-mod-label">Sub-Categories</span>
+    </button>
 
-        <button onclick="switchInvModule('categories')" id="inv-mod-categories"
-            class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white">
-            <div
-                class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="7" width="20" height="14" rx="2" />
-                    <path d="M16 3H8L6 7h12l-2-4z" />
-                </svg>
-            </div>
-            <span class="inv-mod-label">Categories</span>
-        </button>
+    <button
+      onclick="switchInvModule('brands')"
+      id="inv-mod-brands"
+      class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
+    >
+      <div
+        class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200"
+      >
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path
+            d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"
+          />
+        </svg>
+      </div>
+      <span class="inv-mod-label">Brands</span>
+    </button>
 
-        <button onclick="switchInvModule('subcategories')" id="inv-mod-subcategories"
-            class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white">
-            <div
-                class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 18l6-6-6-6" />
-                </svg>
-            </div>
-            <span class="inv-mod-label">Sub-Categories</span>
-        </button>
+    <button
+      onclick="switchInvModule('units')"
+      id="inv-mod-units"
+      class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
+    >
+      <div
+        class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200"
+      >
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M3 3h18M3 9h18M3 15h18M3 21h18" />
+        </svg>
+      </div>
+      <span class="inv-mod-label">Stock Units</span>
+    </button>
 
-        <button onclick="switchInvModule('brands')" id="inv-mod-brands"
-            class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white">
-            <div
-                class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <path
-                        d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32" />
-                </svg>
-            </div>
-            <span class="inv-mod-label">Brands</span>
-        </button>
+    <!-- Divider -->
+    <div class="mx-2 my-3 border-t border-white/5"></div>
+    <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-1.5">
+      Quick Actions
+    </p>
 
-        <button onclick="switchInvModule('units')" id="inv-mod-units"
-            class="inv-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white">
-            <div
-                class="inv-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200">
-                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 3h18M3 9h18M3 15h18M3 21h18" />
-                </svg>
-            </div>
-            <span class="inv-mod-label">Stock Units</span>
-        </button>
+    <button
+      onclick="switchInvModule('add-batch')"
+      class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-400 hover:text-emerald-400 transition-all duration-200 w-full text-left"
+    >
+      <div
+        class="w-5 h-5 rounded flex items-center justify-center bg-emerald-500/5 border border-emerald-500/10 group-hover:bg-emerald-500/15 group-hover:border-emerald-500/25 transition-all"
+      >
+        <svg
+          class="w-2.5 h-2.5 text-emerald-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </div>
+      Add Stock Batch
+    </button>
 
-        <!-- Divider -->
-        <div class="mx-2 my-3 border-t border-white/5"></div>
-        <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-1.5">Quick Actions</p>
+    <button
+      onclick="switchInvModule('add-model')"
+      class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-400 hover:text-amber-400 transition-all duration-200 w-full text-left"
+    >
+      <div
+        class="w-5 h-5 rounded flex items-center justify-center bg-amber-500/5 border border-amber-500/10 group-hover:bg-amber-500/15 group-hover:border-amber-500/25 transition-all"
+      >
+        <svg
+          class="w-2.5 h-2.5 text-amber-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </div>
+      Register Model
+    </button>
 
-        <button onclick="switchInvModule('add-batch')"
-            class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-400 hover:text-emerald-400 transition-all duration-200 w-full text-left">
-            <div
-                class="w-5 h-5 rounded flex items-center justify-center bg-emerald-500/5 border border-emerald-500/10 group-hover:bg-emerald-500/15 group-hover:border-emerald-500/25 transition-all">
-                <svg class="w-2.5 h-2.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="3">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-            </div>
-            Add Stock Batch
-        </button>
+    <button
+      onclick="switchInvModule('update-price')"
+      class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-400 hover:text-sky-400 transition-all duration-200 w-full text-left"
+    >
+      <div
+        class="w-5 h-5 rounded flex items-center justify-center bg-sky-500/5 border border-sky-500/10 group-hover:bg-sky-500/15 group-hover:border-sky-500/25 transition-all"
+      >
+        <svg
+          class="w-2.5 h-2.5 text-sky-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+        >
+          <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+        </svg>
+      </div>
+      Update Prices
+    </button>
 
-        <button onclick="switchInvModule('add-model')"
-            class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-400 hover:text-amber-400 transition-all duration-200 w-full text-left">
-            <div
-                class="w-5 h-5 rounded flex items-center justify-center bg-amber-500/5 border border-amber-500/10 group-hover:bg-amber-500/15 group-hover:border-amber-500/25 transition-all">
-                <svg class="w-2.5 h-2.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="3">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-            </div>
-            Register Model
-        </button>
+    <!-- Bottom spacer -->
+    <div class="flex-1"></div>
+    <div class="px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 mx-0.5">
+      <p class="text-[8px] text-emerald-600 font-bold uppercase tracking-wider">System</p>
+      <p class="text-[9px] text-slate-500 mt-0.5">Catalog · Batch · Serial</p>
+    </div>
+  </div>
 
-        <button onclick="switchInvModule('update-price')"
-            class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-400 hover:text-sky-400 transition-all duration-200 w-full text-left">
-            <div
-                class="w-5 h-5 rounded flex items-center justify-center bg-sky-500/5 border border-sky-500/10 group-hover:bg-sky-500/15 group-hover:border-sky-500/25 transition-all">
-                <svg class="w-2.5 h-2.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2.5" stroke-linecap="round">
-                    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                </svg>
-            </div>
-            Update Prices
-        </button>
-
-        <!-- Bottom spacer -->
-        <div class="flex-1"></div>
-        <div class="px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 mx-0.5">
-            <p class="text-[8px] text-emerald-600 font-bold uppercase tracking-wider">System</p>
-            <p class="text-[9px] text-slate-500 mt-0.5">Catalog · Batch · Serial</p>
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+    <!-- ── STOCK BATCHES ── -->
+    <div id="inv-panel-batches" class="flex-1 flex flex-col overflow-hidden">
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
+              border: 1px solid rgba(16, 185, 129, 0.3);
+            "
+          >
+            <svg
+              class="w-4 h-4 text-emerald-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Stock Batches</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              Per-batch buying price · Serial number tracking
+            </p>
+          </div>
         </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Search -->
+          <div class="relative">
+            <svg
+              class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              id="batch-search-input"
+              onkeyup="filterBatchTable()"
+              placeholder="Search batches..."
+              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all w-44"
+            />
+          </div>
+          <!-- Model Filter Dropdown -->
+          <select
+            id="batch-filter-model"
+            onchange="filterBatchByModel(this.value)"
+            class="bg-black/30 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all"
+          >
+            <option value="">All Models</option>
+          </select>
+          <!-- Export -->
+          <button
+            onclick="exportInventoryToExcel('batches')"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+          >
+            <svg
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Excel
+          </button>
+          <!-- Import -->
+          <label
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 rounded-lg transition-all cursor-pointer"
+          >
+            <svg
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Import
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              class="hidden"
+              onchange="importBatchExcel(this)"
+            />
+          </label>
+        </div>
+      </div>
+      <div class="table-scroll-container flex-1">
+        <table class="w-full text-left" id="batch-main-table">
+          <thead
+            class="sticky top-0 z-10"
+            style="background: rgba(10, 12, 16, 0.95); backdrop-filter: blur(12px)"
+          >
+            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05)">
+              <th class="px-4 py-3 w-8"></th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Batch Code
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Device Model
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Category
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Buy Cost
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Supplier
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                Total
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                Available
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                Sold
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Imported
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody id="batches-stock-body">
+            <tr>
+              <td colspan="10" class="px-4 py-10 text-center">
+                <div class="flex flex-col items-center gap-2">
+                  <svg
+                    class="w-8 h-8 text-slate-700"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path
+                      d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+                    />
+                  </svg>
+                  <span class="text-[11px] text-slate-600">No stock batches yet</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- ═══ MAIN CONTENT ═══ -->
-    <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+    <!-- ── SALES PRICING ── -->
+    <div id="inv-panel-pricing" class="flex-1 flex flex-col overflow-hidden hidden">
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.1));
+              border: 1px solid rgba(245, 158, 11, 0.3);
+            "
+          >
+            <svg
+              class="w-4 h-4 text-amber-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Sales Pricing Sheet</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              Model-level prices · Updated daily · Independent from batches
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Search -->
+          <div class="relative">
+            <svg
+              class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              id="pricing-search-input"
+              onkeyup="filterPricingTable()"
+              placeholder="Search products..."
+              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 transition-all w-44"
+            />
+          </div>
+          <!-- Category filter -->
+          <select
+            id="pricing-filter-category"
+            onchange="filterPricingByCategory(this.value)"
+            class="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-amber-500/50 transition-all w-32 max-w-[130px]"
+          >
+            <option value="">All Categories</option>
+          </select>
+          <button
+            onclick="switchInvModule('update-price')"
+            class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 rounded-lg transition-all"
+          >
+            <svg
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+            </svg>
+            Update Price
+          </button>
+          <!-- Export -->
+          <button
+            onclick="exportInventoryToExcel('pricing')"
+            class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+          >
+            <svg
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Excel
+          </button>
+          <!-- Import -->
+          <label
+            class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-violet-400 border border-violet-500/20 hover:bg-violet-500/10 rounded-lg transition-all cursor-pointer"
+          >
+            <svg
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Import
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              class="hidden"
+              onchange="importPricingExcel(this)"
+            />
+          </label>
+        </div>
+      </div>
+      <div class="table-scroll-container flex-1">
+        <table class="w-full text-left" id="pricing-table">
+          <thead
+            class="sticky top-0 z-10"
+            style="
+              background: rgba(10, 12, 16, 0.95);
+              backdrop-filter: blur(12px);
+              border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            "
+          >
+            <tr>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                SKU
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Device Name
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Category
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Brand
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                In Stock
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right"
+              >
+                USD Price
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right"
+              >
+                MMK Price
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody id="sales-pricing-body">
+            <tr>
+              <td colspan="8" class="px-4 py-10 text-center text-[11px] text-slate-600">
+                Loading pricing data...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-        <!-- ── STOCK BATCHES ── -->
-        <div id="inv-panel-batches" class="flex-1 flex flex-col overflow-hidden">
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
-                style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.1)); border: 1px solid rgba(16,185,129,0.3);">
-                        <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path
-                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Stock Batches</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">Per-batch buying price · Serial number tracking</p>
-                    </div>
+    <!-- ── DEVICE CATALOG ── -->
+    <div id="inv-panel-catalog" class="flex-1 flex flex-col overflow-hidden hidden">
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.1));
+              border: 1px solid rgba(99, 102, 241, 0.3);
+            "
+          >
+            <svg
+              class="w-4 h-4 text-indigo-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Device Catalog</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              All registered device models · Parent of all batches
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Search -->
+          <div class="relative">
+            <svg
+              class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              id="catalog-search-input"
+              onkeyup="filterCatalogTable()"
+              placeholder="Search models..."
+              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all w-44"
+            />
+          </div>
+          <!-- Category filter -->
+          <select
+            id="catalog-filter-category"
+            onchange="filterCatalogByCategory(this.value)"
+            class="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-indigo-500/50 transition-all w-32 max-w-[130px]"
+          >
+            <option value="">All Categories</option>
+          </select>
+          <button
+            onclick="switchInvModule('add-model')"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-amber-400 border border-amber-500/20 hover:bg-amber-500/10 rounded-lg transition-all"
+          >
+            <svg
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="3"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Model
+          </button>
+          <!-- Export -->
+          <button
+            onclick="exportInventoryToExcel('catalog')"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+          >
+            <svg
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Excel
+          </button>
+          <!-- Import -->
+          <label
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 rounded-lg transition-all cursor-pointer"
+          >
+            <svg
+              class="w-3 h-3"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Import
+            <input
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              class="hidden"
+              onchange="importCatalogExcel(this)"
+            />
+          </label>
+        </div>
+      </div>
+      <div class="table-scroll-container flex-1">
+        <table class="w-full text-left" id="catalog-table">
+          <thead
+            class="sticky top-0 z-10"
+            style="
+              background: rgba(10, 12, 16, 0.95);
+              backdrop-filter: blur(12px);
+              border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            "
+          >
+            <tr>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                SKU
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Model Name
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Category
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Sub-Cat
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Brand
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                U/M
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                Stock Qty
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody id="catalog-models-body">
+            <tr>
+              <td colspan="8" class="px-4 py-10 text-center text-[11px] text-slate-600">
+                Loading catalog...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CATEGORIES ── -->
+    <div id="inv-panel-categories" class="flex-1 flex flex-col overflow-hidden hidden">
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(236, 72, 153, 0.1));
+              border: 1px solid rgba(236, 72, 153, 0.3);
+            "
+          >
+            <svg
+              class="w-4 h-4 text-pink-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="2" y="7" width="20" height="14" rx="2" />
+              <path d="M16 3H8L6 7h12l-2-4z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Categories</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">Top-level product groupings</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <svg
+              class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              id="cat-search-input"
+              onkeyup="filterMasterTable('categories-body', 'cat-search-input')"
+              placeholder="Search..."
+              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-pink-500/50 transition-all w-36"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 overflow-auto p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start max-w-4xl">
+          <!-- Add Form -->
+          <div
+            class="rounded-xl p-4 space-y-3"
+            style="
+              background: rgba(255, 255, 255, 0.02);
+              border: 1px solid rgba(255, 255, 255, 0.06);
+            "
+          >
+            <p class="text-[9px] font-black text-pink-400 uppercase tracking-[0.15em]">
+              Add New Category
+            </p>
+            <form onsubmit="submitMasterData('categories', event)" class="space-y-3">
+              <input
+                type="text"
+                id="new-category-id"
+                placeholder="Category ID (e.g. CCTV)"
+                required
+                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08)"
+              />
+              <input
+                type="text"
+                id="new-category-name"
+                placeholder="Category Name (e.g. Security Cameras)"
+                required
+                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08)"
+              />
+              <button
+                type="submit"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider text-white transition-all"
+                style="background: linear-gradient(135deg, #be185d, #ec4899)"
+              >
+                <svg
+                  class="w-3 h-3"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Category
+              </button>
+            </form>
+          </div>
+          <!-- List -->
+          <div class="table-scroll-container overflow-hidden" style="max-height: 400px">
+            <table class="w-full text-left">
+              <thead style="background: rgba(0, 0, 0, 0.3)">
+                <tr>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    ID
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Category Name
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="categories-body">
+                <tr>
+                  <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">
+                    Loading...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SUB-CATEGORIES ── -->
+    <div id="inv-panel-subcategories" class="flex-1 flex flex-col overflow-hidden hidden">
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(251, 146, 60, 0.1));
+              border: 1px solid rgba(251, 146, 60, 0.3);
+            "
+          >
+            <svg
+              class="w-4 h-4 text-orange-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Sub-Categories</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">Nested groupings under a parent category</p>
+          </div>
+        </div>
+        <div class="relative">
+          <svg
+            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            id="subcat-search-input"
+            onkeyup="filterMasterTable('subcategories-body', 'subcat-search-input')"
+            placeholder="Search..."
+            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-orange-500/50 transition-all w-36"
+          />
+        </div>
+      </div>
+      <div class="flex-1 overflow-auto p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start max-w-4xl">
+          <div
+            class="rounded-xl p-4 space-y-3"
+            style="
+              background: rgba(255, 255, 255, 0.02);
+              border: 1px solid rgba(255, 255, 255, 0.06);
+            "
+          >
+            <p class="text-[9px] font-black text-orange-400 uppercase tracking-[0.15em]">
+              Add Sub-Category
+            </p>
+            <form onsubmit="submitSubCategory(event)" class="space-y-3">
+              <div class="space-y-1.5">
+                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >Parent Category</label
+                >
+                <select
+                  id="new-subcat-parent"
+                  required
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                  style="
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                >
+                  <option value="">— Select Category —</option>
+                </select>
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >Sub-Category ID</label
+                >
+                <input
+                  type="text"
+                  id="new-subcat-id"
+                  placeholder="Sub-Category ID (e.g. PTZ)"
+                  required
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                  style="
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                />
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >Sub-Category Name</label
+                >
+                <input
+                  type="text"
+                  id="new-subcat-name"
+                  placeholder="e.g. PTZ Cameras"
+                  required
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                  style="
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                />
+              </div>
+              <button
+                type="submit"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider text-white transition-all"
+                style="background: linear-gradient(135deg, #c2410c, #fb923c)"
+              >
+                <svg
+                  class="w-3 h-3"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Sub-Category
+              </button>
+            </form>
+          </div>
+          <div class="table-scroll-container overflow-hidden" style="max-height: 400px">
+            <table class="w-full text-left">
+              <thead style="background: rgba(0, 0, 0, 0.3)">
+                <tr>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    ID
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Sub-Category
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Parent
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="subcategories-body">
+                <tr>
+                  <td colspan="4" class="px-3 py-6 text-center text-[11px] text-slate-600">
+                    Loading...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BRANDS ── -->
+    <div id="inv-panel-brands" class="flex-1 flex flex-col overflow-hidden hidden">
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(135deg, rgba(34, 211, 238, 0.3), rgba(34, 211, 238, 0.1));
+              border: 1px solid rgba(34, 211, 238, 0.3);
+            "
+          >
+            <svg
+              class="w-4 h-4 text-cyan-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path
+                d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Brands</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">Manufacturer / vendor brand registry</p>
+          </div>
+        </div>
+        <div class="relative">
+          <svg
+            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            id="brand-search-input"
+            onkeyup="filterMasterTable('brands-body', 'brand-search-input')"
+            placeholder="Search..."
+            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all w-36"
+          />
+        </div>
+      </div>
+      <div class="flex-1 overflow-auto p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start max-w-4xl">
+          <div
+            class="rounded-xl p-4 space-y-3"
+            style="
+              background: rgba(255, 255, 255, 0.02);
+              border: 1px solid rgba(255, 255, 255, 0.06);
+            "
+          >
+            <p class="text-[9px] font-black text-cyan-400 uppercase tracking-[0.15em]">
+              Add New Brand
+            </p>
+            <form onsubmit="submitMasterData('brands', event)" class="space-y-3">
+              <input
+                type="text"
+                id="new-brand-id"
+                placeholder="Brand ID (e.g. HIK)"
+                required
+                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08)"
+              />
+              <input
+                type="text"
+                id="new-brand-name"
+                placeholder="Brand Name (e.g. Hikvision)"
+                required
+                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08)"
+              />
+              <button
+                type="submit"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider text-white transition-all"
+                style="background: linear-gradient(135deg, #0e7490, #22d3ee)"
+              >
+                <svg
+                  class="w-3 h-3"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Brand
+              </button>
+            </form>
+          </div>
+          <div class="table-scroll-container overflow-hidden" style="max-height: 400px">
+            <table class="w-full text-left">
+              <thead style="background: rgba(0, 0, 0, 0.3)">
+                <tr>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    ID
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Brand Name
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="brands-body">
+                <tr>
+                  <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">
+                    Loading...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STOCK UNITS ── -->
+    <div id="inv-panel-units" class="flex-1 flex flex-col overflow-hidden hidden">
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(
+                135deg,
+                rgba(167, 139, 250, 0.3),
+                rgba(167, 139, 250, 0.1)
+              );
+              border: 1px solid rgba(167, 139, 250, 0.3);
+            "
+          >
+            <svg
+              class="w-4 h-4 text-violet-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 3h18M3 9h18M3 15h18M3 21h18" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Stock Units</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              Unit of measurement definitions (pcs, meters, boxes...)
+            </p>
+          </div>
+        </div>
+        <div class="relative">
+          <svg
+            class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            id="units-search-input"
+            onkeyup="filterMasterTable('units-body', 'units-search-input')"
+            placeholder="Search..."
+            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-all w-36"
+          />
+        </div>
+      </div>
+      <div class="flex-1 overflow-auto p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start max-w-4xl">
+          <div
+            class="rounded-xl p-4 space-y-3"
+            style="
+              background: rgba(255, 255, 255, 0.02);
+              border: 1px solid rgba(255, 255, 255, 0.06);
+            "
+          >
+            <p class="text-[9px] font-black text-violet-400 uppercase tracking-[0.15em]">
+              Add Stock Unit
+            </p>
+            <form onsubmit="submitStockUnit(event)" class="space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1.5">
+                  <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                    >Full Name</label
+                  >
+                  <input
+                    type="text"
+                    id="new-unit-name"
+                    placeholder="e.g. Pieces"
+                    required
+                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                    style="
+                      background: rgba(0, 0, 0, 0.4);
+                      border: 1px solid rgba(255, 255, 255, 0.08);
+                    "
+                  />
                 </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <!-- Search -->
-                    <div class="relative">
-                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <circle cx="11" cy="11" r="8" />
-                            <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-                        </svg>
-                        <input type="text" id="batch-search-input" onkeyup="filterBatchTable()"
-                            placeholder="Search batches..."
-                            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all w-44">
-                    </div>
-                    <!-- Model Filter Dropdown -->
-                    <select id="batch-filter-model" onchange="filterBatchByModel(this.value)"
-                        class="bg-black/30 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all">
-                        <option value="">All Models</option>
-                    </select>
-                    <!-- Export -->
-                    <button onclick="exportInventoryToExcel('batches')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        Excel
-                    </button>
-                    <!-- Import -->
+                <div class="space-y-1.5">
+                  <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                    >Abbreviation</label
+                  >
+                  <input
+                    type="text"
+                    id="new-unit-abbr"
+                    placeholder="pcs"
+                    required
+                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
+                    style="
+                      background: rgba(0, 0, 0, 0.4);
+                      border: 1px solid rgba(255, 255, 255, 0.08);
+                    "
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider text-white transition-all"
+                style="background: linear-gradient(135deg, #5b21b6, #a78bfa)"
+              >
+                <svg
+                  class="w-3 h-3"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Unit
+              </button>
+            </form>
+          </div>
+          <div
+            class="rounded-xl overflow-hidden"
+            style="border: 1px solid rgba(255, 255, 255, 0.06)"
+          >
+            <table class="w-full text-left">
+              <thead style="background: rgba(0, 0, 0, 0.3)">
+                <tr>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Unit Name
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Abbr.
+                  </th>
+                  <th
+                    class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                  >
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="units-body">
+                <tr>
+                  <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">
+                    Loading...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADD BATCH FORM ── -->
+    <div id="inv-panel-add-batch" class="hidden overflow-auto">
+      <div
+        class="px-5 pt-4 pb-3 border-b border-white/5 flex items-center gap-3"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <button
+          onclick="switchInvModule('batches')"
+          class="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all"
+        >
+          <svg
+            class="w-3 h-3 text-slate-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <div class="flex items-center gap-2">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(
+                135deg,
+                rgba(16, 185, 129, 0.2),
+                rgba(16, 185, 129, 0.05)
+              );
+              border: 1px solid rgba(16, 185, 129, 0.2);
+            "
+          >
+            <svg
+              class="w-3.5 h-3.5 text-emerald-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Register New Stock Batch</h2>
+            <p class="text-[9px] text-slate-500 mt-0.5">
+              Import new devices with serial numbers to active stock batches
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="p-5">
+        <form method="POST" id="batch-form" onsubmit="submitNewBatch(event)">
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-5 max-w-5xl items-start">
+            <!-- LEFT: Batch Details (3 cols) -->
+            <div class="col-span-1 md:col-span-3 space-y-4">
+              <!-- Section: Batch Identity -->
+              <div
+                class="rounded-xl p-4 space-y-3"
+                style="
+                  background: rgba(255, 255, 255, 0.02);
+                  border: 1px solid rgba(255, 255, 255, 0.06);
+                "
+              >
+                <div
+                  class="flex items-center gap-2 pb-2"
+                  style="border-bottom: 1px solid rgba(255, 255, 255, 0.04)"
+                >
+                  <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]"
+                    >Batch Identity</span
+                  >
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="space-y-1.5">
                     <label
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 rounded-lg transition-all cursor-pointer">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="17 8 12 3 7 8" />
-                            <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        Import
-                        <input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="importBatchExcel(this)">
-                    </label>
-                </div>
-            </div>
-            <div class="table-scroll-container flex-1">
-                <table class="w-full text-left" id="batch-main-table">
-                    <thead class="sticky top-0 z-10"
-                        style="background: rgba(10,12,16,0.95); backdrop-filter: blur(12px);">
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <th class="px-4 py-3 w-8"></th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">Batch
-                                Code</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                Device Model</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                Category</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">Buy
-                                Cost</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                Supplier</th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">
-                                Total</th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">
-                                Available</th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">
-                                Sold</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                Imported</th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">
-                                Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="batches-stock-body">
-                        <tr>
-                            <td colspan="10" class="px-4 py-10 text-center">
-                                <div class="flex flex-col items-center gap-2">
-                                    <svg class="w-8 h-8 text-slate-700" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="1.5">
-                                        <path
-                                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                    </svg>
-                                    <span class="text-[11px] text-slate-600">No stock batches yet</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- ── SALES PRICING ── -->
-        <div id="inv-panel-pricing" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
-                style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(245,158,11,0.3), rgba(245,158,11,0.1)); border: 1px solid rgba(245,158,11,0.3);">
-                        <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round">
-                            <line x1="12" y1="1" x2="12" y2="23" />
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Sales Pricing Sheet</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">Model-level prices · Updated daily · Independent
-                            from batches</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <!-- Search -->
-                    <div class="relative">
-                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <circle cx="11" cy="11" r="8" />
-                            <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-                        </svg>
-                        <input type="text" id="pricing-search-input" onkeyup="filterPricingTable()"
-                            placeholder="Search products..."
-                            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 transition-all w-44">
-                    </div>
-                    <!-- Category filter -->
-                    <select id="pricing-filter-category" onchange="filterPricingByCategory(this.value)"
-                        class="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-amber-500/50 transition-all w-32 max-w-[130px]">
-                        <option value="">All Categories</option>
-                    </select>
-                    <button onclick="switchInvModule('update-price')"
-                        class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 rounded-lg transition-all">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-                        </svg>
-                        Update Price
-                    </button>
-                    <!-- Export -->
-                    <button onclick="exportInventoryToExcel('pricing')"
-                        class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        Excel
-                    </button>
-                    <!-- Import -->
+                      class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em] flex items-center gap-1"
+                      >Device Model <span class="text-amber-400">✦</span></label
+                    >
+                    <select
+                      name="batch-item-code"
+                      id="batch-item-code"
+                      required
+                      class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                      style="
+                        background: rgba(0, 0, 0, 0.5);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                      "
+                    ></select>
+                  </div>
+                  <div class="space-y-1.5">
                     <label
-                        class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-violet-400 border border-violet-500/20 hover:bg-violet-500/10 rounded-lg transition-all cursor-pointer">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="17 8 12 3 7 8" />
-                            <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        Import
-                        <input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="importPricingExcel(this)">
-                    </label>
+                      class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em] flex items-center gap-1"
+                      >Batch Code <span class="text-amber-400">✦</span></label
+                    >
+                    <input
+                      name="batch-code"
+                      type="text"
+                      id="batch-code"
+                      placeholder="BATCH-083"
+                      required
+                      class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono uppercase focus:outline-none transition-all"
+                      style="
+                        background: rgba(0, 0, 0, 0.5);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                      "
+                    />
+                  </div>
                 </div>
-            </div>
-            <div class="table-scroll-container flex-1">
-                <table class="w-full text-left" id="pricing-table">
-                    <thead class="sticky top-0 z-10"
-                        style="background: rgba(10,12,16,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <tr>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">SKU
-                            </th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                Device Name</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                Category</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">Brand
-                            </th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">
-                                In Stock</th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right">
-                                USD Price</th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right">
-                                MMK Price</th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">
-                                Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sales-pricing-body">
-                        <tr>
-                            <td colspan="8" class="px-4 py-10 text-center text-[11px] text-slate-600">Loading pricing
-                                data...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- ── DEVICE CATALOG ── -->
-        <div id="inv-panel-catalog" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
-                style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(99,102,241,0.1)); border: 1px solid rgba(99,102,241,0.3);">
-                        <svg class="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="16" y1="13" x2="8" y2="13" />
-                            <line x1="16" y1="17" x2="8" y2="17" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Device Catalog</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">All registered device models · Parent of all batches
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <!-- Search -->
-                    <div class="relative">
-                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <circle cx="11" cy="11" r="8" />
-                            <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-                        </svg>
-                        <input type="text" id="catalog-search-input" onkeyup="filterCatalogTable()"
-                            placeholder="Search models..."
-                            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all w-44">
-                    </div>
-                    <!-- Category filter -->
-                    <select id="catalog-filter-category" onchange="filterCatalogByCategory(this.value)"
-                        class="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-indigo-500/50 transition-all w-32 max-w-[130px]">
-                        <option value="">All Categories</option>
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                  <div class="space-y-1.5">
+                    <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                      >Track by Serial Numbers <span class="text-amber-400">✦</span></label
+                    >
+                    <select
+                      name="batch-is-serial"
+                      id="batch-is-serial"
+                      onchange="toggleBatchTrackingMode(this.value)"
+                      class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                      style="
+                        background: rgba(0, 0, 0, 0.5);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                      "
+                    >
+                      <option value="yes">Yes (Scan Barcode/Serials)</option>
+                      <option value="no">No (Manual Stock Count)</option>
                     </select>
-                    <button onclick="switchInvModule('add-model')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-amber-400 border border-amber-500/20 hover:bg-amber-500/10 rounded-lg transition-all">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        Add Model
-                    </button>
-                    <!-- Export -->
-                    <button onclick="exportInventoryToExcel('catalog')"
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        Excel
-                    </button>
-                    <!-- Import -->
+                  </div>
+                  <div id="manual-qty-container" class="space-y-1.5 hidden">
+                    <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                      >Manual Quantity Count <span class="text-amber-400">✦</span></label
+                    >
+                    <input
+                      name="batch-manual-qty"
+                      type="number"
+                      id="batch-manual-qty"
+                      placeholder="e.g. 50"
+                      min="1"
+                      class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
+                      style="
+                        background: rgba(0, 0, 0, 0.5);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                      "
+                    />
+                  </div>
+                </div>
+              </div>
+              <!-- Section: Purchase Info -->
+              <div
+                class="rounded-xl p-4 space-y-3"
+                style="
+                  background: rgba(255, 255, 255, 0.02);
+                  border: 1px solid rgba(255, 255, 255, 0.06);
+                "
+              >
+                <div
+                  class="flex items-center gap-2 pb-2"
+                  style="border-bottom: 1px solid rgba(255, 255, 255, 0.04)"
+                >
+                  <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]"
+                    >Purchase Info</span
+                  >
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="space-y-1.5">
                     <label
-                        class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 rounded-lg transition-all cursor-pointer">
-                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="17 8 12 3 7 8" />
-                            <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        Import
-                        <input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="importCatalogExcel(this)">
-                    </label>
-                </div>
-            </div>
-            <div class="table-scroll-container flex-1">
-                <table class="w-full text-left" id="catalog-table">
-                    <thead class="sticky top-0 z-10"
-                        style="background: rgba(10,12,16,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <tr>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">SKU
-                            </th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">Model
-                                Name</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                Category</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                Sub-Cat</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">Brand
-                            </th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">U/M
-                            </th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">
-                                Stock Qty</th>
-                            <th
-                                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right">
-                                Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="catalog-models-body">
-                        <tr>
-                            <td colspan="8" class="px-4 py-10 text-center text-[11px] text-slate-600">Loading catalog...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- ── CATEGORIES ── -->
-        <div id="inv-panel-categories" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
-                style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(236,72,153,0.3), rgba(236,72,153,0.1)); border: 1px solid rgba(236,72,153,0.3);">
-                        <svg class="w-4 h-4 text-pink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="2" y="7" width="20" height="14" rx="2" />
-                            <path d="M16 3H8L6 7h12l-2-4z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Categories</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">Top-level product groupings</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
+                      class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em] flex items-center gap-1"
+                      >Buying Cost / Unit <span class="text-amber-400">✦</span></label
+                    >
                     <div class="relative">
-                        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <circle cx="11" cy="11" r="8" />
-                            <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-                        </svg>
-                        <input type="text" id="cat-search-input"
-                            onkeyup="filterMasterTable('categories-body','cat-search-input')" placeholder="Search..."
-                            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-pink-500/50 transition-all w-36">
+                      <span
+                        class="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-emerald-500 font-bold pointer-events-none"
+                        >$</span
+                      >
+                      <input
+                        name="batch-buying-price"
+                        type="number"
+                        id="batch-buying-price"
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                        required
+                        class="w-full rounded-lg pl-6 pr-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
+                        style="
+                          background: rgba(0, 0, 0, 0.5);
+                          border: 1px solid rgba(255, 255, 255, 0.08);
+                        "
+                      />
                     </div>
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]"
+                      >Supplier / Vendor</label
+                    >
+                    <input
+                      name="batch-supplier"
+                      type="text"
+                      id="batch-supplier"
+                      placeholder="e.g. Samsung Myanmar Co."
+                      class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                      style="
+                        background: rgba(0, 0, 0, 0.5);
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                      "
+                    />
+                  </div>
                 </div>
+              </div>
             </div>
-            <div class="flex-1 overflow-auto p-5">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start max-w-4xl">
-                    <!-- Add Form -->
-                    <div class="rounded-xl p-4 space-y-3"
-                        style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
-                        <p class="text-[9px] font-black text-pink-400 uppercase tracking-[0.15em]">Add New Category</p>
-                        <form onsubmit="submitMasterData('categories', event)" class="space-y-3">
-                            <input type="text" id="new-category-id" placeholder="Category ID (e.g. CCTV)" required
-                                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                            <input type="text" id="new-category-name" placeholder="Category Name (e.g. Security Cameras)" required
-                                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                            <button type="submit"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider text-white transition-all"
-                                style="background: linear-gradient(135deg, #be185d, #ec4899);">
-                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="3">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                                Add Category
-                            </button>
-                        </form>
-                    </div>
-                    <!-- List -->
-                    <div class="table-scroll-container overflow-hidden" style="max-height: 400px;">
-                        <table class="w-full text-left">
-                            <thead style="background: rgba(0,0,0,0.3);">
-                                <tr>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        ID</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Category Name</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="categories-body">
-                                <tr>
-                                    <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">Loading...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
+            <!-- RIGHT: Serial Numbers (2 cols) -->
+            <div class="col-span-1 md:col-span-2" id="serial-entry-card">
+              <div class="w-full p-1">
+                <div class="flex items-center justify-between mb-4 px-1">
+                  <div class="flex items-center gap-3">
+                    <button
+                      type="submit"
+                      class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold uppercase tracking-wider text-[10px] text-emerald-400 border border-emerald-500/30 hover:border-emerald-400 hover:text-white transition-all duration-200 cursor-pointer"
+                      style="background: rgba(16, 185, 129, 0.06)"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                      >
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                      </svg>
+                      <span>Commit Batch</span>
+                    </button>
+                    <button
+                      type="button"
+                      onclick="switchInvModule('batches')"
+                      class="px-4 py-2.5 rounded-xl text-slate-400 hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all duration-200 border border-white/5 bg-white/[0.02]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
+                <div
+                  class="w-full rounded-2xl p-5 flex flex-col justify-between border border-white/[0.06] bg-gradient-to-b from-white/[0.03] to-white/[0.01] backdrop-blur-xl"
+                  style="height: 320px"
+                >
+                  <div class="flex items-center justify-between pb-3 border-b border-white/[0.05]">
+                    <span
+                      class="text-[10px] font-extrabold text-slate-300 uppercase tracking-[0.2em]"
+                      >Serial Numbers <span class="text-amber-500">✦</span></span
+                    >
+                    <span
+                      id="serial-count-badge"
+                      class="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-slate-500 bg-white/5 border border-white/5 transition-all duration-300"
+                      >0 units</span
+                    >
+                  </div>
+                  <div class="flex-1 flex flex-col my-3.5 relative">
+                    <label class="text-[10px] text-slate-500 font-medium tracking-wide mb-2 block"
+                      >Paste serial numbers below (one per line, comma, or semicolon).</label
+                    >
+                    <textarea
+                      name="batch-serials"
+                      id="batch-serials"
+                      placeholder="SN-DEVICE-001&#10;SN-DEVICE-002&#10;SN-DEVICE-003..."
+                      required
+                      class="w-full flex-1 rounded-xl px-4 py-3 text-xs text-emerald-300 font-mono placeholder-slate-700 bg-black/40 border border-white/5 focus:border-indigo-500/40 focus:bg-black/60 focus:outline-none transition-all resize-none leading-relaxed"
+                      oninput="processSerialInput(this)"
+                    ></textarea>
+                  </div>
+                  <div
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-indigo-500/[0.02] border border-indigo-500/5"
+                  >
+                    <p class="text-[9px] text-slate-500 font-medium leading-normal">
+                      Each barcode scan automatically appends a new line. Barcode gun optimized.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- Manual Batch Button (Only shows when Serial Mode is NO) -->
+            <div id="manual-commit-btn-container" class="col-span-1 md:col-span-2 hidden pt-2 px-1">
+              <button
+                type="submit"
+                class="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold uppercase tracking-wider text-[11px] text-emerald-400 border border-emerald-500/30 hover:border-emerald-400 hover:text-white transition-all duration-200 cursor-pointer"
+                style="background: rgba(16, 185, 129, 0.06)"
+              >
+                <svg
+                  class="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
+                <span>Commit Batch Stock</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── ADD MODEL FORM ── -->
+    <div id="inv-panel-add-model" class="hidden overflow-auto">
+      <div
+        class="px-5 pt-4 pb-3 border-b border-white/5 flex items-center gap-3"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <button
+          onclick="switchInvModule('catalog')"
+          class="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all"
+        >
+          <svg
+            class="w-3 h-3 text-slate-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <div class="flex items-center gap-2">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(
+                135deg,
+                rgba(245, 158, 11, 0.2),
+                rgba(245, 158, 11, 0.05)
+              );
+              border: 1px solid rgba(245, 158, 11, 0.2);
+            "
+          >
+            <svg
+              class="w-3.5 h-3.5 text-amber-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Register Device Model</h2>
+            <p class="text-[9px] text-slate-500 mt-0.5">
+              Add a new model to the catalog — required before creating batches
+            </p>
+          </div>
         </div>
-
-        <!-- ── SUB-CATEGORIES ── -->
-        <div id="inv-panel-subcategories" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
-                style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(251,146,60,0.3), rgba(251,146,60,0.1)); border: 1px solid rgba(251,146,60,0.3);">
-                        <svg class="w-4 h-4 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M9 18l6-6-6-6" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Sub-Categories</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">Nested groupings under a parent category</p>
-                    </div>
-                </div>
-                <div class="relative">
-                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2.5">
-                        <circle cx="11" cy="11" r="8" />
-                        <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-                    </svg>
-                    <input type="text" id="subcat-search-input"
-                        onkeyup="filterMasterTable('subcategories-body','subcat-search-input')" placeholder="Search..."
-                        class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-orange-500/50 transition-all w-36">
-                </div>
+      </div>
+      <div class="p-5">
+        <div
+          class="max-w-xl rounded-xl p-5 space-y-4"
+          style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06)"
+        >
+          <form
+            method="POST"
+            id="catalog-add-form"
+            onsubmit="submitNewCatalogItem(event)"
+            class="space-y-4"
+          >
+            <div class="space-y-1.5">
+              <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                >Stock Description (Name) <span class="text-amber-400">✦</span></label
+              >
+              <input
+                name="catalog-item-name"
+                type="text"
+                id="catalog-item-name"
+                required
+                placeholder="e.g. Hikvision 4MP Dome Camera"
+                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08)"
+              />
             </div>
-            <div class="flex-1 overflow-auto p-5">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start max-w-4xl">
-                    <div class="rounded-xl p-4 space-y-3"
-                        style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
-                        <p class="text-[9px] font-black text-orange-400 uppercase tracking-[0.15em]">Add Sub-Category
-                        </p>
-                        <form onsubmit="submitSubCategory(event)" class="space-y-3">
-                            <div class="space-y-1.5">
-                                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">Parent
-                                    Category</label>
-                                <select id="new-subcat-parent" required
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                                    <option value="">— Select Category —</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label
-                                    class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">Sub-Category
-                                    ID</label>
-                                <input type="text" id="new-subcat-id" placeholder="Sub-Category ID (e.g. PTZ)" required
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label
-                                    class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">Sub-Category
-                                    Name</label>
-                                <input type="text" id="new-subcat-name" placeholder="e.g. PTZ Cameras" required
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                            </div>
-                            <button type="submit"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider text-white transition-all"
-                                style="background: linear-gradient(135deg, #c2410c, #fb923c);">
-                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="3">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                                Add Sub-Category
-                            </button>
-                        </form>
-                    </div>
-                    <div class="table-scroll-container overflow-hidden" style="max-height: 400px;">
-                        <table class="w-full text-left">
-                            <thead style="background: rgba(0,0,0,0.3);">
-                                <tr>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        ID</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Sub-Category</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Parent</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="subcategories-body">
-                                <tr>
-                                    <td colspan="4" class="px-3 py-6 text-center text-[11px] text-slate-600">Loading...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1.5">
+                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                  >Stock ID (SKU) <span class="text-amber-400">✦</span></label
+                >
+                <input
+                  name="catalog-item-code"
+                  type="text"
+                  id="catalog-item-code"
+                  required
+                  placeholder="HIK-4MP-DOME"
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono uppercase focus:outline-none transition-all"
+                  style="
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                />
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                  >Stocking U/M <span class="text-amber-400">✦</span></label
+                >
+                <select
+                  name="catalog-um"
+                  id="catalog-um"
+                  required
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                  style="
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                >
+                  <option value="">— Select Unit —</option>
+                </select>
+              </div>
             </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="space-y-1.5">
+                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                  >Category <span class="text-amber-400">✦</span></label
+                >
+                <select
+                  name="catalog-item-category"
+                  id="catalog-item-category"
+                  required
+                  onchange="loadSubCategoriesForForm(this.value)"
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                  style="
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                >
+                  <option value="">— Select —</option>
+                </select>
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                  >Sub-Category</label
+                >
+                <select
+                  name="catalog-sub-category"
+                  id="catalog-sub-category"
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                  style="
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                >
+                  <option value="">— Select —</option>
+                </select>
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                  >Brand</label
+                >
+                <select
+                  name="catalog-brand"
+                  id="catalog-brand"
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                  style="
+                    background: rgba(0, 0, 0, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                  "
+                >
+                  <option value="">— Select —</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button
+                type="submit"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] tracking-wider uppercase text-white transition-all"
+                style="
+                  background: linear-gradient(135deg, #b45309, #f59e0b);
+                  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+                "
+              >
+                <svg
+                  class="w-3 h-3"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Register Model
+              </button>
+              <button
+                type="button"
+                onclick="switchInvModule('catalog')"
+                class="px-4 py-2 rounded-lg font-bold text-[10px] tracking-wider uppercase text-slate-400 hover:text-white transition-all"
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  border: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
+      </div>
+    </div>
 
-        <!-- ── BRANDS ── -->
-        <div id="inv-panel-brands" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
-                style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(34,211,238,0.3), rgba(34,211,238,0.1)); border: 1px solid rgba(34,211,238,0.3);">
-                        <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <path
-                                d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Brands</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">Manufacturer / vendor brand registry</p>
-                    </div>
-                </div>
-                <div class="relative">
-                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2.5">
-                        <circle cx="11" cy="11" r="8" />
-                        <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-                    </svg>
-                    <input type="text" id="brand-search-input"
-                        onkeyup="filterMasterTable('brands-body','brand-search-input')" placeholder="Search..."
-                        class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all w-36">
-                </div>
-            </div>
-            <div class="flex-1 overflow-auto p-5">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start max-w-4xl">
-                    <div class="rounded-xl p-4 space-y-3"
-                        style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
-                        <p class="text-[9px] font-black text-cyan-400 uppercase tracking-[0.15em]">Add New Brand</p>
-                        <form onsubmit="submitMasterData('brands', event)" class="space-y-3">
-                            <input type="text" id="new-brand-id" placeholder="Brand ID (e.g. HIK)" required
-                                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                            <input type="text" id="new-brand-name" placeholder="Brand Name (e.g. Hikvision)" required
-                                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                            <button type="submit"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider text-white transition-all"
-                                style="background: linear-gradient(135deg, #0e7490, #22d3ee);">
-                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="3">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                                Add Brand
-                            </button>
-                        </form>
-                    </div>
-                    <div class="table-scroll-container overflow-hidden" style="max-height: 400px;">
-                        <table class="w-full text-left">
-                            <thead style="background: rgba(0,0,0,0.3);">
-                                <tr>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        ID</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Brand Name</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="brands-body">
-                                <tr>
-                                    <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">Loading...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+    <!-- ── UPDATE PRICE FORM ── -->
+    <div id="inv-panel-update-price" class="hidden overflow-auto">
+      <div
+        class="px-5 pt-4 pb-3 border-b border-white/5 flex items-center gap-3"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <button
+          onclick="switchInvModule('pricing')"
+          class="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all"
+        >
+          <svg
+            class="w-3 h-3 text-slate-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <div class="flex items-center gap-2">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(
+                135deg,
+                rgba(14, 165, 233, 0.2),
+                rgba(14, 165, 233, 0.05)
+              );
+              border: 1px solid rgba(14, 165, 233, 0.2);
+            "
+          >
+            <svg
+              class="w-3.5 h-3.5 text-sky-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Update Selling Prices</h2>
+            <p class="text-[9px] text-slate-500 mt-0.5">
+              Set today's USD &amp; MMK retail price for any device model
+            </p>
+          </div>
         </div>
-
-        <!-- ── STOCK UNITS ── -->
-        <div id="inv-panel-units" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 flex-wrap gap-2"
-                style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(167,139,250,0.3), rgba(167,139,250,0.1)); border: 1px solid rgba(167,139,250,0.3);">
-                        <svg class="w-4 h-4 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M3 3h18M3 9h18M3 15h18M3 21h18" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Stock Units</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">Unit of measurement definitions (pcs, meters,
-                            boxes...)</p>
-                    </div>
-                </div>
-                <div class="relative">
-                    <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2.5">
-                        <circle cx="11" cy="11" r="8" />
-                        <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-                    </svg>
-                    <input type="text" id="units-search-input"
-                        onkeyup="filterMasterTable('units-body','units-search-input')" placeholder="Search..."
-                        class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-all w-36">
-                </div>
+      </div>
+      <div class="p-5">
+        <div
+          class="max-w-sm rounded-xl p-5 space-y-4"
+          style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06)"
+        >
+          <form
+            method="POST"
+            id="price-update-form"
+            onsubmit="submitPriceUpdate(event)"
+            class="space-y-4"
+          >
+            <div class="space-y-1.5">
+              <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                >Device Model <span class="text-amber-400">✦</span></label
+              >
+              <select
+                name="price-update-item-code"
+                id="price-update-item-code"
+                required
+                onchange="populatePriceFields(this.value)"
+                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
+                style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08)"
+              >
+                <option value="">— Select a device —</option>
+              </select>
             </div>
-            <div class="flex-1 overflow-auto p-5">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-start max-w-4xl">
-                    <div class="rounded-xl p-4 space-y-3"
-                        style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
-                        <p class="text-[9px] font-black text-violet-400 uppercase tracking-[0.15em]">Add Stock Unit</p>
-                        <form onsubmit="submitStockUnit(event)" class="space-y-3">
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="space-y-1.5">
-                                    <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">Full
-                                        Name</label>
-                                    <input type="text" id="new-unit-name" placeholder="e.g. Pieces" required
-                                        class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                        style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                                </div>
-                                <div class="space-y-1.5">
-                                    <label
-                                        class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">Abbreviation</label>
-                                    <input type="text" id="new-unit-abbr" placeholder="pcs" required
-                                        class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
-                                        style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                                </div>
-                            </div>
-                            <button type="submit"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] uppercase tracking-wider text-white transition-all"
-                                style="background: linear-gradient(135deg, #5b21b6, #a78bfa);">
-                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="3">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                                Add Unit
-                            </button>
-                        </form>
-                    </div>
-                    <div class="rounded-xl overflow-hidden" style="border: 1px solid rgba(255,255,255,0.06);">
-                        <table class="w-full text-left">
-                            <thead style="background: rgba(0,0,0,0.3);">
-                                <tr>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Unit Name</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Abbr.</th>
-                                    <th
-                                        class="px-3 py-2 text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">
-                                        Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="units-body">
-                                <tr>
-                                    <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">Loading...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1.5">
+                <label
+                  class="flex items-center gap-1 text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                  ><span
+                    class="w-3 h-3 rounded-sm flex items-center justify-center text-[7px] font-black text-emerald-400 bg-emerald-500/10"
+                    >$</span
+                  >USD Price <span class="text-amber-400">✦</span></label
+                >
+                <input
+                  name="price-update-usd"
+                  type="number"
+                  id="price-update-usd"
+                  placeholder="0.00"
+                  min="0"
+                  step="0.01"
+                  required
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
+                  style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(16, 185, 129, 0.15)"
+                />
+              </div>
+              <div class="space-y-1.5">
+                <label
+                  class="flex items-center gap-1 text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"
+                  ><span
+                    class="w-3 h-3 rounded-sm flex items-center justify-center text-[6px] font-black text-amber-400 bg-amber-500/10"
+                    >Ks</span
+                  >MMK Price <span class="text-amber-400">✦</span></label
+                >
+                <input
+                  name="price-update-mmk"
+                  type="number"
+                  id="price-update-mmk"
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                  required
+                  class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
+                  style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(245, 158, 11, 0.15)"
+                />
+              </div>
             </div>
+            <div class="flex gap-2 pt-1">
+              <button
+                type="submit"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] tracking-wider uppercase text-white transition-all"
+                style="
+                  background: linear-gradient(135deg, #0369a1, #0ea5e9);
+                  box-shadow: 0 0 20px rgba(14, 165, 233, 0.2);
+                "
+              >
+                <svg
+                  class="w-3 h-3"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
+                Save Prices
+              </button>
+              <button
+                type="button"
+                onclick="switchInvModule('pricing')"
+                class="px-4 py-2 rounded-lg font-bold text-[10px] tracking-wider uppercase text-slate-400 hover:text-white transition-all"
+                style="
+                  background: rgba(255, 255, 255, 0.03);
+                  border: 1px solid rgba(255, 255, 255, 0.08);
+                "
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
-
-        <!-- ── ADD BATCH FORM ── -->
-        <div id="inv-panel-add-batch" class="hidden overflow-auto">
-            <div class="px-5 pt-4 pb-3 border-b border-white/5 flex items-center gap-3"
-                style="background: rgba(0,0,0,0.15);">
-                <button onclick="switchInvModule('batches')"
-                    class="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all">
-                    <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
-                        <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                </button>
-                <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05)); border: 1px solid rgba(16,185,129,0.2);">
-                        <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path
-                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Register New Stock Batch</h2>
-                        <p class="text-[9px] text-slate-500 mt-0.5">Import new devices with serial numbers to active
-                            stock batches</p>
-                    </div>
-                </div>
-            </div>
-            <div class="p-5">
-                <form method="POST" id="batch-form" onsubmit="submitNewBatch(event)">
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-5 max-w-5xl items-start">
-                        <!-- LEFT: Batch Details (3 cols) -->
-                        <div class="col-span-1 md:col-span-3 space-y-4">
-                            <!-- Section: Batch Identity -->
-                            <div class="rounded-xl p-4 space-y-3"
-                                style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
-                                <div class="flex items-center gap-2 pb-2"
-                                    style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Batch
-                                        Identity</span>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em] flex items-center gap-1">Device
-                                            Model <span class="text-amber-400">✦</span></label>
-                                        <select name="batch-item-code" id="batch-item-code" required
-                                            class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                            style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);">
-                                        </select>
-                                    </div>
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em] flex items-center gap-1">Batch
-                                            Code <span class="text-amber-400">✦</span></label>
-                                        <input name="batch-code" type="text" id="batch-code" placeholder="BATCH-083"
-                                            required
-                                            class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono uppercase focus:outline-none transition-all"
-                                            style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3 pt-1">
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">Track
-                                            by Serial Numbers <span class="text-amber-400">✦</span></label>
-                                        <select name="batch-is-serial" id="batch-is-serial"
-                                            onchange="toggleBatchTrackingMode(this.value)"
-                                            class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                            style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);">
-                                            <option value="yes">Yes (Scan Barcode/Serials)</option>
-                                            <option value="no">No (Manual Stock Count)</option>
-                                        </select>
-                                    </div>
-                                    <div id="manual-qty-container" class="space-y-1.5 hidden">
-                                        <label
-                                            class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">Manual
-                                            Quantity Count <span class="text-amber-400">✦</span></label>
-                                        <input name="batch-manual-qty" type="number" id="batch-manual-qty"
-                                            placeholder="e.g. 50" min="1"
-                                            class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
-                                            style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);">
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Section: Purchase Info -->
-                            <div class="rounded-xl p-4 space-y-3"
-                                style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
-                                <div class="flex items-center gap-2 pb-2"
-                                    style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                                    <span
-                                        class="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Purchase
-                                        Info</span>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em] flex items-center gap-1">Buying
-                                            Cost / Unit <span class="text-amber-400">✦</span></label>
-                                        <div class="relative">
-                                            <span
-                                                class="absolute left-3 top-1/2 -translate-y-1/2 text-[11px] text-emerald-500 font-bold pointer-events-none">$</span>
-                                            <input name="batch-buying-price" type="number" id="batch-buying-price"
-                                                placeholder="0.00" min="0" step="0.01" required
-                                                class="w-full rounded-lg pl-6 pr-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
-                                                style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);">
-                                        </div>
-                                    </div>
-                                    <div class="space-y-1.5">
-                                        <label
-                                            class="text-[8px] font-black text-slate-500 uppercase tracking-[0.12em]">Supplier
-                                            / Vendor</label>
-                                        <input name="batch-supplier" type="text" id="batch-supplier"
-                                            placeholder="e.g. Samsung Myanmar Co."
-                                            class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                            style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- RIGHT: Serial Numbers (2 cols) -->
-                        <div class="col-span-1 md:col-span-2" id="serial-entry-card">
-                            <div class="w-full p-1">
-                                <div class="flex items-center justify-between mb-4 px-1">
-                                    <div class="flex items-center gap-3">
-                                        <button type="submit"
-                                            class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold uppercase tracking-wider text-[10px] text-emerald-400 border border-emerald-500/30 hover:border-emerald-400 hover:text-white transition-all duration-200 cursor-pointer"
-                                            style="background: rgba(16,185,129,0.06);">
-                                            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
-                                                stroke="currentColor" stroke-width="2.5">
-                                                <path
-                                                    d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                                                <polyline points="17 21 17 13 7 13 7 21" />
-                                                <polyline points="7 3 7 8 15 8" />
-                                            </svg>
-                                            <span>Commit Batch</span>
-                                        </button>
-                                        <button type="button" onclick="switchInvModule('batches')"
-                                            class="px-4 py-2.5 rounded-xl text-slate-400 hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all duration-200 border border-white/5 bg-white/[0.02]">Cancel</button>
-                                    </div>
-                                </div>
-                                <div class="w-full rounded-2xl p-5 flex flex-col justify-between border border-white/[0.06] bg-gradient-to-b from-white/[0.03] to-white/[0.01] backdrop-blur-xl"
-                                    style="height: 320px;">
-                                    <div class="flex items-center justify-between pb-3 border-b border-white/[0.05]">
-                                        <span
-                                            class="text-[10px] font-extrabold text-slate-300 uppercase tracking-[0.2em]">Serial
-                                            Numbers <span class="text-amber-500">✦</span></span>
-                                        <span id="serial-count-badge"
-                                            class="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-slate-500 bg-white/5 border border-white/5 transition-all duration-300">0
-                                            units</span>
-                                    </div>
-                                    <div class="flex-1 flex flex-col my-3.5 relative">
-                                        <label
-                                            class="text-[10px] text-slate-500 font-medium tracking-wide mb-2 block">Paste
-                                            serial numbers below (one per line, comma, or semicolon).</label>
-                                        <textarea name="batch-serials" id="batch-serials"
-                                            placeholder="SN-DEVICE-001&#10;SN-DEVICE-002&#10;SN-DEVICE-003..." required
-                                            class="w-full flex-1 rounded-xl px-4 py-3 text-xs text-emerald-300 font-mono placeholder-slate-700 bg-black/40 border border-white/5 focus:border-indigo-500/40 focus:bg-black/60 focus:outline-none transition-all resize-none leading-relaxed"
-                                            oninput="processSerialInput(this)"></textarea>
-                                    </div>
-                                    <div
-                                        class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-indigo-500/[0.02] border border-indigo-500/5">
-                                        <p class="text-[9px] text-slate-500 font-medium leading-normal">Each barcode
-                                            scan automatically appends a new line. Barcode gun optimized.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Manual Batch Button (Only shows when Serial Mode is NO) -->
-                        <div id="manual-commit-btn-container" class="col-span-1 md:col-span-2 hidden pt-2 px-1">
-                            <button type="submit"
-                                class="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold uppercase tracking-wider text-[11px] text-emerald-400 border border-emerald-500/30 hover:border-emerald-400 hover:text-white transition-all duration-200 cursor-pointer"
-                                style="background: rgba(16,185,129,0.06);">
-                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.5">
-                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                                    <polyline points="17 21 17 13 7 13 7 21" />
-                                    <polyline points="7 3 7 8 15 8" />
-                                </svg>
-                                <span>Commit Batch Stock</span>
-                            </button>
-                        </div>
-
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- ── ADD MODEL FORM ── -->
-        <div id="inv-panel-add-model" class="hidden overflow-auto">
-            <div class="px-5 pt-4 pb-3 border-b border-white/5 flex items-center gap-3"
-                style="background: rgba(0,0,0,0.15);">
-                <button onclick="switchInvModule('catalog')"
-                    class="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all">
-                    <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
-                        <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                </button>
-                <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.2);">
-                        <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Register Device Model</h2>
-                        <p class="text-[9px] text-slate-500 mt-0.5">Add a new model to the catalog — required before
-                            creating batches</p>
-                    </div>
-                </div>
-            </div>
-            <div class="p-5">
-                <div class="max-w-xl rounded-xl p-5 space-y-4"
-                    style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
-                    <form method="POST" id="catalog-add-form" onsubmit="submitNewCatalogItem(event)" class="space-y-4">
-                        <div class="space-y-1.5">
-                            <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]">Stock
-                                Description (Name) <span class="text-amber-400">✦</span></label>
-                            <input name="catalog-item-name" type="text" id="catalog-item-name" required
-                                placeholder="e.g. Hikvision 4MP Dome Camera"
-                                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-1.5">
-                                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]">Stock ID
-                                    (SKU) <span class="text-amber-400">✦</span></label>
-                                <input name="catalog-item-code" type="text" id="catalog-item-code" required
-                                    placeholder="HIK-4MP-DOME"
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono uppercase focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]">Stocking
-                                    U/M <span class="text-amber-400">✦</span></label>
-                                <select name="catalog-um" id="catalog-um" required
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                                    <option value="">— Select Unit —</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-3">
-                            <div class="space-y-1.5">
-                                <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]">Category
-                                    <span class="text-amber-400">✦</span></label>
-                                <select name="catalog-item-category" id="catalog-item-category" required
-                                    onchange="loadSubCategoriesForForm(this.value)"
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                                    <option value="">— Select —</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label
-                                    class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]">Sub-Category</label>
-                                <select name="catalog-sub-category" id="catalog-sub-category"
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                                    <option value="">— Select —</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1.5">
-                                <label
-                                    class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]">Brand</label>
-                                <select name="catalog-brand" id="catalog-brand"
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                                    <option value="">— Select —</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="flex gap-2 pt-1">
-                            <button type="submit"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] tracking-wider uppercase text-white transition-all"
-                                style="background: linear-gradient(135deg, #b45309, #f59e0b); box-shadow: 0 0 20px rgba(245,158,11,0.2);">
-                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="3">
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                                Register Model
-                            </button>
-                            <button type="button" onclick="switchInvModule('catalog')"
-                                class="px-4 py-2 rounded-lg font-bold text-[10px] tracking-wider uppercase text-slate-400 hover:text-white transition-all"
-                                style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── UPDATE PRICE FORM ── -->
-        <div id="inv-panel-update-price" class="hidden overflow-auto">
-            <div class="px-5 pt-4 pb-3 border-b border-white/5 flex items-center gap-3"
-                style="background: rgba(0,0,0,0.15);">
-                <button onclick="switchInvModule('pricing')"
-                    class="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all">
-                    <svg class="w-3 h-3 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2.5">
-                        <polyline points="15 18 9 12 15 6" />
-                    </svg>
-                </button>
-                <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                        style="background: linear-gradient(135deg, rgba(14,165,233,0.2), rgba(14,165,233,0.05)); border: 1px solid rgba(14,165,233,0.2);">
-                        <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round">
-                            <line x1="12" y1="1" x2="12" y2="23" />
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Update Selling Prices</h2>
-                        <p class="text-[9px] text-slate-500 mt-0.5">Set today's USD &amp; MMK retail price for any
-                            device model</p>
-                    </div>
-                </div>
-            </div>
-            <div class="p-5">
-                <div class="max-w-sm rounded-xl p-5 space-y-4"
-                    style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);">
-                    <form method="POST" id="price-update-form" onsubmit="submitPriceUpdate(event)" class="space-y-4">
-                        <div class="space-y-1.5">
-                            <label class="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]">Device Model
-                                <span class="text-amber-400">✦</span></label>
-                            <select name="price-update-item-code" id="price-update-item-code" required
-                                onchange="populatePriceFields(this.value)"
-                                class="w-full rounded-lg px-3 py-2 text-[11px] text-white focus:outline-none transition-all"
-                                style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);">
-                                <option value="">— Select a device —</option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-1.5">
-                                <label
-                                    class="flex items-center gap-1 text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"><span
-                                        class="w-3 h-3 rounded-sm flex items-center justify-center text-[7px] font-black text-emerald-400 bg-emerald-500/10">$</span>USD
-                                    Price <span class="text-amber-400">✦</span></label>
-                                <input name="price-update-usd" type="number" id="price-update-usd" placeholder="0.00"
-                                    min="0" step="0.01" required
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(16,185,129,0.15);">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label
-                                    class="flex items-center gap-1 text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]"><span
-                                        class="w-3 h-3 rounded-sm flex items-center justify-center text-[6px] font-black text-amber-400 bg-amber-500/10">Ks</span>MMK
-                                    Price <span class="text-amber-400">✦</span></label>
-                                <input name="price-update-mmk" type="number" id="price-update-mmk" placeholder="0"
-                                    min="0" step="1" required
-                                    class="w-full rounded-lg px-3 py-2 text-[11px] text-white font-mono focus:outline-none transition-all"
-                                    style="background: rgba(0,0,0,0.4); border: 1px solid rgba(245,158,11,0.15);">
-                            </div>
-                        </div>
-                        <div class="flex gap-2 pt-1">
-                            <button type="submit"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-[10px] tracking-wider uppercase text-white transition-all"
-                                style="background: linear-gradient(135deg, #0369a1, #0ea5e9); box-shadow: 0 0 20px rgba(14,165,233,0.2);">
-                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2.5">
-                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                                    <polyline points="17 21 17 13 7 13 7 21" />
-                                    <polyline points="7 3 7 8 15 8" />
-                                </svg>
-                                Save Prices
-                            </button>
-                            <button type="button" onclick="switchInvModule('pricing')"
-                                class="px-4 py-2 rounded-lg font-bold text-[10px] tracking-wider uppercase text-slate-400 hover:text-white transition-all"
-                                style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-    </div><!-- /main -->
+      </div>
+    </div>
+  </div>
+  <!-- /main -->
 </div>
 
 <style>
-    /* Sidebar active state */
-    .active-inv-mod {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.05)) !important;
-        border: 1px solid rgba(16, 185, 129, 0.2) !important;
-    }
+  /* Sidebar active state */
+  .active-inv-mod {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.12),
+      rgba(16, 185, 129, 0.05)
+    ) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  }
 
-    .active-inv-mod .inv-mod-label {
-        color: #34d399 !important;
-    }
+  .active-inv-mod .inv-mod-label {
+    color: #34d399 !important;
+  }
 
-    .inv-mod-btn {
-        border: 1px solid transparent;
-    }
+  .inv-mod-btn {
+    border: 1px solid transparent;
+  }
 
-    /* Table row hover */
-    #batch-main-table tbody .clickable-row:hover td:first-child {
-        border-left: 2px solid rgba(16, 185, 129, 0.5);
-    }
+  /* Table row hover */
+  #batch-main-table tbody .clickable-row:hover td:first-child {
+    border-left: 2px solid rgba(16, 185, 129, 0.5);
+  }
 
-    #sales-pricing-body tr:hover td:first-child,
-    #catalog-models-body tr:hover td:first-child {
-        border-left: 2px solid rgba(245, 158, 11, 0.4);
-    }
+  #sales-pricing-body tr:hover td:first-child,
+  #catalog-models-body tr:hover td:first-child {
+    border-left: 2px solid rgba(245, 158, 11, 0.4);
+  }
 
-    /* Category pill */
-    .cat-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        padding: 1px 6px;
-        border-radius: 4px;
-        font-size: 9px;
-        font-weight: 700;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        color: #64748b;
-    }
+  /* Category pill */
+  .cat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #64748b;
+  }
 
-    /* Master data table rows */
-    #categories-body tr:hover,
-    #subcategories-body tr:hover,
-    #brands-body tr:hover,
-    #units-body tr:hover {
-        background: rgba(255, 255, 255, 0.02);
-    }
+  /* Master data table rows */
+  #categories-body tr:hover,
+  #subcategories-body tr:hover,
+  #brands-body tr:hover,
+  #units-body tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
 </style>

@@ -1,63 +1,121 @@
 <div id="view-dispatch-map" class="space-y-8 tab-view">
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-black text-white uppercase tracking-tight">Live Field Dispatch Map</h1>
-            <p class="text-xs text-slate-400 mt-1">Real-time status tracking, crew mapping, and geographic ticket routing.</p>
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+        Live Field Dispatch Map
+      </h1>
+      <p class="text-xs text-slate-400 mt-1">
+        Real-time status tracking, crew mapping, and geographic ticket routing.
+      </p>
+    </div>
+    <button
+      onclick="mapCenterToHQ()"
+      class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 uppercase tracking-wider"
+    >
+      📍 Center to HQ Office
+    </button>
+  </div>
+
+  <div class="grid lg:grid-cols-4 gap-8">
+    <!-- Sidebar Controls panel -->
+    <div class="lg:col-span-1 space-y-6">
+      <!-- Map Theme Selector -->
+      <div class="glass-panel p-5 rounded-2xl space-y-3">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider">Map Style Theme</h3>
+        <div class="grid grid-cols-2 gap-2 text-[10px] font-bold">
+          <button
+            type="button"
+            id="map-theme-dark"
+            onclick="setMapTheme('dark')"
+            class="bg-amber-500/10 border border-amber-500/30 text-amber-500 py-2 rounded-lg"
+          >
+            🌌 Dark Mode
+          </button>
+          <button
+            type="button"
+            id="map-theme-light"
+            onclick="setMapTheme('light')"
+            class="bg-white/5 border border-white/10 text-slate-400 hover:text-white py-2 rounded-lg"
+          >
+            🗺️ Street Map
+          </button>
         </div>
-        <button onclick="mapCenterToHQ()" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all active:scale-95 uppercase tracking-wider">
-            📍 Center to HQ Office
-        </button>
+      </div>
+
+      <!-- Plotted Marker Filters -->
+      <div class="glass-panel p-5 rounded-2xl space-y-4">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider">
+          Filter Plotted Tickets
+        </h3>
+        <div class="space-y-2">
+          <button
+            type="button"
+            onclick="filterMapMarkers('all')"
+            class="map-filter-btn w-full text-left bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center justify-between"
+          >
+            <span>All Dispatches</span>
+            <span
+              class="bg-white/10 px-2 py-0.5 rounded font-mono text-[9px] text-slate-300"
+              id="map-count-all"
+              >0</span
+            >
+          </button>
+          <button
+            type="button"
+            onclick="filterMapMarkers('Pending')"
+            class="map-filter-btn w-full text-left bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/10 text-amber-500 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center justify-between"
+          >
+            <span class="flex items-center gap-1.5">🟡 Pending Logs</span>
+            <span
+              class="bg-amber-500/10 px-2 py-0.5 rounded font-mono text-[9px]"
+              id="map-count-pending"
+              >0</span
+            >
+          </button>
+          <button
+            type="button"
+            onclick="filterMapMarkers('In Progress')"
+            class="map-filter-btn w-full text-left bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 text-indigo-400 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center justify-between"
+          >
+            <span class="flex items-center gap-1.5">🔵 Active On-Site</span>
+            <span
+              class="bg-indigo-500/10 px-2 py-0.5 rounded font-mono text-[9px]"
+              id="map-count-progress"
+              >0</span
+            >
+          </button>
+          <button
+            type="button"
+            onclick="filterMapMarkers('Completed')"
+            class="map-filter-btn w-full text-left bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 text-emerald-400 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center justify-between"
+          >
+            <span class="flex items-center gap-1.5">🟢 Completed</span>
+            <span
+              class="bg-emerald-500/10 px-2 py-0.5 rounded font-mono text-[9px]"
+              id="map-count-completed"
+              >0</span
+            >
+          </button>
+        </div>
+      </div>
+
+      <!-- Locate active dispatches -->
+      <div class="glass-panel p-5 rounded-2xl space-y-3">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider">Locate Active Crews</h3>
+        <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1" id="map-active-crews-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
     </div>
 
-    <div class="grid lg:grid-cols-4 gap-8">
-        <!-- Sidebar Controls panel -->
-        <div class="lg:col-span-1 space-y-6">
-            <!-- Map Theme Selector -->
-            <div class="glass-panel p-5 rounded-2xl space-y-3">
-                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Map Style Theme</h3>
-                <div class="grid grid-cols-2 gap-2 text-[10px] font-bold">
-                    <button type="button" id="map-theme-dark" onclick="setMapTheme('dark')" class="bg-amber-500/10 border border-amber-500/30 text-amber-500 py-2 rounded-lg">🌌 Dark Mode</button>
-                    <button type="button" id="map-theme-light" onclick="setMapTheme('light')" class="bg-white/5 border border-white/10 text-slate-400 hover:text-white py-2 rounded-lg">🗺️ Street Map</button>
-                </div>
-            </div>
-
-            <!-- Plotted Marker Filters -->
-            <div class="glass-panel p-5 rounded-2xl space-y-4">
-                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Filter Plotted Tickets</h3>
-                <div class="space-y-2">
-                    <button type="button" onclick="filterMapMarkers('all')" class="map-filter-btn w-full text-left bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center justify-between">
-                        <span>All Dispatches</span>
-                        <span class="bg-white/10 px-2 py-0.5 rounded font-mono text-[9px] text-slate-300" id="map-count-all">0</span>
-                    </button>
-                    <button type="button" onclick="filterMapMarkers('Pending')" class="map-filter-btn w-full text-left bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/10 text-amber-500 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">🟡 Pending Logs</span>
-                        <span class="bg-amber-500/10 px-2 py-0.5 rounded font-mono text-[9px]" id="map-count-pending">0</span>
-                    </button>
-                    <button type="button" onclick="filterMapMarkers('In Progress')" class="map-filter-btn w-full text-left bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 text-indigo-400 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">🔵 Active On-Site</span>
-                        <span class="bg-indigo-500/10 px-2 py-0.5 rounded font-mono text-[9px]" id="map-count-progress">0</span>
-                    </button>
-                    <button type="button" onclick="filterMapMarkers('Completed')" class="map-filter-btn w-full text-left bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 text-emerald-400 font-semibold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">🟢 Completed</span>
-                        <span class="bg-emerald-500/10 px-2 py-0.5 rounded font-mono text-[9px]" id="map-count-completed">0</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Locate active dispatches -->
-            <div class="glass-panel p-5 rounded-2xl space-y-3">
-                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Locate Active Crews</h3>
-                <div class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1" id="map-active-crews-list">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Big Map Canvas -->
-        <div class="lg:col-span-3">
-            <div class="glass-panel p-4 rounded-3xl h-[530px] flex flex-col">
-                <div id="map" class="flex-1 rounded-2xl border border-white/5 overflow-hidden shadow-inner relative z-10"></div>
-            </div>
-        </div>
+    <!-- Big Map Canvas -->
+    <div class="lg:col-span-3">
+      <div class="glass-panel p-4 rounded-3xl h-[530px] flex flex-col">
+        <div
+          id="map"
+          class="flex-1 rounded-2xl border border-white/5 overflow-hidden shadow-inner relative z-10"
+        ></div>
+      </div>
     </div>
+  </div>
 </div>

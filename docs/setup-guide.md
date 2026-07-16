@@ -3,6 +3,7 @@ npm create cloudflare@latest cctv-service-system -- --type=worker --lang=js
 cd cctv-service-system
 
 # 2. Provision serverless storage engines
+
 npx wrangler d1 create cctv-fsm-db
 npx wrangler r2 bucket create cctv-fsm-photos
 Use code with caution.File: wrangler.tomlReplace the entire contents of your generated wrangler.toml file with this centralized configuration module. Ensure you insert your unique database ID string.tomlname = "cctv-service-system"
@@ -26,52 +27,52 @@ DROP TABLE IF EXISTS clients;
 DROP TABLE IF EXISTS technicians;
 
 CREATE TABLE technicians (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    role TEXT CHECK(role IN ('Sales', 'Technician', 'Admin')) NOT NULL,
-    phone TEXT,
-    active INTEGER DEFAULT 1
+id TEXT PRIMARY KEY,
+name TEXT NOT NULL,
+role TEXT CHECK(role IN ('Sales', 'Technician', 'Admin')) NOT NULL,
+phone TEXT,
+active INTEGER DEFAULT 1
 );
 
 CREATE TABLE clients (
-    id TEXT PRIMARY KEY,
-    company_name TEXT NOT NULL,
-    contact_person TEXT,
-    address TEXT NOT NULL,
-    phone TEXT
+id TEXT PRIMARY KEY,
+company_name TEXT NOT NULL,
+contact_person TEXT,
+address TEXT NOT NULL,
+phone TEXT
 );
 
 CREATE TABLE service_records (
-    id TEXT PRIMARY KEY,
-    client_id TEXT REFERENCES clients(id),
-    technician_id TEXT REFERENCES technicians(id),
-    service_type TEXT CHECK(service_type IN ('CCTV', 'Networking', 'WiFi', 'NAS', 'General Maintenance')) NOT NULL,
-    status TEXT CHECK(status IN ('Pending', 'In Progress', 'Completed')) DEFAULT 'Pending',
-    job_description TEXT NOT NULL,
-    technician_notes TEXT,
-    equipment_used TEXT,
-    before_photo_key TEXT,
-    after_photo_key TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+id TEXT PRIMARY KEY,
+client_id TEXT REFERENCES clients(id),
+technician_id TEXT REFERENCES technicians(id),
+service_type TEXT CHECK(service_type IN ('CCTV', 'Networking', 'WiFi', 'NAS', 'General Maintenance')) NOT NULL,
+status TEXT CHECK(status IN ('Pending', 'In Progress', 'Completed')) DEFAULT 'Pending',
+job_description TEXT NOT NULL,
+technician_notes TEXT,
+equipment_used TEXT,
+before_photo_key TEXT,
+after_photo_key TEXT,
+created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
-Use code with caution.File: mock_data.sqlSave this file to inject highly specific production testing records into your cluster.sqlINSERT INTO technicians (id, name, role, phone, active) VALUES 
+Use code with caution.File: mock_data.sqlSave this file to inject highly specific production testing records into your cluster.sqlINSERT INTO technicians (id, name, role, phone, active) VALUES
 ('TECH-001', 'Alex Mercer', 'Technician', '+15550199', 1),
 ('SALE-002', 'Sarah Connor', 'Sales', '+15550188', 1);
 
-INSERT INTO clients (id, company_name, contact_person, address, phone) VALUES 
+INSERT INTO clients (id, company_name, contact_person, address, phone) VALUES
 ('CLI-101', 'Apex Tech Solutions', 'John Doe', '100 Main St, Suite 400', '+15559999'),
 ('CLI-102', 'Omega Logistics Hub', 'Jane Smith', '750 Warehouse Blvd, Dock 4', '+15558888');
 
-INSERT INTO service_records (id, client_id, technician_id, service_type, status, job_description, technician_notes, equipment_used) VALUES 
+INSERT INTO service_records (id, client_id, technician_id, service_type, status, job_description, technician_notes, equipment_used) VALUES
 ('JOB-201', 'CLI-101', 'TECH-001', 'NAS', 'In Progress', 'Migrate 4-bay Synology NAS array to RAID 6 and configure remote access.', 'Initial deployment complete. Data rebuilding is running smoothly.', '["4x 8TB Enterprise HDDs", "Cat6 Patch Cord 2m"]'),
 ('JOB-202', 'CLI-102', 'TECH-001', 'CCTV', 'Pending', 'Mount 4x external IP PoE cameras and update firmware on 16-channel NVR.', '', '[]');
 Use code with caution.Shell Commands to Build Schema & Seed DataExecute these commands to apply your local definitions directly to the active remote instances:bashnpx wrangler d1 execute cctv-fsm-db --remote --file=./schema.sql
 npx wrangler d1 execute cctv-fsm-db --remote --file=./mock_data.sql
 Use code with caution.Part 3: Backend Gateway LogicFile: src/index.jsThis serverless runtime engine handles routing, parses multipart photo file uploads, interacts with storage systems, and dispatches data to Telegram pipelines.javascriptexport default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    const method = request.method;
+async fetch(request, env) {
+const url = new URL(request.url);
+const method = request.method;
 
     // Handle cross-origin isolation (CORS preflight checks)
     if (method === "OPTIONS") {
@@ -82,7 +83,7 @@ Use code with caution.Part 3: Backend Gateway LogicFile: src/index.jsThis server
       // Endpoint: Fetch Active Jobs
       if (url.pathname === "/api/jobs" && method === "GET") {
         const { results } = await env.DB.prepare(
-          `SELECT r.*, c.company_name, c.address, t.name as tech_name 
+          `SELECT r.*, c.company_name, c.address, t.name as tech_name
            FROM service_records r
            JOIN clients c ON r.client_id = c.id
            JOIN technicians t ON r.technician_id = t.id
@@ -96,7 +97,7 @@ Use code with caution.Part 3: Backend Gateway LogicFile: src/index.jsThis server
         const photoKey = url.pathname.replace("/api/photos/", "");
         const object = await env.PHOTOS.get(photoKey);
         if (!object) return new Response("Image Not Found", { status: 404 });
-        
+
         const headers = new Headers();
         object.writeHttpMetadata(headers);
         headers.set("etag", object.httpEtag);
@@ -111,7 +112,7 @@ Use code with caution.Part 3: Backend Gateway LogicFile: src/index.jsThis server
         const status = formData.get("status");
         const notes = formData.get("notes") || "";
         const equipment = formData.get("equipment") || "[]";
-        
+
         if (!jobId || !status) {
           return new Response("Missing job_id or status components", { status: 400, headers: getCorsHeaders() });
         }
@@ -138,17 +139,17 @@ Use code with caution.Part 3: Backend Gateway LogicFile: src/index.jsThis server
 
         // Persist records inside D1 Database
         await env.DB.prepare(
-          `UPDATE service_records 
-           SET status = ?, technician_notes = ?, equipment_used = ?, 
-               before_photo_key = COALESCE(?, before_photo_key), 
-               after_photo_key = COALESCE(?, after_photo_key), 
-               updated_at = CURRENT_TIMESTAMP 
+          `UPDATE service_records
+           SET status = ?, technician_notes = ?, equipment_used = ?,
+               before_photo_key = COALESCE(?, before_photo_key),
+               after_photo_key = COALESCE(?, after_photo_key),
+               updated_at = CURRENT_TIMESTAMP
            WHERE id = ?`
         ).bind(status, notes, equipment, beforePhotoKey, afterPhotoKey, jobId).run();
 
         // Query metadata details for formatting Telegram telemetry messages
         const details = await env.DB.prepare(
-          `SELECT r.service_type, c.company_name FROM service_records r 
+          `SELECT r.service_type, c.company_name FROM service_records r
            JOIN clients c ON r.client_id = c.id WHERE r.id = ?`
         ).bind(jobId).first();
 
@@ -165,33 +166,34 @@ Use code with caution.Part 3: Backend Gateway LogicFile: src/index.jsThis server
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: getCorsHeaders() });
     }
-  }
+
+}
 };
 
 function getCorsHeaders() {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Content-Type": "application/json"
-  };
+return {
+"Access-Control-Allow-Origin": "*",
+"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+"Access-Control-Allow-Headers": "Content-Type",
+"Content-Type": "application/json"
+};
 }
 
 function jsonResponse(data) {
-  return new Response(JSON.stringify(data), { headers: getCorsHeaders() });
+return new Response(JSON.stringify(data), { headers: getCorsHeaders() });
 }
 
 async function sendTelegramNotification(env, text) {
-  const url = `https://telegram.org{env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-  await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: env.TELEGRAM_CHAT_ID,
-      text: text,
-      parse_mode: "Markdown"
-    })
-  });
+const url = `https://telegram.org{env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+await fetch(url, {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+chat_id: env.TELEGRAM_CHAT_ID,
+text: text,
+parse_mode: "Markdown"
+})
+});
 }
 Use code with caution.Part 4: Production DeploymentDeploy your backend worker code to the global edge network using this command:bashnpx wrangler deploy
 Use code with caution.Note down the live .workers.dev endpoint subdomain string printed to your terminal dashboard panel.Part 5: Single-File Mobile Operations Web InterfaceFile: app.htmlSave this HTML5 code as a local file or host it anywhere. Make sure to update the API_BASE_URL constant on line 12 with your live Cloudflare Worker URL to start managing field assignments, capturing site photos, and tracking hardware equipment in real time.html<!DOCTYPE html>
@@ -217,9 +219,9 @@ Use code with caution.Note down the live .workers.dev endpoint subdomain string 
                 jobs.forEach(job => {
                     const card = document.createElement('div');
                     card.className = "bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-4";
-                    
-                    let badgeColor = job.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
-                                     job.status === 'In Progress' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
+
+                    let badgeColor = job.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                                     job.status === 'In Progress' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
                                      'bg-blue-500/20 text-blue-400 border-blue-500/30';
 
                     card.innerHTML = `
@@ -323,5 +325,6 @@ Use code with caution.Note down the live .workers.dev endpoint subdomain string 
             Initializing pipeline components...
         </div>
     </main>
+
 </body>
 </html>

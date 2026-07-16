@@ -4,14 +4,14 @@
 
 Open `stock_codes.sqlite` in your Antigravity project. It includes:
 
-| Database object | Purpose |
-| --- | --- |
-| `stock` | Current stock-code catalog from **Stock New** |
-| `stock_legacy` | Original catalog from **Stock** |
-| `stock_code_map` | Old-to-new stock-code mapping |
-| `categories`, `subcategories`, `brands` | Lookup lists |
-| `stock_catalog` | Query-ready catalog view with category and brand descriptions |
-| `import_metadata` | Source and import details |
+| Database object                         | Purpose                                                       |
+| --------------------------------------- | ------------------------------------------------------------- |
+| `stock`                                 | Current stock-code catalog from **Stock New**                 |
+| `stock_legacy`                          | Original catalog from **Stock**                               |
+| `stock_code_map`                        | Old-to-new stock-code mapping                                 |
+| `categories`, `subcategories`, `brands` | Lookup lists                                                  |
+| `stock_catalog`                         | Query-ready catalog view with category and brand descriptions |
+| `import_metadata`                       | Source and import details                                     |
 
 All code fields are stored as text, preserving leading zeros such as `01`, `001`, and `000123`.
 

@@ -1,212 +1,217 @@
-﻿        function escapeHTML(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
+﻿function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-        const API_BASE_URL = window.location.hostname.includes("androidplatform.net")
-            ? "https://awesomemyanmar.pages.dev"
-            : window.location.origin;
-        let activeSessionUser = null;
-        let activeCanvases = {};
+const API_BASE_URL = window.location.hostname.includes('androidplatform.net')
+  ? 'https://awesomemyanmar.pages.dev'
+  : window.location.origin;
+let activeSessionUser = null;
+let activeCanvases = {};
 
-        // Listen for online status updates
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
+// Listen for online status updates
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
 
-        function updateOnlineStatus() {
-            const badge = document.getElementById('offline-badge');
-            if (navigator.onLine) {
-                badge.classList.add('hidden');
-                syncOfflineQueue();
-            } else {
-                badge.classList.remove('hidden');
-            }
-        }
+function updateOnlineStatus() {
+  const badge = document.getElementById('offline-badge');
+  if (navigator.onLine) {
+    badge.classList.add('hidden');
+    syncOfflineQueue();
+  } else {
+    badge.classList.remove('hidden');
+  }
+}
 
-        async function handleLogin(e) {
-            e.preventDefault();
-            const id = document.getElementById('auth-uid').value.trim().toUpperCase();
-            const pin = document.getElementById('auth-pin').value.trim();
-            const btn = document.getElementById('auth-btn');
+async function handleLogin(e) {
+  e.preventDefault();
+  const id = document.getElementById('auth-uid').value.trim().toUpperCase();
+  const pin = document.getElementById('auth-pin').value.trim();
+  const btn = document.getElementById('auth-btn');
 
-            btn.disabled = true;
-            btn.textContent = "Checking Credentials...";
+  btn.disabled = true;
+  btn.textContent = 'Checking Credentials...';
 
-            try {
-                // If offline, check if user details match pre-seeded values or cached logins
-                if (!navigator.onLine) {
-                    alert("Running offline. Login bypassed using cached operator ID.");
-                    activeSessionUser = { id, name: "Field Operator (" + id + ")", role: "Technician" };
-                    document.getElementById('user-display-name').textContent = activeSessionUser.name;
-                    document.getElementById('user-display-role').textContent = `${activeSessionUser.id} â€¢ ${activeSessionUser.role}`;
-                    document.getElementById('auth-screen').classList.add('hidden');
-                    document.getElementById('app-content').classList.remove('hidden');
-                    updateOnlineStatus();
-                    loadCachedJobs();
-                    return;
-                }
+  try {
+    // If offline, check if user details match pre-seeded values or cached logins
+    if (!navigator.onLine) {
+      alert('Running offline. Login bypassed using cached operator ID.');
+      activeSessionUser = { id, name: 'Field Operator (' + id + ')', role: 'Technician' };
+      document.getElementById('user-display-name').textContent = activeSessionUser.name;
+      document.getElementById('user-display-role').textContent =
+        `${activeSessionUser.id} â€¢ ${activeSessionUser.role}`;
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app-content').classList.remove('hidden');
+      updateOnlineStatus();
+      loadCachedJobs();
+      return;
+    }
 
-                const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, pin })
-                });
-                
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || "Authentication failed");
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, pin }),
+    });
 
-                activeSessionUser = data.user;
-                document.getElementById('user-display-name').textContent = activeSessionUser.name;
-                document.getElementById('user-display-role').textContent = `${activeSessionUser.id} â€¢ ${activeSessionUser.role}`;
-                
-                document.getElementById('auth-screen').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                updateOnlineStatus();
-                fetchJobs();
-                // Render technician ID card in Settings tab
-                setTimeout(renderMyIdCard, 400);
-            } catch (err) {
-                alert("Access Denied: " + err.message);
-                document.getElementById('auth-pin').value = '';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "Verify Gate Pass";
-            }
-        }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Authentication failed');
 
-        function handleLogout() {
-            activeSessionUser = null;
-            document.getElementById('auth-uid').value = '';
-            document.getElementById('auth-pin').value = '';
-            document.getElementById('app-content').classList.add('hidden');
-            document.getElementById('auth-screen').classList.remove('hidden');
-        }
+    activeSessionUser = data.user;
+    document.getElementById('user-display-name').textContent = activeSessionUser.name;
+    document.getElementById('user-display-role').textContent =
+      `${activeSessionUser.id} â€¢ ${activeSessionUser.role}`;
 
-        async function fetchJobs() {
-            if (!activeSessionUser) return;
-            try {
-                if (!navigator.onLine) {
-                    loadCachedJobs();
-                    return;
-                }
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('app-content').classList.remove('hidden');
+    updateOnlineStatus();
+    fetchJobs();
+    // Render technician ID card in Settings tab
+    setTimeout(renderMyIdCard, 400);
+  } catch (err) {
+    alert('Access Denied: ' + err.message);
+    document.getElementById('auth-pin').value = '';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify Gate Pass';
+  }
+}
 
-                const res = await fetch(`${API_BASE_URL}/api/jobs`);
-                const jobs = await res.json();
-                localStorage.setItem('cached_jobs', JSON.stringify(jobs));
+function handleLogout() {
+  activeSessionUser = null;
+  document.getElementById('auth-uid').value = '';
+  document.getElementById('auth-pin').value = '';
+  document.getElementById('app-content').classList.add('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+}
 
-                // Fetch catalog stock items for technician dropdown select
-                try {
-                    const invRes = await fetch(`${API_BASE_URL}/api/admin/inventory/list`);
-                    if (invRes.ok) {
-                        const invList = await invRes.json();
-                        localStorage.setItem('cached_catalog', JSON.stringify(invList));
-                    }
-                } catch (invErr) {
-                    console.warn("Failed to fetch inventory catalog:", invErr);
-                }
+async function fetchJobs() {
+  if (!activeSessionUser) return;
+  try {
+    if (!navigator.onLine) {
+      loadCachedJobs();
+      return;
+    }
 
-                renderJobsList(jobs);
-            } catch (err) {
-                alert("Error pulling remote data: " + err.message);
-                loadCachedJobs();
-            }
-        }
+    const res = await fetch(`${API_BASE_URL}/api/jobs`);
+    const jobs = await res.json();
+    localStorage.setItem('cached_jobs', JSON.stringify(jobs));
 
-        function loadCachedJobs() {
-            const cached = localStorage.getItem('cached_jobs');
-            if (cached) {
-                renderJobsList(JSON.parse(cached));
-            } else {
-                document.getElementById('jobs-list').innerHTML = `
+    // Fetch catalog stock items for technician dropdown select
+    try {
+      const invRes = await fetch(`${API_BASE_URL}/api/admin/inventory/list`);
+      if (invRes.ok) {
+        const invList = await invRes.json();
+        localStorage.setItem('cached_catalog', JSON.stringify(invList));
+      }
+    } catch (invErr) {
+      console.warn('Failed to fetch inventory catalog:', invErr);
+    }
+
+    renderJobsList(jobs);
+  } catch (err) {
+    alert('Error pulling remote data: ' + err.message);
+    loadCachedJobs();
+  }
+}
+
+function loadCachedJobs() {
+  const cached = localStorage.getItem('cached_jobs');
+  if (cached) {
+    renderJobsList(JSON.parse(cached));
+  } else {
+    document.getElementById('jobs-list').innerHTML = `
                     <div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm">
                         No cached service tickets found on this device.
                     </div>`;
-            }
-        }
+  }
+}
 
-            let selectedJobId = null;
+let selectedJobId = null;
 
-        window.switchMobileTab = function(tabId) {
-            document.querySelectorAll('.mobile-tab-view').forEach(view => {
-                view.classList.add('hidden');
-            });
-            const activeView = document.getElementById(`view-${tabId}`);
-            if (activeView) activeView.classList.remove('hidden');
+window.switchMobileTab = function (tabId) {
+  document.querySelectorAll('.mobile-tab-view').forEach((view) => {
+    view.classList.add('hidden');
+  });
+  const activeView = document.getElementById(`view-${tabId}`);
+  if (activeView) activeView.classList.remove('hidden');
 
-            const navBtnIds = ['job', 'checklist', 'history', 'setting'];
-            navBtnIds.forEach(id => {
-                const btn = document.getElementById(`nav-btn-${id}`);
-                if (btn) {
-                    if (id === tabId) {
-                        btn.classList.add('active-nav-btn');
-                    } else {
-                        btn.classList.remove('active-nav-btn');
-                    }
-                }
-            });
+  const navBtnIds = ['job', 'checklist', 'history', 'setting'];
+  navBtnIds.forEach((id) => {
+    const btn = document.getElementById(`nav-btn-${id}`);
+    if (btn) {
+      if (id === tabId) {
+        btn.classList.add('active-nav-btn');
+      } else {
+        btn.classList.remove('active-nav-btn');
+      }
+    }
+  });
 
-            // Re-render ID card whenever user opens Settings tab
-            if (tabId === 'setting') {
-                setTimeout(renderMyIdCard, 50);
-            }
-        };
+  // Re-render ID card whenever user opens Settings tab
+  if (tabId === 'setting') {
+    setTimeout(renderMyIdCard, 50);
+  }
+};
 
-        // â”€â”€â”€ ðŸªª MY ID CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        function renderMyIdCard() {
-            if (!activeSessionUser) return;
-            const { id, name, role } = activeSessionUser;
+// â”€â”€â”€ ðŸªª MY ID CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function renderMyIdCard() {
+  if (!activeSessionUser) return;
+  const { id, name, role } = activeSessionUser;
 
-            // Populate text fields
-            const setEl = (elId, val) => { const el = document.getElementById(elId); if (el) el.textContent = val; };
-            setEl('my-card-name', (name || '').toUpperCase());
-            setEl('my-card-role', role || 'Field Technician');
-            setEl('my-card-id', id || 'â€”');
-            setEl('my-card-status-bar', 'âœ“ ACTIVE');
-            setEl('my-card-phone-front', activeSessionUser.phone || 'â€”');
-            setEl('my-card-email-back', activeSessionUser.email || 'â€”');
+  // Populate text fields
+  const setEl = (elId, val) => {
+    const el = document.getElementById(elId);
+    if (el) el.textContent = val;
+  };
+  setEl('my-card-name', (name || '').toUpperCase());
+  setEl('my-card-role', role || 'Field Technician');
+  setEl('my-card-id', id || 'â€”');
+  setEl('my-card-status-bar', 'âœ“ ACTIVE');
+  setEl('my-card-phone-front', activeSessionUser.phone || 'â€”');
+  setEl('my-card-email-back', activeSessionUser.email || 'â€”');
 
-            // Set photo if saved
-            const photoEl = document.getElementById('my-card-photo');
-            if (photoEl) {
-                if (activeSessionUser.photo) {
-                    photoEl.innerHTML = '';
-                    photoEl.style.backgroundImage = `url(${activeSessionUser.photo})`;
-                    photoEl.style.backgroundSize = 'cover';
-                    photoEl.style.backgroundPosition = 'center';
-                } else {
-                    photoEl.innerHTML = 'ðŸ‘·';
-                    photoEl.style.backgroundImage = '';
-                }
-            }
+  // Set photo if saved
+  const photoEl = document.getElementById('my-card-photo');
+  if (photoEl) {
+    if (activeSessionUser.photo) {
+      photoEl.innerHTML = '';
+      photoEl.style.backgroundImage = `url(${activeSessionUser.photo})`;
+      photoEl.style.backgroundSize = 'cover';
+      photoEl.style.backgroundPosition = 'center';
+    } else {
+      photoEl.innerHTML = 'ðŸ‘·';
+      photoEl.style.backgroundImage = '';
+    }
+  }
 
-            // Also update header elements
-            setEl('settings-username', name || 'â€”');
-            setEl('settings-userid', `ID: ${id}`);
+  // Also update header elements
+  setEl('settings-username', name || 'â€”');
+  setEl('settings-userid', `ID: ${id}`);
 
-            // Build verification URL
-            const verifyUrl = `${API_BASE_URL}/api/verify-tech/${id}`;
-            setEl('my-card-qr-url', verifyUrl);
+  // Build verification URL
+  const verifyUrl = `${API_BASE_URL}/api/verify-tech/${id}`;
+  setEl('my-card-qr-url', verifyUrl);
 
-            // Update all three img QR targets using public QR generator API
-            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}`;
-            ['my-card-qr-mini', 'my-card-qr-back', 'my-card-qr-main'].forEach(imgId => {
-                const img = document.getElementById(imgId);
-                if (img) img.src = qrImageUrl;
-            });
-        }
+  // Update all three img QR targets using public QR generator API
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}`;
+  ['my-card-qr-mini', 'my-card-qr-back', 'my-card-qr-main'].forEach((imgId) => {
+    const img = document.getElementById(imgId);
+    if (img) img.src = qrImageUrl;
+  });
+}
 
-        window.printMyIdCard = function() {
-            if (!activeSessionUser) return;
-            const { id, name, role } = activeSessionUser;
-            const verifyUrl = `${API_BASE_URL}/api/verify-tech/${id}`;
+window.printMyIdCard = function () {
+  if (!activeSessionUser) return;
+  const { id, name, role } = activeSessionUser;
+  const verifyUrl = `${API_BASE_URL}/api/verify-tech/${id}`;
 
-            const printWin = window.open('', '_blank', 'width=800,height=560');
-            printWin.document.write(`<!DOCTYPE html>
+  const printWin = window.open('', '_blank', 'width=800,height=560');
+  printWin.document.write(`<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -259,74 +264,88 @@
         };
     <\/script>
 </body></html>`);
-            printWin.document.close();
-        };
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  printWin.document.close();
+};
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-        window.openServiceChecklist = function(jobId) {
-            const cached = localStorage.getItem('cached_jobs');
-            if (!cached) return;
-            const jobs = JSON.parse(cached);
-            const job = jobs.find(j => j.id === jobId);
-            if (!job) return;
+window.openServiceChecklist = function (jobId) {
+  const cached = localStorage.getItem('cached_jobs');
+  if (!cached) return;
+  const jobs = JSON.parse(cached);
+  const job = jobs.find((j) => j.id === jobId);
+  if (!job) return;
 
-            selectedJobId = jobId;
+  selectedJobId = jobId;
 
-            document.getElementById('checklist-placeholder').classList.add('hidden');
-            const formContainer = document.getElementById('checklist-form-container');
+  document.getElementById('checklist-placeholder').classList.add('hidden');
+  const formContainer = document.getElementById('checklist-form-container');
 
-            formContainer.innerHTML = renderChecklistFormHTML(job);
+  formContainer.innerHTML = renderChecklistFormHTML(job);
 
-            // Apply searchable dropdowns to dynamically rendered selects in checklist form
-            if (typeof window.makeSearchable === 'function') {
-                var indigo = { accentColor: '#6366f1', force: true };
-                var indigoSm = { accentColor: '#6366f1' };
-                formContainer.querySelectorAll('select[name="service_type"]').forEach(function(el) { window.makeSearchable(el, indigoSm); });
-                formContainer.querySelectorAll('select[name="status"]').forEach(function(el) { window.makeSearchable(el, indigo); });
-                formContainer.querySelectorAll('select[name="hardware_action"]').forEach(function(el) { window.makeSearchable(el, indigo); });
-                formContainer.querySelectorAll('select[name="warranty_months"]').forEach(function(el) { window.makeSearchable(el, indigo); });
-            }
+  // Apply searchable dropdowns to dynamically rendered selects in checklist form
+  if (typeof window.makeSearchable === 'function') {
+    var indigo = { accentColor: '#6366f1', force: true };
+    var indigoSm = { accentColor: '#6366f1' };
+    formContainer.querySelectorAll('select[name="service_type"]').forEach(function (el) {
+      window.makeSearchable(el, indigoSm);
+    });
+    formContainer.querySelectorAll('select[name="status"]').forEach(function (el) {
+      window.makeSearchable(el, indigo);
+    });
+    formContainer.querySelectorAll('select[name="hardware_action"]').forEach(function (el) {
+      window.makeSearchable(el, indigo);
+    });
+    formContainer.querySelectorAll('select[name="warranty_months"]').forEach(function (el) {
+      window.makeSearchable(el, indigo);
+    });
+  }
 
-            const statusSelect = formContainer.querySelector('select[name="status"]');
-            toggleSignaturePad(statusSelect, jobId);
+  const statusSelect = formContainer.querySelector('select[name="status"]');
+  toggleSignaturePad(statusSelect, jobId);
 
-            let checklistVal = {};
-            try {
-                checklistVal = JSON.parse(job.checklist_data || "{}");
-            } catch(e) {}
+  let checklistVal = {};
+  try {
+    checklistVal = JSON.parse(job.checklist_data || '{}');
+  } catch (e) {}
 
-            setTimeout(() => {
-                if (checklistVal && Array.isArray(checklistVal.workstations)) {
-                    checklistVal.workstations.forEach(ws => {
-                        insertWorkstationRow(jobId, ws.device_id || "", ws.os_updated || false, ws.temp_cleaned || false, ws.smart_status || "Pass");
-                    });
-                }
-            }, 50);
+  setTimeout(() => {
+    if (checklistVal && Array.isArray(checklistVal.workstations)) {
+      checklistVal.workstations.forEach((ws) => {
+        insertWorkstationRow(
+          jobId,
+          ws.device_id || '',
+          ws.os_updated || false,
+          ws.temp_cleaned || false,
+          ws.smart_status || 'Pass'
+        );
+      });
+    }
+  }, 50);
 
-            switchMobileTab('checklist');
-        };
+  switchMobileTab('checklist');
+};
 
-        function renderChecklistFormHTML(job) {
-            let equipmentText = "";
-            try {
-                const arr = JSON.parse(job.equipment_used || "[]");
-                if (Array.isArray(arr)) {
-                    equipmentText = arr.join(', ');
-                } else {
-                    equipmentText = job.equipment_used;
-                }
-            } catch(e) {
-                equipmentText = job.equipment_used || "";
-            }
+function renderChecklistFormHTML(job) {
+  let equipmentText = '';
+  try {
+    const arr = JSON.parse(job.equipment_used || '[]');
+    if (Array.isArray(arr)) {
+      equipmentText = arr.join(', ');
+    } else {
+      equipmentText = job.equipment_used;
+    }
+  } catch (e) {
+    equipmentText = job.equipment_used || '';
+  }
 
-            let checklistVal = {};
-            try {
-                checklistVal = JSON.parse(job.checklist_data || "{}");
-            } catch(e) {
-                checklistVal = {};
-            }
+  let checklistVal = {};
+  try {
+    checklistVal = JSON.parse(job.checklist_data || '{}');
+  } catch (e) {
+    checklistVal = {};
+  }
 
-            return `
+  return `
                 <div class="glass-panel p-5 rounded-3xl shadow-xl space-y-4">
                     <div class="border-b border-white/5 pb-3">
                         <span class="bg-indigo-500/10 text-indigo-300 text-[9px] font-bold px-2 py-0.5 rounded border border-indigo-500/25">${job.service_type}</span>
@@ -339,11 +358,15 @@
                         <span class="text-slate-300">${job.job_description}</span>
                     </div>
 
-                    ${job.arrival_time ? `
+                    ${
+                      job.arrival_time
+                        ? `
                     <div class="text-xs text-slate-400 bg-black/20 p-2.5 rounded-xl space-y-1 font-mono">
                         <div>â±ï¸ Arrived: ${job.arrival_time}</div>
                         ${job.completion_time ? `<div>â±ï¸ Completed: ${job.completion_time}</div>` : ''}
-                    </div>` : ''}
+                    </div>`
+                        : ''
+                    }
 
                     <form onsubmit="updateJob(event, '${job.id}')" class="space-y-4">
                         <div class="space-y-1">
@@ -446,10 +469,14 @@
                                             <span class="text-[9px] font-bold text-slate-400">Firmware Upgrade</span>
                                         </div>
                                         <div class="flex gap-1.5" data-status-group="net_firmware">
-                                            ${['Good', 'Repair', 'Fixed', 'Change'].map(state => `
+                                            ${['Good', 'Repair', 'Fixed', 'Change']
+                                              .map(
+                                                (state) => `
                                                 <button type="button" onclick="selectStatusState(this, 'net_firmware', '${state}')" class="status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight
                                                     ${checklistVal.net_firmware === state ? getButtonColorClasses(state) : 'bg-black/40 text-slate-500 border-white/5 hover:text-slate-300'}" data-state="${state}">${state}</button>
-                                            `).join('')}
+                                            `
+                                              )
+                                              .join('')}
                                         </div>
                                     </div>
                                     <div class="space-y-1.5">
@@ -457,10 +484,14 @@
                                             <span class="text-[9px] font-bold text-slate-400">Config Backup</span>
                                         </div>
                                         <div class="flex gap-1.5" data-status-group="net_backup">
-                                            ${['Good', 'Repair', 'Fixed', 'Change'].map(state => `
+                                            ${['Good', 'Repair', 'Fixed', 'Change']
+                                              .map(
+                                                (state) => `
                                                 <button type="button" onclick="selectStatusState(this, 'net_backup', '${state}')" class="status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight
                                                     ${checklistVal.net_backup === state ? getButtonColorClasses(state) : 'bg-black/40 text-slate-500 border-white/5 hover:text-slate-300'}" data-state="${state}">${state}</button>
-                                            `).join('')}
+                                            `
+                                              )
+                                              .join('')}
                                         </div>
                                     </div>
                                     <div class="space-y-1.5">
@@ -468,10 +499,14 @@
                                             <span class="text-[9px] font-bold text-slate-400">UPS Battery Test</span>
                                         </div>
                                         <div class="flex gap-1.5" data-status-group="net_ups">
-                                            ${['Good', 'Repair', 'Fixed', 'Change'].map(state => `
+                                            ${['Good', 'Repair', 'Fixed', 'Change']
+                                              .map(
+                                                (state) => `
                                                 <button type="button" onclick="selectStatusState(this, 'net_ups', '${state}')" class="status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight
                                                     ${checklistVal.net_ups === state ? getButtonColorClasses(state) : 'bg-black/40 text-slate-500 border-white/5 hover:text-slate-300'}" data-state="${state}">${state}</button>
-                                            `).join('')}
+                                            `
+                                              )
+                                              .join('')}
                                         </div>
                                     </div>
                                 </div>
@@ -489,10 +524,14 @@
                                             <span class="text-[9px] font-bold text-slate-400">Video Storage Retention</span>
                                         </div>
                                         <div class="flex gap-1.5" data-status-group="cctv_retention">
-                                            ${['Good', 'Repair', 'Fixed', 'Change'].map(state => `
+                                            ${['Good', 'Repair', 'Fixed', 'Change']
+                                              .map(
+                                                (state) => `
                                                 <button type="button" onclick="selectStatusState(this, 'cctv_retention', '${state}')" class="status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight
                                                     ${checklistVal.cctv_retention === state ? getButtonColorClasses(state) : 'bg-black/40 text-slate-500 border-white/5 hover:text-slate-300'}" data-state="${state}">${state}</button>
-                                            `).join('')}
+                                            `
+                                              )
+                                              .join('')}
                                         </div>
                                     </div>
                                     <div class="space-y-1.5">
@@ -500,10 +539,14 @@
                                             <span class="text-[9px] font-bold text-slate-400">Camera Time Sync</span>
                                         </div>
                                         <div class="flex gap-1.5" data-status-group="cctv_time">
-                                            ${['Good', 'Repair', 'Fixed', 'Change'].map(state => `
+                                            ${['Good', 'Repair', 'Fixed', 'Change']
+                                              .map(
+                                                (state) => `
                                                 <button type="button" onclick="selectStatusState(this, 'cctv_time', '${state}')" class="status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight
                                                     ${checklistVal.cctv_time === state ? getButtonColorClasses(state) : 'bg-black/40 text-slate-500 border-white/5 hover:text-slate-300'}" data-state="${state}">${state}</button>
-                                            `).join('')}
+                                            `
+                                              )
+                                              .join('')}
                                         </div>
                                     </div>
                                     <div class="space-y-1.5">
@@ -511,10 +554,14 @@
                                             <span class="text-[9px] font-bold text-slate-400">Video Loss Matrix</span>
                                         </div>
                                         <div class="flex gap-1.5" data-status-group="cctv_matrix">
-                                            ${['Good', 'Repair', 'Fixed', 'Change'].map(state => `
+                                            ${['Good', 'Repair', 'Fixed', 'Change']
+                                              .map(
+                                                (state) => `
                                                 <button type="button" onclick="selectStatusState(this, 'cctv_matrix', '${state}')" class="status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight
                                                     ${checklistVal.cctv_matrix === state ? getButtonColorClasses(state) : 'bg-black/40 text-slate-500 border-white/5 hover:text-slate-300'}" data-state="${state}">${state}</button>
-                                            `).join('')}
+                                            `
+                                              )
+                                              .join('')}
                                         </div>
                                     </div>
                                 </div>
@@ -532,10 +579,14 @@
                                             <span class="text-[9px] font-bold text-slate-400">RAID Health Status</span>
                                         </div>
                                         <div class="flex gap-1.5" data-status-group="nas_raid">
-                                            ${['Good', 'Repair', 'Fixed', 'Change'].map(state => `
+                                            ${['Good', 'Repair', 'Fixed', 'Change']
+                                              .map(
+                                                (state) => `
                                                 <button type="button" onclick="selectStatusState(this, 'nas_raid', '${state}')" class="status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight
                                                     ${checklistVal.nas_raid === state ? getButtonColorClasses(state) : 'bg-black/40 text-slate-500 border-white/5 hover:text-slate-300'}" data-state="${state}">${state}</button>
-                                            `).join('')}
+                                            `
+                                              )
+                                              .join('')}
                                         </div>
                                     </div>
                                     <div class="space-y-1">
@@ -547,10 +598,14 @@
                                             <span class="text-[9px] font-bold text-slate-400">Data Scrubbing Check</span>
                                         </div>
                                         <div class="flex gap-1.5" data-status-group="nas_scrubbing">
-                                            ${['Good', 'Repair', 'Fixed', 'Change'].map(state => `
+                                            ${['Good', 'Repair', 'Fixed', 'Change']
+                                              .map(
+                                                (state) => `
                                                 <button type="button" onclick="selectStatusState(this, 'nas_scrubbing', '${state}')" class="status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight
                                                     ${checklistVal.nas_scrubbing === state ? getButtonColorClasses(state) : 'bg-black/40 text-slate-500 border-white/5 hover:text-slate-300'}" data-state="${state}">${state}</button>
-                                            `).join('')}
+                                            `
+                                              )
+                                              .join('')}
                                         </div>
                                     </div>
                                 </div>
@@ -593,18 +648,27 @@
                                             class="hidden absolute z-50 left-0 right-0 mt-1 max-h-52 overflow-y-auto rounded-xl border border-white/10 shadow-2xl"
                                             style="background: #0f1117;">
                                             ${(() => {
-                                                try {
-                                                    const catalog = JSON.parse(localStorage.getItem('cached_catalog') || '[]');
-                                                    if (!catalog.length) return '<div class="px-3 py-2 text-[10px] text-slate-500">No devices in catalog</div>';
-                                                    return catalog.map(c => `
+                                              try {
+                                                const catalog = JSON.parse(
+                                                  localStorage.getItem('cached_catalog') || '[]'
+                                                );
+                                                if (!catalog.length)
+                                                  return '<div class="px-3 py-2 text-[10px] text-slate-500">No devices in catalog</div>';
+                                                return catalog
+                                                  .map(
+                                                    (c) => `
                                                         <div class="hw-device-opt px-3 py-2 text-xs text-slate-300 cursor-pointer hover:bg-indigo-500/20 hover:text-white transition-colors flex justify-between items-center gap-2"
                                                             data-value="${c.item_code}"
                                                             data-label="${c.item_name}"
-                                                            onclick="window.selectDeviceOption('${job.id}', '${c.item_code}', '${c.item_name.replace(/'/g,"\\'")}')">
+                                                            onclick="window.selectDeviceOption('${job.id}', '${c.item_code}', '${c.item_name.replace(/'/g, "\\'")}')">
                                                             <span class="truncate">${c.item_name}</span>
                                                             <span class="shrink-0 text-[9px] font-mono ${(c.stock_qty || 0) > 0 ? 'text-emerald-500' : 'text-rose-500'}">${c.stock_qty || 0} in stock</span>
-                                                        </div>`).join('');
-                                                } catch(e) { return ''; }
+                                                        </div>`
+                                                  )
+                                                  .join('');
+                                              } catch (e) {
+                                                return '';
+                                              }
                                             })()}
                                         </div>
                                     </div>
@@ -653,38 +717,44 @@
                     </form>
                 </div>
             `;
-        }
+}
 
-        function renderJobsList(jobs) {
-            localStorage.setItem('cached_jobs', JSON.stringify(jobs));
+function renderJobsList(jobs) {
+  localStorage.setItem('cached_jobs', JSON.stringify(jobs));
 
-            const activeContainer = document.getElementById('view-job');
-            const historyContainer = document.getElementById('view-history');
+  const activeContainer = document.getElementById('view-job');
+  const historyContainer = document.getElementById('view-history');
 
-            activeContainer.innerHTML = '';
-            historyContainer.innerHTML = '';
+  activeContainer.innerHTML = '';
+  historyContainer.innerHTML = '';
 
-            const technicianJobs = jobs.filter(j => j.technician_id === activeSessionUser.id);
+  const technicianJobs = jobs.filter((j) => j.technician_id === activeSessionUser.id);
 
-            const activeJobs = technicianJobs.filter(j => j.status !== 'Completed' && j.status !== 'Cancelled');
-            const historyJobs = technicianJobs.filter(j => j.status === 'Completed' || j.status === 'Cancelled');
+  const activeJobs = technicianJobs.filter(
+    (j) => j.status !== 'Completed' && j.status !== 'Cancelled'
+  );
+  const historyJobs = technicianJobs.filter(
+    (j) => j.status === 'Completed' || j.status === 'Cancelled'
+  );
 
-            // 1. Render Active Jobs Tab View
-            if (activeJobs.length === 0) {
-                activeContainer.innerHTML = `
+  // 1. Render Active Jobs Tab View
+  if (activeJobs.length === 0) {
+    activeContainer.innerHTML = `
                     <div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm">
                         <span class="text-3xl block mb-2">ðŸŽ‰</span>
                         No active service tickets assigned to you.
                     </div>`;
-            } else {
-                activeJobs.forEach(job => {
-                    const card = document.createElement('div');
-                    card.className = "glass-panel p-5 rounded-3xl shadow-xl space-y-4";
-                    
-                    let badgeColor = job.status === 'In Progress' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
-                                     'bg-blue-500/10 text-blue-400 border-blue-500/20';
+  } else {
+    activeJobs.forEach((job) => {
+      const card = document.createElement('div');
+      card.className = 'glass-panel p-5 rounded-3xl shadow-xl space-y-4';
 
-                    card.innerHTML = `
+      let badgeColor =
+        job.status === 'In Progress'
+          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+          : 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+
+      card.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div class="flex-1 min-w-0 pr-4">
                                 <div class="flex items-center gap-2 flex-wrap">
@@ -703,25 +773,27 @@
                             Open Service Checklist
                         </button>
                     `;
-                    activeContainer.appendChild(card);
-                });
-            }
+      activeContainer.appendChild(card);
+    });
+  }
 
-            // 2. Render History Jobs Tab View
-            if (historyJobs.length === 0) {
-                historyContainer.innerHTML = `
+  // 2. Render History Jobs Tab View
+  if (historyJobs.length === 0) {
+    historyContainer.innerHTML = `
                     <div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm">
                         No completed history records found on this device.
                     </div>`;
-            } else {
-                historyJobs.forEach(job => {
-                    const card = document.createElement('div');
-                    card.className = "glass-panel p-5 rounded-3xl shadow-xl space-y-3 opacity-80";
+  } else {
+    historyJobs.forEach((job) => {
+      const card = document.createElement('div');
+      card.className = 'glass-panel p-5 rounded-3xl shadow-xl space-y-3 opacity-80';
 
-                    let badgeColor = job.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                     'bg-rose-500/10 text-rose-400 border-rose-500/20';
+      let badgeColor =
+        job.status === 'Completed'
+          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+          : 'bg-rose-500/10 text-rose-400 border-rose-500/20';
 
-                    card.innerHTML = `
+      card.innerHTML = `
                         <div onclick="this.nextElementSibling.classList.toggle('hidden');" class="cursor-pointer select-none">
                             <div class="flex justify-between items-center">
                                 <div class="flex-1 min-w-0 pr-4">
@@ -742,561 +814,581 @@
                             ${job.arrival_time ? `<p class="text-slate-500 font-mono text-[10px]">Arrived: ${job.arrival_time} / Completed: ${job.completion_time || 'N/A'}</p>` : ''}
                         </div>
                     `;
-                    historyContainer.appendChild(card);
-                });
-            }
+      historyContainer.appendChild(card);
+    });
+  }
 
-            // Sync settings profile cards
-            const setUsername = document.getElementById('settings-username');
-            const setUserid = document.getElementById('settings-userid');
-            if (setUsername && activeSessionUser) setUsername.textContent = activeSessionUser.name;
-            if (setUserid && activeSessionUser) setUserid.textContent = `ID: ${activeSessionUser.id}`;
+  // Sync settings profile cards
+  const setUsername = document.getElementById('settings-username');
+  const setUserid = document.getElementById('settings-userid');
+  if (setUsername && activeSessionUser) setUsername.textContent = activeSessionUser.name;
+  if (setUserid && activeSessionUser) setUserid.textContent = `ID: ${activeSessionUser.id}`;
+}
+
+function toggleSignaturePad(select, jobId) {
+  const pad = document.getElementById(`sig-pad-${jobId}`);
+  if (select.value === 'Completed') {
+    pad.classList.remove('hidden');
+    initSignatureCanvas(jobId);
+  } else {
+    pad.classList.add('hidden');
+  }
+}
+
+function toggleHardwareFields(select, jobId) {
+  const wrap = document.getElementById(`hw-fields-${jobId}`);
+  const defectiveSnWrap = document.getElementById(`defective-sn-wrap-${jobId}`);
+  if (select.value === 'none') {
+    wrap.classList.add('hidden');
+  } else {
+    wrap.classList.remove('hidden');
+    if (select.value === 'replace') {
+      defectiveSnWrap.classList.remove('hidden');
+
+      const clientId = select.getAttribute('data-client-id');
+      const datalist = document.getElementById(`defective-serials-${jobId}`);
+      if (clientId && datalist) {
+        datalist.innerHTML = '';
+        fetch(`/api/portal/warranties?client_id=${clientId}`)
+          .then((res) => res.json())
+          .then((items) => {
+            if (Array.isArray(items)) {
+              datalist.innerHTML = items
+                .map((item) => {
+                  const expiry = new Date(item.installed_date || item.created_at);
+                  expiry.setMonth(expiry.getMonth() + (parseInt(item.warranty_months) || 12));
+                  const isExpired = expiry < new Date();
+                  const statusText = isExpired ? 'Expired' : 'Active';
+                  return `<option value="${item.serial_number}">${item.device_name} (${statusText} Warranty)</option>`;
+                })
+                .join('');
+            }
+          })
+          .catch((err) =>
+            console.error('Failed to load customer warranties for autocomplete:', err)
+          );
+      }
+    } else {
+      defectiveSnWrap.classList.add('hidden');
+    }
+  }
+}
+
+window.showDevicePrice = function (itemCode, jobId) {
+  const priceInfoWrap = document.getElementById(`hw-price-info-${jobId}`);
+  const priceValSpan = document.getElementById(`hw-price-value-${jobId}`);
+  const datalist = document.getElementById(`hw-serials-${jobId}`);
+  if (!priceInfoWrap || !priceValSpan) return;
+
+  if (datalist) {
+    datalist.innerHTML = '';
+  }
+
+  if (!itemCode) {
+    priceInfoWrap.classList.add('hidden');
+    return;
+  }
+
+  // Load available stock serial numbers for the selected device model
+  if (datalist) {
+    fetch(`/api/inventory/serials?item_code=${itemCode}`)
+      .then((res) => res.json())
+      .then((serials) => {
+        if (Array.isArray(serials)) {
+          datalist.innerHTML = serials.map((sn) => `<option value="${sn}"></option>`).join('');
         }
+      })
+      .catch((err) => console.error('Failed to load serials for autocomplete:', err));
+  }
 
-        function toggleSignaturePad(select, jobId) {
-            const pad = document.getElementById(`sig-pad-${jobId}`);
-            if (select.value === 'Completed') {
-                pad.classList.remove('hidden');
-                initSignatureCanvas(jobId);
-            } else {
-                pad.classList.add('hidden');
-            }
-        }
+  try {
+    const catalog = JSON.parse(localStorage.getItem('cached_catalog') || '[]');
+    const item = catalog.find((c) => c.item_code === itemCode);
+    if (item) {
+      const priceUSD = parseFloat(item.unit_price || 0).toFixed(2);
+      const priceMMK = parseInt(item.unit_price_mmk || 0).toLocaleString();
+      priceValSpan.textContent = `$${priceUSD} / ${priceMMK} Ks`;
+      priceInfoWrap.classList.remove('hidden');
+    } else {
+      priceInfoWrap.classList.add('hidden');
+    }
+  } catch (err) {
+    console.error('Price display error:', err);
+    priceInfoWrap.classList.add('hidden');
+  }
+};
 
-        function toggleHardwareFields(select, jobId) {
-            const wrap = document.getElementById(`hw-fields-${jobId}`);
-            const defectiveSnWrap = document.getElementById(`defective-sn-wrap-${jobId}`);
-            if (select.value === 'none') {
-                wrap.classList.add('hidden');
-            } else {
-                wrap.classList.remove('hidden');
-                if (select.value === 'replace') {
-                    defectiveSnWrap.classList.remove('hidden');
-                    
-                    const clientId = select.getAttribute('data-client-id');
-                    const datalist = document.getElementById(`defective-serials-${jobId}`);
-                    if (clientId && datalist) {
-                        datalist.innerHTML = '';
-                        fetch(`/api/portal/warranties?client_id=${clientId}`)
-                            .then(res => res.json())
-                            .then(items => {
-                                if (Array.isArray(items)) {
-                                    datalist.innerHTML = items.map(item => {
-                                        const expiry = new Date(item.installed_date || item.created_at);
-                                        expiry.setMonth(expiry.getMonth() + (parseInt(item.warranty_months) || 12));
-                                        const isExpired = expiry < new Date();
-                                        const statusText = isExpired ? 'Expired' : 'Active';
-                                        return `<option value="${item.serial_number}">${item.device_name} (${statusText} Warranty)</option>`;
-                                    }).join('');
-                                }
-                            })
-                            .catch(err => console.error("Failed to load customer warranties for autocomplete:", err));
-                    }
-                } else {
-                    defectiveSnWrap.classList.add('hidden');
-                }
-            }
-        }
+// â”€â”€ Device Model Searchable Combobox Controllers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+window.openDeviceDropdown = function (jobId) {
+  const list = document.getElementById(`hw-device-list-${jobId}`);
+  if (list) {
+    list.classList.remove('hidden');
+    // Reset filter to show all when reopening
+    list.querySelectorAll('.hw-device-opt').forEach((el) => (el.style.display = ''));
+  }
+};
 
-        window.showDevicePrice = function(itemCode, jobId) {
-            const priceInfoWrap = document.getElementById(`hw-price-info-${jobId}`);
-            const priceValSpan = document.getElementById(`hw-price-value-${jobId}`);
-            const datalist = document.getElementById(`hw-serials-${jobId}`);
-            if (!priceInfoWrap || !priceValSpan) return;
+window.filterDeviceDropdown = function (jobId) {
+  const searchInput = document.getElementById(`hw-device-search-${jobId}`);
+  const list = document.getElementById(`hw-device-list-${jobId}`);
+  const hiddenInput = document.getElementById(`hw-device-val-${jobId}`);
+  if (!searchInput || !list) return;
 
-            if (datalist) {
-                datalist.innerHTML = '';
-            }
+  const q = searchInput.value.trim().toLowerCase();
+  list.classList.remove('hidden');
 
-            if (!itemCode) {
-                priceInfoWrap.classList.add('hidden');
-                return;
-            }
+  // If user clears the input, also clear the committed value
+  if (!q) {
+    if (hiddenInput) hiddenInput.value = '';
+    window.showDevicePrice('', jobId);
+  }
 
-            // Load available stock serial numbers for the selected device model
-            if (datalist) {
-                fetch(`/api/inventory/serials?item_code=${itemCode}`)
-                    .then(res => res.json())
-                    .then(serials => {
-                        if (Array.isArray(serials)) {
-                            datalist.innerHTML = serials.map(sn => `<option value="${sn}"></option>`).join('');
-                        }
-                    })
-                    .catch(err => console.error("Failed to load serials for autocomplete:", err));
-            }
+  let anyVisible = false;
+  list.querySelectorAll('.hw-device-opt').forEach((opt) => {
+    const label = (opt.dataset.label || '').toLowerCase();
+    const match = !q || label.includes(q);
+    opt.style.display = match ? '' : 'none';
+    if (match) anyVisible = true;
+  });
 
-            try {
-                const catalog = JSON.parse(localStorage.getItem('cached_catalog') || '[]');
-                const item = catalog.find(c => c.item_code === itemCode);
-                if (item) {
-                    const priceUSD = parseFloat(item.unit_price || 0).toFixed(2);
-                    const priceMMK = parseInt(item.unit_price_mmk || 0).toLocaleString();
-                    priceValSpan.textContent = `$${priceUSD} / ${priceMMK} Ks`;
-                    priceInfoWrap.classList.remove('hidden');
-                } else {
-                    priceInfoWrap.classList.add('hidden');
-                }
-            } catch (err) {
-                console.error("Price display error:", err);
-                priceInfoWrap.classList.add('hidden');
-            }
-        };
+  // Show empty state if nothing matches
+  let emptyMsg = list.querySelector('.hw-device-empty');
+  if (!anyVisible) {
+    if (!emptyMsg) {
+      emptyMsg = document.createElement('div');
+      emptyMsg.className = 'hw-device-empty px-3 py-2 text-[10px] text-slate-500';
+      emptyMsg.textContent = 'No match found';
+      list.appendChild(emptyMsg);
+    }
+    emptyMsg.style.display = '';
+  } else if (emptyMsg) {
+    emptyMsg.style.display = 'none';
+  }
+};
 
-        // â”€â”€ Device Model Searchable Combobox Controllers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        window.openDeviceDropdown = function(jobId) {
-            const list = document.getElementById(`hw-device-list-${jobId}`);
-            if (list) {
-                list.classList.remove('hidden');
-                // Reset filter to show all when reopening
-                list.querySelectorAll('.hw-device-opt').forEach(el => el.style.display = '');
-            }
-        };
+window.selectDeviceOption = function (jobId, itemCode, itemLabel) {
+  const searchInput = document.getElementById(`hw-device-search-${jobId}`);
+  const hiddenInput = document.getElementById(`hw-device-val-${jobId}`);
+  const list = document.getElementById(`hw-device-list-${jobId}`);
+  if (searchInput) searchInput.value = itemLabel;
+  if (hiddenInput) hiddenInput.value = itemCode;
+  if (list) list.classList.add('hidden');
+  // Highlight selected row
+  if (list) {
+    list.querySelectorAll('.hw-device-opt').forEach((opt) => {
+      opt.style.background = opt.dataset.value === itemCode ? 'rgba(99,102,241,0.15)' : '';
+    });
+  }
+  window.showDevicePrice(itemCode, jobId);
+};
 
-        window.filterDeviceDropdown = function(jobId) {
-            const searchInput = document.getElementById(`hw-device-search-${jobId}`);
-            const list        = document.getElementById(`hw-device-list-${jobId}`);
-            const hiddenInput = document.getElementById(`hw-device-val-${jobId}`);
-            if (!searchInput || !list) return;
+window.deviceDropdownKeyNav = function (e, jobId) {
+  const list = document.getElementById(`hw-device-list-${jobId}`);
+  if (!list) return;
+  const opts = [...list.querySelectorAll('.hw-device-opt')].filter(
+    (o) => o.style.display !== 'none'
+  );
+  const current = list.querySelector('.hw-device-opt.dd-focused');
+  let idx = opts.indexOf(current);
 
-            const q = searchInput.value.trim().toLowerCase();
-            list.classList.remove('hidden');
+  if (e.key === 'Escape') {
+    list.classList.add('hidden');
+    return;
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (list.classList.contains('hidden')) {
+      list.classList.remove('hidden');
+    }
+    if (current) current.classList.remove('dd-focused');
+    idx = Math.min(idx + 1, opts.length - 1);
+    if (opts[idx]) {
+      opts[idx].classList.add('dd-focused');
+      opts[idx].scrollIntoView({ block: 'nearest' });
+    }
+    return;
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (current) current.classList.remove('dd-focused');
+    idx = Math.max(idx - 1, 0);
+    if (opts[idx]) {
+      opts[idx].classList.add('dd-focused');
+      opts[idx].scrollIntoView({ block: 'nearest' });
+    }
+    return;
+  }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (current) window.selectDeviceOption(jobId, current.dataset.value, current.dataset.label);
+    return;
+  }
+};
 
-            // If user clears the input, also clear the committed value
-            if (!q) {
-                if (hiddenInput) hiddenInput.value = '';
-                window.showDevicePrice('', jobId);
-            }
+// Global click-outside handler to close device dropdowns
+if (!window._deviceDropdownOutsideListenerAdded) {
+  window._deviceDropdownOutsideListenerAdded = true;
+  document.addEventListener('click', function (e) {
+    document.querySelectorAll('[id^="hw-device-list-"]').forEach((list) => {
+      const jobId = list.id.replace('hw-device-list-', '');
+      const wrap = document.getElementById(`hw-model-wrap-${jobId}`);
+      if (wrap && !wrap.contains(e.target)) {
+        list.classList.add('hidden');
+      }
+    });
+  });
+}
 
-            let anyVisible = false;
-            list.querySelectorAll('.hw-device-opt').forEach(opt => {
-                const label = (opt.dataset.label || '').toLowerCase();
-                const match = !q || label.includes(q);
-                opt.style.display = match ? '' : 'none';
-                if (match) anyVisible = true;
-            });
+function initSignatureCanvas(jobId) {
+  const canvas = document.getElementById(`canvas-${jobId}`);
+  if (!canvas || activeCanvases[jobId]) return;
 
-            // Show empty state if nothing matches
-            let emptyMsg = list.querySelector('.hw-device-empty');
-            if (!anyVisible) {
-                if (!emptyMsg) {
-                    emptyMsg = document.createElement('div');
-                    emptyMsg.className = 'hw-device-empty px-3 py-2 text-[10px] text-slate-500';
-                    emptyMsg.textContent = 'No match found';
-                    list.appendChild(emptyMsg);
-                }
-                emptyMsg.style.display = '';
-            } else if (emptyMsg) {
-                emptyMsg.style.display = 'none';
-            }
-        };
+  // Make canvas responsive
+  canvas.width = canvas.parentElement.clientWidth;
 
-        window.selectDeviceOption = function(jobId, itemCode, itemLabel) {
-            const searchInput = document.getElementById(`hw-device-search-${jobId}`);
-            const hiddenInput = document.getElementById(`hw-device-val-${jobId}`);
-            const list        = document.getElementById(`hw-device-list-${jobId}`);
-            if (searchInput) searchInput.value = itemLabel;
-            if (hiddenInput) hiddenInput.value = itemCode;
-            if (list) list.classList.add('hidden');
-            // Highlight selected row
-            if (list) {
-                list.querySelectorAll('.hw-device-opt').forEach(opt => {
-                    opt.style.background = opt.dataset.value === itemCode ? 'rgba(99,102,241,0.15)' : '';
-                });
-            }
-            window.showDevicePrice(itemCode, jobId);
-        };
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#6366f1'; // Indigo signature stroke
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
 
-        window.deviceDropdownKeyNav = function(e, jobId) {
-            const list = document.getElementById(`hw-device-list-${jobId}`);
-            if (!list) return;
-            const opts = [...list.querySelectorAll('.hw-device-opt')].filter(o => o.style.display !== 'none');
-            const current = list.querySelector('.hw-device-opt.dd-focused');
-            let idx = opts.indexOf(current);
+  let drawing = false;
 
-            if (e.key === 'Escape') {
-                list.classList.add('hidden');
-                return;
-            }
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (list.classList.contains('hidden')) { list.classList.remove('hidden'); }
-                if (current) current.classList.remove('dd-focused');
-                idx = Math.min(idx + 1, opts.length - 1);
-                if (opts[idx]) { opts[idx].classList.add('dd-focused'); opts[idx].scrollIntoView({ block: 'nearest' }); }
-                return;
-            }
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (current) current.classList.remove('dd-focused');
-                idx = Math.max(idx - 1, 0);
-                if (opts[idx]) { opts[idx].classList.add('dd-focused'); opts[idx].scrollIntoView({ block: 'nearest' }); }
-                return;
-            }
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (current) window.selectDeviceOption(jobId, current.dataset.value, current.dataset.label);
-                return;
-            }
-        };
+  // Event listeners for drawing
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDraw);
+  canvas.addEventListener('mouseleave', stopDraw);
 
-        // Global click-outside handler to close device dropdowns
-        if (!window._deviceDropdownOutsideListenerAdded) {
-            window._deviceDropdownOutsideListenerAdded = true;
-            document.addEventListener('click', function(e) {
-                document.querySelectorAll('[id^="hw-device-list-"]').forEach(list => {
-                    const jobId = list.id.replace('hw-device-list-', '');
-                    const wrap  = document.getElementById(`hw-model-wrap-${jobId}`);
-                    if (wrap && !wrap.contains(e.target)) {
-                        list.classList.add('hidden');
-                    }
-                });
-            });
-        }
+  canvas.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(t.clientX - rect.left, t.clientY - rect.top);
+    drawing = true;
+    e.preventDefault();
+  });
+  canvas.addEventListener('touchmove', (e) => {
+    if (!drawing) return;
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineTo(t.clientX - rect.left, t.clientY - rect.top);
+    ctx.stroke();
+    e.preventDefault();
+  });
+  canvas.addEventListener('touchend', stopDraw);
 
+  function startDraw(e) {
+    drawing = true;
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+  }
 
-        function initSignatureCanvas(jobId) {
-            const canvas = document.getElementById(`canvas-${jobId}`);
-            if (!canvas || activeCanvases[jobId]) return;
+  function draw(e) {
+    if (!drawing) return;
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.stroke();
+  }
 
-            // Make canvas responsive
-            canvas.width = canvas.parentElement.clientWidth;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.strokeStyle = '#6366f1'; // Indigo signature stroke
-            ctx.lineWidth = 3;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+  function stopDraw() {
+    drawing = false;
+  }
 
-            let drawing = false;
+  activeCanvases[jobId] = { canvas, ctx };
+}
 
-            // Event listeners for drawing
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDraw);
-            canvas.addEventListener('mouseleave', stopDraw);
+function clearSignatureCanvas(jobId) {
+  const item = activeCanvases[jobId];
+  if (item) {
+    item.ctx.clearRect(0, 0, item.canvas.width, item.canvas.height);
+  }
+}
 
-            canvas.addEventListener('touchstart', (e) => {
-                const t = e.touches[0];
-                const rect = canvas.getBoundingClientRect();
-                ctx.beginPath();
-                ctx.moveTo(t.clientX - rect.left, t.clientY - rect.top);
-                drawing = true;
-                e.preventDefault();
-            });
-            canvas.addEventListener('touchmove', (e) => {
-                if (!drawing) return;
-                const t = e.touches[0];
-                const rect = canvas.getBoundingClientRect();
-                ctx.lineTo(t.clientX - rect.left, t.clientY - rect.top);
-                ctx.stroke();
-                e.preventDefault();
-            });
-            canvas.addEventListener('touchend', stopDraw);
+function drawSignatureData(jobId, dataUrl) {
+  const item = activeCanvases[jobId];
+  if (item) {
+    const img = new Image();
+    img.onload = () => {
+      item.ctx.drawImage(img, 0, 0, item.canvas.width, item.canvas.height);
+    };
+    img.src = dataUrl;
+  }
+}
 
-            function startDraw(e) {
-                drawing = true;
-                const rect = canvas.getBoundingClientRect();
-                ctx.beginPath();
-                ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-            }
+async function updateJob(event, jobId) {
+  event.preventDefault();
+  const form = event.target;
+  const status = form.status.value;
 
-            function draw(e) {
-                if (!drawing) return;
-                const rect = canvas.getBoundingClientRect();
-                ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-                ctx.stroke();
-            }
+  const formData = new FormData(form);
+  formData.append('job_id', jobId);
 
-            function stopDraw() {
-                drawing = false;
-            }
+  // Convert comma-separated equipment items into a JSON array string
+  const rawEquipment = form.equipment.value.trim();
+  let eqJson = '[]';
+  if (rawEquipment) {
+    const arr = rawEquipment
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s !== '');
+    eqJson = JSON.stringify(arr);
+  }
+  formData.set('equipment', eqJson);
 
-            activeCanvases[jobId] = { canvas, ctx };
-        }
+  // Serialize checklist items as JSON
+  const workstations = [];
+  const table = document.getElementById(`tbl-workstations-${jobId}`);
+  const wsRows = table ? table.querySelectorAll('tbody tr') : [];
+  wsRows.forEach((row) => {
+    const device_id = row.querySelector('[name="ws_device_id"]').value.trim();
+    const os_updated = row.querySelector('[name="ws_os_updated"]').checked;
+    const temp_cleaned = row.querySelector('[name="ws_temp_cleaned"]').checked;
+    const smart_status = row.querySelector('[name="ws_smart_status"]').value;
+    if (device_id) {
+      workstations.push({ device_id, os_updated, temp_cleaned, smart_status });
+    }
+  });
 
-        function clearSignatureCanvas(jobId) {
-            const item = activeCanvases[jobId];
-            if (item) {
-                item.ctx.clearRect(0, 0, item.canvas.width, item.canvas.height);
-            }
-        }
+  const getSelectedState = (groupName) => {
+    const group = form.querySelector(`[data-status-group="${groupName}"]`);
+    if (!group) return 'Good';
+    const activeBtn = group.querySelector(
+      '.bg-emerald-500, .bg-amber-500, .bg-indigo-500, .bg-rose-500'
+    );
+    return activeBtn ? activeBtn.getAttribute('data-state') : 'Good';
+  };
 
-        function drawSignatureData(jobId, dataUrl) {
-            const item = activeCanvases[jobId];
-            if (item) {
-                const img = new Image();
-                img.onload = () => {
-                    item.ctx.drawImage(img, 0, 0, item.canvas.width, item.canvas.height);
-                };
-                img.src = dataUrl;
-            }
-        }
+  const checklist = {
+    workstations: workstations,
+    net_firmware: getSelectedState('net_firmware'),
+    net_backup: getSelectedState('net_backup'),
+    net_ups: getSelectedState('net_ups'),
+    cctv_retention: getSelectedState('cctv_retention'),
+    cctv_time: getSelectedState('cctv_time'),
+    cctv_matrix: getSelectedState('cctv_matrix'),
+    nas_raid: getSelectedState('nas_raid'),
+    nas_capacity: form.nas_capacity ? parseInt(form.nas_capacity.value) || 0 : 0,
+    nas_scrubbing: getSelectedState('nas_scrubbing'),
+  };
+  formData.append('checklist_data', JSON.stringify(checklist));
 
-        async function updateJob(event, jobId) {
-            event.preventDefault();
-            const form = event.target;
-            const status = form.status.value;
-            
-            const formData = new FormData(form);
-            formData.append("job_id", jobId);
+  // Add signature if completing
+  if (status === 'Completed' && activeCanvases[jobId]) {
+    const signatureData = activeCanvases[jobId].canvas.toDataURL('image/png');
+    formData.append('signature', signatureData);
+  }
 
-            // Convert comma-separated equipment items into a JSON array string
-            const rawEquipment = form.equipment.value.trim();
-            let eqJson = "[]";
-            if (rawEquipment) {
-                const arr = rawEquipment.split(',').map(s => s.trim()).filter(s => s !== '');
-                eqJson = JSON.stringify(arr);
-            }
-            formData.set("equipment", eqJson);
+  const submitBtn = form.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Syncing with Edge...';
 
-            // Serialize checklist items as JSON
-            const workstations = [];
-            const table = document.getElementById(`tbl-workstations-${jobId}`);
-            const wsRows = table ? table.querySelectorAll('tbody tr') : [];
-            wsRows.forEach(row => {
-                const device_id = row.querySelector('[name="ws_device_id"]').value.trim();
-                const os_updated = row.querySelector('[name="ws_os_updated"]').checked;
-                const temp_cleaned = row.querySelector('[name="ws_temp_cleaned"]').checked;
-                const smart_status = row.querySelector('[name="ws_smart_status"]').value;
-                if (device_id) {
-                    workstations.push({ device_id, os_updated, temp_cleaned, smart_status });
-                }
-            });
+  // Retrieve Location & Time Telemetry parameters
+  const telemetry = await getFieldTelemetry(status);
+  if (telemetry.time) {
+    if (status === 'In Progress') {
+      formData.append('arrival_time', telemetry.time);
+      if (telemetry.coords) {
+        formData.append('arrival_lat', telemetry.coords.latitude);
+        formData.append('arrival_lng', telemetry.coords.longitude);
+      }
+    } else if (status === 'Completed') {
+      formData.append('completion_time', telemetry.time);
+      if (telemetry.coords) {
+        formData.append('completion_lat', telemetry.coords.latitude);
+        formData.append('completion_lng', telemetry.coords.longitude);
+      }
+    }
+  }
 
-            const getSelectedState = (groupName) => {
-                const group = form.querySelector(`[data-status-group="${groupName}"]`);
-                if (!group) return 'Good';
-                const activeBtn = group.querySelector('.bg-emerald-500, .bg-amber-500, .bg-indigo-500, .bg-rose-500');
-                return activeBtn ? activeBtn.getAttribute('data-state') : 'Good';
-            };
+  try {
+    if (!navigator.onLine) {
+      queueOfflineUpdate(jobId, formData);
+      alert('Device offline. Update stored in local pipeline queue!');
+      selectedJobId = null;
+      document.getElementById('checklist-placeholder').classList.remove('hidden');
+      document.getElementById('checklist-form-container').innerHTML = '';
+      switchMobileTab('job');
+      fetchJobs();
+      return;
+    }
 
-            const checklist = {
-                workstations: workstations,
-                net_firmware: getSelectedState('net_firmware'),
-                net_backup: getSelectedState('net_backup'),
-                net_ups: getSelectedState('net_ups'),
-                cctv_retention: getSelectedState('cctv_retention'),
-                cctv_time: getSelectedState('cctv_time'),
-                cctv_matrix: getSelectedState('cctv_matrix'),
-                nas_raid: getSelectedState('nas_raid'),
-                nas_capacity: form.nas_capacity ? parseInt(form.nas_capacity.value) || 0 : 0,
-                nas_scrubbing: getSelectedState('nas_scrubbing')
-            };
-            formData.append("checklist_data", JSON.stringify(checklist));
+    const res = await fetch(`${API_BASE_URL}/api/jobs/update`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Synchronization failure.');
+    alert('Cloud engine synced successfully!');
+    selectedJobId = null;
+    document.getElementById('checklist-placeholder').classList.remove('hidden');
+    document.getElementById('checklist-form-container').innerHTML = '';
+    switchMobileTab('job');
+    fetchJobs();
+  } catch (err) {
+    alert('API sync error: ' + err.message + '. Enqueueing update locally.');
+    queueOfflineUpdate(jobId, formData);
+    selectedJobId = null;
+    document.getElementById('checklist-placeholder').classList.remove('hidden');
+    document.getElementById('checklist-form-container').innerHTML = '';
+    switchMobileTab('job');
+    fetchJobs();
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Dispatch Report';
+  }
+}
 
-            // Add signature if completing
-            if (status === 'Completed' && activeCanvases[jobId]) {
-                const signatureData = activeCanvases[jobId].canvas.toDataURL('image/png');
-                formData.append("signature", signatureData);
-            }
+function getFieldTelemetry(status) {
+  return new Promise((resolve) => {
+    if (status === 'Pending') return resolve({});
 
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Syncing with Edge...";
+    const time = new Date().toLocaleString();
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ time, coords: pos.coords }),
+        () => resolve({ time }), // fallback if user blocks GPS
+        { timeout: 3000 } // set 3s timeout to prevent infinite hang in local development
+      );
+    } else {
+      resolve({ time });
+    }
+  });
+}
 
-            // Retrieve Location & Time Telemetry parameters
-            const telemetry = await getFieldTelemetry(status);
-            if (telemetry.time) {
-                if (status === 'In Progress') {
-                    formData.append("arrival_time", telemetry.time);
-                    if (telemetry.coords) {
-                        formData.append("arrival_lat", telemetry.coords.latitude);
-                        formData.append("arrival_lng", telemetry.coords.longitude);
-                    }
-                } else if (status === 'Completed') {
-                    formData.append("completion_time", telemetry.time);
-                    if (telemetry.coords) {
-                        formData.append("completion_lat", telemetry.coords.latitude);
-                        formData.append("completion_lng", telemetry.coords.longitude);
-                    }
-                }
-            }
+// --- OFFLINE Fallback Cache Queue Pipelines ---
+function queueOfflineUpdate(jobId, formData) {
+  const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
 
-            try {
-                if (!navigator.onLine) {
-                    queueOfflineUpdate(jobId, formData);
-                    alert("Device offline. Update stored in local pipeline queue!");
-                    selectedJobId = null;
-                    document.getElementById('checklist-placeholder').classList.remove('hidden');
-                    document.getElementById('checklist-form-container').innerHTML = '';
-                    switchMobileTab('job');
-                    fetchJobs();
-                    return;
-                }
+  // Map formData entries to JSON-serializable object
+  const record = { jobId };
+  for (const [key, val] of formData.entries()) {
+    if (val instanceof File) {
+      // skip file binaries in offline storage for memory efficiency
+      continue;
+    }
+    record[key] = val;
+  }
 
-                const res = await fetch(`${API_BASE_URL}/api/jobs/update`, {
-                    method: "POST",
-                    body: formData
-                });
-                if (!res.ok) throw new Error("Synchronization failure.");
-                alert("Cloud engine synced successfully!");
-                selectedJobId = null;
-                document.getElementById('checklist-placeholder').classList.remove('hidden');
-                document.getElementById('checklist-form-container').innerHTML = '';
-                switchMobileTab('job');
-                fetchJobs();
-            } catch (err) {
-                alert("API sync error: " + err.message + ". Enqueueing update locally.");
-                queueOfflineUpdate(jobId, formData);
-                selectedJobId = null;
-                document.getElementById('checklist-placeholder').classList.remove('hidden');
-                document.getElementById('checklist-form-container').innerHTML = '';
-                switchMobileTab('job');
-                fetchJobs();
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = "Submit Dispatch Report";
-            }
-        }
+  queue.push(record);
+  localStorage.setItem('offline_update_queue', JSON.stringify(queue));
+  showSyncButton();
+}
 
-        function getFieldTelemetry(status) {
-            return new Promise((resolve) => {
-                if (status === 'Pending') return resolve({});
-                
-                const time = new Date().toLocaleString();
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => resolve({ time, coords: pos.coords }),
-                        () => resolve({ time }), // fallback if user blocks GPS
-                        { timeout: 3000 } // set 3s timeout to prevent infinite hang in local development
-                    );
-                } else {
-                    resolve({ time });
-                }
-            });
-        }
+function showSyncButton() {
+  const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
+  const btn = document.getElementById('sync-btn');
+  if (queue.length > 0) {
+    btn.textContent = `Sync Queue (${queue.length})`;
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+}
 
-        // --- OFFLINE Fallback Cache Queue Pipelines ---
-        function queueOfflineUpdate(jobId, formData) {
-            const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
-            
-            // Map formData entries to JSON-serializable object
-            const record = { jobId };
-            for (const [key, val] of formData.entries()) {
-                if (val instanceof File) {
-                    // skip file binaries in offline storage for memory efficiency
-                    continue;
-                }
-                record[key] = val;
-            }
-            
-            queue.push(record);
-            localStorage.setItem('offline_update_queue', JSON.stringify(queue));
-            showSyncButton();
-        }
+async function syncOfflineQueue() {
+  const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
+  if (queue.length === 0) return;
 
-        function showSyncButton() {
-            const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
-            const btn = document.getElementById('sync-btn');
-            if (queue.length > 0) {
-                btn.textContent = `Sync Queue (${queue.length})`;
-                btn.classList.remove('hidden');
-            } else {
-                btn.classList.add('hidden');
-            }
-        }
+  const btn = document.getElementById('sync-btn');
+  btn.disabled = true;
+  btn.textContent = 'Syncing local database...';
 
-        async function syncOfflineQueue() {
-            const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
-            if (queue.length === 0) return;
+  for (const record of queue) {
+    const formData = new FormData();
+    for (const [k, v] of Object.entries(record)) {
+      formData.append(k, v);
+    }
 
-            const btn = document.getElementById('sync-btn');
-            btn.disabled = true;
-            btn.textContent = "Syncing local database...";
+    try {
+      await fetch(`${API_BASE_URL}/api/jobs/update`, {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (e) {
+      console.error('Queue sync failure', e);
+    }
+  }
 
-            for (const record of queue) {
-                const formData = new FormData();
-                for (const [k, v] of Object.entries(record)) {
-                    formData.append(k, v);
-                }
+  localStorage.removeItem('offline_update_queue');
+  showSyncButton();
+  alert('Offline database changes merged to Cloudflare D1 successfully!');
+  fetchJobs();
+}
 
-                try {
-                    await fetch(`${API_BASE_URL}/api/jobs/update`, {
-                        method: "POST",
-                        body: formData
-                    });
-                } catch (e) {
-                    console.error("Queue sync failure", e);
-                }
-            }
+// Initialize queue checks
+setTimeout(() => {
+  showSyncButton();
+  updateOnlineStatus();
+}, 1000);
 
-            localStorage.removeItem('offline_update_queue');
-            showSyncButton();
-            alert("Offline database changes merged to Cloudflare D1 successfully!");
-            fetchJobs();
-        }
+// Google OAuth Sign-in Handlers
+window.addEventListener('load', () => {
+  google.accounts.id.initialize({
+    client_id: '609507528219-2foc0ch65rkqkgdlvlihqagb6dqbmpcm.apps.googleusercontent.com', // Google OAuth Client ID binding
+    callback: handleGoogleLogin,
+  });
+  google.accounts.id.renderButton(document.getElementById('g-signin-btn'), {
+    theme: 'dark',
+    size: 'large',
+    type: 'standard',
+    shape: 'rectangular',
+  });
+});
 
-        // Initialize queue checks
-        setTimeout(() => {
-            showSyncButton();
-            updateOnlineStatus();
-        }, 1000);
+async function handleGoogleLogin(response) {
+  const container = document.getElementById('auth-screen');
+  try {
+    if (!navigator.onLine) {
+      alert('Local Offline Access Bypass Enabled.');
+      activeSessionUser = { id: 'TECH-001', name: 'Offline Operator', role: 'Technician' };
+      document.getElementById('user-display-name').textContent = activeSessionUser.name;
+      document.getElementById('user-display-role').textContent =
+        `${activeSessionUser.id} â€¢ ${activeSessionUser.role}`;
+      container.classList.add('hidden');
+      document.getElementById('app-content').classList.remove('hidden');
+      return;
+    }
 
+    const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: response.credential }),
+    });
 
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Google login rejected');
 
-        // Google OAuth Sign-in Handlers
-        window.addEventListener("load", () => {
-            google.accounts.id.initialize({
-                client_id: "609507528219-2foc0ch65rkqkgdlvlihqagb6dqbmpcm.apps.googleusercontent.com", // Google OAuth Client ID binding
-                callback: handleGoogleLogin
-            });
-            google.accounts.id.renderButton(
-                document.getElementById("g-signin-btn"),
-                { theme: "dark", size: "large", type: "standard", shape: "rectangular" }
-            );
-        });
+    activeSessionUser = data.user;
+    document.getElementById('user-display-name').textContent = activeSessionUser.name;
+    document.getElementById('user-display-role').textContent =
+      `${activeSessionUser.id} â€¢ ${activeSessionUser.role}`;
 
-        async function handleGoogleLogin(response) {
-            const container = document.getElementById('auth-screen');
-            try {
-                if (!navigator.onLine) {
-                    alert("Local Offline Access Bypass Enabled.");
-                    activeSessionUser = { id: "TECH-001", name: "Offline Operator", role: "Technician" };
-                    document.getElementById('user-display-name').textContent = activeSessionUser.name;
-                    document.getElementById('user-display-role').textContent = `${activeSessionUser.id} â€¢ ${activeSessionUser.role}`;
-                    container.classList.add('hidden');
-                    document.getElementById('app-content').classList.remove('hidden');
-                    return;
-                }
+    container.classList.add('hidden');
+    document.getElementById('app-content').classList.remove('hidden');
+    fetchJobs();
+  } catch (err) {
+    alert('Access Denied: ' + err.message);
+  }
+}
 
-                const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: response.credential })
-                });
-                
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || "Google login rejected");
+window.addWorkstationRow = function (jobId) {
+  insertWorkstationRow(jobId, '', false, false, 'Pass');
+};
 
-                activeSessionUser = data.user;
-                document.getElementById('user-display-name').textContent = activeSessionUser.name;
-                document.getElementById('user-display-role').textContent = `${activeSessionUser.id} â€¢ ${activeSessionUser.role}`;
-                
-                container.classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                fetchJobs();
-            } catch (err) {
-                alert("Access Denied: " + err.message);
-            }
-        }
+window.removeWorkstationRow = function (btn) {
+  const row = btn.closest('tr');
+  if (row) row.remove();
+};
 
-        window.addWorkstationRow = function(jobId) {
-            insertWorkstationRow(jobId, "", false, false, "Pass");
-        }
+function insertWorkstationRow(jobId, deviceId, osUpdated, tempCleaned, smartStatus) {
+  const table = document.getElementById(`tbl-workstations-${jobId}`);
+  const tbody = table ? table.querySelector('tbody') : null;
+  if (!tbody) return;
 
-        window.removeWorkstationRow = function(btn) {
-            const row = btn.closest('tr');
-            if (row) row.remove();
-        }
-
-        function insertWorkstationRow(jobId, deviceId, osUpdated, tempCleaned, smartStatus) {
-            const table = document.getElementById(`tbl-workstations-${jobId}`);
-            const tbody = table ? table.querySelector('tbody') : null;
-            if (!tbody) return;
-
-            const tr = document.createElement('tr');
-            tr.className = "border-b border-white/5 hover:bg-white/[0.02] transition-all";
-            tr.innerHTML = `
+  const tr = document.createElement('tr');
+  tr.className = 'border-b border-white/5 hover:bg-white/[0.02] transition-all';
+  tr.innerHTML = `
                 <td class="py-2.5 pr-2">
                     <input type="text" name="ws_device_id" value="${deviceId}" placeholder="PC-01" class="w-full bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-white text-[10px] focus:outline-none focus:border-indigo-500 transition-all font-mono uppercase">
                 </td>
@@ -1317,26 +1409,26 @@
                     <button type="button" onclick="removeWorkstationRow(this)" class="w-6 h-6 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-all flex items-center justify-center font-bold text-[10px]">âœ•</button>
                 </td>
             `;
-            tbody.appendChild(tr);
-        }
+  tbody.appendChild(tr);
+}
 
-        window.openPhoto = function(event, jobId, fieldName) {
-            event.preventDefault();
-            // Fetch the job object from local memory or API to get base64Data
-            const form = event.target.closest('form');
-            if (!form) return;
-            
-            // If the user has already loaded/rendered jobs, they are in the DOM or cached
-            // For simplicity, we query the API or retrieve from DB directly, but we can also just fetch it:
-            fetch(`${API_BASE_URL}/api/jobs`)
-                .then(res => res.json())
-                .then(jobs => {
-                    const job = jobs.find(j => j.id === jobId);
-                    if (job && job[fieldName]) {
-                        const base64Data = job[fieldName];
-                        const w = window.open();
-                        if (w) {
-                            w.document.write(`
+window.openPhoto = function (event, jobId, fieldName) {
+  event.preventDefault();
+  // Fetch the job object from local memory or API to get base64Data
+  const form = event.target.closest('form');
+  if (!form) return;
+
+  // If the user has already loaded/rendered jobs, they are in the DOM or cached
+  // For simplicity, we query the API or retrieve from DB directly, but we can also just fetch it:
+  fetch(`${API_BASE_URL}/api/jobs`)
+    .then((res) => res.json())
+    .then((jobs) => {
+      const job = jobs.find((j) => j.id === jobId);
+      if (job && job[fieldName]) {
+        const base64Data = job[fieldName];
+        const w = window.open();
+        if (w) {
+          w.document.write(`
                                 <html>
                                 <head><title>View Uploaded Photo</title></head>
                                 <body style="margin:0; background:#070709; display:flex; align-items:center; justify-content:center; min-height:100vh;">
@@ -1344,86 +1436,87 @@
                                 </body>
                                 </html>
                             `);
-                            w.document.close();
-                        } else {
-                            alert("Popup blocked! Please allow popups for this site.");
-                        }
-                    } else {
-                        alert("Photo data not found or empty.");
-                    }
-                });
+          w.document.close();
+        } else {
+          alert('Popup blocked! Please allow popups for this site.');
         }
+      } else {
+        alert('Photo data not found or empty.');
+      }
+    });
+};
 
-        // --- MULTI-STATE CHECKLIST HELPERS ---
-        function getButtonColorClasses(state) {
-            switch(state) {
-                case 'Good':
-                    return 'bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-500/10';
-                case 'Repair':
-                    return 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600 shadow-md shadow-amber-500/10';
-                case 'Fixed':
-                    return 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600 shadow-md shadow-indigo-500/10';
-                case 'Change':
-                    return 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 shadow-md shadow-rose-500/10';
-                default:
-                    return 'bg-black/40 text-slate-500 border-white/5';
-            }
-        }
+// --- MULTI-STATE CHECKLIST HELPERS ---
+function getButtonColorClasses(state) {
+  switch (state) {
+    case 'Good':
+      return 'bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-500/10';
+    case 'Repair':
+      return 'bg-amber-500 text-white border-amber-500 hover:bg-amber-600 shadow-md shadow-amber-500/10';
+    case 'Fixed':
+      return 'bg-indigo-500 text-white border-indigo-500 hover:bg-indigo-600 shadow-md shadow-indigo-500/10';
+    case 'Change':
+      return 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600 shadow-md shadow-rose-500/10';
+    default:
+      return 'bg-black/40 text-slate-500 border-white/5';
+  }
+}
 
-        function selectStatusState(button, groupName, state) {
-            const container = button.closest(`[data-status-group="${groupName}"]`);
-            if (!container) return;
+function selectStatusState(button, groupName, state) {
+  const container = button.closest(`[data-status-group="${groupName}"]`);
+  if (!container) return;
 
-            // Reset all buttons in the group to default state
-            const buttons = container.querySelectorAll('.status-btn');
-            buttons.forEach(btn => {
-                btn.className = 'status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight bg-black/40 text-slate-500 border-white/5 hover:text-slate-300';
-            });
+  // Reset all buttons in the group to default state
+  const buttons = container.querySelectorAll('.status-btn');
+  buttons.forEach((btn) => {
+    btn.className =
+      'status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight bg-black/40 text-slate-500 border-white/5 hover:text-slate-300';
+  });
 
-            // Set the clicked button to active state classes
-            button.className = `status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight ${getButtonColorClasses(state)}`;
-        }
+  // Set the clicked button to active state classes
+  button.className = `status-btn flex-1 text-[9px] font-bold py-1 px-1.5 rounded-lg border transition-all text-center uppercase tracking-tight ${getButtonColorClasses(state)}`;
+}
 
-        // Bind helpers to window context
-        window.selectStatusState = selectStatusState;
-        window.getButtonColorClasses = getButtonColorClasses;
+// Bind helpers to window context
+window.selectStatusState = selectStatusState;
+window.getButtonColorClasses = getButtonColorClasses;
 
-        window.changeSecurityPin = async function(e) {
-            e.preventDefault();
-            if (!activeSessionUser) return alert("Session expired. Please log in first.");
+window.changeSecurityPin = async function (e) {
+  e.preventDefault();
+  if (!activeSessionUser) return alert('Session expired. Please log in first.');
 
-            const oldPin = document.getElementById('pin-current').value.trim();
-            const newPin = document.getElementById('pin-new').value.trim();
-            const confirmPin = document.getElementById('pin-new-confirm').value.trim();
+  const oldPin = document.getElementById('pin-current').value.trim();
+  const newPin = document.getElementById('pin-new').value.trim();
+  const confirmPin = document.getElementById('pin-new-confirm').value.trim();
 
-            if (newPin !== confirmPin) {
-                alert("New PIN inputs do not match!");
-                return;
-            }
+  if (newPin !== confirmPin) {
+    alert('New PIN inputs do not match!');
+    return;
+  }
 
-            const btn = document.getElementById('pin-btn');
-            btn.disabled = true;
-            btn.textContent = "Updating PIN...";
+  const btn = document.getElementById('pin-btn');
+  btn.disabled = true;
+  btn.textContent = 'Updating PIN...';
 
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/portal/change-pin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: activeSessionUser.id, oldPin, newPin })
-                });
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/portal/change-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: activeSessionUser.id, oldPin, newPin }),
+    });
 
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || "Failed to update PIN");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update PIN');
 
-                alert("PIN updated successfully!");
-                document.getElementById('pin-modal').classList.add('hidden');
-                document.getElementById('pin-current').value = '';
-                document.getElementById('pin-new').value = '';
-                document.getElementById('pin-new-confirm').value = '';
-            } catch (err) {
-                alert("Error updating PIN: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "Update Security PIN";
-            }
-        };
+    alert('PIN updated successfully!');
+    document.getElementById('pin-modal').classList.add('hidden');
+    document.getElementById('pin-current').value = '';
+    document.getElementById('pin-new').value = '';
+    document.getElementById('pin-new-confirm').value = '';
+  } catch (err) {
+    alert('Error updating PIN: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Update Security PIN';
+  }
+};

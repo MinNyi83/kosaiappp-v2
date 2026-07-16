@@ -7,14 +7,14 @@ TELEGRAM_BOT_TOKEN = "PASTE_YOUR_TELEGRAM_BOT_TOKEN_HERE"
 TELEGRAM_CHAT_ID = "PASTE_YOUR_TELEGRAM_CHAT_ID_OR_CHANNEL_ID"
 Use code with caution.Upgraded Worker Logic for BackupsAdd this scheduled event handler block directly to the bottom of your src/index.js file (outside your main export default { fetch(...) } block, or integrated within it as a sibling method) to handle the cron execution path:javascript// Append this method directly to the default export object inside src/index.js
 export default {
-  async fetch(request, env) {
-    // ... keep your existing fetch endpoint routing code exactly as it is here ...
-  },
+async fetch(request, env) {
+// ... keep your existing fetch endpoint routing code exactly as it is here ...
+},
 
-  async scheduled(event, env, ctx) {
-    // Scheduled execution pipeline for maintenance automation
-    console.log(`Cron trigger snapshot job executed at: ${event.scheduledTime}`);
-    
+async scheduled(event, env, ctx) {
+// Scheduled execution pipeline for maintenance automation
+console.log(`Cron trigger snapshot job executed at: ${event.scheduledTime}`);
+
     // Cloudflare D1 automatically captures systemic snapshots regularly.
     // This hook allows you to push an automated confirmation to your Telegram channel.
     if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
@@ -25,7 +25,8 @@ export default {
         body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: backupAlert, parse_mode: "Markdown" })
       });
     }
-  }
+
+}
 };
 Use code with caution.Run npx wrangler deploy to push the automation update live to your Cloudflare dashboard.Part 2: Upgraded Mobile Web Application with Pin-Pad AuthenticationFile: app.htmlReplace your previous mobile interface file with this version. It features a complete cryptographic gate sequence that hides operational jobs until a technician matches their registered unique identifier and passkey PIN against the live database cluster.html<!DOCTYPE html>
 <html lang="en">
@@ -97,14 +98,14 @@ Use code with caution.Run npx wrangler deploy to push the automation update live
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id, pin })
                 });
-                
+
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || "Authentication failed");
 
                 activeSessionUser = data.user;
                 document.getElementById('user-display-name').textContent = activeSessionUser.name;
                 document.getElementById('user-display-role').textContent = `${activeSessionUser.id} • Assigned ${activeSessionUser.role}`;
-                
+
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('app-content').classList.remove('hidden');
                 fetchJobs();
@@ -144,8 +145,8 @@ Use code with caution.Run npx wrangler deploy to push the automation update live
                 technicianJobs.forEach(job => {
                     const card = document.createElement('div');
                     card.className = "bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-4";
-                    let badgeColor = job.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
-                                     job.status === 'In Progress' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
+                    let badgeColor = job.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                                     job.status === 'In Progress' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
                                      'bg-blue-500/20 text-blue-400 border-blue-500/30';
 
                     card.innerHTML = `
@@ -221,6 +222,7 @@ Use code with caution.Run npx wrangler deploy to push the automation update live
             }
         }
     </script>
+
 </body>
 </html>
 ---
@@ -230,17 +232,20 @@ Use code with caution.Run npx wrangler deploy to push the automation update live
 This upgraded desktop interface includes secondary fetch loops to query and build dynamic HTML selection tags for clients and staff directly from your live database tables.
 
 ### Upgrade Requirements (Worker Code Adjustment)
+
 Ensure your `src/index.js` file has two supporting public API endpoints so your office forms can pull existing records dynamically:
+
 ```javascript
 // Add these simple lookups alongside your public GET endpoints inside src/index.js
-if (url.pathname === "/api/admin/lookups" && method === "GET") {
-  const clients = await env.DB.prepare("SELECT id, company_name FROM clients").all();
-  const techs = await env.DB.prepare("SELECT id, name FROM technicians WHERE active = 1").all();
+if (url.pathname === '/api/admin/lookups' && method === 'GET') {
+  const clients = await env.DB.prepare('SELECT id, company_name FROM clients').all();
+  const techs = await env.DB.prepare('SELECT id, name FROM technicians WHERE active = 1').all();
   return new Response(JSON.stringify({ clients: clients.results, technicians: techs.results }), {
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
   });
 }
 ```
+
 File: admin.htmlReplace your old admin module file with this fully responsive code configuration.html<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -276,7 +281,7 @@ File: admin.htmlReplace your old admin module file with this fully responsive co
                 <h2 class="text-lg font-bold text-white uppercase tracking-wide">🏢 Provision Client Profile</h2>
                 <form id="client-form" class="space-y-3" onsubmit="submitClient(event)">
                     <input type="text" name="id" placeholder="Account Key Identifier (e.g., CLI-103)" required class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white">
-                    
+
                     <input type="text" name="contact_person" placeholder="Primary Operations Contact Head" required class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white">
                     <input type="text" name="address" placeholder="Physical Logistics Address Location" required class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white">
                     <input type="text" name="phone" placeholder="Contact Mobile Sequence Line" required class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white">
@@ -289,7 +294,7 @@ File: admin.htmlReplace your old admin module file with this fully responsive co
                 <h2 class="text-lg font-bold text-white uppercase tracking-wide">🛠️ Dispatch Field Assignment</h2>
                 <form id="job-form" class="space-y-3" onsubmit="submitJob(event)">
                     <input type="text" name="id" placeholder="New Ticket Identifier (e.g., JOB-203)" required class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white">
-                    
+
                     <div>
                         <label class="block text-xs font-bold text-slate-400 mb-1">Target Client Corporate Account</label>
                         <select id="lookup-client" name="client_id" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:border-indigo-500"></select>
@@ -355,13 +360,13 @@ File: admin.htmlReplace your old admin module file with this fully responsive co
         async function sendAdminRequest(endpoint, payload) {
             const baseUrl = document.getElementById('api-base').value;
             const secret = document.getElementById('admin-secret').value;
-            
+
             const res = await fetch(`${baseUrl}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
                 body: JSON.stringify(payload)
             });
-            
+
             const data = await res.json();
             if (res.ok) {
                 alert("Operation executed successfully.");
@@ -385,5 +390,6 @@ File: admin.htmlReplace your old admin module file with this fully responsive co
             e.target.reset();
         }
     </script>
+
 </body>
 </html>

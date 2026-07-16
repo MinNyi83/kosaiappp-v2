@@ -29,15 +29,11 @@
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
-          "parameters": [
-            { "name": "low_stock", "value": "true" }
-          ]
+          "parameters": [{ "name": "low_stock", "value": "true" }]
         },
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -97,7 +93,10 @@
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "items", "value": "={{ JSON.stringify($json.criticalItems.map(i => ({ item_id: i.id, quantity: i.min_stock * 2 - i.quantity, reason: 'auto-reorder-critical' }))) }}" },
+            {
+              "name": "items",
+              "value": "={{ JSON.stringify($json.criticalItems.map(i => ({ item_id: i.id, quantity: i.min_stock * 2 - i.quantity, reason: 'auto-reorder-critical' }))) }}"
+            },
             { "name": "priority", "value": "high" },
             { "name": "source", "value": "n8n-auto-reorder" }
           ]
@@ -121,13 +120,13 @@
   ],
   "connections": {
     "Cron - Daily 8 AM": {
-      "main": [[ { "node": "GET /api/inventory?low_stock=true", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "GET /api/inventory?low_stock=true", "type": "main", "index": 0 }]]
     },
     "GET /api/inventory?low_stock=true": {
-      "main": [[ { "node": "Format Alert Message", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Format Alert Message", "type": "main", "index": 0 }]]
     },
     "Format Alert Message": {
-      "main": [[ { "node": "Check if Alert Needed", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Check if Alert Needed", "type": "main", "index": 0 }]]
     },
     "Check if Alert Needed": {
       "main": [
@@ -136,7 +135,7 @@
       ]
     },
     "Telegram - Inventory Alert": {
-      "main": [[ { "node": "POST /api/purchase-orders (auto)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/purchase-orders (auto)", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

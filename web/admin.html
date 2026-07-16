@@ -1,12 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AwesomeMyanmar - HQ Dispatch Console</title>
-    <link rel="stylesheet" href="public/tailwind.css">
+    <link rel="stylesheet" href="public/tailwind.css" />
     <!-- Google Fonts: Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <!-- jsPDF Module -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Leaflet.js (Map Component) -->
@@ -17,1086 +20,2020 @@
     <!-- Google Identity Services (Sign-In) SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- FullCalendar.js (Scheduler Component) -->
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
-        body {
-            font-family: "Plus Jakarta Sans", sans-serif;
-            background: #09090b;
-        }
-        .glass-panel {
-            background: rgba(18, 18, 24, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.2); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.4); }
-        /* Leaflet Dark Theme Overrides */
-        .leaflet-container { background: #0f172a !important; }
-        .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
-        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-            background-color: #0f172a !important;
-            color: #cbd5e1 !important;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        /* ── Mobile Sidebar ── */
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: #09090b;
+      }
+      .glass-panel {
+        background: rgba(18, 18, 24, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(245, 158, 11, 0.2);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(245, 158, 11, 0.4);
+      }
+      /* Leaflet Dark Theme Overrides */
+      .leaflet-container {
+        background: #0f172a !important;
+      }
+      .leaflet-tile {
+        filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+      }
+      .leaflet-popup-content-wrapper,
+      .leaflet-popup-tip {
+        background-color: #0f172a !important;
+        color: #cbd5e1 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      /* ── Mobile Sidebar ── */
+      #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 260px;
+        z-index: 40;
+        transform: translateX(-100%);
+        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+      }
+      #sidebar.open {
+        transform: translateX(0);
+      }
+      #sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(2px);
+        z-index: 39;
+      }
+      #sidebar-overlay.open {
+        display: block;
+      }
+      @media (min-width: 1024px) {
         #sidebar {
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            width: 260px;
-            z-index: 40;
-            transform: translateX(-100%);
-            transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-            overflow-y: auto;
+          position: relative;
+          transform: translateX(0) !important;
+          width: 256px;
+          flex-shrink: 0;
         }
-        #sidebar.open { transform: translateX(0); }
         #sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(2px);
-            z-index: 39;
+          display: none !important;
         }
-        #sidebar-overlay.open { display: block; }
-        @media (min-width: 1024px) {
-            #sidebar {
-                position: relative;
-                transform: translateX(0) !important;
-                width: 256px;
-                flex-shrink: 0;
-            }
-            #sidebar-overlay { display: none !important; }
-            #hamburger-btn { display: none !important; }
+        #hamburger-btn {
+          display: none !important;
         }
-        /* Smooth tab transitions */
-        .tab-view { animation: fadeIn 0.2s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+      }
+      /* Smooth tab transitions */
+      .tab-view {
+        animation: fadeIn 0.2s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
     </style>
-</head>
-<body class="text-slate-200 min-h-screen flex overflow-x-hidden">
-
+  </head>
+  <body class="text-slate-200 min-h-screen flex overflow-x-hidden">
     <!-- Google Auth Lock Screen Gateway (Restored for Admin verification) -->
-    <div id="auth-screen" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="glass-panel p-8 rounded-3xl shadow-2xl max-w-sm w-full space-y-6 text-center border border-white/10">
-            <div class="inline-flex p-3 rounded-2xl bg-amber-500/10 text-amber-500 mb-1 text-xl">🛡️</div>
-            <h1 class="text-2xl font-extrabold tracking-wider text-white uppercase">DISPATCH GATEWAY</h1>
-            <p class="text-xs text-amber-500 uppercase font-bold tracking-widest">Admin Authorization Required</p>
-            
-            <!-- Password Login Container -->
-            <form id="login-password-container" onsubmit="handlePasswordLogin(event)" class="space-y-4 text-left py-2">
-                <div>
-                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Username</label>
-                    <input type="text" id="login-username" required placeholder="Enter username" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                </div>
-                <div>
-                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Password</label>
-                    <input type="password" id="login-password" required placeholder="Enter password" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                </div>
-                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Sign In</button>
-            </form>
+    <div
+      id="auth-screen"
+      class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="glass-panel p-8 rounded-3xl shadow-2xl max-w-sm w-full space-y-6 text-center border border-white/10"
+      >
+        <div class="inline-flex p-3 rounded-2xl bg-amber-500/10 text-amber-500 mb-1 text-xl">
+          🛡️
         </div>
+        <h1 class="text-2xl font-extrabold tracking-wider text-white uppercase">
+          DISPATCH GATEWAY
+        </h1>
+        <p class="text-xs text-amber-500 uppercase font-bold tracking-widest">
+          Admin Authorization Required
+        </p>
+
+        <!-- Password Login Container -->
+        <form
+          id="login-password-container"
+          onsubmit="handlePasswordLogin(event)"
+          class="space-y-4 text-left py-2"
+        >
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1"
+              >Username</label
+            >
+            <input
+              type="text"
+              id="login-username"
+              required
+              placeholder="Enter username"
+              class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1"
+              >Password</label
+            >
+            <input
+              type="password"
+              id="login-password"
+              required
+              placeholder="Enter password"
+              class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition"
+          >
+            Sign In
+          </button>
+        </form>
+      </div>
     </div>
 
     <!-- Hidden Configuration Fields to bind existing scripts -->
-    <input type="hidden" id="api-base" value="https://awesomemyanmar.pages.dev">
-    <input type="hidden" id="admin-secret" value="SuperSecureAdminPass123!">
+    <input type="hidden" id="api-base" value="https://awesomemyanmar.pages.dev" />
+    <input type="hidden" id="admin-secret" value="SuperSecureAdminPass123!" />
 
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebar-overlay" onclick="closeSidebar()"></div>
 
     <!-- Left Sidebar Navigation Layout -->
     <aside id="sidebar" class="bg-[#0c0c10] border-r border-white/5 flex flex-col">
-        <!-- Logo and Brand -->
-        <div class="p-5 border-b border-white/5 flex items-center gap-2">
-            <span class="text-amber-500 text-lg">⚙️</span>
-            <span class="font-extrabold text-white tracking-wider text-sm uppercase">AwesomeMyanmar</span>
-            <span class="text-[9px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded font-bold">v1.1</span>
-            <!-- Close button (mobile only) -->
-            <button onclick="closeSidebar()" class="ml-auto text-slate-400 hover:text-white text-xl leading-none lg:hidden">✕</button>
+      <!-- Logo and Brand -->
+      <div class="p-5 border-b border-white/5 flex items-center gap-2">
+        <span class="text-amber-500 text-lg">⚙️</span>
+        <span class="font-extrabold text-white tracking-wider text-sm uppercase"
+          >AwesomeMyanmar</span
+        >
+        <span class="text-[9px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded font-bold"
+          >v1.1</span
+        >
+        <!-- Close button (mobile only) -->
+        <button
+          onclick="closeSidebar()"
+          class="ml-auto text-slate-400 hover:text-white text-xl leading-none lg:hidden"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Navigation Menu Links -->
+      <nav class="flex-1 p-4 space-y-6 overflow-y-auto">
+        <!-- ACCOUNTING & HR Section -->
+        <div class="space-y-1.5">
+          <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
+            Accounting & HR
+          </p>
+          <a
+            href="#"
+            onclick="
+              switchTab('currency');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>💵</span> Currency & Rates
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('reports');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>📄</span> Reports
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('distributors');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>🏢</span> Distributors
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('system-settings');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>⚙️</span> System Settings
+          </a>
         </div>
 
-        <!-- Navigation Menu Links -->
-        <nav class="flex-1 p-4 space-y-6 overflow-y-auto">
-            <!-- ACCOUNTING & HR Section -->
-            <div class="space-y-1.5">
-                <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">Accounting & HR</p>
-                <a href="#" onclick="switchTab('currency'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>💵</span> Currency & Rates
-                </a>
-                <a href="#" onclick="switchTab('reports'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>📄</span> Reports
-                </a>
-                <a href="#" onclick="switchTab('distributors'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>🏢</span> Distributors
-                </a>
-                <a href="#" onclick="switchTab('system-settings'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>⚙️</span> System Settings
-                </a>
-            </div>
+        <!-- MAINTENANCE OPS Section -->
+        <div class="space-y-1.5">
+          <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
+            Maintenance Ops
+          </p>
+          <a
+            href="#"
+            id="default-tab-link"
+            onclick="
+              switchTab('dashboard');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-500 transition-all"
+          >
+            <span>📊</span> Operations Dashboard
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('tickets');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>🎫</span> Service Tickets
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('amc');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>🤝</span> Maintenance (AMC)
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('warranty');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>🛡️</span> Warranty & RMA
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('system-settings');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>👷</span> User Management
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('inventory');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>📦</span> Inventory Items
+          </a>
+        </div>
 
-            <!-- MAINTENANCE OPS Section -->
-            <div class="space-y-1.5">
-                <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">Maintenance Ops</p>
-                <a href="#" id="default-tab-link" onclick="switchTab('dashboard'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-500 transition-all">
-                    <span>📊</span> Operations Dashboard
-                </a>
-                <a href="#" onclick="switchTab('tickets'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>🎫</span> Service Tickets
-                </a>
-                <a href="#" onclick="switchTab('amc'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>🤝</span> Maintenance (AMC)
-                </a>
-                <a href="#" onclick="switchTab('warranty'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>🛡️</span> Warranty & RMA
-                </a>
-                <a href="#" onclick="switchTab('system-settings'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>👷</span> User Management
-                </a>
-                <a href="#" onclick="switchTab('inventory'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>📦</span> Inventory Items
-                </a>
-            </div>
-
-            <!-- SYSTEM Section -->
-            <div class="space-y-1.5">
-                <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">System</p>
-                <a href="#" onclick="switchTab('system-settings'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span>⚙️</span> Deployment / Mounts
-                </a>
-            </div>
-        </nav>
+        <!-- SYSTEM Section -->
+        <div class="space-y-1.5">
+          <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
+            System
+          </p>
+          <a
+            href="#"
+            onclick="
+              switchTab('system-settings');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>⚙️</span> Deployment / Mounts
+          </a>
+        </div>
+      </nav>
     </aside>
 
     <!-- Main Workspace Area -->
     <div class="flex-1 flex flex-col min-w-0 bg-[#09090b]">
-        <!-- Main Top Bar Header Control Desk -->
-        <header class="h-14 border-b border-white/5 px-4 md:px-8 flex items-center justify-between shrink-0 bg-[#0c0c10] gap-3">
-            <!-- Hamburger + Path -->
-            <div class="flex items-center gap-3">
-                <!-- Hamburger Menu (mobile only) -->
-                <button id="hamburger-btn" onclick="openSidebar()" class="text-slate-300 hover:text-amber-400 transition p-1 rounded-lg" aria-label="Open menu">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
+      <!-- Main Top Bar Header Control Desk -->
+      <header
+        class="h-14 border-b border-white/5 px-4 md:px-8 flex items-center justify-between shrink-0 bg-[#0c0c10] gap-3"
+      >
+        <!-- Hamburger + Path -->
+        <div class="flex items-center gap-3">
+          <!-- Hamburger Menu (mobile only) -->
+          <button
+            id="hamburger-btn"
+            onclick="openSidebar()"
+            class="text-slate-300 hover:text-amber-400 transition p-1 rounded-lg"
+            aria-label="Open menu"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+            <span class="hidden sm:inline">AwesomeMyanmar /</span>
+            <span class="text-white" id="current-path-display">Dashboard</span>
+          </div>
+        </div>
+
+        <!-- Controls (Tech Portal, Signout) -->
+        <div class="flex items-center gap-2 md:gap-4">
+          <a
+            href="./app.html"
+            target="_blank"
+            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider px-2.5 md:px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5"
+          >
+            🚀 <span class="hidden sm:inline">Technician Portal</span
+            ><span class="sm:hidden">Portal</span>
+          </a>
+          <button
+            onclick="handleLogout()"
+            class="text-rose-400 hover:text-rose-300 text-[10px] font-bold uppercase tracking-widest"
+          >
+            <span class="hidden sm:inline">Sign Out</span><span class="sm:hidden">⏻</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content Area Scroll Container -->
+      <main class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8">
+        <!-- 1. OPERATIONS DASHBOARD VIEW -->
+        <div id="view-dashboard" class="space-y-8 tab-view">
+          <!-- Dashboard Welcome Row -->
+          <div class="flex justify-between items-center">
+            <div>
+              <h1 class="text-2xl font-black text-white uppercase tracking-tight">Dashboard</h1>
+              <p class="text-xs text-slate-400 mt-1">
+                Store operations, job logs, and sales overview.
+              </p>
+            </div>
+            <button
+              onclick="switchTab('tickets')"
+              class="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-wider"
+            >
+              + New Service Ticket
+            </button>
+          </div>
+
+          <!-- Stats Widgets Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- Widget 1: Active Tickets -->
+            <div
+              class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden"
+            >
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >Active Tickets</span
+                >
+                <span class="text-slate-500 text-sm">🎫</span>
+              </div>
+              <div>
+                <span class="text-3xl font-extrabold text-white" id="stat-active-tickets">2</span>
+                <span class="block text-[10px] text-slate-400 mt-1"
+                  >1 pending assignment / diagnostics</span
+                >
+              </div>
+            </div>
+            <!-- Widget 2: Total Revenue -->
+            <div
+              class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden"
+            >
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >Total Revenue</span
+                >
+                <span class="text-slate-500 text-sm">💵</span>
+              </div>
+              <div>
+                <span class="text-3xl font-extrabold text-white" id="stat-total-revenue"
+                  >$1,835.00</span
+                >
+                <span class="block text-[10px] text-amber-500 mt-1 font-mono">9,315,000 MMK</span>
+              </div>
+            </div>
+            <!-- Widget 3: Technicians On Site -->
+            <div
+              class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden"
+            >
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >Technicians On Site</span
+                >
+                <span class="text-slate-500 text-sm">👷</span>
+              </div>
+              <div>
+                <span class="text-3xl font-extrabold text-white" id="stat-techs-onsite">1</span>
+                <span class="block text-[10px] text-slate-400 mt-1">Out of 4 total engineers</span>
+              </div>
+            </div>
+            <!-- Widget 4: Upcoming AMC Checks -->
+            <div
+              class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden"
+            >
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                  >Upcoming AMC Checks</span
+                >
+                <span class="text-slate-500 text-sm">🤝</span>
+              </div>
+              <div>
+                <span class="text-3xl font-extrabold text-white" id="stat-amc-checks">1</span>
+                <span class="block text-[10px] text-slate-400 mt-1">Due in the next 30 days</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Tickets Table -->
+          <div class="glass-panel rounded-2xl p-6 space-y-4">
+            <div class="flex justify-between items-center">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                Recent Active Tickets
+              </h2>
+              <button
+                onclick="switchTab('tickets')"
+                class="bg-white/5 border border-white/10 hover:bg-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-300 px-3 py-1.5 rounded-lg"
+              >
+                View All Tickets
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left">
+                <thead>
+                  <tr
+                    class="text-slate-500 border-b border-white/5 pb-2 uppercase tracking-widest text-[9px]"
+                  >
+                    <th class="pb-3">Ticket ID</th>
+                    <th class="pb-3">Customer</th>
+                    <th class="pb-3">Job Category</th>
+                    <th class="pb-3">Assigned Tech</th>
+                    <th class="pb-3">Status</th>
+                    <th class="pb-3">Service Fee</th>
+                    <th class="pb-3">Created Date</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-tickets-body" class="divide-y divide-white/5">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Leaflet Live Map & Calendar Scheduler Row -->
+          <div class="grid md:grid-cols-2 gap-8">
+            <!-- Live Field Map -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                📍 Live Field Dispatch Map
+              </h2>
+              <div
+                id="map"
+                class="h-80 rounded-xl border border-white/10 overflow-hidden shadow-inner relative z-10"
+              ></div>
+            </div>
+            <!-- Calendar Scheduler -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                📅 Monthly Dispatch Calendar
+              </h2>
+              <div
+                id="calendar"
+                class="p-2 bg-black/40 rounded-xl border border-white/5 text-xs text-slate-300"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Analytics Charts Row -->
+          <div class="grid md:grid-cols-2 gap-8">
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                Job Allocation by Status
+              </h2>
+              <canvas id="chart-status" class="max-h-64"></canvas>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                System Category Metrics
+              </h2>
+              <canvas id="chart-category" class="max-h-64"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. SERVICE TICKETS MANAGEMENT VIEW -->
+        <div id="view-tickets" class="space-y-8 tab-view hidden">
+          <div>
+            <h1 class="text-2xl font-black text-white uppercase tracking-tight">Service Tickets</h1>
+            <p class="text-xs text-slate-400 mt-1">
+              Dispatch new jobs, track active dispatches, and print compliant PDFs.
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-8">
+            <!-- Left: Dispatch Form -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
+              <h2
+                class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
+              >
+                <span class="text-amber-500">🎫</span> Dispatch Service Ticket
+              </h2>
+              <form id="job-form" class="space-y-4" onsubmit="submitJob(event)">
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >New Ticket ID</label
+                  >
+                  <input
+                    type="text"
+                    name="id"
+                    placeholder="e.g., JOB-203"
+                    required
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Service Domain</label
+                  >
+                  <select
+                    name="service_type"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
+                  >
+                    <option value="CCTV">CCTV Surveillance Array</option>
+                    <option value="Networking">Core Infrastructure Networking</option>
+                    <option value="WiFi">WiFi Mesh Deployment</option>
+                    <option value="NAS">NAS Storage Cluster</option>
+                    <option value="General Maintenance">General Maintenance</option>
+                  </select>
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Service Type Category</label
+                  >
+                  <select
+                    name="customer_type"
+                    onchange="toggleCustomerTypeFields(this.value)"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
+                  >
+                    <option value="Annual">Annual Member (AMC Contract)</option>
+                    <option value="Individual">Individual Service (One-off Client)</option>
+                  </select>
+                </div>
+                <div id="corporate-client-field" class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Target Client Corporate Account</label
+                  >
+                  <input
+                    type="text"
+                    id="lookup-client-search"
+                    placeholder="Type to search corporate account..."
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
+                    list="corporate-clients-datalist"
+                    autocomplete="off"
+                  />
+                  <input type="hidden" id="lookup-client" name="client_id" />
+                  <datalist id="corporate-clients-datalist"></datalist>
+                </div>
+                <div
+                  id="individual-customer-fields"
+                  class="space-y-3 hidden border-l-2 border-amber-500/50 pl-3"
+                >
+                  <div class="space-y-1">
+                    <label
+                      class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                      >Customer / Contact Name</label
+                    >
+                    <input
+                      type="text"
+                      id="lookup-individual-search"
+                      name="customer_name"
+                      placeholder="Type to search or enter new name..."
+                      class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
+                      list="individual-clients-datalist"
+                      autocomplete="off"
+                    />
+                    <datalist id="individual-clients-datalist"></datalist>
+                  </div>
+                  <div class="space-y-1">
+                    <label
+                      class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                      >Contact Phone</label
+                    >
+                    <input
+                      type="text"
+                      name="customer_phone"
+                      placeholder="Mobile number"
+                      class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono"
+                    />
+                  </div>
+                  <div class="space-y-1">
+                    <label
+                      class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                      >Service Site Address</label
+                    >
+                    <input
+                      type="text"
+                      name="customer_address"
+                      placeholder="Physical location of service"
+                      class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
+                    />
+                  </div>
+                  <div class="space-y-1">
+                    <label
+                      class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                      >Google Maps Link (Optional)</label
+                    >
+                    <input
+                      type="text"
+                      id="job-maps-url"
+                      placeholder="https://maps.app.goo.gl/..."
+                      oninput="resolveJobMapsUrlToCoords(this.value)"
+                      class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
+                    />
+                    <span id="job-resolve-status" class="block text-[8px] text-slate-500 mt-1"
+                      >Coordinates: Not resolved yet</span
+                    >
+                  </div>
+                  <input type="hidden" name="arrival_lat" id="job-lat" value="" />
+                  <input type="hidden" name="arrival_lng" id="job-lng" value="" />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Assigned Operational Engineer</label
+                  >
+                  <select
+                    id="lookup-tech"
+                    name="technician_id"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
+                  ></select>
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Statement of Scope</label
+                  >
+                  <textarea
+                    name="job_description"
+                    placeholder="Technical instructions & specific service scope metrics..."
+                    required
+                    rows="3"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all resize-none"
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/10"
+                >
+                  Commit Ticket
                 </button>
-                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-                    <span class="hidden sm:inline">AwesomeMyanmar /</span>
-                    <span class="text-white" id="current-path-display">Dashboard</span>
-                </div>
+              </form>
             </div>
 
-            <!-- Controls (Tech Portal, Signout) -->
-            <div class="flex items-center gap-2 md:gap-4">
-                <a href="./app.html" target="_blank" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider px-2.5 md:px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5">
-                    🚀 <span class="hidden sm:inline">Technician Portal</span><span class="sm:hidden">Portal</span>
-                </a>
-                <button onclick="handleLogout()" class="text-rose-400 hover:text-rose-300 text-[10px] font-bold uppercase tracking-widest">
-                    <span class="hidden sm:inline">Sign Out</span><span class="sm:hidden">⏻</span>
+            <!-- Right: Jobs Table & PDF Generator -->
+            <div class="glass-panel p-6 rounded-2xl space-y-6 md:col-span-2">
+              <!-- PDF Generation Panel -->
+              <div class="space-y-2 border-b border-white/5 pb-4">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                  📄 Generate Compliant PDF Service Receipts
+                </h2>
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    id="pdf-target-job-id"
+                    placeholder="Target Ticket ID (e.g., JOB-201)"
+                    class="bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-amber-500 flex-1"
+                  />
+                  <button
+                    onclick="generateServiceReceiptPDF()"
+                    class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl whitespace-nowrap transition-all uppercase tracking-wider"
+                  >
+                    Compile & Print
+                  </button>
+                </div>
+              </div>
+
+              <!-- Full Jobs Table -->
+              <div class="space-y-3">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Ticket Logs</h2>
+                <div
+                  class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[300px] overflow-y-auto"
+                >
+                  <table class="w-full text-xs text-left">
+                    <thead>
+                      <tr class="text-slate-500 border-b border-white/5 pb-2">
+                        <th class="pb-2">ID</th>
+                        <th class="pb-2">Client</th>
+                        <th class="pb-2">Tech</th>
+                        <th class="pb-2">Service</th>
+                        <th class="pb-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="full-jobs-body">
+                      <!-- Loaded dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. MAINTENANCE (AMC) CONTRACTS VIEW -->
+        <div id="view-amc" class="space-y-8 tab-view hidden">
+          <div>
+            <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+              Maintenance (AMC) Contracts
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">
+              Register new client accounts and configure Annual Maintenance Contracts (AMC).
+            </p>
+          </div>
+
+          <div class="max-w-xl glass-panel p-6 rounded-2xl space-y-4">
+            <h2
+              class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
+            >
+              <span class="text-amber-500">🏢</span> Provision Client Profile
+            </h2>
+            <form id="client-form" class="space-y-4" onsubmit="submitClient(event)">
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Client Account ID</label
+                >
+                <input
+                  type="text"
+                  name="id"
+                  placeholder="e.g., CLI-103"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Company Name</label
+                >
+                <input
+                  type="text"
+                  name="company_name"
+                  placeholder="Legal Enterprise Company Name"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Primary Contact Manager</label
+                >
+                <input
+                  type="text"
+                  name="contact_person"
+                  placeholder="Primary Operations Manager Head"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Installation Address</label
+                >
+                <input
+                  type="text"
+                  name="address"
+                  placeholder="Physical Logistics Site Location"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Contact Phone Line</label
+                >
+                <input
+                  type="text"
+                  name="phone"
+                  placeholder="Contact Mobile Sequence Line"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
+                />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >AMC Start Date</label
+                  >
+                  <input
+                    type="date"
+                    name="amc_start"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >AMC End Date</label
+                  >
+                  <input
+                    type="date"
+                    name="amc_end"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >AMC Contract Status</label
+                >
+                <select
+                  name="amc_status"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                >
+                  <option value="Active" class="bg-slate-900">Active Contract</option>
+                  <option value="Inactive" class="bg-slate-900" selected>
+                    Inactive / Suspended
+                  </option>
+                  <option value="Expired" class="bg-slate-900">Expired Contract</option>
+                  <option value="No AMC" class="bg-slate-900">No AMC</option>
+                  <option value="Individual" class="bg-slate-900">Individual Customer</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/10"
+              >
+                Save Client Profile
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 4. CURRENCY & LEDGER VIEW -->
+        <div id="view-currency" class="space-y-8 tab-view hidden">
+          <div>
+            <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+              Currency & Cash Safe Ledger
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">
+              Audit cash balances, log safe withdrawals, and manage equivalent local currencies.
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-8">
+            <!-- Balance Summary -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                🏦 Vault Balance Summary
+              </h2>
+              <div class="space-y-4">
+                <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                  <span class="block text-[10px] text-slate-500 uppercase tracking-wider font-bold"
+                    >Safe Balance (USD)</span
+                  >
+                  <span id="safe-usd-balance" class="text-2xl font-bold text-amber-500">$0.00</span>
+                </div>
+                <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                  <span class="block text-[10px] text-slate-500 uppercase tracking-wider font-bold"
+                    >Safe Balance (MMK)</span
+                  >
+                  <span id="safe-mmk-balance" class="text-2xl font-bold text-slate-300">0 Ks</span>
+                </div>
+              </div>
+
+              <!-- Form: Record Transaction -->
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider pt-4">
+                Log Safe Transaction
+              </h2>
+              <form onsubmit="submitCashTransaction(event)" class="space-y-3">
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Tx Type</label
+                  >
+                  <select
+                    id="cash-type"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  >
+                    <option value="Deposit" class="bg-slate-900">Deposit / Inflow</option>
+                    <option value="Withdrawal" class="bg-slate-900">Withdrawal / Expense</option>
+                  </select>
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Currency</label
+                  >
+                  <select
+                    id="cash-currency"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  >
+                    <option value="USD" class="bg-slate-900">USD</option>
+                    <option value="MMK" class="bg-slate-900">MMK</option>
+                  </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="space-y-1">
+                    <label
+                      class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                      >Amount</label
+                    >
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="cash-amount"
+                      placeholder="e.g. 500"
+                      required
+                      class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
+                    />
+                  </div>
+                  <div class="space-y-1">
+                    <label
+                      class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                      >Rate</label
+                    >
+                    <input
+                      type="number"
+                      step="0.1"
+                      id="cash-rate"
+                      value="4500"
+                      required
+                      class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
+                    />
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Linked Job ID</label
+                  >
+                  <input
+                    type="text"
+                    id="cash-job-id"
+                    placeholder="JOB-201 (Optional)"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Notes</label
+                  >
+                  <input
+                    type="text"
+                    id="cash-notes"
+                    placeholder="Transaction notes"
+                    required
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider"
+                >
+                  Execute Transaction
                 </button>
-            </div>
-        </header>
-
-        <!-- Main Content Area Scroll Container -->
-        <main class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8">
-
-            <!-- 1. OPERATIONS DASHBOARD VIEW -->
-            <div id="view-dashboard" class="space-y-8 tab-view">
-                <!-- Dashboard Welcome Row -->
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-black text-white uppercase tracking-tight">Dashboard</h1>
-                        <p class="text-xs text-slate-400 mt-1">Store operations, job logs, and sales overview.</p>
-                    </div>
-                    <button onclick="switchTab('tickets')" class="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-wider">
-                        + New Service Ticket
-                    </button>
-                </div>
-
-                <!-- Stats Widgets Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <!-- Widget 1: Active Tickets -->
-                    <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Tickets</span>
-                            <span class="text-slate-500 text-sm">🎫</span>
-                        </div>
-                        <div>
-                            <span class="text-3xl font-extrabold text-white" id="stat-active-tickets">2</span>
-                            <span class="block text-[10px] text-slate-400 mt-1">1 pending assignment / diagnostics</span>
-                        </div>
-                    </div>
-                    <!-- Widget 2: Total Revenue -->
-                    <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Revenue</span>
-                            <span class="text-slate-500 text-sm">💵</span>
-                        </div>
-                        <div>
-                            <span class="text-3xl font-extrabold text-white" id="stat-total-revenue">$1,835.00</span>
-                            <span class="block text-[10px] text-amber-500 mt-1 font-mono">9,315,000 MMK</span>
-                        </div>
-                    </div>
-                    <!-- Widget 3: Technicians On Site -->
-                    <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Technicians On Site</span>
-                            <span class="text-slate-500 text-sm">👷</span>
-                        </div>
-                        <div>
-                            <span class="text-3xl font-extrabold text-white" id="stat-techs-onsite">1</span>
-                            <span class="block text-[10px] text-slate-400 mt-1">Out of 4 total engineers</span>
-                        </div>
-                    </div>
-                    <!-- Widget 4: Upcoming AMC Checks -->
-                    <div class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upcoming AMC Checks</span>
-                            <span class="text-slate-500 text-sm">🤝</span>
-                        </div>
-                        <div>
-                            <span class="text-3xl font-extrabold text-white" id="stat-amc-checks">1</span>
-                            <span class="block text-[10px] text-slate-400 mt-1">Due in the next 30 days</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Active Tickets Table -->
-                <div class="glass-panel rounded-2xl p-6 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Recent Active Tickets</h2>
-                        <button onclick="switchTab('tickets')" class="bg-white/5 border border-white/10 hover:bg-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-300 px-3 py-1.5 rounded-lg">View All Tickets</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-left">
-                            <thead>
-                                <tr class="text-slate-500 border-b border-white/5 pb-2 uppercase tracking-widest text-[9px]">
-                                    <th class="pb-3">Ticket ID</th>
-                                    <th class="pb-3">Customer</th>
-                                    <th class="pb-3">Job Category</th>
-                                    <th class="pb-3">Assigned Tech</th>
-                                    <th class="pb-3">Status</th>
-                                    <th class="pb-3">Service Fee</th>
-                                    <th class="pb-3">Created Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dashboard-tickets-body" class="divide-y divide-white/5">
-                                <!-- Loaded dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Leaflet Live Map & Calendar Scheduler Row -->
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Live Field Map -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">📍 Live Field Dispatch Map</h2>
-                        <div id="map" class="h-80 rounded-xl border border-white/10 overflow-hidden shadow-inner relative z-10"></div>
-                    </div>
-                    <!-- Calendar Scheduler -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">📅 Monthly Dispatch Calendar</h2>
-                        <div id="calendar" class="p-2 bg-black/40 rounded-xl border border-white/5 text-xs text-slate-300"></div>
-                    </div>
-                </div>
-
-                <!-- Analytics Charts Row -->
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Job Allocation by Status</h2>
-                        <canvas id="chart-status" class="max-h-64"></canvas>
-                    </div>
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">System Category Metrics</h2>
-                        <canvas id="chart-category" class="max-h-64"></canvas>
-                    </div>
-                </div>
+              </form>
             </div>
 
-            <!-- 2. SERVICE TICKETS MANAGEMENT VIEW -->
-            <div id="view-tickets" class="space-y-8 tab-view hidden">
-                <div>
-                    <h1 class="text-2xl font-black text-white uppercase tracking-tight">Service Tickets</h1>
-                    <p class="text-xs text-slate-400 mt-1">Dispatch new jobs, track active dispatches, and print compliant PDFs.</p>
-                </div>
+            <!-- Ledger Table -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                Transaction Ledger Log
+              </h2>
+              <div
+                class="bg-black/30 rounded-xl border border-white/5 p-4 max-h-[500px] overflow-y-auto"
+              >
+                <table class="w-full text-xs text-left">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-white/5 pb-2">
+                      <th class="pb-2">Date</th>
+                      <th class="pb-2">Type</th>
+                      <th class="pb-2">Amount</th>
+                      <th class="pb-2">Rate</th>
+                      <th class="pb-2">Local Value (MMK)</th>
+                      <th class="pb-2">Memo</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cash-ledger-body">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="flex justify-between items-center text-[10px] pt-2">
+                <button
+                  type="button"
+                  onclick="changeCashPage(-1)"
+                  class="bg-white/5 border border-white/10 text-slate-300 font-bold px-3 py-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50"
+                  id="btn-cash-prev"
+                >
+                  Prev
+                </button>
+                <span class="text-slate-400 font-mono" id="cash-page-indicator">Page 1 of 1</span>
+                <button
+                  type="button"
+                  onclick="changeCashPage(1)"
+                  class="bg-white/5 border border-white/10 text-slate-300 font-bold px-3 py-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50"
+                  id="btn-cash-next"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Left: Dispatch Form -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span class="text-amber-500">🎫</span> Dispatch Service Ticket
-                        </h2>
-                        <form id="job-form" class="space-y-4" onsubmit="submitJob(event)">
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">New Ticket ID</label>
-                                <input type="text" name="id" placeholder="e.g., JOB-203" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Service Domain</label>
-                                <select name="service_type" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all">
-                                    <option value="CCTV">CCTV Surveillance Array</option>
-                                    <option value="Networking">Core Infrastructure Networking</option>
-                                    <option value="WiFi">WiFi Mesh Deployment</option>
-                                    <option value="NAS">NAS Storage Cluster</option>
-                                    <option value="General Maintenance">General Maintenance</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Service Type Category</label>
-                                <select name="customer_type" onchange="toggleCustomerTypeFields(this.value)" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all">
-                                    <option value="Annual">Annual Member (AMC Contract)</option>
-                                    <option value="Individual">Individual Service (One-off Client)</option>
-                                </select>
-                            </div>
-                            <div id="corporate-client-field" class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Target Client Corporate Account</label>
-                                <input type="text" id="lookup-client-search" placeholder="Type to search corporate account..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" list="corporate-clients-datalist" autocomplete="off">
-                                <input type="hidden" id="lookup-client" name="client_id">
-                                <datalist id="corporate-clients-datalist"></datalist>
-                            </div>
-                            <div id="individual-customer-fields" class="space-y-3 hidden border-l-2 border-amber-500/50 pl-3">
-                                <div class="space-y-1">
-                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Customer / Contact Name</label>
-                                    <input type="text" id="lookup-individual-search" name="customer_name" placeholder="Type to search or enter new name..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all" list="individual-clients-datalist" autocomplete="off">
-                                    <datalist id="individual-clients-datalist"></datalist>
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Contact Phone</label>
-                                    <input type="text" name="customer_phone" placeholder="Mobile number" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Service Site Address</label>
-                                    <input type="text" name="customer_address" placeholder="Physical location of service" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Google Maps Link (Optional)</label>
-                                    <input type="text" id="job-maps-url" placeholder="https://maps.app.goo.gl/..." oninput="resolveJobMapsUrlToCoords(this.value)" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
-                                    <span id="job-resolve-status" class="block text-[8px] text-slate-500 mt-1">Coordinates: Not resolved yet</span>
-                                </div>
-                                <input type="hidden" name="arrival_lat" id="job-lat" value="">
-                                <input type="hidden" name="arrival_lng" id="job-lng" value="">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Assigned Operational Engineer</label>
-                                <select id="lookup-tech" name="technician_id" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"></select>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Statement of Scope</label>
-                                <textarea name="job_description" placeholder="Technical instructions & specific service scope metrics..." required rows="3" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all resize-none"></textarea>
-                            </div>
-                            <button type="submit" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/10">
-                                Commit Ticket
-                            </button>
-                        </form>
-                    </div>
+        <!-- REPORTS VIEW -->
+        <div id="view-reports" class="space-y-8 tab-view hidden">
+          <div class="flex justify-between items-center">
+            <div>
+              <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+                Operational & Financial Reports
+              </h1>
+              <p class="text-xs text-slate-400 mt-1">
+                Audit field performance metrics, client classifications, and generate printable
+                executive summaries.
+              </p>
+            </div>
+            <button
+              onclick="window.print()"
+              class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md"
+            >
+              🖨️ Print Report
+            </button>
+          </div>
 
-                    <!-- Right: Jobs Table & PDF Generator -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-6 md:col-span-2">
-                        <!-- PDF Generation Panel -->
-                        <div class="space-y-2 border-b border-white/5 pb-4">
-                            <h2 class="text-sm font-bold text-white uppercase tracking-wider">📄 Generate Compliant PDF Service Receipts</h2>
-                            <div class="flex gap-2">
-                                <input type="text" id="pdf-target-job-id" placeholder="Target Ticket ID (e.g., JOB-201)" class="bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-amber-500 flex-1">
-                                <button onclick="generateServiceReceiptPDF()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl whitespace-nowrap transition-all uppercase tracking-wider">
-                                    Compile & Print
-                                </button>
-                            </div>
-                        </div>
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="glass-panel p-6 rounded-2xl space-y-2">
+              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider"
+                >Total Tickets Created</span
+              >
+              <div id="report-total-tickets" class="text-2xl font-black text-white">0</div>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl space-y-2">
+              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider"
+                >Ticket Completion Rate</span
+              >
+              <div id="report-completion-rate" class="text-2xl font-black text-emerald-400">0%</div>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl space-y-2">
+              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider"
+                >USD Cash Safe Volume</span
+              >
+              <div id="report-usd-safe" class="text-2xl font-black text-amber-500">$0.00</div>
+              常规
+            </div>
+            <div class="glass-panel p-6 rounded-2xl space-y-2">
+              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider"
+                >MMK Cash Safe Volume</span
+              >
+              <div id="report-mmk-safe" class="text-2xl font-black text-indigo-400">0 Ks</div>
+            </div>
+          </div>
 
-                        <!-- Full Jobs Table -->
-                        <div class="space-y-3">
-                            <h2 class="text-sm font-bold text-white uppercase tracking-wider">Ticket Logs</h2>
-                            <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[300px] overflow-y-auto">
-                                <table class="w-full text-xs text-left">
-                                    <thead>
-                                        <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                            <th class="pb-2">ID</th>
-                                            <th class="pb-2">Client</th>
-                                            <th class="pb-2">Tech</th>
-                                            <th class="pb-2">Service</th>
-                                            <th class="pb-2">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="full-jobs-body">
-                                        <!-- Loaded dynamically -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          <div class="grid md:grid-cols-2 gap-8">
+            <!-- Client AMC Contracts Breakdown Table -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                Client Portfolio & AMC Status
+              </h2>
+              <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+                <table class="w-full text-xs text-left">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-white/5 pb-2">
+                      <th class="pb-2">Contract Status</th>
+                      <th class="pb-2 text-right">Client Count</th>
+                    </tr>
+                  </thead>
+                  <tbody id="report-amc-body">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <!-- 3. MAINTENANCE (AMC) CONTRACTS VIEW -->
-            <div id="view-amc" class="space-y-8 tab-view hidden">
-                <div>
-                    <h1 class="text-2xl font-black text-white uppercase tracking-tight">Maintenance (AMC) Contracts</h1>
-                    <p class="text-xs text-slate-400 mt-1">Register new client accounts and configure Annual Maintenance Contracts (AMC).</p>
-                </div>
+            <!-- Engineer Allocation Report Table -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                Engineer Ticket Load & Metrics
+              </h2>
+              <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+                <table class="w-full text-xs text-left">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-white/5 pb-2">
+                      <th class="pb-2">Engineer Name</th>
+                      <th class="pb-2 text-center">Assigned Jobs</th>
+                      <th class="pb-2 text-right">Completion Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody id="report-techs-body">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                <div class="max-w-xl glass-panel p-6 rounded-2xl space-y-4">
-                    <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span class="text-amber-500">🏢</span> Provision Client Profile
-                    </h2>
-                    <form id="client-form" class="space-y-4" onsubmit="submitClient(event)">
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Client Account ID</label>
-                            <input type="text" name="id" placeholder="e.g., CLI-103" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Company Name</label>
-                            <input type="text" name="company_name" placeholder="Legal Enterprise Company Name" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Primary Contact Manager</label>
-                            <input type="text" name="contact_person" placeholder="Primary Operations Manager Head" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Installation Address</label>
-                            <input type="text" name="address" placeholder="Physical Logistics Site Location" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Contact Phone Line</label>
-                            <input type="text" name="phone" placeholder="Contact Mobile Sequence Line" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMC Start Date</label>
-                                <input type="date" name="amc_start" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMC End Date</label>
-                                <input type="date" name="amc_end" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
-                            </div>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMC Contract Status</label>
-                            <select name="amc_status" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
-                                <option value="Active" class="bg-slate-900">Active Contract</option>
-                                <option value="Inactive" class="bg-slate-900" selected>Inactive / Suspended</option>
-                                <option value="Expired" class="bg-slate-900">Expired Contract</option>
-                                <option value="No AMC" class="bg-slate-900">No AMC</option>
-                                <option value="Individual" class="bg-slate-900">Individual Customer</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/10">
-                            Save Client Profile
-                        </button>
-                    </form>
-                </div>
+        <!-- 5. WARRANTY & RMA DESTRUCTIVE PROCESSING VIEW -->
+        <div id="view-warranty" class="space-y-8 tab-view hidden">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+                Warranty & RMA Claims
+              </h1>
+              <p class="text-xs text-slate-400 mt-1">
+                Track hardware serial number warranties and dispatch defective goods to distributors
+                for RMA processing.
+              </p>
+            </div>
+            <div class="flex gap-3">
+              <button
+                onclick="openRegisterWarrantyModal()"
+                class="bg-transparent border border-white/20 hover:border-white/40 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition"
+              >
+                Register Customer Warranty
+              </button>
+              <button
+                onclick="openRaiseRMAModal()"
+                class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md"
+              >
+                Raise Distributor RMA Claim
+              </button>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-8">
+            <!-- Left: Customer Product Warranties Table -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                Customer Product Warranties
+              </h2>
+              <div
+                class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[500px] overflow-y-auto"
+              >
+                <table class="w-full text-xs text-left">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-white/5 pb-2">
+                      <th class="pb-2">SERIAL NO.</th>
+                      <th class="pb-2">PRODUCT</th>
+                      <th class="pb-2">CUSTOMER</th>
+                      <th class="pb-2">EXPIRY</th>
+                      <th class="pb-2">STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody id="warranty-list-body">
+                    <tr>
+                      <td colspan="5" class="py-4 text-center text-slate-600">
+                        Loading warranties...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <!-- 4. CURRENCY & LEDGER VIEW -->
-            <div id="view-currency" class="space-y-8 tab-view hidden">
-                <div>
-                    <h1 class="text-2xl font-black text-white uppercase tracking-tight">Currency & Cash Safe Ledger</h1>
-                    <p class="text-xs text-slate-400 mt-1">Audit cash balances, log safe withdrawals, and manage equivalent local currencies.</p>
+            <!-- Right: Active Distributor RMA Claims Table -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                Active Distributor RMA / Claims
+              </h2>
+              <div
+                class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[500px] overflow-y-auto"
+              >
+                <table class="w-full text-xs text-left">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-white/5 pb-2">
+                      <th class="pb-2">RMA ID</th>
+                      <th class="pb-2">SERIAL / PRODUCT</th>
+                      <th class="pb-2">DISTRIBUTOR</th>
+                      <th class="pb-2">SENT DATE</th>
+                      <th class="pb-2">STATUS</th>
+                      <th class="pb-2 text-right">ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rma-list-body">
+                    <tr>
+                      <td colspan="6" class="py-4 text-center text-slate-600">
+                        Loading RMA dispatches...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL: REGISTER CUSTOMER WARRANTY -->
+        <div
+          id="modal-register-warranty"
+          class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden"
+        >
+          <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
+            <div class="flex justify-between items-center">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">
+                Register Customer Warranty
+              </h3>
+              <button
+                onclick="closeRegisterWarrantyModal()"
+                class="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <form onsubmit="submitRegisterWarranty(event)" class="space-y-3">
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Serial Number</label
+                >
+                <input
+                  type="text"
+                  name="serial_number"
+                  required
+                  placeholder="e.g. SN-HDD-99381"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Product / Device Name</label
+                >
+                <input
+                  type="text"
+                  name="device_name"
+                  required
+                  placeholder="e.g. Seagate IronWolf 4TB HDD"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Customer / Client Account</label
+                >
+                <select
+                  id="modal-warranty-client"
+                  name="client_id"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                ></select>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Installed Date</label
+                  >
+                  <input
+                    type="date"
+                    name="installed_date"
+                    required
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
                 </div>
-
-                <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Balance Summary -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">🏦 Vault Balance Summary</h2>
-                        <div class="space-y-4">
-                            <div class="bg-black/30 p-4 rounded-xl border border-white/5">
-                                <span class="block text-[10px] text-slate-500 uppercase tracking-wider font-bold">Safe Balance (USD)</span>
-                                <span id="safe-usd-balance" class="text-2xl font-bold text-amber-500">$0.00</span>
-                            </div>
-                            <div class="bg-black/30 p-4 rounded-xl border border-white/5">
-                                <span class="block text-[10px] text-slate-500 uppercase tracking-wider font-bold">Safe Balance (MMK)</span>
-                                <span id="safe-mmk-balance" class="text-2xl font-bold text-slate-300">0 Ks</span>
-                            </div>
-                        </div>
-
-                        <!-- Form: Record Transaction -->
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider pt-4">Log Safe Transaction</h2>
-                        <form onsubmit="submitCashTransaction(event)" class="space-y-3">
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Tx Type</label>
-                                <select id="cash-type" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                                    <option value="Deposit" class="bg-slate-900">Deposit / Inflow</option>
-                                    <option value="Withdrawal" class="bg-slate-900">Withdrawal / Expense</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Currency</label>
-                                <select id="cash-currency" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                                    <option value="USD" class="bg-slate-900">USD</option>
-                                    <option value="MMK" class="bg-slate-900">MMK</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="space-y-1">
-                                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Amount</label>
-                                    <input type="number" step="0.01" id="cash-amount" placeholder="e.g. 500" required class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Rate</label>
-                                    <input type="number" step="0.1" id="cash-rate" value="4500" required class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
-                                </div>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Linked Job ID</label>
-                                <input type="text" id="cash-job-id" placeholder="JOB-201 (Optional)" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Notes</label>
-                                <input type="text" id="cash-notes" placeholder="Transaction notes" required class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                            </div>
-                            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider">Execute Transaction</button>
-                        </form>
-                    </div>
-
-                    <!-- Ledger Table -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Transaction Ledger Log</h2>
-                        <div class="bg-black/30 rounded-xl border border-white/5 p-4 max-h-[500px] overflow-y-auto">
-                            <table class="w-full text-xs text-left">
-                                <thead>
-                                    <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                        <th class="pb-2">Date</th>
-                                        <th class="pb-2">Type</th>
-                                        <th class="pb-2">Amount</th>
-                                        <th class="pb-2">Rate</th>
-                                        <th class="pb-2">Local Value (MMK)</th>
-                                        <th class="pb-2">Memo</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cash-ledger-body">
-                                    <!-- Loaded dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="flex justify-between items-center text-[10px] pt-2">
-                            <button type="button" onclick="changeCashPage(-1)" class="bg-white/5 border border-white/10 text-slate-300 font-bold px-3 py-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50" id="btn-cash-prev">Prev</button>
-                            <span class="text-slate-400 font-mono" id="cash-page-indicator">Page 1 of 1</span>
-                            <button type="button" onclick="changeCashPage(1)" class="bg-white/5 border border-white/10 text-slate-300 font-bold px-3 py-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50" id="btn-cash-next">Next</button>
-                        </div>
-                    </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Warranty Months</label
+                  >
+                  <input
+                    type="number"
+                    name="warranty_months"
+                    value="12"
+                    required
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
                 </div>
+              </div>
+              <button
+                type="submit"
+                class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition"
+              >
+                Register Warranty
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODAL: RAISE DISTRIBUTOR RMA CLAIM -->
+        <div
+          id="modal-raise-rma"
+          class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden"
+        >
+          <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
+            <div class="flex justify-between items-center">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">
+                Raise Distributor RMA Claim
+              </h3>
+              <button onclick="closeRaiseRMAModal()" class="text-slate-400 hover:text-white">
+                ✕
+              </button>
+            </div>
+            <form onsubmit="submitRaiseRMA(event)" class="space-y-3">
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Select Serial Number</label
+                >
+                <select
+                  id="modal-rma-serial"
+                  name="serial_number"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                ></select>
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Distributor / Supplier</label
+                >
+                <input
+                  type="text"
+                  name="distributor"
+                  required
+                  placeholder="e.g. KST Hardware Solutions"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >RMA ID / Tracking Reference</label
+                >
+                <input
+                  type="text"
+                  name="rma_id"
+                  required
+                  placeholder="e.g. RMA-3001"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Sent Date</label
+                >
+                <input
+                  type="date"
+                  name="sent_date"
+                  required
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <button
+                type="submit"
+                class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-black uppercase tracking-wider transition"
+              >
+                Raise Claim
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- DISTRIBUTORS DIRECTORY VIEW -->
+        <div id="view-distributors" class="space-y-8 tab-view hidden">
+          <div class="flex justify-between items-center">
+            <div>
+              <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+                Distributors Directory
+              </h1>
+              <p class="text-xs text-slate-400 mt-1">
+                Procurement channels for spare parts, network switches, CCTV kits, and storage
+                arrays.
+              </p>
+            </div>
+            <button
+              onclick="openAddDistributorModal()"
+              class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-1.5"
+            >
+              <span>+</span> Add Distributor
+            </button>
+          </div>
+
+          <div class="glass-panel p-6 rounded-2xl space-y-4">
+            <div class="max-w-xs">
+              <input
+                type="text"
+                id="distributor-search-input"
+                onkeyup="filterDistributors()"
+                placeholder="Search distributor or product lines..."
+                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
+              />
+            </div>
+            <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+              <table class="w-full text-xs text-left">
+                <thead>
+                  <tr class="text-slate-500 border-b border-white/5 pb-2">
+                    <th class="pb-2">DISTRIBUTOR NAME</th>
+                    <th class="pb-2">CONTACT PERSON</th>
+                    <th class="pb-2">PHONE</th>
+                    <th class="pb-2">EMAIL</th>
+                    <th class="pb-2">PRODUCT LINES SUPPLIED</th>
+                    <th class="pb-2 text-right">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody id="distributors-list-body">
+                  <tr>
+                    <td colspan="6" class="py-4 text-center text-slate-600">
+                      Loading distributors...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL: ADD DISTRIBUTOR -->
+        <div
+          id="modal-add-distributor"
+          class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden"
+        >
+          <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
+            <div class="flex justify-between items-center">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">Add Distributor</h3>
+              <button onclick="closeAddDistributorModal()" class="text-slate-400 hover:text-white">
+                ✕
+              </button>
+            </div>
+            <form onsubmit="submitAddDistributor(event)" class="space-y-3">
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Distributor Name</label
+                >
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="e.g. Elite CCTV & IT Distribution"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Contact Person</label
+                >
+                <input
+                  type="text"
+                  name="contact_person"
+                  required
+                  placeholder="e.g. Ko Hlaing"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Phone</label
+                  >
+                  <input
+                    type="text"
+                    name="phone"
+                    required
+                    placeholder="e.g. 09-443882991"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >Email</label
+                  >
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="sales@elitecctv.com.mm"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+              <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                  >Product Lines Supplied</label
+                >
+                <input
+                  type="text"
+                  name="product_lines"
+                  required
+                  placeholder="e.g. Hikvision, Dahua, Ruijie"
+                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+              <button
+                type="submit"
+                class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-black uppercase tracking-wider transition"
+              >
+                Save Distributor
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 6. INTEGRATED SYSTEM SETTINGS & USER MANAGEMENT VIEW -->
+        <div id="view-system-settings" class="space-y-8 tab-view hidden">
+          <div>
+            <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+              System Settings & User Management
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">
+              Approve team members, adjust currency rate rules, and perform database management.
+            </p>
+          </div>
+
+          <!-- Part 1: System Administration Panels -->
+          <div class="grid md:grid-cols-2 gap-8">
+            <!-- Backup & Restore Operations -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2
+                class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
+              >
+                <span>💾</span> Database Management Binds
+              </h2>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Save database state snaps or run system restorations directly from edge storage
+                points.
+              </p>
+              <div class="flex gap-3 pt-2">
+                <button
+                  class="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-md uppercase tracking-wider flex-1"
+                  onclick="triggerBackup()"
+                >
+                  💾 Backup Database
+                </button>
+                <button
+                  class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 font-extrabold text-xs px-4 py-2.5 rounded-xl transition uppercase tracking-wider flex-1"
+                  onclick="triggerRestore()"
+                >
+                  🔄 Restore System
+                </button>
+                <input
+                  type="file"
+                  id="restore-file-input"
+                  style="display: none"
+                  onchange="handleRestoreFile(event)"
+                />
+              </div>
             </div>
 
-            <!-- REPORTS VIEW -->
-            <div id="view-reports" class="space-y-8 tab-view hidden">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-black text-white uppercase tracking-tight">Operational & Financial Reports</h1>
-                        <p class="text-xs text-slate-400 mt-1">Audit field performance metrics, client classifications, and generate printable executive summaries.</p>
-                    </div>
-                    <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md">
-                        🖨️ Print Report
-                    </button>
+            <!-- Exchange Rate Controls -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4">
+              <h2
+                class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
+              >
+                <span>💵</span> System Exchange Rate rules
+              </h2>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                Set the global exchange conversion factor for MMK currencies across the ledger
+                modules.
+              </p>
+              <div class="flex items-center gap-3 pt-2">
+                <div
+                  class="flex-grow flex items-center gap-2 text-xs font-bold text-slate-400 bg-black/40 px-3 py-2 rounded-xl border border-white/10"
+                >
+                  <span>1 USD =</span>
+                  <input
+                    type="number"
+                    id="cash-rate-local"
+                    value="4500"
+                    oninput="syncExchangeRate(this.value)"
+                    class="w-16 bg-black/50 border border-white/10 text-white rounded px-2 py-1 text-center font-mono"
+                  />
+                  <span>MMK</span>
                 </div>
-
-                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="glass-panel p-6 rounded-2xl space-y-2">
-                        <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Total Tickets Created</span>
-                        <div id="report-total-tickets" class="text-2xl font-black text-white">0</div>
-                    </div>
-                    <div class="glass-panel p-6 rounded-2xl space-y-2">
-                        <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Ticket Completion Rate</span>
-                        <div id="report-completion-rate" class="text-2xl font-black text-emerald-400">0%</div>
-                    </div>
-                    <div class="glass-panel p-6 rounded-2xl space-y-2">
-                        <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">USD Cash Safe Volume</span>
-                        <div id="report-usd-safe" class="text-2xl font-black text-amber-500">$0.00</div>
-常规                    </div>
-                    <div class="glass-panel p-6 rounded-2xl space-y-2">
-                        <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">MMK Cash Safe Volume</span>
-                        <div id="report-mmk-safe" class="text-2xl font-black text-indigo-400">0 Ks</div>
-                    </div>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Client AMC Contracts Breakdown Table -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Client Portfolio & AMC Status</h2>
-                        <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
-                            <table class="w-full text-xs text-left">
-                                <thead>
-                                    <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                        <th class="pb-2">Contract Status</th>
-                                        <th class="pb-2 text-right">Client Count</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="report-amc-body">
-                                    <!-- Populated dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Engineer Allocation Report Table -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Engineer Ticket Load & Metrics</h2>
-                        <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
-                            <table class="w-full text-xs text-left">
-                                <thead>
-                                    <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                        <th class="pb-2">Engineer Name</th>
-                                        <th class="pb-2 text-center">Assigned Jobs</th>
-                                        <th class="pb-2 text-right">Completion Rate</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="report-techs-body">
-                                    <!-- Populated dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
 
-            <!-- 5. WARRANTY & RMA DESTRUCTIVE PROCESSING VIEW -->
-            <div id="view-warranty" class="space-y-8 tab-view hidden">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 class="text-2xl font-black text-white uppercase tracking-tight">Warranty & RMA Claims</h1>
-                        <p class="text-xs text-slate-400 mt-1">Track hardware serial number warranties and dispatch defective goods to distributors for RMA processing.</p>
-                    </div>
-                    <div class="flex gap-3">
-                        <button onclick="openRegisterWarrantyModal()" class="bg-transparent border border-white/20 hover:border-white/40 text-white text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition">
-                            Register Customer Warranty
-                        </button>
-                        <button onclick="openRaiseRMAModal()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md">
-                            Raise Distributor RMA Claim
-                        </button>
-                    </div>
+            <!-- Head Office Location Setup -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
+              <h2
+                class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
+              >
+                <span>🏢</span> Head Office Location Setup (Map Reference)
+              </h2>
+              <p class="text-xs text-slate-400">
+                Specify the location details of the headquarters. This centers the dispatch map and
+                displays a primary home base pin.
+              </p>
+              <form
+                onsubmit="saveHQConfig(event)"
+                class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2"
+              >
+                <div class="space-y-1">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >HQ Label / Name</label
+                  >
+                  <input
+                    type="text"
+                    id="hq-name"
+                    value="AwesomeMyanmar Head Office"
+                    required
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
                 </div>
-
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Left: Customer Product Warranties Table -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Customer Product Warranties</h2>
-                        <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[500px] overflow-y-auto">
-                            <table class="w-full text-xs text-left">
-                                <thead>
-                                    <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                        <th class="pb-2">SERIAL NO.</th>
-                                        <th class="pb-2">PRODUCT</th>
-                                        <th class="pb-2">CUSTOMER</th>
-                                        <th class="pb-2">EXPIRY</th>
-                                        <th class="pb-2">STATUS</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="warranty-list-body">
-                                    <tr>
-                                        <td colspan="5" class="py-4 text-center text-slate-600">Loading warranties...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Right: Active Distributor RMA Claims Table -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Active Distributor RMA / Claims</h2>
-                        <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[500px] overflow-y-auto">
-                            <table class="w-full text-xs text-left">
-                                <thead>
-                                    <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                        <th class="pb-2">RMA ID</th>
-                                        <th class="pb-2">SERIAL / PRODUCT</th>
-                                        <th class="pb-2">DISTRIBUTOR</th>
-                                        <th class="pb-2">SENT DATE</th>
-                                        <th class="pb-2">STATUS</th>
-                                        <th class="pb-2 text-right">ACTIONS</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rma-list-body">
-                                    <tr>
-                                        <td colspan="6" class="py-4 text-center text-slate-600">Loading RMA dispatches...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="space-y-1 md:col-span-2">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >HQ Google Maps Share Link</label
+                  >
+                  <input
+                    type="text"
+                    id="hq-maps-url"
+                    placeholder="https://maps.app.goo.gl/..."
+                    oninput="resolveMapsUrlToCoords(this.value)"
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                  <span id="hq-resolve-status" class="block text-[8px] text-slate-500 mt-1"
+                    >Default coordinates preloaded</span
+                  >
                 </div>
+                <div class="space-y-1 flex items-end">
+                  <button
+                    type="submit"
+                    class="w-full bg-amber-600 hover:bg-amber-500 py-2 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition"
+                  >
+                    Save HQ Settings
+                  </button>
+                </div>
+                <input type="hidden" id="hq-lat" value="16.774687" />
+                <input type="hidden" id="hq-lng" value="96.163438" />
+                <div class="space-y-1 md:col-span-4">
+                  <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+                    >HQ Physical Address</label
+                  >
+                  <input
+                    type="text"
+                    id="hq-address"
+                    value="Q5F7+V9 Yangon, Myanmar (Burma)"
+                    required
+                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Part 2: User Access & Role approvals -->
+          <div class="grid md:grid-cols-3 gap-8">
+            <!-- Left Form: Create User -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
+              <h2
+                class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
+              >
+                <span>👤</span> Add User / Technician
+              </h2>
+              <p class="text-[10px] text-slate-400">
+                Create a new local login credentials profile.
+              </p>
+              <form onsubmit="submitNewUser(event)" class="space-y-3">
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Username</label
+                  >
+                  <input
+                    type="text"
+                    id="new-user-username"
+                    required
+                    placeholder="e.g. jdoe"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Password</label
+                  >
+                  <input
+                    type="password"
+                    id="new-user-password"
+                    required
+                    placeholder="••••••••"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Full Name</label
+                  >
+                  <input
+                    type="text"
+                    id="new-user-name"
+                    required
+                    placeholder="e.g. John Doe"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Role</label
+                  >
+                  <select
+                    id="new-user-role"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  >
+                    <option value="Technician">Technician</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Phone (Optional)</label
+                  >
+                  <input
+                    type="text"
+                    id="new-user-phone"
+                    placeholder="e.g. +9591234567"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Email (Optional)</label
+                  >
+                  <input
+                    type="email"
+                    id="new-user-email"
+                    placeholder="e.g. jdoe@example.com"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition"
+                >
+                  Create Account
+                </button>
+              </form>
             </div>
 
-            <!-- MODAL: REGISTER CUSTOMER WARRANTY -->
-            <div id="modal-register-warranty" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-                <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Register Customer Warranty</h3>
-                        <button onclick="closeRegisterWarrantyModal()" class="text-slate-400 hover:text-white">✕</button>
-                    </div>
-                    <form onsubmit="submitRegisterWarranty(event)" class="space-y-3">
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Serial Number</label>
-                            <input type="text" name="serial_number" required placeholder="e.g. SN-HDD-99381" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Product / Device Name</label>
-                            <input type="text" name="device_name" required placeholder="e.g. Seagate IronWolf 4TB HDD" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Customer / Client Account</label>
-                            <select id="modal-warranty-client" name="client_id" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"></select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Installed Date</label>
-                                <input type="date" name="installed_date" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Warranty Months</label>
-                                <input type="number" name="warranty_months" value="12" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition">Register Warranty</button>
-                    </form>
+            <!-- Right Table: Accounts list -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
+              <h2
+                class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
+              >
+                <span>👥</span> User Management (Google & Local Accounts)
+              </h2>
+              <p class="text-xs text-slate-400">
+                Approve new registered accounts, assign access scopes, or deactivate technicians.
+              </p>
+              <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+                <table class="w-full text-xs text-left">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-white/5 pb-2">
+                      <th class="pb-2">Name</th>
+                      <th class="pb-2">Email / Username</th>
+                      <th class="pb-2">Role</th>
+                      <th class="pb-2">Status</th>
+                      <th class="pb-2 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tech-list-body">
+                    <tr>
+                      <td colspan="5" class="py-4 text-center text-slate-600">
+                        Loading user accounts list...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. INVENTORY STOCK CATALOG VIEW -->
+        <div id="view-inventory" class="space-y-8 tab-view hidden">
+          <div>
+            <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+              Inventory Items & Stock Levels
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">
+              Audit camera spares, cables, storage modules, and restock levels.
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-8">
+            <!-- Left Panel: Add / Restock Tabs -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
+              <!-- Tab switcher -->
+              <div class="flex border-b border-white/10 text-xs gap-2 pb-1">
+                <button
+                  type="button"
+                  id="inv-tab-add"
+                  onclick="setInvTab('add')"
+                  class="w-1/2 py-2 text-white font-bold border-b-2 border-amber-500 transition-all"
+                >
+                  ➕ Add Item
+                </button>
+                <button
+                  type="button"
+                  id="inv-tab-restock"
+                  onclick="setInvTab('restock')"
+                  class="w-1/2 py-2 text-slate-400 hover:text-white transition-all"
+                >
+                  📦 Restock
+                </button>
+              </div>
+
+              <!-- Add New Item Form -->
+              <form id="inv-form-add" onsubmit="submitNewInventoryItem(event)" class="space-y-3">
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Item Code <span class="text-amber-400">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="new-item-code"
+                    required
+                    placeholder="e.g. CAM-IP-01"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono uppercase"
+                  />
                 </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Item Name <span class="text-amber-400">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="new-item-name"
+                    required
+                    placeholder="e.g. IP PoE Camera 4MP"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Category</label
+                  >
+                  <select
+                    id="new-item-category"
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
+                  >
+                    <option value="CCTV">CCTV</option>
+                    <option value="Networking">Networking</option>
+                    <option value="NAS">NAS / Storage</option>
+                    <option value="WiFi">WiFi</option>
+                    <option value="Cable">Cable & Accessories</option>
+                    <option value="General" selected>General</option>
+                  </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="space-y-1">
+                    <label
+                      class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                      >Initial Qty</label
+                    >
+                    <input
+                      type="number"
+                      id="new-item-qty"
+                      placeholder="0"
+                      min="0"
+                      class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
+                    />
+                  </div>
+                  <div class="space-y-1">
+                    <label
+                      class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                      >Unit Price $</label
+                    >
+                    <input
+                      type="number"
+                      id="new-item-price"
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  class="w-full bg-emerald-700 hover:bg-emerald-600 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition"
+                >
+                  Add to Catalog
+                </button>
+              </form>
+
+              <!-- Restock Form -->
+              <form
+                id="inv-form-restock"
+                onsubmit="submitInventoryRestock(event)"
+                class="space-y-3 hidden"
+              >
+                <p class="text-[10px] text-slate-400">
+                  Adjust stock quantity for an existing item. Use negative numbers to deduct.
+                </p>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Item Code</label
+                  >
+                  <input
+                    type="text"
+                    id="restock-code"
+                    placeholder="e.g. CAM-IP-01"
+                    required
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+                    >Qty Change (+/-)</label
+                  >
+                  <input
+                    type="number"
+                    id="restock-qty"
+                    placeholder="e.g. 10 or -3"
+                    required
+                    class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider"
+                >
+                  Apply Stock Change
+                </button>
+              </form>
             </div>
 
-            <!-- MODAL: RAISE DISTRIBUTOR RMA CLAIM -->
-            <div id="modal-raise-rma" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-                <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Raise Distributor RMA Claim</h3>
-                        <button onclick="closeRaiseRMAModal()" class="text-slate-400 hover:text-white">✕</button>
-                    </div>
-                    <form onsubmit="submitRaiseRMA(event)" class="space-y-3">
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Select Serial Number</label>
-                            <select id="modal-rma-serial" name="serial_number" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"></select>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Distributor / Supplier</label>
-                            <input type="text" name="distributor" required placeholder="e.g. KST Hardware Solutions" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">RMA ID / Tracking Reference</label>
-                            <input type="text" name="rma_id" required placeholder="e.g. RMA-3001" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sent Date</label>
-                            <input type="date" name="sent_date" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        </div>
-                        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-black uppercase tracking-wider transition">Raise Claim</button>
-                    </form>
-                </div>
+            <!-- Stock table -->
+            <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
+              <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+                Stock Catalog Levels
+              </h2>
+              <div
+                class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[420px] overflow-y-auto"
+              >
+                <table class="w-full text-xs text-left">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-white/5 pb-2">
+                      <th class="pb-2">Code</th>
+                      <th class="pb-2">Name</th>
+                      <th class="pb-2 hidden sm:table-cell">Category</th>
+                      <th class="pb-2 hidden sm:table-cell text-right">Price</th>
+                      <th class="pb-2 text-right">Stock</th>
+                      <th class="pb-2 text-right">Del</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventory-stock-body">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="flex justify-between items-center text-[10px] pt-2">
+                <button
+                  type="button"
+                  onclick="changeStockPage(-1)"
+                  class="bg-white/5 border border-white/10 text-slate-300 font-bold px-3 py-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50"
+                  id="btn-stock-prev"
+                >
+                  Prev
+                </button>
+                <span class="text-slate-400 font-mono" id="stock-page-indicator">Page 1 of 1</span>
+                <button
+                  type="button"
+                  onclick="changeStockPage(1)"
+                  class="bg-white/5 border border-white/10 text-slate-300 font-bold px-3 py-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50"
+                  id="btn-stock-next"
+                >
+                  Next
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <!-- DISTRIBUTORS DIRECTORY VIEW -->
-            <div id="view-distributors" class="space-y-8 tab-view hidden">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-black text-white uppercase tracking-tight">Distributors Directory</h1>
-                        <p class="text-xs text-slate-400 mt-1">Procurement channels for spare parts, network switches, CCTV kits, and storage arrays.</p>
-                    </div>
-                    <button onclick="openAddDistributorModal()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-1.5">
-                        <span>+</span> Add Distributor
-                    </button>
-                </div>
-
-                <div class="glass-panel p-6 rounded-2xl space-y-4">
-                    <div class="max-w-xs">
-                        <input type="text" id="distributor-search-input" onkeyup="filterDistributors()" placeholder="Search distributor or product lines..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
-                    </div>
-                    <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
-                        <table class="w-full text-xs text-left">
-                            <thead>
-                                <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                    <th class="pb-2">DISTRIBUTOR NAME</th>
-                                    <th class="pb-2">CONTACT PERSON</th>
-                                    <th class="pb-2">PHONE</th>
-                                    <th class="pb-2">EMAIL</th>
-                                    <th class="pb-2">PRODUCT LINES SUPPLIED</th>
-                                    <th class="pb-2 text-right">ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody id="distributors-list-body">
-                                <tr>
-                                    <td colspan="6" class="py-4 text-center text-slate-600">Loading distributors...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MODAL: ADD DISTRIBUTOR -->
-            <div id="modal-add-distributor" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-                <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Add Distributor</h3>
-                        <button onclick="closeAddDistributorModal()" class="text-slate-400 hover:text-white">✕</button>
-                    </div>
-                    <form onsubmit="submitAddDistributor(event)" class="space-y-3">
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Distributor Name</label>
-                            <input type="text" name="name" required placeholder="e.g. Elite CCTV & IT Distribution" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Contact Person</label>
-                            <input type="text" name="contact_person" required placeholder="e.g. Ko Hlaing" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone</label>
-                                <input type="text" name="phone" required placeholder="e.g. 09-443882991" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Email</label>
-                                <input type="email" name="email" required placeholder="sales@elitecctv.com.mm" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                            </div>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Product Lines Supplied</label>
-                            <input type="text" name="product_lines" required placeholder="e.g. Hikvision, Dahua, Ruijie" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        </div>
-                        <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-black uppercase tracking-wider transition">Save Distributor</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- 6. INTEGRATED SYSTEM SETTINGS & USER MANAGEMENT VIEW -->
-            <div id="view-system-settings" class="space-y-8 tab-view hidden">
-                <div>
-                    <h1 class="text-2xl font-black text-white uppercase tracking-tight">System Settings & User Management</h1>
-                    <p class="text-xs text-slate-400 mt-1">Approve team members, adjust currency rate rules, and perform database management.</p>
-                </div>
-
-                <!-- Part 1: System Administration Panels -->
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Backup & Restore Operations -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span>💾</span> Database Management Binds
-                        </h2>
-                        <p class="text-xs text-slate-400 leading-relaxed">Save database state snaps or run system restorations directly from edge storage points.</p>
-                        <div class="flex gap-3 pt-2">
-                            <button class="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-md uppercase tracking-wider flex-1" onclick="triggerBackup()">💾 Backup Database</button>
-                            <button class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 font-extrabold text-xs px-4 py-2.5 rounded-xl transition uppercase tracking-wider flex-1" onclick="triggerRestore()">🔄 Restore System</button>
-                            <input type="file" id="restore-file-input" style="display: none;" onchange="handleRestoreFile(event)">
-                        </div>
-                    </div>
-
-                    <!-- Exchange Rate Controls -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span>💵</span> System Exchange Rate rules
-                        </h2>
-                        <p class="text-xs text-slate-400 leading-relaxed">Set the global exchange conversion factor for MMK currencies across the ledger modules.</p>
-                        <div class="flex items-center gap-3 pt-2">
-                            <div class="flex-grow flex items-center gap-2 text-xs font-bold text-slate-400 bg-black/40 px-3 py-2 rounded-xl border border-white/10">
-                                <span>1 USD =</span>
-                                <input type="number" id="cash-rate-local" value="4500" oninput="syncExchangeRate(this.value)" class="w-16 bg-black/50 border border-white/10 text-white rounded px-2 py-1 text-center font-mono">
-                                <span>MMK</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Head Office Location Setup -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span>🏢</span> Head Office Location Setup (Map Reference)
-                        </h2>
-                        <p class="text-xs text-slate-400">Specify the location details of the headquarters. This centers the dispatch map and displays a primary home base pin.</p>
-                        <form onsubmit="saveHQConfig(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
-                            <div class="space-y-1">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">HQ Label / Name</label>
-                                <input type="text" id="hq-name" value="AwesomeMyanmar Head Office" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                            </div>
-                            <div class="space-y-1 md:col-span-2">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">HQ Google Maps Share Link</label>
-                                <input type="text" id="hq-maps-url" placeholder="https://maps.app.goo.gl/..." oninput="resolveMapsUrlToCoords(this.value)" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                                <span id="hq-resolve-status" class="block text-[8px] text-slate-500 mt-1">Default coordinates preloaded</span>
-                            </div>
-                            <div class="space-y-1 flex items-end">
-                                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition">Save HQ Settings</button>
-                            </div>
-                            <input type="hidden" id="hq-lat" value="16.774687">
-                            <input type="hidden" id="hq-lng" value="96.163438">
-                            <div class="space-y-1 md:col-span-4">
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">HQ Physical Address</label>
-                                <input type="text" id="hq-address" value="Q5F7+V9 Yangon, Myanmar (Burma)" required class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Part 2: User Access & Role approvals -->
-                <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Left Form: Create User -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span>👤</span> Add User / Technician
-                        </h2>
-                        <p class="text-[10px] text-slate-400">Create a new local login credentials profile.</p>
-                        <form onsubmit="submitNewUser(event)" class="space-y-3">
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Username</label>
-                                <input type="text" id="new-user-username" required placeholder="e.g. jdoe" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Password</label>
-                                <input type="password" id="new-user-password" required placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Full Name</label>
-                                <input type="text" id="new-user-name" required placeholder="e.g. John Doe" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Role</label>
-                                <select id="new-user-role" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                                    <option value="Technician">Technician</option>
-                                    <option value="Sales">Sales</option>
-                                    <option value="Admin">Admin</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Phone (Optional)</label>
-                                <input type="text" id="new-user-phone" placeholder="e.g. +9591234567" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Email (Optional)</label>
-                                <input type="email" id="new-user-email" placeholder="e.g. jdoe@example.com" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                            </div>
-                            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Create Account</button>
-                        </form>
-                    </div>
-
-                    <!-- Right Table: Accounts list -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span>👥</span> User Management (Google & Local Accounts)
-                        </h2>
-                        <p class="text-xs text-slate-400">Approve new registered accounts, assign access scopes, or deactivate technicians.</p>
-                        <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
-                            <table class="w-full text-xs text-left">
-                                <thead>
-                                    <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                        <th class="pb-2">Name</th>
-                                        <th class="pb-2">Email / Username</th>
-                                        <th class="pb-2">Role</th>
-                                        <th class="pb-2">Status</th>
-                                        <th class="pb-2 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tech-list-body">
-                                    <tr>
-                                        <td colspan="5" class="py-4 text-center text-slate-600">Loading user accounts list...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 7. INVENTORY STOCK CATALOG VIEW -->
-            <div id="view-inventory" class="space-y-8 tab-view hidden">
-                <div>
-                    <h1 class="text-2xl font-black text-white uppercase tracking-tight">Inventory Items & Stock Levels</h1>
-                    <p class="text-xs text-slate-400 mt-1">Audit camera spares, cables, storage modules, and restock levels.</p>
-                </div>
-
-                <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Left Panel: Add / Restock Tabs -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
-                        <!-- Tab switcher -->
-                        <div class="flex border-b border-white/10 text-xs gap-2 pb-1">
-                            <button type="button" id="inv-tab-add" onclick="setInvTab('add')" class="w-1/2 py-2 text-white font-bold border-b-2 border-amber-500 transition-all">➕ Add Item</button>
-                            <button type="button" id="inv-tab-restock" onclick="setInvTab('restock')" class="w-1/2 py-2 text-slate-400 hover:text-white transition-all">📦 Restock</button>
-                        </div>
-
-                        <!-- Add New Item Form -->
-                        <form id="inv-form-add" onsubmit="submitNewInventoryItem(event)" class="space-y-3">
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Item Code <span class="text-amber-400">*</span></label>
-                                <input type="text" id="new-item-code" required placeholder="e.g. CAM-IP-01" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono uppercase">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Item Name <span class="text-amber-400">*</span></label>
-                                <input type="text" id="new-item-name" required placeholder="e.g. IP PoE Camera 4MP" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Category</label>
-                                <select id="new-item-category" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
-                                    <option value="CCTV">CCTV</option>
-                                    <option value="Networking">Networking</option>
-                                    <option value="NAS">NAS / Storage</option>
-                                    <option value="WiFi">WiFi</option>
-                                    <option value="Cable">Cable & Accessories</option>
-                                    <option value="General" selected>General</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="space-y-1">
-                                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Initial Qty</label>
-                                    <input type="number" id="new-item-qty" placeholder="0" min="0" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
-                                </div>
-                                <div class="space-y-1">
-                                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Unit Price $</label>
-                                    <input type="number" id="new-item-price" placeholder="0.00" min="0" step="0.01" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
-                                </div>
-                            </div>
-                            <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-600 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Add to Catalog</button>
-                        </form>
-
-                        <!-- Restock Form -->
-                        <form id="inv-form-restock" onsubmit="submitInventoryRestock(event)" class="space-y-3 hidden">
-                            <p class="text-[10px] text-slate-400">Adjust stock quantity for an existing item. Use negative numbers to deduct.</p>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Item Code</label>
-                                <input type="text" id="restock-code" placeholder="e.g. CAM-IP-01" required class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Qty Change (+/-)</label>
-                                <input type="number" id="restock-qty" placeholder="e.g. 10 or -3" required class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
-                            </div>
-                            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider">Apply Stock Change</button>
-                        </form>
-                    </div>
-
-                    <!-- Stock table -->
-                    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
-                        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Stock Catalog Levels</h2>
-                        <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[420px] overflow-y-auto">
-                            <table class="w-full text-xs text-left">
-                                <thead>
-                                    <tr class="text-slate-500 border-b border-white/5 pb-2">
-                                        <th class="pb-2">Code</th>
-                                        <th class="pb-2">Name</th>
-                                        <th class="pb-2 hidden sm:table-cell">Category</th>
-                                        <th class="pb-2 hidden sm:table-cell text-right">Price</th>
-                                        <th class="pb-2 text-right">Stock</th>
-                                        <th class="pb-2 text-right">Del</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="inventory-stock-body">
-                                    <!-- Loaded dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="flex justify-between items-center text-[10px] pt-2">
-                            <button type="button" onclick="changeStockPage(-1)" class="bg-white/5 border border-white/10 text-slate-300 font-bold px-3 py-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50" id="btn-stock-prev">Prev</button>
-                            <span class="text-slate-400 font-mono" id="stock-page-indicator">Page 1 of 1</span>
-                            <button type="button" onclick="changeStockPage(1)" class="bg-white/5 border border-white/10 text-slate-300 font-bold px-3 py-1.5 rounded-lg hover:bg-white/10 disabled:opacity-50" id="btn-stock-next">Next</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 8. REPORTS DUMMY PLACEHOLDER -->
-            <div id="view-reports" class="space-y-8 tab-view hidden">
-                <div class="glass-panel p-8 rounded-3xl text-center space-y-4 max-w-xl mx-auto">
-                    <span class="text-4xl block">📄</span>
-                    <h1 class="text-xl font-bold text-white uppercase">Operational Reports</h1>
-                    <p class="text-xs text-slate-400 leading-relaxed">This view serves consolidated project compliance summaries, engineer site dispatches, billing summaries, and audit logs. Admin permissions apply.</p>
-                </div>
-            </div>
-
-        </main>
+        <!-- 8. REPORTS DUMMY PLACEHOLDER -->
+        <div id="view-reports" class="space-y-8 tab-view hidden">
+          <div class="glass-panel p-8 rounded-3xl text-center space-y-4 max-w-xl mx-auto">
+            <span class="text-4xl block">📄</span>
+            <h1 class="text-xl font-bold text-white uppercase">Operational Reports</h1>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              This view serves consolidated project compliance summaries, engineer site dispatches,
+              billing summaries, and audit logs. Admin permissions apply.
+            </p>
+          </div>
+        </div>
+      </main>
     </div>
 
     <!-- Core App Logic & Scripts (Separated to admin.js) -->
     <script src="./admin.js"></script>
-</body>
+  </body>
 </html>

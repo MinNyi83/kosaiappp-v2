@@ -28,9 +28,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -57,9 +55,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -145,7 +141,10 @@
         "bodyParameters": {
           "parameters": [
             { "name": "type", "value": "job_assigned" },
-            { "name": "description", "value": "Auto-assigned job #{{ $json.jobId }} to worker #{{ $json.recommendedWorker.id }} ({{ $json.recommendedWorker.name }})" },
+            {
+              "name": "description",
+              "value": "Auto-assigned job #{{ $json.jobId }} to worker #{{ $json.recommendedWorker.id }} ({{ $json.recommendedWorker.name }})"
+            },
             { "name": "reference_type", "value": "job" },
             { "name": "reference_id", "value": "={{ $json.jobId }}" }
           ]
@@ -161,28 +160,33 @@
   ],
   "connections": {
     "Webhook - Job Created": {
-      "main": [[ { "node": "GET /api/jobs/{id}", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "GET /api/jobs/{id}", "type": "main", "index": 0 }]]
     },
     "GET /api/jobs/{id}": {
-      "main": [[ { "node": "Find Available Workers", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Find Available Workers", "type": "main", "index": 0 }]]
     },
     "Find Available Workers": {
-      "main": [[ { "node": "GET /api/workers (available)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "GET /api/workers (available)", "type": "main", "index": 0 }]]
     },
     "GET /api/workers (available)": {
-      "main": [[ { "node": "Score & Rank Workers", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Score & Rank Workers", "type": "main", "index": 0 }]]
     },
     "Score & Rank Workers": {
-      "main": [[ { "node": "POST /api/jobs/{id}/assign", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/jobs/{id}/assign", "type": "main", "index": 0 }]]
     },
     "POST /api/jobs/{id}/assign": {
-      "main": [[ { "node": "Telegram - Notify Worker", "type": "main", "index": 0 }, { "node": "Telegram - Notify Admin", "type": "main", "index": 1 } ]]
+      "main": [
+        [
+          { "node": "Telegram - Notify Worker", "type": "main", "index": 0 },
+          { "node": "Telegram - Notify Admin", "type": "main", "index": 1 }
+        ]
+      ]
     },
     "Telegram - Notify Worker": {
-      "main": [[ { "node": "POST /api/activity (log)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/activity (log)", "type": "main", "index": 0 }]]
     },
     "Telegram - Notify Admin": {
-      "main": [[ { "node": "POST /api/activity (log)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/activity (log)", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

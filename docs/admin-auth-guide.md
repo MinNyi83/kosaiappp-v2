@@ -7,18 +7,18 @@ UPDATE technicians SET pin_code = '5678' WHERE id = 'SALE-002';
 
 -- 2. Global application configurations table for system admin authentication
 CREATE TABLE IF NOT EXISTS system_config (
-    config_key TEXT PRIMARY KEY,
-    config_value TEXT NOT NULL
+config_key TEXT PRIMARY KEY,
+config_value TEXT NOT NULL
 );
 
 -- Seed global admin access passkey (Change this to a strong password)
-INSERT OR REPLACE INTO system_config (config_key, config_value) 
+INSERT OR REPLACE INTO system_config (config_key, config_value)
 VALUES ('ADMIN_SECRET_KEY', 'SuperSecureAdminPass123!');
 Use code with caution.Shell Command to Apply Security Patchbashnpx wrangler d1 execute cctv-fsm-db --remote --file=./security_patch.sql
 Use code with caution.Part 2: Upgraded Edge Gateway (With Security & CRUD Framework)File: src/index.jsReplace your previous worker file with this complete script. It enforces field authentication via worker request headers and includes administrative pipelines to register clients and create new tickets.javascriptexport default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    const method = request.method;
+async fetch(request, env) {
+const url = new URL(request.url);
+const method = request.method;
 
     if (method === "OPTIONS") return new Response(null, { headers: getCorsHeaders() });
 
@@ -38,7 +38,7 @@ Use code with caution.Part 2: Upgraded Edge Gateway (With Security & CRUD Framew
       if (url.pathname.startsWith("/api/admin")) {
         const adminKey = request.headers.get("X-Admin-Secret");
         const storedAdminKey = await env.DB.prepare("SELECT config_value FROM system_config WHERE config_key = 'ADMIN_SECRET_KEY'").first("config_value");
-        
+
         if (!adminKey || adminKey !== storedAdminKey) {
           return new Response(JSON.stringify({ error: "Unauthorized Admin Request" }), { status: 403, headers: getCorsHeaders() });
         }
@@ -94,7 +94,7 @@ Use code with caution.Part 2: Upgraded Edge Gateway (With Security & CRUD Framew
         const status = formData.get("status");
         const notes = formData.get("notes") || "";
         const equipment = formData.get("equipment") || "[]";
-        
+
         let beforePhotoKey = formData.get("before_photo_key") || null;
         let afterPhotoKey = formData.get("after_photo_key") || null;
 
@@ -111,7 +111,7 @@ Use code with caution.Part 2: Upgraded Edge Gateway (With Security & CRUD Framew
         }
 
         await env.DB.prepare(
-          `UPDATE service_records SET status = ?, technician_notes = ?, equipment_used = ?, 
+          `UPDATE service_records SET status = ?, technician_notes = ?, equipment_used = ?,
            before_photo_key = COALESCE(?, before_photo_key), after_photo_key = COALESCE(?, after_photo_key), updated_at = CURRENT_TIMESTAMP WHERE id = ?`
         ).bind(status, notes, equipment, beforePhotoKey, afterPhotoKey, jobId).run();
 
@@ -128,18 +128,19 @@ Use code with caution.Part 2: Upgraded Edge Gateway (With Security & CRUD Framew
     } catch (err) {
       return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: getCorsHeaders() });
     }
-  }
+
+}
 };
 
 function getCorsHeaders() {
-  return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, X-Admin-Secret", "Content-Type": "application/json" };
+return { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, X-Admin-Secret", "Content-Type": "application/json" };
 }
 function jsonResponse(data) { return new Response(JSON.stringify(data), { headers: getCorsHeaders() }); }
 async function sendTelegramNotification(env, text) {
-  await fetch(`https://telegram.org{env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: text, parse_mode: "Markdown" })
-  });
+await fetch(`https://telegram.org{env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+method: "POST", headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: text, parse_mode: "Markdown" })
+});
 }
 Use code with caution.Push the updated codebase livebashnpx wrangler deploy
 Use code with caution.Part 3: Centralized Administrative Dispatch DashboardFile: admin.htmlSave this file onto your computer to act as your office dispatch station. It enables immediate provisioning of client structures and task assignments.html<!DOCTYPE html>
@@ -207,13 +208,13 @@ Use code with caution.Part 3: Centralized Administrative Dispatch DashboardFile:
         async function sendAdminRequest(endpoint, payload) {
             const baseUrl = document.getElementById('api-base').value;
             const secret = document.getElementById('admin-secret').value;
-            
+
             const res = await fetch(`${baseUrl}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
                 body: JSON.stringify(payload)
             });
-            
+
             const data = await res.json();
             if (res.ok) alert("Success: " + (data.message || "Record successfully pushed."));
             else alert("Error: " + data.error);
@@ -233,6 +234,7 @@ Use code with caution.Part 3: Centralized Administrative Dispatch DashboardFile:
             e.target.reset();
         }
     </script>
+
 </body>
 </html>
 Use code with caution.Part 4: Telegram Bot Token Integration GuideTo route field updates directly into a company chat room, configure your Telegram components by following these steps:Create the Bot via Telegram BotFather:Open Telegram and search for @BotFather.Send the command /newbot.Follow the prompts to name your bot (e.g., MyCCTVCompanyBot).Copy the HTTP API Token generated (formatted like 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ).Retrieve your target Chat ID:Create a new group chat in Telegram and add your bot as a member.Send a dummy text message inside that group chat channel (e.g., Test active connection).Open your browser and navigate to this URL to view the raw JSON activity updates received by your bot instance:https://telegram.org<YOUR_HTTP_API_TOKEN>/getUpdatesSearch through the text output for the "chat" object block and copy the negative numeric tracking string assigned to your room (formatted like "id": -100223456789).Bind Production Keys to Cloudflare Config Variables:Open your project's local wrangler.toml file and update your variables:toml[vars]

@@ -1,157 +1,231 @@
 <div id="view-reports" class="space-y-8 tab-view">
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-black text-white uppercase tracking-tight">Operational & Financial Reports</h1>
-            <p class="text-xs text-slate-400 mt-1">Audit field performance metrics, client classifications, and generate printable executive summaries.</p>
-        </div>
-        <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md">
-            🖨️ Print Report
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-black text-white uppercase tracking-tight">
+        Operational & Financial Reports
+      </h1>
+      <p class="text-xs text-slate-400 mt-1">
+        Audit field performance metrics, client classifications, and generate printable executive
+        summaries.
+      </p>
+    </div>
+    <button
+      onclick="window.print()"
+      class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md"
+    >
+      🖨️ Print Report
+    </button>
+  </div>
+
+  <!-- Quick Stats Cards -->
+  <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="glass-panel p-6 rounded-2xl space-y-2">
+      <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider"
+        >Total Tickets Created</span
+      >
+      <div id="report-total-tickets" class="text-2xl font-black text-white">0</div>
+    </div>
+    <div class="glass-panel p-6 rounded-2xl space-y-2">
+      <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider"
+        >Ticket Completion Rate</span
+      >
+      <div id="report-completion-rate" class="text-2xl font-black text-emerald-400">0%</div>
+    </div>
+    <div class="glass-panel p-6 rounded-2xl space-y-2">
+      <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider"
+        >USD Cash Safe Volume</span
+      >
+      <div id="report-usd-safe" class="text-2xl font-black text-amber-500">$0.00</div>
+    </div>
+    <div class="glass-panel p-6 rounded-2xl space-y-2">
+      <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider"
+        >MMK Cash Safe Volume</span
+      >
+      <div id="report-mmk-safe" class="text-2xl font-black text-indigo-400">0 Ks</div>
+    </div>
+  </div>
+
+  <!-- REPORT GENERATOR CONTROL PANEL -->
+  <div class="glass-panel p-6 rounded-2xl space-y-4">
+    <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+      <span>⚙️</span> Dynamic Report Builder
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >Select Report Type</label
+        >
+        <select
+          name="report-select-type"
+          id="report-select-type"
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
+        >
+          <option value="tech-performance">Technician Performance Audit</option>
+          <option value="customer-service">Customer Service Audit</option>
+          <option value="job-ledger">Job History Ledger</option>
+          <option value="cashflow">Safe Cash Flow Statement</option>
+          <option value="inventory-low">Inventory Consumption & Low Stock</option>
+          <option value="amc-expiry">Maintenance & AMC Expiry Schedule</option>
+          <option value="warranty-rma">Active Warranty & RMA Claims Log</option>
+        </select>
+      </div>
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
+          >Timeframe Scope</label
+        >
+        <select
+          name="report-select-timeframe"
+          id="report-select-timeframe"
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
+        >
+          <option value="all">All-Time Records</option>
+          <option value="this-month">This Month</option>
+          <option value="last-month">Last Month</option>
+          <option value="this-year">This Year</option>
+          <option value="last-year">Last Year</option>
+          <option value="30">Last 30 Days</option>
+          <option value="90">Last 90 Days</option>
+        </select>
+      </div>
+      <div>
+        <button
+          onclick="generateCustomReport()"
+          class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition-all"
+        >
+          Compile Custom Report
         </button>
+      </div>
     </div>
+  </div>
 
-    <!-- Quick Stats Cards -->
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="glass-panel p-6 rounded-2xl space-y-2">
-            <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Total Tickets Created</span>
-            <div id="report-total-tickets" class="text-2xl font-black text-white">0</div>
-        </div>
-        <div class="glass-panel p-6 rounded-2xl space-y-2">
-            <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Ticket Completion Rate</span>
-            <div id="report-completion-rate" class="text-2xl font-black text-emerald-400">0%</div>
-        </div>
-        <div class="glass-panel p-6 rounded-2xl space-y-2">
-            <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">USD Cash Safe Volume</span>
-            <div id="report-usd-safe" class="text-2xl font-black text-amber-500">$0.00</div>
-        </div>
-        <div class="glass-panel p-6 rounded-2xl space-y-2">
-            <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">MMK Cash Safe Volume</span>
-            <div id="report-mmk-safe" class="text-2xl font-black text-indigo-400">0 Ks</div>
-        </div>
+  <!-- DYNAMIC REPORT RESULT WORKSPACE -->
+  <div id="report-result-panel" class="glass-panel p-6 rounded-2xl space-y-4 hidden">
+    <div class="flex justify-between items-center border-b border-white/5 pb-3">
+      <h3
+        class="text-sm font-bold text-amber-500 uppercase tracking-wider"
+        id="report-title-display"
+      >
+        Generated Report
+      </h3>
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] text-slate-400 font-mono" id="report-timestamp-display"
+          >Timestamp</span
+        >
+        <button
+          type="button"
+          onclick="exportTableToExcel('report-result-table', 'Compiled_Executive_Report')"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+        >
+          <svg
+            class="w-3 h-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Excel
+        </button>
+      </div>
     </div>
+    <div
+      class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[450px] overflow-y-auto"
+    >
+      <table class="w-full text-xs text-left" id="report-result-table">
+        <thead id="report-result-head">
+          <!-- Loaded dynamically -->
+        </thead>
+        <tbody id="report-result-body">
+          <!-- Loaded dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-    <!-- REPORT GENERATOR CONTROL PANEL -->
+  <!-- Native Reports Lists -->
+  <div class="grid md:grid-cols-2 gap-8">
+    <!-- Client AMC Contracts Breakdown Table -->
     <div class="glass-panel p-6 rounded-2xl space-y-4">
-        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-            <span>⚙️</span> Dynamic Report Builder
+      <div class="flex justify-between items-center border-b border-white/5 pb-2">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+          Client Portfolio & AMC Status
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Select Report Type</label>
-                <select name="report-select-type" id="report-select-type" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all">
-                    <option value="tech-performance">Technician Performance Audit</option>
-                    <option value="customer-service">Customer Service Audit</option>
-                    <option value="job-ledger">Job History Ledger</option>
-                    <option value="cashflow">Safe Cash Flow Statement</option>
-                    <option value="inventory-low">Inventory Consumption & Low Stock</option>
-                    <option value="amc-expiry">Maintenance & AMC Expiry Schedule</option>
-                    <option value="warranty-rma">Active Warranty & RMA Claims Log</option>
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Timeframe Scope</label>
-                <select name="report-select-timeframe" id="report-select-timeframe" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all">
-                    <option value="all">All-Time Records</option>
-                    <option value="this-month">This Month</option>
-                    <option value="last-month">Last Month</option>
-                    <option value="this-year">This Year</option>
-                    <option value="last-year">Last Year</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="90">Last 90 Days</option>
-                </select>
-            </div>
-            <div>
-                <button onclick="generateCustomReport()" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition-all">
-                    Compile Custom Report
-                </button>
-            </div>
-        </div>
+        <button
+          type="button"
+          onclick="exportTableToExcel('report-amc-table', 'Client_Portfolio_AMC_Status')"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+        >
+          <svg
+            class="w-3 h-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Excel
+        </button>
+      </div>
+      <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+        <table id="report-amc-table" class="w-full text-xs text-left">
+          <thead>
+            <tr class="text-slate-500 border-b border-white/5 pb-2">
+              <th class="pb-2">Contract Status</th>
+              <th class="pb-2 text-right">Client Count</th>
+            </tr>
+          </thead>
+          <tbody id="report-amc-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- DYNAMIC REPORT RESULT WORKSPACE -->
-    <div id="report-result-panel" class="glass-panel p-6 rounded-2xl space-y-4 hidden">
-        <div class="flex justify-between items-center border-b border-white/5 pb-3">
-            <h3 class="text-sm font-bold text-amber-500 uppercase tracking-wider" id="report-title-display">Generated Report</h3>
-            <div class="flex items-center gap-2">
-                <span class="text-[10px] text-slate-400 font-mono" id="report-timestamp-display">Timestamp</span>
-                <button type="button" onclick="exportTableToExcel('report-result-table','Compiled_Executive_Report')" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Excel
-                </button>
-            </div>
-        </div>
-        <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[450px] overflow-y-auto">
-            <table class="w-full text-xs text-left" id="report-result-table">
-                <thead id="report-result-head">
-                    <!-- Loaded dynamically -->
-                </thead>
-                <tbody id="report-result-body">
-                    <!-- Loaded dynamically -->
-                </tbody>
-            </table>
-        </div>
+    <!-- Engineer Allocation Report Table -->
+    <div class="glass-panel p-6 rounded-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-white/5 pb-2">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider">
+          Engineer Ticket Load & Metrics
+        </h2>
+        <button
+          type="button"
+          onclick="exportTableToExcel('report-techs-table', 'Engineer_Ticket_Load')"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+        >
+          <svg
+            class="w-3 h-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Excel
+        </button>
+      </div>
+      <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+        <table id="report-techs-table" class="w-full text-xs text-left">
+          <thead>
+            <tr class="text-slate-500 border-b border-white/5 pb-2">
+              <th class="pb-2">Engineer Name</th>
+              <th class="pb-2 text-center">Assigned Jobs</th>
+              <th class="pb-2 text-right">Completion Rate</th>
+            </tr>
+          </thead>
+          <tbody id="report-techs-body">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
     </div>
-
-    <!-- Native Reports Lists -->
-    <div class="grid md:grid-cols-2 gap-8">
-        <!-- Client AMC Contracts Breakdown Table -->
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-white/5 pb-2">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Client Portfolio & AMC Status</h2>
-                <button type="button" onclick="exportTableToExcel('report-amc-table','Client_Portfolio_AMC_Status')" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Excel
-                </button>
-            </div>
-            <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
-                <table id="report-amc-table" class="w-full text-xs text-left">
-                    <thead>
-                        <tr class="text-slate-500 border-b border-white/5 pb-2">
-                            <th class="pb-2">Contract Status</th>
-                            <th class="pb-2 text-right">Client Count</th>
-                        </tr>
-                    </thead>
-                    <tbody id="report-amc-body">
-                        <!-- Populated dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Engineer Allocation Report Table -->
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-white/5 pb-2">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Engineer Ticket Load & Metrics</h2>
-                <button type="button" onclick="exportTableToExcel('report-techs-table','Engineer_Ticket_Load')" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Excel
-                </button>
-            </div>
-            <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
-                <table id="report-techs-table" class="w-full text-xs text-left">
-                    <thead>
-                        <tr class="text-slate-500 border-b border-white/5 pb-2">
-                            <th class="pb-2">Engineer Name</th>
-                            <th class="pb-2 text-center">Assigned Jobs</th>
-                            <th class="pb-2 text-right">Completion Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody id="report-techs-body">
-                        <!-- Populated dynamically -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>

@@ -183,10 +183,17 @@
   ],
   "connections": {
     "Webhook - Any Event": {
-      "main": [[ { "node": "Parse & Route Event", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Parse & Route Event", "type": "main", "index": 0 }]]
     },
     "Parse & Route Event": {
-      "main": [[ { "node": "Route: Telegram Admin", "type": "main", "index": 0 }, { "node": "Route: Telegram Worker", "type": "main", "index": 1 }, { "node": "Route: Telegram Client", "type": "main", "index": 2 }, { "node": "Route: Email Channels", "type": "main", "index": 3 } ]]
+      "main": [
+        [
+          { "node": "Route: Telegram Admin", "type": "main", "index": 0 },
+          { "node": "Route: Telegram Worker", "type": "main", "index": 1 },
+          { "node": "Route: Telegram Client", "type": "main", "index": 2 },
+          { "node": "Route: Email Channels", "type": "main", "index": 3 }
+        ]
+      ]
     },
     "Route: Telegram Admin": {
       "main": [

@@ -1,131 +1,173 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Customer Infrastructure Service Portal</title>
-    <link rel="stylesheet" href="public/tailwind.css">
+    <link rel="stylesheet" href="public/tailwind.css" />
     <!-- Google Fonts: Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
     <!-- jsPDF Module -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        body {
-            font-family: "Plus Jakarta Sans", sans-serif;
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 45%),
-                        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.05), transparent 40%),
-                        #09090b;
-        }
-        .glass-panel {
-            background: rgba(18, 18, 24, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-        .input-dark {
-            background-color: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .input-dark:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-        }
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background:
+          radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 45%),
+          radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.05), transparent 40%), #09090b;
+      }
+      .glass-panel {
+        background: rgba(18, 18, 24, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      .input-dark {
+        background-color: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .input-dark:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+      }
     </style>
-</head>
-<body class="text-slate-200 min-h-screen p-6 md:p-12 flex flex-col items-center">
+  </head>
+  <body class="text-slate-200 min-h-screen p-6 md:p-12 flex flex-col items-center">
     <div class="max-w-4xl w-full space-y-8">
-        
-        <!-- Header -->
-        <header class="border-b border-white/5 pb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <div>
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                    <span class="text-xs font-semibold tracking-widest text-indigo-400 uppercase">Secure Client Console</span>
-                </div>
-                <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
-                    CLIENT MAINTENANCE PORTAL
-                </h1>
-                <p class="text-sm text-slate-400 mt-1 font-medium">Verify historical system deployments, WiFi audits, and CCTV state parameters</p>
-            </div>
-            <div class="flex gap-2">
-                <input type="text" id="client-id-input" placeholder="Client Account ID (e.g., CLI-101)" class="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono tracking-wide w-full md:w-64 placeholder-slate-600">
-                <button onclick="loadClientHistory()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-[1.02] whitespace-nowrap shadow-lg hover:shadow-indigo-500/20">
-                    Pull Logs
-                </button>
-            </div>
-        </header>
-
-        <!-- Dynamic Logs Feed Container -->
-        <main id="portal-feed" class="space-y-6">
-            <div id="portal-summary-container"></div>
-            <div id="portal-logs-container" class="space-y-6">
-                <div class="glass-panel text-center py-16 text-slate-500 rounded-3xl border border-white/5 shadow-2xl">
-                    <span class="text-4xl block mb-3">🔍</span>
-                    <p class="text-sm font-medium">Enter your Client Key Identifier code above to request operational field records.</p>
-                </div>
-            </div>
-        </main>
-
-        <!-- Pagination Controls -->
-        <div id="feed-pagination" class="flex justify-between items-center text-xs pt-4 hidden">
-            <button type="button" onclick="changeFeedPage(-1)" class="bg-white/5 border border-white/10 text-slate-300 font-bold px-4 py-2 rounded-xl hover:bg-white/15 disabled:opacity-40 transition-all" id="btn-feed-prev">Prev</button>
-            <span class="text-slate-400 font-mono font-bold" id="feed-page-indicator">Page 1 of 1</span>
-            <button type="button" onclick="changeFeedPage(1)" class="bg-white/5 border border-white/10 text-slate-300 font-bold px-4 py-2 rounded-xl hover:bg-white/15 disabled:opacity-40 transition-all" id="btn-feed-next">Next</button>
+      <!-- Header -->
+      <header
+        class="border-b border-white/5 pb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4"
+      >
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
+            <span class="text-xs font-semibold tracking-widest text-indigo-400 uppercase"
+              >Secure Client Console</span
+            >
+          </div>
+          <h1
+            class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent"
+          >
+            CLIENT MAINTENANCE PORTAL
+          </h1>
+          <p class="text-sm text-slate-400 mt-1 font-medium">
+            Verify historical system deployments, WiFi audits, and CCTV state parameters
+          </p>
         </div>
+        <div class="flex gap-2">
+          <input
+            type="text"
+            id="client-id-input"
+            placeholder="Client Account ID (e.g., CLI-101)"
+            class="bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 font-mono tracking-wide w-full md:w-64 placeholder-slate-600"
+          />
+          <button
+            onclick="loadClientHistory()"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-[1.02] whitespace-nowrap shadow-lg hover:shadow-indigo-500/20"
+          >
+            Pull Logs
+          </button>
+        </div>
+      </header>
+
+      <!-- Dynamic Logs Feed Container -->
+      <main id="portal-feed" class="space-y-6">
+        <div id="portal-summary-container"></div>
+        <div id="portal-logs-container" class="space-y-6">
+          <div
+            class="glass-panel text-center py-16 text-slate-500 rounded-3xl border border-white/5 shadow-2xl"
+          >
+            <span class="text-4xl block mb-3">🔍</span>
+            <p class="text-sm font-medium">
+              Enter your Client Key Identifier code above to request operational field records.
+            </p>
+          </div>
+        </div>
+      </main>
+
+      <!-- Pagination Controls -->
+      <div id="feed-pagination" class="flex justify-between items-center text-xs pt-4 hidden">
+        <button
+          type="button"
+          onclick="changeFeedPage(-1)"
+          class="bg-white/5 border border-white/10 text-slate-300 font-bold px-4 py-2 rounded-xl hover:bg-white/15 disabled:opacity-40 transition-all"
+          id="btn-feed-prev"
+        >
+          Prev
+        </button>
+        <span class="text-slate-400 font-mono font-bold" id="feed-page-indicator">Page 1 of 1</span>
+        <button
+          type="button"
+          onclick="changeFeedPage(1)"
+          class="bg-white/5 border border-white/10 text-slate-300 font-bold px-4 py-2 rounded-xl hover:bg-white/15 disabled:opacity-40 transition-all"
+          id="btn-feed-next"
+        >
+          Next
+        </button>
+      </div>
     </div>
 
     <script>
-        const API_BASE_URL = "https://awesomemyanmar.pages.dev";
-        
-        let activeFeedLogs = [];
-        let feedPage = 1;
-        const feedPerPage = 4;
-        let activeClientId = "";
+      const API_BASE_URL = 'https://awesomemyanmar.pages.dev';
 
-        async function loadClientHistory() {
-            const clientId = document.getElementById('client-id-input').value.trim();
-            const summaryContainer = document.getElementById('portal-summary-container');
-            const logsContainer = document.getElementById('portal-logs-container');
-            
-            if(!clientId) return alert("Please supply a valid account parameter identifier.");
-            
-            activeClientId = clientId;
-            logsContainer.innerHTML = '<div class="text-center py-16 text-indigo-400 animate-pulse font-mono tracking-widest text-xs uppercase font-bold">Querying global infrastructure matrix nodes...</div>';
-            summaryContainer.innerHTML = '';
-            document.getElementById('feed-pagination').classList.add('hidden');
+      let activeFeedLogs = [];
+      let feedPage = 1;
+      const feedPerPage = 4;
+      let activeClientId = '';
 
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/portal/history?client_id=${clientId}`);
-                if (!res.ok) throw new Error("Could not acquire profile matrix logs.");
-                activeFeedLogs = await res.json();
+      async function loadClientHistory() {
+        const clientId = document.getElementById('client-id-input').value.trim();
+        const summaryContainer = document.getElementById('portal-summary-container');
+        const logsContainer = document.getElementById('portal-logs-container');
 
-                if (activeFeedLogs.length === 0) {
-                    logsContainer.innerHTML = `
+        if (!clientId) return alert('Please supply a valid account parameter identifier.');
+
+        activeClientId = clientId;
+        logsContainer.innerHTML =
+          '<div class="text-center py-16 text-indigo-400 animate-pulse font-mono tracking-widest text-xs uppercase font-bold">Querying global infrastructure matrix nodes...</div>';
+        summaryContainer.innerHTML = '';
+        document.getElementById('feed-pagination').classList.add('hidden');
+
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/portal/history?client_id=${clientId}`);
+          if (!res.ok) throw new Error('Could not acquire profile matrix logs.');
+          activeFeedLogs = await res.json();
+
+          if (activeFeedLogs.length === 0) {
+            logsContainer.innerHTML = `
                         <div class="glass-panel text-center py-16 text-slate-500 rounded-3xl border border-white/5 shadow-2xl">
                             <span class="text-3xl block mb-2">📁</span>
                             No validated, completed infrastructure logs are associated with account identifier: <b class="font-mono text-slate-300 font-bold">${clientId}</b>
                         </div>`;
-                    return;
-                }
+            return;
+          }
 
-                // Also fetch client warranties and AMC info
-                const warrantyRes = await fetch(`${API_BASE_URL}/api/portal/warranties?client_id=${clientId}`);
-                const warranties = warrantyRes.ok ? await warrantyRes.json() : [];
+          // Also fetch client warranties and AMC info
+          const warrantyRes = await fetch(
+            `${API_BASE_URL}/api/portal/warranties?client_id=${clientId}`
+          );
+          const warranties = warrantyRes.ok ? await warrantyRes.json() : [];
 
-                // Create AMC and Warranty Summary Panels
-                const summaryBlock = document.createElement('div');
-                summaryBlock.className = "grid md:grid-cols-3 gap-6 mb-6";
+          // Create AMC and Warranty Summary Panels
+          const summaryBlock = document.createElement('div');
+          summaryBlock.className = 'grid md:grid-cols-3 gap-6 mb-6';
 
-                // Resolve Client info from first log record
-                const clientName = activeFeedLogs[0].company_name || clientId;
-                const amcStart = activeFeedLogs[0].amc_start || 'N/A';
-                const amcEnd = activeFeedLogs[0].amc_end || 'N/A';
-                const amcStatus = activeFeedLogs[0].amc_status || 'Inactive';
-                const amcBadgeColor = amcStatus === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                      amcStatus === 'Expired' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 
-                                      'bg-slate-500/10 text-slate-400 border-slate-500/20';
+          // Resolve Client info from first log record
+          const clientName = activeFeedLogs[0].company_name || clientId;
+          const amcStart = activeFeedLogs[0].amc_start || 'N/A';
+          const amcEnd = activeFeedLogs[0].amc_end || 'N/A';
+          const amcStatus = activeFeedLogs[0].amc_status || 'Inactive';
+          const amcBadgeColor =
+            amcStatus === 'Active'
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              : amcStatus === 'Expired'
+                ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                : 'bg-slate-500/10 text-slate-400 border-slate-500/20';
 
-                summaryBlock.innerHTML = `
+          summaryBlock.innerHTML = `
                     <!-- AMC Contract Status Panel -->
                     <div class="glass-panel p-5 rounded-3xl shadow-xl border border-white/5 space-y-3 md:col-span-1 flex flex-col justify-between">
                         <div class="flex justify-between items-center">
@@ -143,15 +185,29 @@
                     <div class="glass-panel p-5 rounded-3xl shadow-xl border border-white/5 space-y-3 md:col-span-2">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Active Hardware Warranties</span>
                         <div class="max-h-[120px] overflow-y-auto scrollbar-thin space-y-2 pr-1">
-                            ${warranties.length === 0 ? '<div class="text-xs text-slate-500 italic py-4">No serialized active warranties registered.</div>' : warranties.map(w => {
-                                const installDate = new Date(w.installed_date || Date.now());
-                                const expiryDate = new Date(installDate);
-                                expiryDate.setMonth(expiryDate.getMonth() + (w.warranty_months || 12));
-                                const diffDays = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
-                                const warrantyRemaining = diffDays > 0 ? `${diffDays} days left` : 'Expired';
-                                const remainingColor = diffDays > 30 ? 'text-emerald-400' : diffDays > 0 ? 'text-amber-400' : 'text-rose-400';
-                                
-                                return `
+                            ${
+                              warranties.length === 0
+                                ? '<div class="text-xs text-slate-500 italic py-4">No serialized active warranties registered.</div>'
+                                : warranties
+                                    .map((w) => {
+                                      const installDate = new Date(w.installed_date || Date.now());
+                                      const expiryDate = new Date(installDate);
+                                      expiryDate.setMonth(
+                                        expiryDate.getMonth() + (w.warranty_months || 12)
+                                      );
+                                      const diffDays = Math.ceil(
+                                        (expiryDate - new Date()) / (1000 * 60 * 60 * 24)
+                                      );
+                                      const warrantyRemaining =
+                                        diffDays > 0 ? `${diffDays} days left` : 'Expired';
+                                      const remainingColor =
+                                        diffDays > 30
+                                          ? 'text-emerald-400'
+                                          : diffDays > 0
+                                            ? 'text-amber-400'
+                                            : 'text-rose-400';
+
+                                      return `
                                     <div class="flex justify-between items-center text-xs bg-black/40 p-2.5 rounded-lg border border-white/5">
                                         <div>
                                             <span class="text-white font-bold block">${w.device_name}</span>
@@ -163,7 +219,9 @@
                                         </div>
                                     </div>
                                 `;
-                            }).join('')}
+                                    })
+                                    .join('')
+                            }
                         </div>
                     </div>
 
@@ -179,21 +237,27 @@
                     </div>
                 `;
 
-                summaryContainer.appendChild(summaryBlock);
+          summaryContainer.appendChild(summaryBlock);
 
-                // Fetch client billing transactions dynamically
-                try {
-                    const txRes = await fetch(`${API_BASE_URL}/api/portal/transactions?client_id=${clientId}`);
-                    const txs = txRes.ok ? await txRes.json() : [];
-                    const txList = document.getElementById('portal-billing-list');
-                    if (txs.length === 0) {
-                        txList.innerHTML = '<div class="text-xs text-slate-500 italic py-4 text-center">No invoice or payment statement ledger logs found.</div>';
-                    } else {
-                        txList.innerHTML = '';
-                        txs.forEach(t => {
-                            const amountPrefix = t.transaction_type === 'Deposit' ? '+' : '-';
-                            const badgeColor = t.transaction_type === 'Deposit' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
-                            txList.innerHTML += `
+          // Fetch client billing transactions dynamically
+          try {
+            const txRes = await fetch(
+              `${API_BASE_URL}/api/portal/transactions?client_id=${clientId}`
+            );
+            const txs = txRes.ok ? await txRes.json() : [];
+            const txList = document.getElementById('portal-billing-list');
+            if (txs.length === 0) {
+              txList.innerHTML =
+                '<div class="text-xs text-slate-500 italic py-4 text-center">No invoice or payment statement ledger logs found.</div>';
+            } else {
+              txList.innerHTML = '';
+              txs.forEach((t) => {
+                const amountPrefix = t.transaction_type === 'Deposit' ? '+' : '-';
+                const badgeColor =
+                  t.transaction_type === 'Deposit'
+                    ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                    : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+                txList.innerHTML += `
                                 <div class="flex justify-between items-center text-xs bg-black/40 p-2.5 rounded-lg border border-white/5 font-mono">
                                     <div>
                                         <span class="px-2 py-0.5 rounded-full font-bold text-[9px] border ${badgeColor} mr-2">${t.transaction_type}</span>
@@ -205,48 +269,50 @@
                                     </div>
                                 </div>
                             `;
-                        });
-                    }
-                } catch(e){}
-
-                feedPage = 1;
-                renderFeed();
-
-            } catch (err) {
-                logsContainer.innerHTML = `<div class="text-center py-12 text-rose-400 bg-rose-950/10 border border-rose-500/20 rounded-2xl font-mono text-sm">Error matching query parameter credentials: ${err.message}</div>`;
+              });
             }
+          } catch (e) {}
+
+          feedPage = 1;
+          renderFeed();
+        } catch (err) {
+          logsContainer.innerHTML = `<div class="text-center py-12 text-rose-400 bg-rose-950/10 border border-rose-500/20 rounded-2xl font-mono text-sm">Error matching query parameter credentials: ${err.message}</div>`;
         }
+      }
 
-        function changeFeedPage(delta) {
-            feedPage += delta;
-            renderFeed();
-        }
+      function changeFeedPage(delta) {
+        feedPage += delta;
+        renderFeed();
+      }
 
-        function renderFeed() {
-            const logsContainer = document.getElementById('portal-logs-container');
-            const totalPages = Math.ceil(activeFeedLogs.length / feedPerPage) || 1;
+      function renderFeed() {
+        const logsContainer = document.getElementById('portal-logs-container');
+        const totalPages = Math.ceil(activeFeedLogs.length / feedPerPage) || 1;
 
-            if (feedPage < 1) feedPage = 1;
-            if (feedPage > totalPages) feedPage = totalPages;
+        if (feedPage < 1) feedPage = 1;
+        if (feedPage > totalPages) feedPage = totalPages;
 
-            document.getElementById('feed-page-indicator').textContent = `Page ${feedPage} of ${totalPages}`;
-            document.getElementById('btn-feed-prev').disabled = (feedPage === 1);
-            document.getElementById('btn-feed-next').disabled = (feedPage === totalPages);
-            document.getElementById('feed-pagination').classList.remove('hidden');
+        document.getElementById('feed-page-indicator').textContent =
+          `Page ${feedPage} of ${totalPages}`;
+        document.getElementById('btn-feed-prev').disabled = feedPage === 1;
+        document.getElementById('btn-feed-next').disabled = feedPage === totalPages;
+        document.getElementById('feed-pagination').classList.remove('hidden');
 
-            const start = (feedPage - 1) * feedPerPage;
-            const end = start + feedPerPage;
-            const sliced = activeFeedLogs.slice(start, end);
+        const start = (feedPage - 1) * feedPerPage;
+        const end = start + feedPerPage;
+        const sliced = activeFeedLogs.slice(start, end);
 
-            logsContainer.innerHTML = '';
-            sliced.forEach(log => {
-                const block = document.createElement('article');
-                block.className = "glass-panel p-6 rounded-3xl shadow-xl space-y-5";
-                
-                let equipmentList = [];
-                try { equipmentList = JSON.parse(log.equipment_used || "[]"); } catch(e){}
+        logsContainer.innerHTML = '';
+        sliced.forEach((log) => {
+          const block = document.createElement('article');
+          block.className = 'glass-panel p-6 rounded-3xl shadow-xl space-y-5';
 
-                block.innerHTML = `
+          let equipmentList = [];
+          try {
+            equipmentList = JSON.parse(log.equipment_used || '[]');
+          } catch (e) {}
+
+          block.innerHTML = `
                     <div class="flex justify-between items-start border-b border-white/5 pb-3">
                         <div>
                             <span class="bg-indigo-500/10 text-indigo-400 text-xs font-bold font-mono px-3 py-1 rounded border border-indigo-500/20">${log.service_type}</span>
@@ -280,87 +346,112 @@
                     <div class="space-y-2">
                         <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hardware Infrastructure Implemented</h4>
                         <div class="flex flex-wrap gap-2">
-                            ${equipmentList.length > 0 ? equipmentList.map(e => `<span class="bg-black/40 border border-white/10 text-xs px-3 py-1.5 rounded-lg text-slate-300 font-mono">${e}</span>`).join('') : '<span class="text-xs text-slate-500 italic">No inventory deployment required during execution loop.</span>'}
+                            ${equipmentList.length > 0 ? equipmentList.map((e) => `<span class="bg-black/40 border border-white/10 text-xs px-3 py-1.5 rounded-lg text-slate-300 font-mono">${e}</span>`).join('') : '<span class="text-xs text-slate-500 italic">No inventory deployment required during execution loop.</span>'}
                         </div>
                     </div>
-                    ${(log.before_photo || log.after_photo) ? `
+                    ${
+                      log.before_photo || log.after_photo
+                        ? `
                     <div class="space-y-2 pt-2 border-t border-white/5">
                         <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Visual Inspection Syncs</h4>
                         <div class="grid grid-cols-2 gap-4">
-                            ${log.before_photo ? `
+                            ${
+                              log.before_photo
+                                ? `
                             <div class="space-y-1">
                                 <span class="text-[10px] text-slate-500 block font-semibold">BEFORE</span>
                                 <img src="${log.before_photo}" class="rounded-xl border border-white/10 max-h-48 object-cover shadow-lg w-full" alt="Before Deployment">
-                            </div>` : ''}
-                            ${log.after_photo ? `
+                            </div>`
+                                : ''
+                            }
+                            ${
+                              log.after_photo
+                                ? `
                             <div class="space-y-1">
                                 <span class="text-[10px] text-slate-500 block font-semibold">AFTER</span>
                                 <img src="${log.after_photo}" class="rounded-xl border border-white/10 max-h-48 object-cover shadow-lg w-full" alt="After Deployment">
-                            </div>` : ''}
+                            </div>`
+                                : ''
+                            }
                         </div>
-                    </div>` : ''}
+                    </div>`
+                        : ''
+                    }
 
                     <!-- Customer Signature Sign-Off -->
-                    ${log.signature ? `
+                    ${
+                      log.signature
+                        ? `
                     <div class="space-y-1 pt-3 border-t border-white/5">
                         <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Validation Signature</h4>
                         <div class="bg-white/10 rounded-xl border border-white/15 inline-block p-2">
                             <img src="${log.signature}" class="max-h-16 invert opacity-80" alt="Customer Signature">
                         </div>
-                    </div>` : ''}
+                    </div>`
+                        : ''
+                    }
                 `;
-                logsContainer.appendChild(block);
-            });
-        }
+          logsContainer.appendChild(block);
+        });
+      }
 
-        async function downloadBillingStatementPDF(clientId) {
-            try {
-                const txRes = await fetch(`${API_BASE_URL}/api/portal/transactions?client_id=${clientId}`);
-                const txs = txRes.ok ? await txRes.json() : [];
-                if (txs.length === 0) return alert("No billing history found to compile.");
+      async function downloadBillingStatementPDF(clientId) {
+        try {
+          const txRes = await fetch(
+            `${API_BASE_URL}/api/portal/transactions?client_id=${clientId}`
+          );
+          const txs = txRes.ok ? await txRes.json() : [];
+          if (txs.length === 0) return alert('No billing history found to compile.');
 
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF('p', 'mm', 'a4');
 
-                doc.setFillColor(79, 70, 229);
-                doc.rect(0, 0, 210, 8, 'F');
+          doc.setFillColor(79, 70, 229);
+          doc.rect(0, 0, 210, 8, 'F');
 
-                doc.setTextColor(15, 23, 42);
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(20);
-                doc.text("CLIENT BILLING STATEMENT", 15, 25);
+          doc.setTextColor(15, 23, 42);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(20);
+          doc.text('CLIENT BILLING STATEMENT', 15, 25);
 
-                doc.setTextColor(100, 116, 139);
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(9);
-                doc.text("STATEMENT OF ACCOUNTS & TRANSACTIONS LOG", 15, 30);
+          doc.setTextColor(100, 116, 139);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.text('STATEMENT OF ACCOUNTS & TRANSACTIONS LOG', 15, 30);
 
-                doc.setDrawColor(226, 232, 240);
-                doc.setLineWidth(0.5);
-                doc.line(15, 35, 195, 35);
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(0.5);
+          doc.line(15, 35, 195, 35);
 
-                let currentY = 48;
-                doc.setTextColor(15, 23, 42);
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "bold");
-                doc.text("TRANSACTION LEDGER HISTORY:", 15, currentY);
-                currentY += 8;
+          let currentY = 48;
+          doc.setTextColor(15, 23, 42);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text('TRANSACTION LEDGER HISTORY:', 15, currentY);
+          currentY += 8;
 
-                txs.forEach((t, i) => {
-                    if (currentY > 270) { doc.addPage(); currentY = 20; }
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9);
-                    const amountStr = `${t.transaction_type}: ${t.primary_currency === 'USD' ? '$' : ''}${t.amount.toLocaleString()} ${t.primary_currency === 'MMK' ? 'Ks' : ''} (Rate: ${t.exchange_rate} / Equiv: ${t.equivalent_amount.toLocaleString()} Ks)`;
-                    doc.text(`${i+1}. [${new Date(t.created_at).toLocaleDateString()}] ${t.notes}`, 15, currentY);
-                    doc.text(amountStr, 15, currentY + 5);
-                    currentY += 13;
-                });
-
-                doc.save(`billing-statement-${clientId}.pdf`);
-            } catch(e) {
-                alert("Error compiling PDF: " + e.message);
+          txs.forEach((t, i) => {
+            if (currentY > 270) {
+              doc.addPage();
+              currentY = 20;
             }
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            const amountStr = `${t.transaction_type}: ${t.primary_currency === 'USD' ? '$' : ''}${t.amount.toLocaleString()} ${t.primary_currency === 'MMK' ? 'Ks' : ''} (Rate: ${t.exchange_rate} / Equiv: ${t.equivalent_amount.toLocaleString()} Ks)`;
+            doc.text(
+              `${i + 1}. [${new Date(t.created_at).toLocaleDateString()}] ${t.notes}`,
+              15,
+              currentY
+            );
+            doc.text(amountStr, 15, currentY + 5);
+            currentY += 13;
+          });
+
+          doc.save(`billing-statement-${clientId}.pdf`);
+        } catch (e) {
+          alert('Error compiling PDF: ' + e.message);
         }
+      }
     </script>
-</body>
+  </body>
 </html>

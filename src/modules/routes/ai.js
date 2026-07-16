@@ -2,51 +2,51 @@
  * AI Routes — AI-powered features: polish notes, auto-dispatch, route optimization, copilot
  */
 
-import { success, error } from "../utils/response.js";
-import { verifyToken } from "../utils/jwt.js";
+import { success, error } from '../utils/response.js';
+import { verifyToken } from '../utils/jwt.js';
 
 function register(router, env) {
   const db = env.DB;
 
   async function authenticate(request) {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
     const user = await verifyToken(authHeader.slice(7));
-    if (!user || user.role !== "admin") return null;
+    if (!user || user.role !== 'admin') return null;
     return user;
   }
 
   // ── POST /api/ai/polish-notes ─────────────────────────────────────────
-  router.post("/api/ai/polish-notes", async (request) => {
+  router.post('/api/ai/polish-notes', async (request) => {
     try {
       const user = await authenticate(request);
-      if (!user) return error("Unauthorized", 401);
+      if (!user) return error('Unauthorized', 401);
 
       const { text } = await request.json();
-      if (!text) return error("Missing text", 400);
+      if (!text) return error('Missing text', 400);
 
       // Use Gemini or OpenAI to polish notes
       const polished = await polishWithAI(text, env);
       return success({ original: text, polished });
     } catch (err) {
-      return error("Failed to polish notes: " + err.message, 500);
+      return error('Failed to polish notes: ' + err.message, 500);
     }
   });
 
   // ── POST /api/ai/auto-dispatch ────────────────────────────────────────
-  router.post("/api/ai/auto-dispatch", async (request) => {
+  router.post('/api/ai/auto-dispatch', async (request) => {
     try {
       const user = await authenticate(request);
-      if (!user) return error("Unauthorized", 401);
+      if (!user) return error('Unauthorized', 401);
 
       const { job_id, client_location, job_type, priority } = await request.json();
 
       // Find available technicians based on location, skills, and workload
       const availableTechs = await db
         .prepare(
-          "SELECT t.id, t.name, t.specialties, " +
-          "(SELECT COUNT(*) FROM jobs WHERE assigned_to = t.id AND status IN ('assigned', 'in_progress')) as active_jobs " +
-          "FROM technicians t WHERE t.active = 1 ORDER BY active_jobs ASC LIMIT 10"
+          'SELECT t.id, t.name, t.specialties, ' +
+            "(SELECT COUNT(*) FROM jobs WHERE assigned_to = t.id AND status IN ('assigned', 'in_progress')) as active_jobs " +
+            'FROM technicians t WHERE t.active = 1 ORDER BY active_jobs ASC LIMIT 10'
         )
         .all();
 
@@ -68,7 +68,9 @@ function register(router, env) {
 
       if (bestTech && job_id) {
         await db
-          .prepare("UPDATE jobs SET assigned_to = ?, status = 'assigned', updated_at = datetime('now') WHERE id = ?")
+          .prepare(
+            "UPDATE jobs SET assigned_to = ?, status = 'assigned', updated_at = datetime('now') WHERE id = ?"
+          )
           .bind(bestTech.id, job_id)
           .run();
       }
@@ -78,21 +80,23 @@ function register(router, env) {
         alternatives: scored.slice(1, 4),
       });
     } catch (err) {
-      return error("Failed to auto-dispatch: " + err.message, 500);
+      return error('Failed to auto-dispatch: ' + err.message, 500);
     }
   });
 
   // ── POST /api/ai/route-optimize ───────────────────────────────────────
-  router.post("/api/ai/route-optimize", async (request) => {
+  router.post('/api/ai/route-optimize', async (request) => {
     try {
       const user = await authenticate(request);
-      if (!user) return error("Unauthorized", 401);
+      if (!user) return error('Unauthorized', 401);
 
       const { technician_id, date } = await request.json();
-      if (!technician_id || !date) return error("Missing technician_id or date", 400);
+      if (!technician_id || !date) return error('Missing technician_id or date', 400);
 
       const jobs = await db
-        .prepare("SELECT j.id, j.title, c.address, c.name as client_name FROM jobs j JOIN clients c ON j.client_id = c.id WHERE j.assigned_to = ? AND j.scheduled_date = ? AND j.status IN ('assigned', 'pending') ORDER BY j.priority DESC")
+        .prepare(
+          "SELECT j.id, j.title, c.address, c.name as client_name FROM jobs j JOIN clients c ON j.client_id = c.id WHERE j.assigned_to = ? AND j.scheduled_date = ? AND j.status IN ('assigned', 'pending') ORDER BY j.priority DESC"
+        )
         .bind(technician_id, date)
         .all();
 
@@ -110,18 +114,18 @@ function register(router, env) {
         optimized_route: optimized,
       });
     } catch (err) {
-      return error("Failed to optimize route: " + err.message, 500);
+      return error('Failed to optimize route: ' + err.message, 500);
     }
   });
 
   // ── POST /api/ai/copilot ──────────────────────────────────────────────
-  router.post("/api/ai/copilot", async (request) => {
+  router.post('/api/ai/copilot', async (request) => {
     try {
       const user = await authenticate(request);
-      if (!user) return error("Unauthorized", 401);
+      if (!user) return error('Unauthorized', 401);
 
       const { query } = await request.json();
-      if (!query) return error("Missing query", 400);
+      if (!query) return error('Missing query', 400);
 
       // Natural language to SQL — use AI model to generate SQL
       const sql = await nlToSql(query, env);
@@ -138,29 +142,29 @@ function register(router, env) {
         return error(`SQL execution error: ${dbErr.message}`, 400);
       }
     } catch (err) {
-      return error("Copilot query failed: " + err.message, 500);
+      return error('Copilot query failed: ' + err.message, 500);
     }
   });
 
   // ── POST /api/ai/transcribe ───────────────────────────────────────────
-  router.post("/api/ai/transcribe", async (request) => {
+  router.post('/api/ai/transcribe', async (request) => {
     try {
       const user = await authenticate(request);
-      if (!user) return error("Unauthorized", 401);
+      if (!user) return error('Unauthorized', 401);
 
       const formData = await request.formData();
-      const audio = formData.get("audio");
-      if (!audio) return error("Missing audio file", 400);
+      const audio = formData.get('audio');
+      if (!audio) return error('Missing audio file', 400);
 
       // In production, send to Whisper API or similar
       // For now, return a placeholder
       return success({
-        transcription: "[Voice transcription would be processed here]",
+        transcription: '[Voice transcription would be processed here]',
         file_name: audio.name,
         file_size: audio.size,
       });
     } catch (err) {
-      return error("Failed to transcribe: " + err.message, 500);
+      return error('Failed to transcribe: ' + err.message, 500);
     }
   });
 }
@@ -173,23 +177,27 @@ async function polishWithAI(text, env) {
   if (!GEMINI_API_KEY) {
     // Simple fallback: capitalize, fix spacing
     return text
-      .split(". ")
+      .split('. ')
       .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-      .join(". ");
+      .join('. ');
   }
 
   try {
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Polish the following service technician notes for clarity and professionalism. Fix grammar and spelling, but keep the technical details intact:\n\n${text}`,
-            }],
-          }],
+          contents: [
+            {
+              parts: [
+                {
+                  text: `Polish the following service technician notes for clarity and professionalism. Fix grammar and spelling, but keep the technical details intact:\n\n${text}`,
+                },
+              ],
+            },
+          ],
         }),
       }
     );
@@ -208,10 +216,13 @@ async function nlToSql(query, env) {
   if (!GEMINI_API_KEY) {
     // Fallback: simple keyword matching
     const q = query.toLowerCase();
-    if (q.includes("job") && q.includes("count")) return "SELECT status, COUNT(*) as count FROM jobs GROUP BY status";
-    if (q.includes("client") && q.includes("recent")) return "SELECT * FROM clients ORDER BY created_at DESC LIMIT 10";
-    if (q.includes("expense") && q.includes("total")) return "SELECT category, SUM(amount) as total FROM expenses GROUP BY category";
-    return "SELECT * FROM jobs LIMIT 10";
+    if (q.includes('job') && q.includes('count'))
+      return 'SELECT status, COUNT(*) as count FROM jobs GROUP BY status';
+    if (q.includes('client') && q.includes('recent'))
+      return 'SELECT * FROM clients ORDER BY created_at DESC LIMIT 10';
+    if (q.includes('expense') && q.includes('total'))
+      return 'SELECT category, SUM(amount) as total FROM expenses GROUP BY category';
+    return 'SELECT * FROM jobs LIMIT 10';
   }
 
   try {
@@ -219,35 +230,52 @@ async function nlToSql(query, env) {
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Given this SQLite schema:\n${schema}\n\nConvert this natural language query to SQL. Return ONLY the SQL, no explanation:\n"${query}"`,
-            }],
-          }],
+          contents: [
+            {
+              parts: [
+                {
+                  text: `Given this SQLite schema:\n${schema}\n\nConvert this natural language query to SQL. Return ONLY the SQL, no explanation:\n"${query}"`,
+                },
+              ],
+            },
+          ],
         }),
       }
     );
     const data = await resp.json();
-    let sql = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    sql = sql.replace(/```sql|```/gi, "").trim();
+    let sql = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    sql = sql.replace(/```sql|```/gi, '').trim();
     return sql;
   } catch {
-    return "SELECT * FROM jobs LIMIT 10";
+    return 'SELECT * FROM jobs LIMIT 10';
   }
 }
 
 async function getSchemaSummary(db) {
-  const tables = ["technicians", "clients", "jobs", "inventory", "expenses", "attendance", "invoices", "system_config"];
+  const tables = [
+    'technicians',
+    'clients',
+    'jobs',
+    'inventory',
+    'expenses',
+    'attendance',
+    'invoices',
+    'system_config',
+  ];
   const schemas = [];
   for (const table of tables) {
     const info = await db.prepare(`PRAGMA table_info(${table})`).all();
-    const cols = info.results.map((c) => `  ${c.name} ${c.type}${c.pk ? " PRIMARY KEY" : ""}${c.notnull ? " NOT NULL" : ""}`).join("\n");
+    const cols = info.results
+      .map(
+        (c) => `  ${c.name} ${c.type}${c.pk ? ' PRIMARY KEY' : ''}${c.notnull ? ' NOT NULL' : ''}`
+      )
+      .join('\n');
     schemas.push(`TABLE ${table}:\n${cols}`);
   }
-  return schemas.join("\n\n");
+  return schemas.join('\n\n');
 }
 
 export { register };

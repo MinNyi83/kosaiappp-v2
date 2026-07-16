@@ -30,15 +30,11 @@
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
         "queryParameters": {
-          "parameters": [
-            { "name": "week", "value": "last" }
-          ]
+          "parameters": [{ "name": "week", "value": "last" }]
         },
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -55,9 +51,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -111,16 +105,21 @@
   ],
   "connections": {
     "Cron - Monday 9 AM": {
-      "main": [[ { "node": "GET /api/attendance?week=last", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "GET /api/attendance?week=last", "type": "main", "index": 0 }]]
     },
     "GET /api/attendance?week=last": {
-      "main": [[ { "node": "Build Weekly Report", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Build Weekly Report", "type": "main", "index": 0 }]]
     },
     "GET /api/workers": {
-      "main": [[ { "node": "Build Weekly Report", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Build Weekly Report", "type": "main", "index": 0 }]]
     },
     "Build Weekly Report": {
-      "main": [[ { "node": "Email - Send CSV Report", "type": "main", "index": 0 }, { "node": "Telegram - Report Summary", "type": "main", "index": 1 } ]]
+      "main": [
+        [
+          { "node": "Email - Send CSV Report", "type": "main", "index": 0 },
+          { "node": "Telegram - Report Summary", "type": "main", "index": 1 }
+        ]
+      ]
     }
   },
   "settings": {

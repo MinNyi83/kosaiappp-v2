@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { 
+import {
   createSuccessResponse,
   createErrorResponse,
   createNotFoundResponse,
@@ -48,7 +48,10 @@ describe('Response Utilities', () => {
     });
 
     it('should include details when provided', async () => {
-      const response = createErrorResponse('Validation failed', 400, { field: 'email', issue: 'invalid format' });
+      const response = createErrorResponse('Validation failed', 400, {
+        field: 'email',
+        issue: 'invalid format',
+      });
       expect(response.status).toBe(400);
       const body = await response.json();
       expect(body.details).toEqual({ field: 'email', issue: 'invalid format' });
@@ -84,7 +87,7 @@ describe('Response Utilities', () => {
     it('should return 400 with validation errors', async () => {
       const errors = [
         { field: 'email', message: 'Invalid email' },
-        { field: 'password', message: 'Too short' }
+        { field: 'password', message: 'Too short' },
       ];
       const response = createValidationErrorResponse(errors);
       expect(response.status).toBe(400);

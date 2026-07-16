@@ -1,659 +1,928 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Awesome Myanmar - CCTV & Infrastructure Solutions</title>
-    <link rel="stylesheet" href="tailwind.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tailwind.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        * { scroll-behavior: smooth; }
-        
-        html {
-            scroll-padding-top: 80px;
-        }
-        
-        body {
-            font-family: "Plus Jakarta Sans", sans-serif;
-            background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.05), transparent 45%),
-                        radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 40%),
-                        #09090b;
-        }
-        
-        .glass-panel {
-            background: rgba(18, 18, 24, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
-        }
-        
-        .glass-panel:hover {
-            border-color: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        .hero-grid {
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 60px 60px;
-        }
-        
-        .gradient-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.15;
-            animation: float 8s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-20px) scale(1.05); }
-        }
-        
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fade-in-up {
-            animation: fadeInUp 0.8s ease-out forwards;
-            opacity: 0;
-        }
-        
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
-        
-        .icon-container {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-        
-        .glass-panel:hover .icon-container {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.1));
-            border-color: rgba(245, 158, 11, 0.4);
-            transform: scale(1.05);
-        }
-        
-        .icon-container svg {
-            width: 24px;
-            height: 24px;
-            color: #f59e0b;
-        }
-        
-        .btn-primary {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        .btn-primary:hover::before { left: 100%; }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
-        }
-        
-        .btn-secondary {
-            transition: all 0.3s ease;
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .form-input {
-            transition: all 0.3s ease;
-        }
-        
-        .form-input:focus {
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-        }
-        
-        .stat-item { position: relative; }
-        
-        .stat-item::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 1px;
-            height: 40px;
-            background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
-        }
-        
-        .stat-item:last-child::after { display: none; }
-        
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid transparent;
-            border-top-color: #000;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease;
-        }
-        
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        tbody tr { transition: all 0.2s ease; }
-        tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
-        
-        a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
-            outline: 2px solid #f59e0b;
-            outline-offset: 2px;
-        }
-        
-        #hamburger-btn.active .hamburger-line:nth-child(1) {
-            transform: translateY(8px) rotate(45deg);
-        }
-        #hamburger-btn.active .hamburger-line:nth-child(2) {
-            opacity: 0;
-            transform: scaleX(0);
-        }
-        #hamburger-btn.active .hamburger-line:nth-child(3) {
-            transform: translateY(-8px) rotate(-45deg);
-        }
-        
-        #mobile-menu {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        #mobile-menu.open { max-height: 400px; }
-        
-        #back-to-top.visible {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0);
-        }
-        #back-to-top:hover { transform: translateY(-4px); }
-        
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-    </style>
-</head>
-<body class="text-slate-200 min-h-screen flex flex-col">
+      * {
+        scroll-behavior: smooth;
+      }
 
+      html {
+        scroll-padding-top: 80px;
+      }
+
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background:
+          radial-gradient(circle at top right, rgba(245, 158, 11, 0.05), transparent 45%),
+          radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 40%), #09090b;
+      }
+
+      .glass-panel {
+        background: rgba(18, 18, 24, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .glass-panel:hover {
+        border-color: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      }
+
+      .hero-grid {
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 60px 60px;
+      }
+
+      .gradient-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.15;
+        animation: float 8s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+        }
+        50% {
+          transform: translateY(-20px) scale(1.05);
+        }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .animate-fade-in-up {
+        animation: fadeInUp 0.8s ease-out forwards;
+        opacity: 0;
+      }
+
+      .delay-100 {
+        animation-delay: 0.1s;
+      }
+      .delay-200 {
+        animation-delay: 0.2s;
+      }
+      .delay-300 {
+        animation-delay: 0.3s;
+      }
+
+      .icon-container {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .glass-panel:hover .icon-container {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.1));
+        border-color: rgba(245, 158, 11, 0.4);
+        transform: scale(1.05);
+      }
+
+      .icon-container svg {
+        width: 24px;
+        height: 24px;
+        color: #f59e0b;
+      }
+
+      .btn-primary {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+      }
+
+      .btn-primary:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+      }
+
+      .btn-secondary {
+        transition: all 0.3s ease;
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+
+      .form-input {
+        transition: all 0.3s ease;
+      }
+
+      .form-input:focus {
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+      }
+
+      .stat-item {
+        position: relative;
+      }
+
+      .stat-item::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1px;
+        height: 40px;
+        background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
+      }
+
+      .stat-item:last-child::after {
+        display: none;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top-color: #000;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s ease;
+      }
+
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      tbody tr {
+        transition: all 0.2s ease;
+      }
+      tbody tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      a:focus-visible,
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid #f59e0b;
+        outline-offset: 2px;
+      }
+
+      #hamburger-btn.active .hamburger-line:nth-child(1) {
+        transform: translateY(8px) rotate(45deg);
+      }
+      #hamburger-btn.active .hamburger-line:nth-child(2) {
+        opacity: 0;
+        transform: scaleX(0);
+      }
+      #hamburger-btn.active .hamburger-line:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);
+      }
+
+      #mobile-menu {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      #mobile-menu.open {
+        max-height: 400px;
+      }
+
+      #back-to-top.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+      #back-to-top:hover {
+        transform: translateY(-4px);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="text-slate-200 min-h-screen flex flex-col">
     <!-- Header Navigation -->
-    <header id="main-header" class="border-b border-white/5 bg-black/30 backdrop-blur-md sticky top-0 z-50 transition-shadow duration-300">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-amber-500 text-xl">⚙️</span>
-                <span class="font-extrabold text-white tracking-wider text-sm uppercase">Awesome Myanmar</span>
-            </div>
-            <!-- Desktop Nav -->
-            <nav class="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
-                <a href="#services" class="text-slate-400 hover:text-white transition">Services</a>
-                <a href="#stats" class="text-slate-400 hover:text-white transition">About</a>
-                <a href="/portfolio.html" class="text-slate-400 hover:text-white transition">Portfolio</a>
-                <a href="#prices" class="text-slate-400 hover:text-white transition">Price List</a>
-                <a href="#quotation" class="text-slate-400 hover:text-white transition">Quotation</a>
-                <a href="/portal.html" class="text-slate-400 hover:text-white transition">Client Portal</a>
-                <a href="/contact.html" class="text-slate-400 hover:text-white transition">Contact</a>
-                <a href="/admin.html" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-1.5 rounded-lg transition">Staff Console</a>
-            </nav>
-            <!-- Hamburger Button -->
-            <button id="hamburger-btn" class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5" aria-label="Toggle menu">
-                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-            </button>
+    <header
+      id="main-header"
+      class="border-b border-white/5 bg-black/30 backdrop-blur-md sticky top-0 z-50 transition-shadow duration-300"
+    >
+      <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-500 text-xl">⚙️</span>
+          <span class="font-extrabold text-white tracking-wider text-sm uppercase"
+            >Awesome Myanmar</span
+          >
         </div>
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="md:hidden hidden border-t border-white/5 bg-black/50 backdrop-blur-md">
-            <nav class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 text-xs font-bold uppercase tracking-wider">
-                <a href="#services" class="text-slate-400 hover:text-white transition py-2">Services</a>
-                <a href="#stats" class="text-slate-400 hover:text-white transition py-2">About</a>
-                <a href="/portfolio.html" class="text-slate-400 hover:text-white transition py-2">Portfolio</a>
-                <a href="#prices" class="text-slate-400 hover:text-white transition py-2">Price List</a>
-                <a href="#quotation" class="text-slate-400 hover:text-white transition py-2">Quotation</a>
-                <a href="/portal.html" class="text-slate-400 hover:text-white transition py-2">Client Portal</a>
-                <a href="/contact.html" class="text-slate-400 hover:text-white transition py-2">Contact</a>
-                <a href="/admin.html" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-2 rounded-lg transition text-center mt-2">Staff Console</a>
-            </nav>
-        </div>
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
+          <a href="#services" class="text-slate-400 hover:text-white transition">Services</a>
+          <a href="#stats" class="text-slate-400 hover:text-white transition">About</a>
+          <a href="/portfolio.html" class="text-slate-400 hover:text-white transition">Portfolio</a>
+          <a href="#prices" class="text-slate-400 hover:text-white transition">Price List</a>
+          <a href="#quotation" class="text-slate-400 hover:text-white transition">Quotation</a>
+          <a href="/portal.html" class="text-slate-400 hover:text-white transition"
+            >Client Portal</a
+          >
+          <a href="/contact.html" class="text-slate-400 hover:text-white transition">Contact</a>
+          <a
+            href="/admin.html"
+            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-1.5 rounded-lg transition"
+            >Staff Console</a
+          >
+        </nav>
+        <!-- Hamburger Button -->
+        <button
+          id="hamburger-btn"
+          class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5"
+          aria-label="Toggle menu"
+        >
+          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+        </button>
+      </div>
+      <!-- Mobile Menu -->
+      <div
+        id="mobile-menu"
+        class="md:hidden hidden border-t border-white/5 bg-black/50 backdrop-blur-md"
+      >
+        <nav
+          class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 text-xs font-bold uppercase tracking-wider"
+        >
+          <a href="#services" class="text-slate-400 hover:text-white transition py-2">Services</a>
+          <a href="#stats" class="text-slate-400 hover:text-white transition py-2">About</a>
+          <a href="/portfolio.html" class="text-slate-400 hover:text-white transition py-2"
+            >Portfolio</a
+          >
+          <a href="#prices" class="text-slate-400 hover:text-white transition py-2">Price List</a>
+          <a href="#quotation" class="text-slate-400 hover:text-white transition py-2">Quotation</a>
+          <a href="/portal.html" class="text-slate-400 hover:text-white transition py-2"
+            >Client Portal</a
+          >
+          <a href="/contact.html" class="text-slate-400 hover:text-white transition py-2"
+            >Contact</a
+          >
+          <a
+            href="/admin.html"
+            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-2 rounded-lg transition text-center mt-2"
+            >Staff Console</a
+          >
+        </nav>
+      </div>
     </header>
 
     <!-- Hero Section -->
     <section class="relative overflow-hidden">
-        <div class="hero-grid absolute inset-0 opacity-50"></div>
-        <div class="gradient-orb bg-amber-500 w-96 h-96 -top-48 -right-48"></div>
-        <div class="gradient-orb bg-indigo-500 w-80 h-80 -bottom-40 -left-40" style="animation-delay: 4s;"></div>
-        
-        <div class="relative max-w-6xl mx-auto px-4 py-20 md:py-28 text-center space-y-6">
-            <p id="lp-eyebrow" class="animate-fade-in-up text-amber-500 text-xs font-bold uppercase tracking-[0.3em]">Trusted Security Solutions</p>
-            <h1 id="lp-headline" class="animate-fade-in-up delay-100 text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white uppercase leading-[0.95]">
-                Next-Gen CCTV & <br class="hidden md:inline"><span class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Infrastructure Systems</span>
-            </h1>
-            <p id="lp-description" class="animate-fade-in-up delay-200 max-w-2xl mx-auto text-sm md:text-base text-slate-400 leading-relaxed font-medium">
-                We deliver state-of-the-art surveillance arrays, mesh networks, and redundant storage systems tailored for high-security environments in Myanmar.
-            </p>
-            <div class="animate-fade-in-up delay-300 flex justify-center gap-4 pt-4">
-                <a href="#quotation" id="lp-btn-primary" class="btn-primary bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold uppercase tracking-wider px-8 py-4 rounded-xl shadow-lg shadow-amber-500/20">
-                    Request a Free Quotation
-                </a>
-                <a href="/portal.html" id="lp-btn-secondary" class="btn-secondary bg-white/5 border border-white/10 text-white text-xs font-bold uppercase tracking-wider px-8 py-4 rounded-xl">
-                    Access Client Portal
-                </a>
-            </div>
+      <div class="hero-grid absolute inset-0 opacity-50"></div>
+      <div class="gradient-orb bg-amber-500 w-96 h-96 -top-48 -right-48"></div>
+      <div
+        class="gradient-orb bg-indigo-500 w-80 h-80 -bottom-40 -left-40"
+        style="animation-delay: 4s"
+      ></div>
+
+      <div class="relative max-w-6xl mx-auto px-4 py-20 md:py-28 text-center space-y-6">
+        <p
+          id="lp-eyebrow"
+          class="animate-fade-in-up text-amber-500 text-xs font-bold uppercase tracking-[0.3em]"
+        >
+          Trusted Security Solutions
+        </p>
+        <h1
+          id="lp-headline"
+          class="animate-fade-in-up delay-100 text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white uppercase leading-[0.95]"
+        >
+          Next-Gen CCTV & <br class="hidden md:inline" /><span
+            class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent"
+            >Infrastructure Systems</span
+          >
+        </h1>
+        <p
+          id="lp-description"
+          class="animate-fade-in-up delay-200 max-w-2xl mx-auto text-sm md:text-base text-slate-400 leading-relaxed font-medium"
+        >
+          We deliver state-of-the-art surveillance arrays, mesh networks, and redundant storage
+          systems tailored for high-security environments in Myanmar.
+        </p>
+        <div class="animate-fade-in-up delay-300 flex justify-center gap-4 pt-4">
+          <a
+            href="#quotation"
+            id="lp-btn-primary"
+            class="btn-primary bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold uppercase tracking-wider px-8 py-4 rounded-xl shadow-lg shadow-amber-500/20"
+          >
+            Request a Free Quotation
+          </a>
+          <a
+            href="/portal.html"
+            id="lp-btn-secondary"
+            class="btn-secondary bg-white/5 border border-white/10 text-white text-xs font-bold uppercase tracking-wider px-8 py-4 rounded-xl"
+          >
+            Access Client Portal
+          </a>
         </div>
+      </div>
     </section>
 
     <!-- Features & Services -->
     <section id="services" class="max-w-6xl mx-auto px-4 py-16">
-        <div class="text-center mb-12">
-            <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.2em] mb-3">What We Offer</p>
-            <h2 id="lp-services-title" class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Our Services</h2>
+      <div class="text-center mb-12">
+        <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.2em] mb-3">
+          What We Offer
+        </p>
+        <h2
+          id="lp-services-title"
+          class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight"
+        >
+          Our Services
+        </h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
+          <div class="icon-container">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"
+              />
+            </svg>
+          </div>
+          <h3
+            id="lp-service1-title"
+            class="text-base font-bold text-white uppercase tracking-wider"
+          >
+            CCTV & Surveillance
+          </h3>
+          <p id="lp-service1-desc" class="text-xs text-slate-400 leading-relaxed">
+            High-definition IP cameras, multi-channel NVR arrays, AI intelligent human tracking and
+            vehicle detection capabilities.
+          </p>
         </div>
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
-                <div class="icon-container">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                    </svg>
-                </div>
-                <h3 id="lp-service1-title" class="text-base font-bold text-white uppercase tracking-wider">CCTV & Surveillance</h3>
-                <p id="lp-service1-desc" class="text-xs text-slate-400 leading-relaxed">High-definition IP cameras, multi-channel NVR arrays, AI intelligent human tracking and vehicle detection capabilities.</p>
-            </div>
-            <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
-                <div class="icon-container">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                    </svg>
-                </div>
-                <h3 id="lp-service2-title" class="text-base font-bold text-white uppercase tracking-wider">Mesh Networking</h3>
-                <p id="lp-service2-desc" class="text-xs text-slate-400 leading-relaxed">Enterprise wireless bridging, multi-gigabit switches, optical fiber deployment, and robust firewalls.</p>
-            </div>
-            <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
-                <div class="icon-container">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-                    </svg>
-                </div>
-                <h3 id="lp-service3-title" class="text-base font-bold text-white uppercase tracking-wider">NAS Storage Arrays</h3>
-                <p id="lp-service3-desc" class="text-xs text-slate-400 leading-relaxed">High-reliability network-attached storage nodes for continuous recordings and automated disaster backups.</p>
-            </div>
+        <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
+          <div class="icon-container">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418"
+              />
+            </svg>
+          </div>
+          <h3
+            id="lp-service2-title"
+            class="text-base font-bold text-white uppercase tracking-wider"
+          >
+            Mesh Networking
+          </h3>
+          <p id="lp-service2-desc" class="text-xs text-slate-400 leading-relaxed">
+            Enterprise wireless bridging, multi-gigabit switches, optical fiber deployment, and
+            robust firewalls.
+          </p>
         </div>
+        <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
+          <div class="icon-container">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"
+              />
+            </svg>
+          </div>
+          <h3
+            id="lp-service3-title"
+            class="text-base font-bold text-white uppercase tracking-wider"
+          >
+            NAS Storage Arrays
+          </h3>
+          <p id="lp-service3-desc" class="text-xs text-slate-400 leading-relaxed">
+            High-reliability network-attached storage nodes for continuous recordings and automated
+            disaster backups.
+          </p>
+        </div>
+      </div>
     </section>
 
     <!-- Stats Section -->
     <section id="stats" class="border-y border-white/5 bg-black/20">
-        <div class="max-w-6xl mx-auto px-4 py-12">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <div class="stat-item text-center space-y-2">
-                    <p id="lp-stat1-value" class="text-3xl md:text-4xl font-black text-white">500+</p>
-                    <p id="lp-stat1-label" class="text-xs text-slate-400 uppercase tracking-wider">Projects Completed</p>
-                </div>
-                <div class="stat-item text-center space-y-2">
-                    <p id="lp-stat2-value" class="text-3xl md:text-4xl font-black text-white">150+</p>
-                    <p id="lp-stat2-label" class="text-xs text-slate-400 uppercase tracking-wider">Active Clients</p>
-                </div>
-                <div class="stat-item text-center space-y-2">
-                    <p id="lp-stat3-value" class="text-3xl md:text-4xl font-black text-white">10+</p>
-                    <p id="lp-stat3-label" class="text-xs text-slate-400 uppercase tracking-wider">Years Experience</p>
-                </div>
-                <div class="stat-item text-center space-y-2">
-                    <p id="lp-stat4-value" class="text-3xl md:text-4xl font-black text-white">24/7</p>
-                    <p id="lp-stat4-label" class="text-xs text-slate-400 uppercase tracking-wider">Support Available</p>
-                </div>
-            </div>
+      <div class="max-w-6xl mx-auto px-4 py-12">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div class="stat-item text-center space-y-2">
+            <p id="lp-stat1-value" class="text-3xl md:text-4xl font-black text-white">500+</p>
+            <p id="lp-stat1-label" class="text-xs text-slate-400 uppercase tracking-wider">
+              Projects Completed
+            </p>
+          </div>
+          <div class="stat-item text-center space-y-2">
+            <p id="lp-stat2-value" class="text-3xl md:text-4xl font-black text-white">150+</p>
+            <p id="lp-stat2-label" class="text-xs text-slate-400 uppercase tracking-wider">
+              Active Clients
+            </p>
+          </div>
+          <div class="stat-item text-center space-y-2">
+            <p id="lp-stat3-value" class="text-3xl md:text-4xl font-black text-white">10+</p>
+            <p id="lp-stat3-label" class="text-xs text-slate-400 uppercase tracking-wider">
+              Years Experience
+            </p>
+          </div>
+          <div class="stat-item text-center space-y-2">
+            <p id="lp-stat4-value" class="text-3xl md:text-4xl font-black text-white">24/7</p>
+            <p id="lp-stat4-label" class="text-xs text-slate-400 uppercase tracking-wider">
+              Support Available
+            </p>
+          </div>
         </div>
+      </div>
     </section>
 
     <!-- Real-Time Catalog Price List -->
     <section id="prices" class="max-w-4xl mx-auto w-full px-4 py-16 space-y-6">
-        <div class="text-center">
-            <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.2em] mb-3">Transparent Pricing</p>
-            <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">System Components & Price List</h2>
-            <p class="text-xs text-slate-400 mt-2">Live catalog items and standard pricing conversion indices.</p>
+      <div class="text-center">
+        <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.2em] mb-3">
+          Transparent Pricing
+        </p>
+        <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+          System Components & Price List
+        </h2>
+        <p class="text-xs text-slate-400 mt-2">
+          Live catalog items and standard pricing conversion indices.
+        </p>
+      </div>
+
+      <div class="glass-panel p-6 rounded-2xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead>
+              <tr
+                class="text-slate-500 border-b border-white/5 pb-2 font-bold uppercase tracking-wider"
+              >
+                <th class="pb-3">Component Name</th>
+                <th class="pb-3">Category</th>
+                <th class="pb-3 text-right">USD Unit Price</th>
+                <th class="pb-3 text-right">MMK Equivalent</th>
+              </tr>
+            </thead>
+            <tbody id="catalog-price-body" class="divide-y divide-white/5">
+              <tr>
+                <td colspan="4" class="py-4 text-center text-slate-500">
+                  Loading catalog prices...
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        
-        <div class="glass-panel p-6 rounded-2xl">
-            <div class="overflow-x-auto">
-                <table class="w-full text-xs text-left">
-                    <thead>
-                        <tr class="text-slate-500 border-b border-white/5 pb-2 font-bold uppercase tracking-wider">
-                            <th class="pb-3">Component Name</th>
-                            <th class="pb-3">Category</th>
-                            <th class="pb-3 text-right">USD Unit Price</th>
-                            <th class="pb-3 text-right">MMK Equivalent</th>
-                        </tr>
-                    </thead>
-                    <tbody id="catalog-price-body" class="divide-y divide-white/5">
-                        <tr>
-                            <td colspan="4" class="py-4 text-center text-slate-500">Loading catalog prices...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+      </div>
     </section>
 
     <!-- Quotation Form -->
     <section id="quotation" class="max-w-2xl mx-auto w-full px-4 py-16 space-y-6">
-        <div class="text-center">
-            <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.2em] mb-3">Get Started</p>
-            <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Request Quotation</h2>
-            <p class="text-xs text-slate-400 mt-2">Submit your site parameters, and our engineers will design a customized system layout.</p>
-        </div>
+      <div class="text-center">
+        <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.2em] mb-3">Get Started</p>
+        <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+          Request Quotation
+        </h2>
+        <p class="text-xs text-slate-400 mt-2">
+          Submit your site parameters, and our engineers will design a customized system layout.
+        </p>
+      </div>
 
-        <form method="POST" id="quotation-form" onsubmit="submitQuotationRequest(event)" class="glass-panel p-6 md:p-8 rounded-3xl space-y-5">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Name / Company</label>
-                    <input name="quote-name" type="text" id="quote-name" required placeholder="e.g. Oak Palace Hotel" class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none">
-                </div>
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phone Number</label>
-                    <input name="quote-phone" type="text" id="quote-phone" required placeholder="e.g. 09-443882991" class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none">
-                </div>
-            </div>
-            <div class="space-y-2">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Site Location Address</label>
-                <input name="quote-address" type="text" id="quote-address" required placeholder="Physical address of proposed installation" class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none">
-            </div>
-            <div class="space-y-2">
-                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Scope / Requirements Description</label>
-                <textarea name="quote-description" id="quote-description" required rows="4" placeholder="How many cameras do you require? Is networking infrastructure needed?..." class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none resize-none"></textarea>
-            </div>
-            <button type="submit" id="submit-btn" class="btn-primary w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2">
-                <span id="btn-text">Submit Quotation Request</span>
-                <div id="btn-spinner" class="spinner hidden"></div>
-            </button>
-        </form>
+      <form
+        method="POST"
+        id="quotation-form"
+        onsubmit="submitQuotationRequest(event)"
+        class="glass-panel p-6 md:p-8 rounded-3xl space-y-5"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Name / Company</label
+            >
+            <input
+              name="quote-name"
+              type="text"
+              id="quote-name"
+              required
+              placeholder="e.g. Oak Palace Hotel"
+              class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+              >Phone Number</label
+            >
+            <input
+              name="quote-phone"
+              type="text"
+              id="quote-phone"
+              required
+              placeholder="e.g. 09-443882991"
+              class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none"
+            />
+          </div>
+        </div>
+        <div class="space-y-2">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Site Location Address</label
+          >
+          <input
+            name="quote-address"
+            type="text"
+            id="quote-address"
+            required
+            placeholder="Physical address of proposed installation"
+            class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none"
+          />
+        </div>
+        <div class="space-y-2">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+            >Scope / Requirements Description</label
+          >
+          <textarea
+            name="quote-description"
+            id="quote-description"
+            required
+            rows="4"
+            placeholder="How many cameras do you require? Is networking infrastructure needed?..."
+            class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none resize-none"
+          ></textarea>
+        </div>
+        <button
+          type="submit"
+          id="submit-btn"
+          class="btn-primary w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+        >
+          <span id="btn-text">Submit Quotation Request</span>
+          <div id="btn-spinner" class="spinner hidden"></div>
+        </button>
+      </form>
     </section>
 
     <!-- Footer -->
     <footer class="border-t border-white/5 bg-black/50 py-8">
-        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 space-y-4">
-            <div class="flex items-center justify-center gap-2">
-                <span class="text-amber-500">⚙️</span>
-                <span class="font-bold text-white tracking-wider uppercase">Awesome Myanmar</span>
-            </div>
-            <p id="lp-copyright">&copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.</p>
+      <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 space-y-4">
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-amber-500">⚙️</span>
+          <span class="font-bold text-white tracking-wider uppercase">Awesome Myanmar</span>
         </div>
+        <p id="lp-copyright">
+          &copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.
+        </p>
+      </div>
     </footer>
 
     <!-- Back to Top Button -->
-    <button id="back-to-top" class="fixed bottom-6 right-6 w-12 h-12 bg-amber-500 hover:bg-amber-400 text-black rounded-full shadow-lg shadow-amber-500/30 flex items-center justify-center transition-all duration-300 opacity-0 invisible translate-y-4" aria-label="Back to top">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-        </svg>
+    <button
+      id="back-to-top"
+      class="fixed bottom-6 right-6 w-12 h-12 bg-amber-500 hover:bg-amber-400 text-black rounded-full shadow-lg shadow-amber-500/30 flex items-center justify-center transition-all duration-300 opacity-0 invisible translate-y-4"
+      aria-label="Back to top"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="2"
+        stroke="currentColor"
+        class="w-5 h-5"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+      </svg>
     </button>
 
     <script>
-        const API_BASE_URL = window.location.origin;
-        let exchangeRate = 4500;
+      const API_BASE_URL = window.location.origin;
+      let exchangeRate = 4500;
 
-        window.addEventListener('load', async () => {
-            await fetchLandingPageContent();
-            await fetchExchangeRate();
-            await fetchCatalog();
-            initScrollReveal();
-            initStickyHeader();
-            initMobileMenu();
-            initBackToTop();
+      window.addEventListener('load', async () => {
+        await fetchLandingPageContent();
+        await fetchExchangeRate();
+        await fetchCatalog();
+        initScrollReveal();
+        initStickyHeader();
+        initMobileMenu();
+        initBackToTop();
+      });
+
+      async function fetchLandingPageContent() {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/landing-page`);
+          if (res.ok) {
+            const data = await res.json();
+            const content = data.value;
+            if (content) {
+              // Hero
+              if (content.eyebrow)
+                document.getElementById('lp-eyebrow').textContent = content.eyebrow;
+              if (content.headline)
+                document.getElementById('lp-headline').innerHTML = content.headline;
+              if (content.description)
+                document.getElementById('lp-description').textContent = content.description;
+              if (content.btn_primary)
+                document.getElementById('lp-btn-primary').textContent = content.btn_primary;
+              if (content.btn_secondary)
+                document.getElementById('lp-btn-secondary').textContent = content.btn_secondary;
+
+              // Stats
+              if (content.stat1_value)
+                document.getElementById('lp-stat1-value').textContent = content.stat1_value;
+              if (content.stat1_label)
+                document.getElementById('lp-stat1-label').textContent = content.stat1_label;
+              if (content.stat2_value)
+                document.getElementById('lp-stat2-value').textContent = content.stat2_value;
+              if (content.stat2_label)
+                document.getElementById('lp-stat2-label').textContent = content.stat2_label;
+              if (content.stat3_value)
+                document.getElementById('lp-stat3-value').textContent = content.stat3_value;
+              if (content.stat3_label)
+                document.getElementById('lp-stat3-label').textContent = content.stat3_label;
+              if (content.stat4_value)
+                document.getElementById('lp-stat4-value').textContent = content.stat4_value;
+              if (content.stat4_label)
+                document.getElementById('lp-stat4-label').textContent = content.stat4_label;
+
+              // Services
+              if (content.services_title)
+                document.getElementById('lp-services-title').textContent = content.services_title;
+              if (content.service1_title)
+                document.getElementById('lp-service1-title').textContent = content.service1_title;
+              if (content.service1_desc)
+                document.getElementById('lp-service1-desc').textContent = content.service1_desc;
+              if (content.service2_title)
+                document.getElementById('lp-service2-title').textContent = content.service2_title;
+              if (content.service2_desc)
+                document.getElementById('lp-service2-desc').textContent = content.service2_desc;
+              if (content.service3_title)
+                document.getElementById('lp-service3-title').textContent = content.service3_title;
+              if (content.service3_desc)
+                document.getElementById('lp-service3-desc').textContent = content.service3_desc;
+
+              // Footer
+              if (content.copyright)
+                document.getElementById('lp-copyright').textContent = content.copyright;
+            }
+          }
+        } catch (e) {
+          console.log('Using default landing page content');
+        }
+      }
+
+      function initStickyHeader() {
+        const header = document.getElementById('main-header');
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 10) {
+            header.classList.add('shadow-lg', 'shadow-black/20');
+          } else {
+            header.classList.remove('shadow-lg', 'shadow-black/20');
+          }
+        });
+      }
+
+      function initMobileMenu() {
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        hamburgerBtn.addEventListener('click', () => {
+          hamburgerBtn.classList.toggle('active');
+          mobileMenu.classList.toggle('hidden');
+          mobileMenu.classList.toggle('open');
         });
 
-        async function fetchLandingPageContent() {
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/landing-page`);
-                if (res.ok) {
-                    const data = await res.json();
-                    const content = data.value;
-                    if (content) {
-                        // Hero
-                        if (content.eyebrow) document.getElementById('lp-eyebrow').textContent = content.eyebrow;
-                        if (content.headline) document.getElementById('lp-headline').innerHTML = content.headline;
-                        if (content.description) document.getElementById('lp-description').textContent = content.description;
-                        if (content.btn_primary) document.getElementById('lp-btn-primary').textContent = content.btn_primary;
-                        if (content.btn_secondary) document.getElementById('lp-btn-secondary').textContent = content.btn_secondary;
-                        
-                        // Stats
-                        if (content.stat1_value) document.getElementById('lp-stat1-value').textContent = content.stat1_value;
-                        if (content.stat1_label) document.getElementById('lp-stat1-label').textContent = content.stat1_label;
-                        if (content.stat2_value) document.getElementById('lp-stat2-value').textContent = content.stat2_value;
-                        if (content.stat2_label) document.getElementById('lp-stat2-label').textContent = content.stat2_label;
-                        if (content.stat3_value) document.getElementById('lp-stat3-value').textContent = content.stat3_value;
-                        if (content.stat3_label) document.getElementById('lp-stat3-label').textContent = content.stat3_label;
-                        if (content.stat4_value) document.getElementById('lp-stat4-value').textContent = content.stat4_value;
-                        if (content.stat4_label) document.getElementById('lp-stat4-label').textContent = content.stat4_label;
-                        
-                        // Services
-                        if (content.services_title) document.getElementById('lp-services-title').textContent = content.services_title;
-                        if (content.service1_title) document.getElementById('lp-service1-title').textContent = content.service1_title;
-                        if (content.service1_desc) document.getElementById('lp-service1-desc').textContent = content.service1_desc;
-                        if (content.service2_title) document.getElementById('lp-service2-title').textContent = content.service2_title;
-                        if (content.service2_desc) document.getElementById('lp-service2-desc').textContent = content.service2_desc;
-                        if (content.service3_title) document.getElementById('lp-service3-title').textContent = content.service3_title;
-                        if (content.service3_desc) document.getElementById('lp-service3-desc').textContent = content.service3_desc;
-                        
-                        // Footer
-                        if (content.copyright) document.getElementById('lp-copyright').textContent = content.copyright;
-                    }
-                }
-            } catch (e) {
-                console.log('Using default landing page content');
+        mobileMenu.querySelectorAll('a').forEach((link) => {
+          link.addEventListener('click', () => {
+            hamburgerBtn.classList.remove('active');
+            mobileMenu.classList.remove('open');
+            setTimeout(() => mobileMenu.classList.add('hidden'), 300);
+          });
+        });
+      }
+
+      function initBackToTop() {
+        const backToTopBtn = document.getElementById('back-to-top');
+
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 400) {
+            backToTopBtn.classList.add('visible');
+          } else {
+            backToTopBtn.classList.remove('visible');
+          }
+        });
+
+        backToTopBtn.addEventListener('click', () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+
+      function initScrollReveal() {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+              }
+            });
+          },
+          { threshold: 0.1 }
+        );
+
+        document.querySelectorAll('.glass-panel').forEach((el) => {
+          el.classList.add('reveal');
+          observer.observe(el);
+        });
+      }
+
+      async function fetchExchangeRate() {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/exchange-rate`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.rate) {
+              exchangeRate = parseFloat(data.rate);
             }
+          }
+        } catch (e) {
+          console.error('Failed to load exchange rate', e);
         }
+      }
 
-        function initStickyHeader() {
-            const header = document.getElementById('main-header');
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 10) {
-                    header.classList.add('shadow-lg', 'shadow-black/20');
-                } else {
-                    header.classList.remove('shadow-lg', 'shadow-black/20');
-                }
-            });
-        }
+      async function fetchCatalog() {
+        const tbody = document.getElementById('catalog-price-body');
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/admin/inventory/list`);
+          if (!res.ok) throw new Error('Catalog fetch error');
+          const items = await res.json();
+          const itemsList = items.value || items || [];
 
-        function initMobileMenu() {
-            const hamburgerBtn = document.getElementById('hamburger-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            hamburgerBtn.addEventListener('click', () => {
-                hamburgerBtn.classList.toggle('active');
-                mobileMenu.classList.toggle('hidden');
-                mobileMenu.classList.toggle('open');
-            });
+          if (itemsList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">No catalog items listed.</td></tr>`;
+            return;
+          }
 
-            mobileMenu.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', () => {
-                    hamburgerBtn.classList.remove('active');
-                    mobileMenu.classList.remove('open');
-                    setTimeout(() => mobileMenu.classList.add('hidden'), 300);
-                });
-            });
-        }
+          tbody.innerHTML = '';
+          itemsList.forEach((item) => {
+            const priceUSD = parseFloat(item.unit_price) || 0;
+            const priceMMK = Math.round(priceUSD * exchangeRate);
 
-        function initBackToTop() {
-            const backToTopBtn = document.getElementById('back-to-top');
-            
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 400) {
-                    backToTopBtn.classList.add('visible');
-                } else {
-                    backToTopBtn.classList.remove('visible');
-                }
-            });
-
-            backToTopBtn.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
-
-        function initScrollReveal() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('active');
-                    }
-                });
-            }, { threshold: 0.1 });
-
-            document.querySelectorAll('.glass-panel').forEach(el => {
-                el.classList.add('reveal');
-                observer.observe(el);
-            });
-        }
-
-        async function fetchExchangeRate() {
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/exchange-rate`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.rate) {
-                        exchangeRate = parseFloat(data.rate);
-                    }
-                }
-            } catch(e) {
-                console.error("Failed to load exchange rate", e);
-            }
-        }
-
-        async function fetchCatalog() {
-            const tbody = document.getElementById('catalog-price-body');
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/admin/inventory/list`);
-                if (!res.ok) throw new Error("Catalog fetch error");
-                const items = await res.json();
-                const itemsList = items.value || items || [];
-
-                if (itemsList.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">No catalog items listed.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = '';
-                itemsList.forEach(item => {
-                    const priceUSD = parseFloat(item.unit_price) || 0;
-                    const priceMMK = Math.round(priceUSD * exchangeRate);
-                    
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
                         <td class="py-3 font-semibold text-white">${item.item_name} <span class="text-[10px] text-slate-500 font-mono">(${item.item_code})</span></td>
                         <td class="py-3 text-slate-400">${item.category || 'General'}</td>
                         <td class="py-3 text-right font-mono text-amber-500">$${priceUSD.toFixed(2)}</td>
                         <td class="py-3 text-right font-mono text-slate-300">${priceMMK.toLocaleString()} Ks</td>
                     `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-rose-400">Failed to load price list.</td></tr>`;
-            }
+            tbody.appendChild(tr);
+          });
+        } catch (err) {
+          tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-rose-400">Failed to load price list.</td></tr>`;
         }
+      }
 
-        async function submitQuotationRequest(e) {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submit-btn');
-            const btnText = document.getElementById('btn-text');
-            const btnSpinner = document.getElementById('btn-spinner');
-            
-            submitBtn.disabled = true;
-            btnText.textContent = 'Submitting...';
-            btnSpinner.classList.remove('hidden');
-            
-            const name = document.getElementById('quote-name').value.trim();
-            const phone = document.getElementById('quote-phone').value.trim();
-            const address = document.getElementById('quote-address').value.trim();
-            const desc = document.getElementById('quote-description').value.trim();
+      async function submitQuotationRequest(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnSpinner = document.getElementById('btn-spinner');
 
-            try {
-                const mockTicketId = "REQ-" + Math.floor(1000 + Math.random() * 9000);
-                const payload = {
-                    id: mockTicketId,
-                    client_id: "Individual",
-                    customer_type: "Individual",
-                    customer_name: name,
-                    customer_phone: phone,
-                    customer_address: address,
-                    job_description: `[QUOTATION REQUEST] ${desc}`,
-                    service_type: "General Maintenance",
-                    status: "Pending",
-                    technician_id: "UNASSIGNED"
-                };
+        submitBtn.disabled = true;
+        btnText.textContent = 'Submitting...';
+        btnSpinner.classList.remove('hidden');
 
-                const res = await fetch(`${API_BASE_URL}/api/admin/jobs`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Admin-Secret': 'SuperSecureAdminPass123!'
-                    },
-                    body: JSON.stringify(payload)
-                });
+        const name = document.getElementById('quote-name').value.trim();
+        const phone = document.getElementById('quote-phone').value.trim();
+        const address = document.getElementById('quote-address').value.trim();
+        const desc = document.getElementById('quote-description').value.trim();
 
-                if (res.ok) {
-                    btnText.textContent = 'Request Submitted!';
-                    submitBtn.classList.remove('bg-amber-600', 'hover:bg-amber-500');
-                    submitBtn.classList.add('bg-green-600');
-                    
-                    document.getElementById('quotation-form').reset();
-                    
-                    setTimeout(() => {
-                        btnText.textContent = 'Submit Quotation Request';
-                        submitBtn.classList.remove('bg-green-600');
-                        submitBtn.classList.add('bg-amber-600', 'hover:bg-amber-500');
-                        submitBtn.disabled = false;
-                        btnSpinner.classList.add('hidden');
-                    }, 2000);
-                } else {
-                    throw new Error();
-                }
-            } catch(e) {
-                btnText.textContent = 'Failed - Try Again';
-                submitBtn.classList.remove('bg-amber-600');
-                submitBtn.classList.add('bg-red-600');
-                
-                setTimeout(() => {
-                    btnText.textContent = 'Submit Quotation Request';
-                    submitBtn.classList.remove('bg-red-600');
-                    submitBtn.classList.add('bg-amber-600');
-                    submitBtn.disabled = false;
-                    btnSpinner.classList.add('hidden');
-                }, 2000);
-            }
+        try {
+          const mockTicketId = 'REQ-' + Math.floor(1000 + Math.random() * 9000);
+          const payload = {
+            id: mockTicketId,
+            client_id: 'Individual',
+            customer_type: 'Individual',
+            customer_name: name,
+            customer_phone: phone,
+            customer_address: address,
+            job_description: `[QUOTATION REQUEST] ${desc}`,
+            service_type: 'General Maintenance',
+            status: 'Pending',
+            technician_id: 'UNASSIGNED',
+          };
+
+          const res = await fetch(`${API_BASE_URL}/api/admin/jobs`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Admin-Secret': 'SuperSecureAdminPass123!',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            btnText.textContent = 'Request Submitted!';
+            submitBtn.classList.remove('bg-amber-600', 'hover:bg-amber-500');
+            submitBtn.classList.add('bg-green-600');
+
+            document.getElementById('quotation-form').reset();
+
+            setTimeout(() => {
+              btnText.textContent = 'Submit Quotation Request';
+              submitBtn.classList.remove('bg-green-600');
+              submitBtn.classList.add('bg-amber-600', 'hover:bg-amber-500');
+              submitBtn.disabled = false;
+              btnSpinner.classList.add('hidden');
+            }, 2000);
+          } else {
+            throw new Error();
+          }
+        } catch (e) {
+          btnText.textContent = 'Failed - Try Again';
+          submitBtn.classList.remove('bg-amber-600');
+          submitBtn.classList.add('bg-red-600');
+
+          setTimeout(() => {
+            btnText.textContent = 'Submit Quotation Request';
+            submitBtn.classList.remove('bg-red-600');
+            submitBtn.classList.add('bg-amber-600');
+            submitBtn.disabled = false;
+            btnSpinner.classList.add('hidden');
+          }, 2000);
         }
+      }
     </script>
-</body>
+  </body>
 </html>

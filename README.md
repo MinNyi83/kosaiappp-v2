@@ -1,20 +1,21 @@
 <<<<<<< HEAD
+
 # Awesome Myanmar CCTV & Infrastructure Platform
 
 A **field service management system** for CCTV, networking, and storage infrastructure in Myanmar. Built on Cloudflare Workers with a dark-themed, glass-morphism UI.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Backend** | Cloudflare Workers (JavaScript) |
-| **Database** | Cloudflare D1 (SQLite) |
-| **Frontend** | Vanilla HTML/CSS/JS + Tailwind CSS |
-| **Design** | Dark theme, glass morphism, amber accent |
-| **Auth** | Google OAuth, PIN-based, username/password |
-| **Desktop** | Electron + Tauri (Rust) |
-| **Mobile** | Android (Java/Kotlin) |
-| **CI/CD** | Wrangler CLI |
+| Layer        | Technology                                 |
+| ------------ | ------------------------------------------ |
+| **Backend**  | Cloudflare Workers (JavaScript)            |
+| **Database** | Cloudflare D1 (SQLite)                     |
+| **Frontend** | Vanilla HTML/CSS/JS + Tailwind CSS         |
+| **Design**   | Dark theme, glass morphism, amber accent   |
+| **Auth**     | Google OAuth, PIN-based, username/password |
+| **Desktop**  | Electron + Tauri (Rust)                    |
+| **Mobile**   | Android (Java/Kotlin)                      |
+| **CI/CD**    | Wrangler CLI                               |
 
 ## Project Structure
 
@@ -76,11 +77,11 @@ npm run dev
 
 Configure in `.dev.vars` (local) or Cloudflare dashboard (production):
 
-| Variable | Description |
-|----------|-------------|
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `ADMIN_EMAIL` | Admin email for Google auth |
-| `JWT_SECRET` / `ADMIN_SECRET` | Secret for JWT tokens |
+| Variable                      | Description                 |
+| ----------------------------- | --------------------------- |
+| `GOOGLE_CLIENT_ID`            | Google OAuth client ID      |
+| `ADMIN_EMAIL`                 | Admin email for Google auth |
+| `JWT_SECRET` / `ADMIN_SECRET` | Secret for JWT tokens       |
 
 ### Database
 
@@ -96,32 +97,32 @@ wrangler d1 execute cctv-fsm-db --file=mock_data.sql
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Wrangler dev server |
-| `npm run build:css` | Build Tailwind CSS |
+| Command             | Description                |
+| ------------------- | -------------------------- |
+| `npm run dev`       | Start Wrangler dev server  |
+| `npm run build:css` | Build Tailwind CSS         |
 | `npm run watch:css` | Watch Tailwind for changes |
 
 ## API Endpoints
 
 All endpoints are served from the Cloudflare Worker at `/api/...`:
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/auth/login` | Technician PIN login |
-| POST | `/api/auth/google` | Google OAuth login |
-| POST | `/api/auth/login-password` | Username/password login |
-| POST | `/api/portal/change-pin` | Change technician PIN |
-| GET | `/api/jobs` | List jobs |
-| POST | `/api/jobs` | Create job |
-| GET | `/api/jobs/:id` | Get job details |
-| PUT | `/api/jobs/:id` | Update job |
-| GET | `/api/technicians` | List technicians |
-| POST | `/api/technicians` | Create technician |
-| GET | `/api/inventory` | List inventory |
-| POST | `/api/inventory` | Add inventory item |
-| GET | `/api/clients` | List clients |
-| POST | `/api/clients` | Create client |
+| Method | Path                       | Description             |
+| ------ | -------------------------- | ----------------------- |
+| POST   | `/api/auth/login`          | Technician PIN login    |
+| POST   | `/api/auth/google`         | Google OAuth login      |
+| POST   | `/api/auth/login-password` | Username/password login |
+| POST   | `/api/portal/change-pin`   | Change technician PIN   |
+| GET    | `/api/jobs`                | List jobs               |
+| POST   | `/api/jobs`                | Create job              |
+| GET    | `/api/jobs/:id`            | Get job details         |
+| PUT    | `/api/jobs/:id`            | Update job              |
+| GET    | `/api/technicians`         | List technicians        |
+| POST   | `/api/technicians`         | Create technician       |
+| GET    | `/api/inventory`           | List inventory          |
+| POST   | `/api/inventory`           | Add inventory item      |
+| GET    | `/api/clients`             | List clients            |
+| POST   | `/api/clients`             | Create client           |
 
 ## Design System
 
@@ -147,5 +148,7 @@ npm run build:css && wrangler deploy
 
 ISC
 =======
+
 # kosaiappp-v2
->>>>>>> c5fcfb32ca579b10330cf331e121f235708e129e
+
+> > > > > > > c5fcfb32ca579b10330cf331e121f235708e129e

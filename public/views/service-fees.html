@@ -1,81 +1,144 @@
 <div id="view-service-fees" class="space-y-8 tab-view">
-    <div>
-        <h1 class="text-2xl font-black text-white uppercase tracking-tight">Service Fee Catalog</h1>
-        <p class="text-xs text-slate-400 mt-1">Configure standard service rates for different services (CCTV, Networking, etc.).</p>
+  <div>
+    <h1 class="text-2xl font-black text-white uppercase tracking-tight">Service Fee Catalog</h1>
+    <p class="text-xs text-slate-400 mt-1">
+      Configure standard service rates for different services (CCTV, Networking, etc.).
+    </p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-8">
+    <!-- Left Panel: Add / Update Service Fee -->
+    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
+      <h2
+        class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
+        id="fee-form-title"
+      >
+        <span>💵</span> Add Service Rate
+      </h2>
+      <form
+        method="POST"
+        id="service-fee-form"
+        onsubmit="submitServiceFee(event)"
+        class="space-y-3"
+      >
+        <input name="fee-id" type="hidden" id="fee-id" value="" />
+        <div class="space-y-1">
+          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+            >Service Type</label
+          >
+          <select
+            name="fee-service-type"
+            id="fee-service-type"
+            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+          >
+            <option value="CCTV">CCTV Surveillance Array</option>
+            <option value="Networking">Core Infrastructure Networking</option>
+            <option value="WiFi">WiFi Mesh Deployment</option>
+            <option value="NAS">NAS Storage Cluster</option>
+            <option value="General Maintenance">General Maintenance</option>
+          </select>
+        </div>
+        <div class="space-y-1">
+          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+            >Rate Amount</label
+          >
+          <input
+            name="fee-amount"
+            type="number"
+            step="0.01"
+            id="fee-amount"
+            required
+            placeholder="e.g. 150.00"
+            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+          />
+        </div>
+        <div class="space-y-1">
+          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+            >Currency</label
+          >
+          <select
+            name="fee-currency"
+            id="fee-currency"
+            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+          >
+            <option value="USD">USD ($)</option>
+            <option value="MMK">MMK (K)</option>
+          </select>
+        </div>
+        <div class="space-y-1">
+          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
+            >Description / Scope Details</label
+          >
+          <textarea
+            name="fee-desc"
+            id="fee-desc"
+            placeholder="Details of what this service fee covers..."
+            rows="3"
+            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500 resize-none"
+          ></textarea>
+        </div>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            id="btn-fee-reset"
+            onclick="resetFeeForm()"
+            class="flex-1 bg-white/5 hover:bg-white/10 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition hidden"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            id="btn-fee-submit"
+            class="flex-1 bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition"
+          >
+            Save Rate
+          </button>
+        </div>
+      </form>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-8">
-        <!-- Left Panel: Add / Update Service Fee -->
-        <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
-            <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2" id="fee-form-title">
-                <span>💵</span> Add Service Rate
-            </h2>
-            <form method="POST" id="service-fee-form" onsubmit="submitServiceFee(event)" class="space-y-3">
-                <input name="fee-id" type="hidden" id="fee-id" value="">
-                <div class="space-y-1">
-                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Service Type</label>
-                    <select name="fee-service-type" id="fee-service-type" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        <option value="CCTV">CCTV Surveillance Array</option>
-                        <option value="Networking">Core Infrastructure Networking</option>
-                        <option value="WiFi">WiFi Mesh Deployment</option>
-                        <option value="NAS">NAS Storage Cluster</option>
-                        <option value="General Maintenance">General Maintenance</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Rate Amount</label>
-                    <input name="fee-amount" type="number" step="0.01" id="fee-amount" required placeholder="e.g. 150.00" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono">
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Currency</label>
-                    <select name="fee-currency" id="fee-currency" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
-                        <option value="USD">USD ($)</option>
-                        <option value="MMK">MMK (K)</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Description / Scope Details</label>
-                    <textarea name="fee-desc" id="fee-desc" placeholder="Details of what this service fee covers..." rows="3" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500 resize-none"></textarea>
-                </div>
-                <div class="flex gap-2">
-                    <button type="button" id="btn-fee-reset" onclick="resetFeeForm()" class="flex-1 bg-white/5 hover:bg-white/10 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition hidden">Cancel</button>
-                    <button type="submit" id="btn-fee-submit" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Save Rate</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Right Panel: Service Rates List -->
-        <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
-            <div class="flex justify-between items-center border-b border-white/5 pb-2">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <span>📋</span> Configured Service Rates
-                </h2>
-                <button type="button" onclick="exportTableToExcel('service-fees-table','Service_Rates')" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Excel
-                </button>
-            </div>
-            <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
-                <table id="service-fees-table" class="w-full text-xs text-left">
-                    <thead>
-                        <tr class="text-slate-500 border-b border-white/5 pb-2">
-                            <th class="pb-2">Service Type</th>
-                            <th class="pb-2">Rate Amount</th>
-                            <th class="pb-2">Description</th>
-                            <th class="pb-2 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="service-fees-body">
-                        <tr>
-                            <td colspan="4" class="py-4 text-center text-slate-600">Loading service rates...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Right Panel: Service Rates List -->
+    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
+      <div class="flex justify-between items-center border-b border-white/5 pb-2">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <span>📋</span> Configured Service Rates
+        </h2>
+        <button
+          type="button"
+          onclick="exportTableToExcel('service-fees-table', 'Service_Rates')"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+        >
+          <svg
+            class="w-3 h-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Excel
+        </button>
+      </div>
+      <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+        <table id="service-fees-table" class="w-full text-xs text-left">
+          <thead>
+            <tr class="text-slate-500 border-b border-white/5 pb-2">
+              <th class="pb-2">Service Type</th>
+              <th class="pb-2">Rate Amount</th>
+              <th class="pb-2">Description</th>
+              <th class="pb-2 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="service-fees-body">
+            <tr>
+              <td colspan="4" class="py-4 text-center text-slate-600">Loading service rates...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 </div>

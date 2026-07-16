@@ -28,9 +28,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }]
         }
       }
     },
@@ -160,7 +158,10 @@
         "bodyParameters": {
           "parameters": [
             { "name": "type", "value": "expense_{{ $json.decision }}" },
-            { "name": "description", "value": "Expense #{{ $json.expenseId }} - ${{ $json.amount }} - {{ $json.category }} - Decision: {{ $json.decision }}" },
+            {
+              "name": "description",
+              "value": "Expense #{{ $json.expenseId }} - ${{ $json.amount }} - {{ $json.category }} - Decision: {{ $json.decision }}"
+            },
             { "name": "reference_type", "value": "expense" },
             { "name": "reference_id", "value": "={{ $json.expenseId }}" }
           ]
@@ -176,13 +177,13 @@
   ],
   "connections": {
     "Webhook - Expense Submitted": {
-      "main": [[ { "node": "GET /api/expenses/{id}", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "GET /api/expenses/{id}", "type": "main", "index": 0 }]]
     },
     "GET /api/expenses/{id}": {
-      "main": [[ { "node": "Evaluate Expense", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Evaluate Expense", "type": "main", "index": 0 }]]
     },
     "Evaluate Expense": {
-      "main": [[ { "node": "Auto-Approve?", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Auto-Approve?", "type": "main", "index": 0 }]]
     },
     "Auto-Approve?": {
       "main": [
@@ -192,19 +193,19 @@
       ]
     },
     "PATCH /api/expenses/{id} (approve)": {
-      "main": [[ { "node": "Telegram → Submitter (Approved)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Telegram → Submitter (Approved)", "type": "main", "index": 0 }]]
     },
     "Telegram → Manager (Approve?)": {
-      "main": [[ { "node": "Wait for Response (24h)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Wait for Response (24h)", "type": "main", "index": 0 }]]
     },
     "Telegram → Admin (Review)": {
-      "main": [[ { "node": "Wait for Response (24h)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "Wait for Response (24h)", "type": "main", "index": 0 }]]
     },
     "Telegram → Submitter (Approved)": {
-      "main": [[ { "node": "POST /api/activity (expense)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/activity (expense)", "type": "main", "index": 0 }]]
     },
     "Wait for Response (24h)": {
-      "main": [[ { "node": "POST /api/activity (expense)", "type": "main", "index": 0 } ]]
+      "main": [[{ "node": "POST /api/activity (expense)", "type": "main", "index": 0 }]]
     }
   },
   "settings": {

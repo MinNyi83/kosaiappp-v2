@@ -1,279 +1,533 @@
-<div id="view-pos" class="tab-view flex gap-0 -mx-4 -mt-4" style="min-height: calc(100vh - 120px);">
+<div id="view-pos" class="tab-view flex gap-0 -mx-4 -mt-4" style="min-height: calc(100vh - 120px)">
+  <!-- Left Sidebar Navigation Layout -->
+  <div
+    class="w-48 shrink-0 flex flex-col py-4 px-2.5 gap-0.5"
+    style="
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    "
+  >
+    <p class="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] px-2 mb-2 mt-1">
+      POS Modules
+    </p>
 
-    <!-- Left Sidebar Navigation Layout -->
-    <div class="w-48 shrink-0 flex flex-col py-4 px-2.5 gap-0.5" style="background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%); border-right: 1px solid rgba(255,255,255,0.05);">
+    <!-- Module Buttons -->
+    <button
+      onclick="switchPosModule('checkout')"
+      id="pos-mod-checkout"
+      class="pos-mod-btn active-pos-mod group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200"
+    >
+      <div
+        class="pos-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all duration-200"
+        style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.3)"
+      >
+        <svg
+          class="w-3.5 h-3.5 text-emerald-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+      </div>
+      <span class="pos-mod-label text-emerald-400">Terminal Checkout</span>
+    </button>
 
-        <p class="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] px-2 mb-2 mt-1">POS Modules</p>
+    <button
+      onclick="switchPosModule('credits')"
+      id="pos-mod-credits"
+      class="pos-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
+    >
+      <div
+        class="pos-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all duration-200"
+        style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.05)"
+      >
+        <svg
+          class="w-3.5 h-3.5 text-slate-400 group-hover:text-white"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+          <line x1="1" y1="10" x2="23" y2="10" />
+        </svg>
+      </div>
+      <span class="pos-mod-label">Outstanding Credits</span>
+    </button>
 
-        <!-- Module Buttons -->
-        <button onclick="switchPosModule('checkout')" id="pos-mod-checkout"
-            class="pos-mod-btn active-pos-mod group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200">
-            <div class="pos-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all duration-200" style="background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3);">
-                <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            </div>
-            <span class="pos-mod-label text-emerald-400">Terminal Checkout</span>
-        </button>
+    <!-- Divider -->
+    <div class="mx-2 my-3 border-t border-white/5"></div>
 
-        <button onclick="switchPosModule('credits')" id="pos-mod-credits"
-            class="pos-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white">
-            <div class="pos-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all duration-200" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);">
-                <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            </div>
-            <span class="pos-mod-label">Outstanding Credits</span>
-        </button>
+    <p class="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] px-2 mb-1.5">
+      Quick Actions
+    </p>
 
-        <!-- Divider -->
-        <div class="mx-2 my-3 border-t border-white/5"></div>
+    <button
+      onclick="resetPosCart()"
+      class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-500 hover:text-emerald-400 transition-all duration-200 w-full text-left"
+    >
+      <div
+        class="w-5 h-5 rounded flex items-center justify-center bg-emerald-500/5 border border-emerald-500/10 group-hover:bg-emerald-500/15 group-hover:border-emerald-500/25 transition-all"
+      >
+        <svg
+          class="w-2.5 h-2.5 text-emerald-500"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="3"
+        >
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </div>
+      Clear Active Cart
+    </button>
 
-        <p class="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] px-2 mb-1.5">Quick Actions</p>
+    <!-- Bottom spacer -->
+    <div class="flex-1"></div>
+    <div class="px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 mx-0.5">
+      <p class="text-[8px] text-emerald-600 font-bold uppercase tracking-wider">POS Engine</p>
+      <p class="text-[9px] text-slate-500 mt-0.5">Sales · Stock · Invoice</p>
+    </div>
+  </div>
 
-        <button onclick="resetPosCart()"
-            class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-500 hover:text-emerald-400 transition-all duration-200 w-full text-left">
-            <div class="w-5 h-5 rounded flex items-center justify-center bg-emerald-500/5 border border-emerald-500/10 group-hover:bg-emerald-500/15 group-hover:border-emerald-500/25 transition-all">
-                <svg class="w-2.5 h-2.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </div>
-            Clear Active Cart
-        </button>
-
-        <!-- Bottom spacer -->
-        <div class="flex-1"></div>
-        <div class="px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 mx-0.5">
-            <p class="text-[8px] text-emerald-600 font-bold uppercase tracking-wider">POS Engine</p>
-            <p class="text-[9px] text-slate-500 mt-0.5">Sales · Stock · Invoice</p>
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+    <!-- ── TERMINAL CHECKOUT PANEL ── -->
+    <div id="pos-panel-checkout" class="flex-1 flex flex-col overflow-hidden">
+      <!-- Header Bar -->
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            style="
+              background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
+              border: 1px solid rgba(16, 185, 129, 0.3);
+            "
+          >
+            <svg
+              class="w-4 h-4 text-emerald-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">POS Terminal</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              Instant invoice generation, stock subtraction, and vault booking
+            </p>
+          </div>
         </div>
+      </div>
+
+      <!-- Double-Split: Left Catalog, Right Checkout Cart -->
+      <div class="flex-1 flex overflow-hidden">
+        <!-- Left Catalog Panel -->
+        <div class="w-8/12 flex flex-col border-r border-white/5 overflow-hidden">
+          <div
+            class="p-4 border-b border-white/5 flex gap-2 items-center"
+            style="background: rgba(0, 0, 0, 0.1)"
+          >
+            <div class="relative flex-1 min-w-0">
+              <span
+                class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  class="w-3.5 h-3.5"
+                >
+                  <path
+                    d="M3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2z"
+                  />
+                  <line x1="7" y1="7" x2="7" y2="17" />
+                  <line x1="10" y1="7" x2="10" y2="17" />
+                  <line x1="13" y1="7" x2="13" y2="17" />
+                  <line x1="17" y1="7" x2="17" y2="17" />
+                </svg>
+              </span>
+              <input
+                name="pos-stock-search"
+                type="text"
+                id="pos-stock-search"
+                oninput="filterPosCatalog()"
+                placeholder="Scan Barcode, S/N, or Search name..."
+                class="bg-black/30 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 w-full font-mono"
+              />
+            </div>
+            <select
+              name="pos-stock-cat"
+              id="pos-stock-cat"
+              onchange="filterPosCatalog()"
+              class="bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500/50 w-32 max-w-[130px]"
+            >
+              <option value="All">All Categories</option>
+            </select>
+            <div class="flex items-center gap-1.5 pl-2 border-l border-white/5 shrink-0">
+              <input
+                type="checkbox"
+                id="pos-filter-instock"
+                checked
+                onchange="filterPosCatalog()"
+                class="rounded bg-black/40 border-white/10 text-emerald-500 focus:ring-0"
+              />
+              <label
+                for="pos-filter-instock"
+                class="text-[10px] text-slate-400 font-bold uppercase cursor-pointer select-none"
+                >In-Stock Only</label
+              >
+            </div>
+          </div>
+          <!-- Products Grid -->
+          <div class="flex-1 overflow-y-auto p-3 grid grid-cols-4 gap-2" id="pos-catalog-grid">
+            <!-- Filled dynamically -->
+          </div>
+        </div>
+
+        <!-- Right Cart / Checkout Panel -->
+        <div class="w-4/12 flex flex-col overflow-hidden bg-black/10">
+          <!-- Client Selector -->
+          <div class="p-4 border-b border-white/5 space-y-2 shrink-0">
+            <div class="flex justify-between items-center">
+              <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest"
+                >Select Client / Customer</label
+              >
+              <button
+                onclick="window.posCreateWalkinClient()"
+                class="text-[8px] font-bold text-amber-500 hover:text-amber-400 uppercase tracking-wider"
+              >
+                Quick Walk-In
+              </button>
+            </div>
+            <input
+              name="pos-client-search"
+              type="text"
+              id="pos-client-search"
+              placeholder="Search Corporate AMC, Individual or Walk-in..."
+              class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+              list="pos-clients-datalist"
+              autocomplete="off"
+            />
+            <input type="hidden" id="pos-client-id" name="client_id" />
+            <datalist id="pos-clients-datalist"></datalist>
+
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5"
+                  >Link Service Ticket / Job ID</label
+                >
+                <select
+                  id="pos-link-job"
+                  onchange="window.posLoadJobDetails(this.value)"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white"
+                >
+                  <option value="">-- Select Ticket --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cart List -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-2">
+            <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
+              Shopping Cart
+            </p>
+            <div id="pos-cart-list" class="space-y-2">
+              <!-- Items -->
+            </div>
+          </div>
+
+          <!-- Totals & Payment -->
+          <div class="p-4 border-t border-white/5 space-y-3 bg-black/35 shrink-0">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">Subtotal</span>
+              <span id="pos-subtotal" class="text-white font-mono font-bold">$0.00 / 0 Ks</span>
+            </div>
+            <div class="flex gap-2">
+              <div class="flex-1 space-y-1">
+                <label class="block text-[8px] text-slate-500 uppercase">Discount (%)</label>
+                <input
+                  name="pos-discount"
+                  type="number"
+                  id="pos-discount"
+                  value="0"
+                  min="0"
+                  max="100"
+                  oninput="calculatePosTotals()"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                />
+              </div>
+              <div class="flex-grow space-y-1">
+                <label class="block text-[8px] text-slate-500 uppercase">Exchange Rate</label>
+                <input
+                  name="pos-exchange-rate"
+                  type="number"
+                  id="pos-exchange-rate"
+                  value="4500"
+                  oninput="calculatePosTotals()"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                />
+              </div>
+            </div>
+            <div class="border-t border-white/5 pt-2 flex justify-between text-sm font-black">
+              <span class="text-emerald-400">Total USD</span>
+              <span id="pos-total-usd" class="text-emerald-400 font-mono">$0.00</span>
+            </div>
+            <div class="flex justify-between text-xs font-bold border-b border-white/5 pb-2">
+              <span class="text-slate-400">Total MMK Equivalent</span>
+              <span id="pos-total-mmk" class="text-slate-300 font-mono">0 Ks</span>
+            </div>
+
+            <!-- Pay In Currency Select & Custom Rate -->
+            <div class="flex gap-2">
+              <div class="flex-1 space-y-1">
+                <label class="block text-[8px] text-slate-500 uppercase"
+                  >Billing Currency Type</label
+                >
+                <select
+                  name="pos-pay-currency"
+                  id="pos-pay-currency"
+                  onchange="calculatePosTotals()"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs text-white"
+                >
+                  <option value="USD">USD</option>
+                  <option value="USD_CUSTOM">USD (Custom Rate)</option>
+                  <option value="MMK">MMK</option>
+                </select>
+              </div>
+              <div class="flex-1 space-y-1 hidden" id="pos-custom-rate-container">
+                <label class="block text-[8px] text-slate-500 uppercase"
+                  >Custom Exchange Rate</label
+                >
+                <input
+                  name="pos-custom-exchange-rate"
+                  type="number"
+                  id="pos-custom-exchange-rate"
+                  value="4600"
+                  oninput="calculatePosTotals()"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                />
+              </div>
+            </div>
+
+            <!-- Split Payment Method A -->
+            <div class="flex gap-2">
+              <div class="flex-1 space-y-1">
+                <label class="block text-[8px] text-slate-500 uppercase">Payment Method A</label>
+                <select
+                  name="pos-pay-method-a"
+                  id="pos-pay-method-a"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs text-white"
+                >
+                  <option value="Cash">Cash (Local)</option>
+                  <option value="USD">USD Cash</option>
+                  <option value="Mobile Payment">Mobile Payment</option>
+                  <option value="Banking">Banking</option>
+                </select>
+              </div>
+              <div class="flex-1 space-y-1">
+                <label class="block text-[8px] text-slate-500 uppercase">Paid Amount A</label>
+                <input
+                  name="pos-paid-amount-a"
+                  type="number"
+                  id="pos-paid-amount-a"
+                  placeholder="Amount A"
+                  oninput="calculatePosTotals()"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                />
+              </div>
+            </div>
+
+            <!-- Split Payment Method B -->
+            <div class="flex gap-2">
+              <div class="flex-1 space-y-1">
+                <label class="block text-[8px] text-slate-500 uppercase">Payment Method B</label>
+                <select
+                  name="pos-pay-method-b"
+                  id="pos-pay-method-b"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs text-white"
+                >
+                  <option value="Mobile Payment">Mobile Payment</option>
+                  <option value="Banking">Banking</option>
+                  <option value="Cash">Cash (Local)</option>
+                  <option value="USD">USD Cash</option>
+                </select>
+              </div>
+              <div class="flex-1 space-y-1">
+                <label class="block text-[8px] text-slate-500 uppercase">Paid Amount B</label>
+                <input
+                  name="pos-paid-amount-b"
+                  type="number"
+                  id="pos-paid-amount-b"
+                  placeholder="Amount B"
+                  oninput="calculatePosTotals()"
+                  class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono"
+                />
+              </div>
+            </div>
+
+            <!-- Balance Due & Outstanding Credit display -->
+            <div class="flex justify-between text-xs font-mono border-t border-white/5 pt-2">
+              <span class="text-slate-500">Unpaid Credit Balance</span>
+              <span id="pos-credit-due" class="text-rose-400 font-bold">$0.00 / 0 Ks</span>
+            </div>
+
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-slate-500">Change Due</span>
+              <span id="pos-change-due" class="text-amber-500 font-bold">$0.00 / 0 Ks</span>
+            </div>
+
+            <button
+              onclick="executePosCheckout()"
+              class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-emerald-500/10"
+            >
+              Process Checkout & Generate Invoice
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- ═══ MAIN CONTENT ═══ -->
-    <div class="flex-1 flex flex-col overflow-hidden min-w-0">
-
-        <!-- ── TERMINAL CHECKOUT PANEL ── -->
-        <div id="pos-panel-checkout" class="flex-1 flex flex-col overflow-hidden">
-            <!-- Header Bar -->
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5" style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(16,185,129,0.1)); border: 1px solid rgba(16,185,129,0.3);">
-                        <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">POS Terminal</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">Instant invoice generation, stock subtraction, and vault booking</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Double-Split: Left Catalog, Right Checkout Cart -->
-            <div class="flex-1 flex overflow-hidden">
-                
-                <!-- Left Catalog Panel -->
-                <div class="w-8/12 flex flex-col border-r border-white/5 overflow-hidden">
-                    <div class="p-4 border-b border-white/5 flex gap-2 items-center" style="background: rgba(0,0,0,0.1);">
-                        <div class="relative flex-1 min-w-0">
-                            <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5"><path d="M3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2z"/><line x1="7" y1="7" x2="7" y2="17"/><line x1="10" y1="7" x2="10" y2="17"/><line x1="13" y1="7" x2="13" y2="17"/><line x1="17" y1="7" x2="17" y2="17"/></svg>
-                            </span>
-                            <input name="pos-stock-search" type="text" id="pos-stock-search" oninput="filterPosCatalog()" placeholder="Scan Barcode, S/N, or Search name..."
-                                class="bg-black/30 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 w-full font-mono">
-                        </div>
-                        <select name="pos-stock-cat" id="pos-stock-cat" onchange="filterPosCatalog()"
-                            class="bg-black/30 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-emerald-500/50 w-32 max-w-[130px]">
-                            <option value="All">All Categories</option>
-                        </select>
-                        <div class="flex items-center gap-1.5 pl-2 border-l border-white/5 shrink-0">
-                            <input type="checkbox" id="pos-filter-instock" checked onchange="filterPosCatalog()" class="rounded bg-black/40 border-white/10 text-emerald-500 focus:ring-0">
-                            <label for="pos-filter-instock" class="text-[10px] text-slate-400 font-bold uppercase cursor-pointer select-none">In-Stock Only</label>
-                        </div>
-                    </div>
-                    <!-- Products Grid -->
-                    <div class="flex-1 overflow-y-auto p-3 grid grid-cols-4 gap-2" id="pos-catalog-grid">
-                        <!-- Filled dynamically -->
-                    </div>
-                </div>
-
-                <!-- Right Cart / Checkout Panel -->
-                <div class="w-4/12 flex flex-col overflow-hidden bg-black/10">
-                    <!-- Client Selector -->
-                    <div class="p-4 border-b border-white/5 space-y-2 shrink-0">
-                        <div class="flex justify-between items-center">
-                            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest">Select Client / Customer</label>
-                            <button onclick="window.posCreateWalkinClient()" class="text-[8px] font-bold text-amber-500 hover:text-amber-400 uppercase tracking-wider">Quick Walk-In</button>
-                        </div>
-                        <input name="pos-client-search" type="text" id="pos-client-search" placeholder="Search Corporate AMC, Individual or Walk-in..." class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500" list="pos-clients-datalist" autocomplete="off">
-                        <input type="hidden" id="pos-client-id" name="client_id">
-                        <datalist id="pos-clients-datalist"></datalist>
-
-                        <div class="flex gap-2">
-                            <div class="flex-1">
-                                <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Link Service Ticket / Job ID</label>
-                                <select id="pos-link-job" onchange="window.posLoadJobDetails(this.value)" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white">
-                                    <option value="">-- Select Ticket --</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cart List -->
-                    <div class="flex-1 overflow-y-auto p-4 space-y-2">
-                        <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Shopping Cart</p>
-                        <div id="pos-cart-list" class="space-y-2">
-                            <!-- Items -->
-                        </div>
-                    </div>
-
-                    <!-- Totals & Payment -->
-                    <div class="p-4 border-t border-white/5 space-y-3 bg-black/35 shrink-0">
-                        <div class="flex justify-between text-xs">
-                            <span class="text-slate-500">Subtotal</span>
-                            <span id="pos-subtotal" class="text-white font-mono font-bold">$0.00 / 0 Ks</span>
-                        </div>
-                        <div class="flex gap-2">
-                            <div class="flex-1 space-y-1">
-                                <label class="block text-[8px] text-slate-500 uppercase">Discount (%)</label>
-                                <input name="pos-discount" type="number" id="pos-discount" value="0" min="0" max="100" oninput="calculatePosTotals()" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono">
-                            </div>
-                            <div class="flex-grow space-y-1">
-                                <label class="block text-[8px] text-slate-500 uppercase">Exchange Rate</label>
-                                <input name="pos-exchange-rate" type="number" id="pos-exchange-rate" value="4500" oninput="calculatePosTotals()" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono">
-                            </div>
-                        </div>
-                        <div class="border-t border-white/5 pt-2 flex justify-between text-sm font-black">
-                            <span class="text-emerald-400">Total USD</span>
-                            <span id="pos-total-usd" class="text-emerald-400 font-mono">$0.00</span>
-                        </div>
-                        <div class="flex justify-between text-xs font-bold border-b border-white/5 pb-2">
-                            <span class="text-slate-400">Total MMK Equivalent</span>
-                            <span id="pos-total-mmk" class="text-slate-300 font-mono">0 Ks</span>
-                        </div>
-
-                        <!-- Pay In Currency Select & Custom Rate -->
-                        <div class="flex gap-2">
-                            <div class="flex-1 space-y-1">
-                                <label class="block text-[8px] text-slate-500 uppercase">Billing Currency Type</label>
-                                <select name="pos-pay-currency" id="pos-pay-currency" onchange="calculatePosTotals()" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs text-white">
-                                    <option value="USD">USD</option>
-                                    <option value="USD_CUSTOM">USD (Custom Rate)</option>
-                                    <option value="MMK">MMK</option>
-                                </select>
-                            </div>
-                            <div class="flex-1 space-y-1 hidden" id="pos-custom-rate-container">
-                                <label class="block text-[8px] text-slate-500 uppercase">Custom Exchange Rate</label>
-                                <input name="pos-custom-exchange-rate" type="number" id="pos-custom-exchange-rate" value="4600" oninput="calculatePosTotals()" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono">
-                            </div>
-                        </div>
-
-                        <!-- Split Payment Method A -->
-                        <div class="flex gap-2">
-                            <div class="flex-1 space-y-1">
-                                <label class="block text-[8px] text-slate-500 uppercase">Payment Method A</label>
-                                <select name="pos-pay-method-a" id="pos-pay-method-a" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs text-white">
-                                    <option value="Cash">Cash (Local)</option>
-                                    <option value="USD">USD Cash</option>
-                                    <option value="Mobile Payment">Mobile Payment</option>
-                                    <option value="Banking">Banking</option>
-                                </select>
-                            </div>
-                            <div class="flex-1 space-y-1">
-                                <label class="block text-[8px] text-slate-500 uppercase">Paid Amount A</label>
-                                <input name="pos-paid-amount-a" type="number" id="pos-paid-amount-a" placeholder="Amount A" oninput="calculatePosTotals()" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono">
-                            </div>
-                        </div>
-
-                        <!-- Split Payment Method B -->
-                        <div class="flex gap-2">
-                            <div class="flex-1 space-y-1">
-                                <label class="block text-[8px] text-slate-500 uppercase">Payment Method B</label>
-                                <select name="pos-pay-method-b" id="pos-pay-method-b" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1.5 text-xs text-white">
-                                    <option value="Mobile Payment">Mobile Payment</option>
-                                    <option value="Banking">Banking</option>
-                                    <option value="Cash">Cash (Local)</option>
-                                    <option value="USD">USD Cash</option>
-                                </select>
-                            </div>
-                            <div class="flex-1 space-y-1">
-                                <label class="block text-[8px] text-slate-500 uppercase">Paid Amount B</label>
-                                <input name="pos-paid-amount-b" type="number" id="pos-paid-amount-b" placeholder="Amount B" oninput="calculatePosTotals()" class="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white font-mono">
-                            </div>
-                        </div>
-
-                        <!-- Balance Due & Outstanding Credit display -->
-                        <div class="flex justify-between text-xs font-mono border-t border-white/5 pt-2">
-                            <span class="text-slate-500">Unpaid Credit Balance</span>
-                            <span id="pos-credit-due" class="text-rose-400 font-bold">$0.00 / 0 Ks</span>
-                        </div>
-
-                        <div class="flex justify-between text-xs font-mono">
-                            <span class="text-slate-500">Change Due</span>
-                            <span id="pos-change-due" class="text-amber-500 font-bold">$0.00 / 0 Ks</span>
-                        </div>
-
-                        <button onclick="executePosCheckout()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-emerald-500/10">
-                            Process Checkout & Generate Invoice
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <!-- ── OUTSTANDING CREDITS PANEL ── -->
+    <div id="pos-panel-credits" class="flex-1 flex flex-col overflow-hidden hidden">
+      <!-- Header Bar -->
+      <div
+        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5"
+        style="background: rgba(0, 0, 0, 0.15)"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-7 h-7 rounded-lg flex items-center justify-center bg-rose-500/10 border border-rose-500/20"
+          >
+            <svg
+              class="w-4 h-4 text-rose-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-white leading-none">Outstanding Credit Ledgers</h2>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              Monitor client balances, record payments, and recall historical cart parameters
+            </p>
+          </div>
         </div>
+      </div>
 
-        <!-- ── OUTSTANDING CREDITS PANEL ── -->
-        <div id="pos-panel-credits" class="flex-1 flex flex-col overflow-hidden hidden">
-            <!-- Header Bar -->
-            <div class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5" style="background: rgba(0,0,0,0.15);">
-                <div class="flex items-center gap-3">
-                    <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-rose-500/10 border border-rose-500/20">
-                        <svg class="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white leading-none">Outstanding Credit Ledgers</h2>
-                        <p class="text-[9px] text-slate-600 mt-0.5">Monitor client balances, record payments, and recall historical cart parameters</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex-1 overflow-auto p-6">
-                <table class="w-full text-left" id="pos-credits-table">
-                    <thead>
-                        <tr>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">Date</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">Client</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">Invoice ID</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right">Total Amount</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right">Paid Amount</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right">Credit Due</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">Status</th>
-                            <th class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pos-credits-body">
-                        <tr><td colspan="8" class="px-4 py-10 text-center text-[11px] text-slate-600">No outstanding credit records found.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
+      <div class="flex-1 overflow-auto p-6">
+        <table class="w-full text-left" id="pos-credits-table">
+          <thead>
+            <tr>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Date
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Client
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]"
+              >
+                Invoice ID
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right"
+              >
+                Total Amount
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right"
+              >
+                Paid Amount
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-right"
+              >
+                Credit Due
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                Status
+              </th>
+              <th
+                class="px-4 py-3 text-[9px] font-black text-slate-500 uppercase tracking-[0.12em] text-center"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody id="pos-credits-body">
+            <tr>
+              <td colspan="8" class="px-4 py-10 text-center text-[11px] text-slate-600">
+                No outstanding credit records found.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
+  </div>
 </div>
 
 <style>
-.active-pos-mod {
-    background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.05)) !important;
-    border: 1px solid rgba(16,185,129,0.2) !important;
-}
-.active-pos-mod .pos-mod-label { color: #34d399 !important; }
-.pos-mod-btn { border: 1px solid transparent; }
+  .active-pos-mod {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.12),
+      rgba(16, 185, 129, 0.05)
+    ) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  }
+  .active-pos-mod .pos-mod-label {
+    color: #34d399 !important;
+  }
+  .pos-mod-btn {
+    border: 1px solid transparent;
+  }
 
-/* Catalog cards */
-.pos-catalog-card:hover {
-    border-color: rgba(255,255,255,0.12) !important;
+  /* Catalog cards */
+  .pos-catalog-card:hover {
+    border-color: rgba(255, 255, 255, 0.12) !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-}
-.pos-catalog-card:active {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+  .pos-catalog-card:active {
     transform: translateY(0);
-}
-.line-clamp-2 {
+  }
+  .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
+  }
 </style>

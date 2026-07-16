@@ -7,7 +7,6 @@
     "@cloudflare/workers-types": "^5.20260715.1",
     "@tailwindcss/cli": "^4.3.2",
     "autoprefixer": "^10.5.2",
-    "better-sqlite3": "^12.11.1",
     "postcss": "^8.5.16",
     "prettier": "^3.9.5",
     "tailwindcss": "^4.3.2",
@@ -19,7 +18,9 @@
     "build:css": "tailwindcss -i ./public/input.css -o ./public/tailwind.css",
     "watch:css": "tailwindcss -i ./public/input.css -o ./public/tailwind.css --watch",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",

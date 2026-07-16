@@ -1,16 +1,16 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-function createWindow () {
+function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true
+      sandbox: true,
     },
-    title: "AwesomeMyanmar - HQ Dispatch Console"
+    title: 'AwesomeMyanmar - HQ Dispatch Console',
   });
 
   // Load local HTML file

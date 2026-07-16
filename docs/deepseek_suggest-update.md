@@ -61,11 +61,13 @@ npm install -D vitest
 ```
 
 Create `src/__tests__/` with tests for:
+
 - Auth middleware (JWT verification)
 - Each route handler
 - Utility functions
 
 Add to `package.json`:
+
 ```json
 "scripts": {
   "test": "vitest run",
@@ -111,6 +113,7 @@ export async function requireAuth(request, env) {
 **Current**: `schema.sql`, `mock_data.sql`, `local_dump.sql`, `kosai_schema.sql`, `kosai_schema_v2.sql` scattered in root.
 
 **Recommended**:
+
 ```
 db/
 ├── migrations/
@@ -130,6 +133,7 @@ db/
 **Current**: `export_inventory.py`, `run_migration.py`, `sync_inventory.py`, `test_db.py` at root.
 
 **Recommended**:
+
 ```
 scripts/
 ├── python/
@@ -148,6 +152,7 @@ scripts/
 **Current**: `DESIGN.md`, `SYSTEM-DOCUMENTATION.md`, `setup-guide.md`, `admin-auth-guide.md`, `android-guide.md` at root.
 
 **Recommended**:
+
 ```
 docs/
 ├── architecture.md       # DESIGN.md
@@ -183,15 +188,15 @@ const MAX_REQUESTS = 10;
 export async function checkRateLimit(ip) {
   const now = Date.now();
   const entry = rateLimit.get(ip) || { count: 0, resetAt: now + WINDOW_MS };
-  
+
   if (now > entry.resetAt) {
     entry.count = 0;
     entry.resetAt = now + WINDOW_MS;
   }
-  
+
   entry.count++;
   rateLimit.set(ip, entry);
-  
+
   if (entry.count > MAX_REQUESTS) {
     return { blocked: true, retryAfter: Math.ceil((entry.resetAt - now) / 1000) };
   }
@@ -212,7 +217,9 @@ async function hashPassword(password) {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
   const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 ```
 
@@ -227,11 +234,7 @@ Or better, use **bcrypt** via a polyfill or switch to a more robust hashing algo
 **Recommendation**: Restrict to known origins:
 
 ```javascript
-const ALLOWED_ORIGINS = [
-  'https://yourdomain.com',
-  'tauri://localhost',
-  'https://localhost:5173'
-];
+const ALLOWED_ORIGINS = ['https://yourdomain.com', 'tauri://localhost', 'https://localhost:5173'];
 
 function getCorsHeaders(request) {
   const origin = request.headers.get('Origin');
@@ -250,6 +253,7 @@ function getCorsHeaders(request) {
 **Problem**: Hardcoded secrets in source code.
 
 **Recommendation**:
+
 - Keep `wrangler.toml` in version control (no secrets)
 - Use `.dev.vars` for local development (already in `.gitignore`)
 - Use Cloudflare Dashboard → Workers → Settings → Variables for production secrets
@@ -261,11 +265,11 @@ function getCorsHeaders(request) {
 
 ### 13. Clean Up Dependencies
 
-| Package | Status | Action |
-|---------|--------|--------|
-| `better-sqlite3` | devDependency | ❌ Remove — not used by Worker (D1 is the DB) |
-| `wrangler` | devDependency | ✅ Keep |
-| `@tauri-apps/cli` | devDependency | ✅ Keep (if Tauri is active) |
+| Package           | Status        | Action                                        |
+| ----------------- | ------------- | --------------------------------------------- |
+| `better-sqlite3`  | devDependency | ❌ Remove — not used by Worker (D1 is the DB) |
+| `wrangler`        | devDependency | ✅ Keep                                       |
+| `@tauri-apps/cli` | devDependency | ✅ Keep (if Tauri is active)                  |
 
 ### 14. Add Useful Dependencies
 
@@ -319,6 +323,7 @@ npm install -D prettier
 ```
 
 Create `.prettierrc`:
+
 ```json
 {
   "semi": true,
@@ -329,6 +334,7 @@ Create `.prettierrc`:
 ```
 
 Add to `package.json`:
+
 ```json
 "scripts": {
   "format": "prettier --write .",
@@ -340,18 +346,18 @@ Add to `package.json`:
 
 ## 📊 Priority Matrix
 
-| Priority | Task | Effort | Impact |
-|----------|------|--------|--------|
-| 🔴 P0 | Hash passwords/PINs | Low | 🔥 Critical |
-| 🔴 P0 | Secure JWT secret | Low | 🔥 Critical |
-| 🟠 P1 | Add rate limiting | Medium | High |
-| 🟠 P1 | CORS origin validation | Low | High |
-| 🟡 P2 | Split `src/index.js` into modules | High | High |
-| 🟡 P2 | Add tests | Medium | High |
-| 🟢 P3 | Organize project structure | Medium | Medium |
-| 🟢 P3 | Add CI/CD | Medium | Medium |
-| 🔵 P4 | TypeScript migration | High | Medium |
-| 🔵 P4 | Code formatting | Low | Low |
+| Priority | Task                              | Effort | Impact      |
+| -------- | --------------------------------- | ------ | ----------- |
+| 🔴 P0    | Hash passwords/PINs               | Low    | 🔥 Critical |
+| 🔴 P0    | Secure JWT secret                 | Low    | 🔥 Critical |
+| 🟠 P1    | Add rate limiting                 | Medium | High        |
+| 🟠 P1    | CORS origin validation            | Low    | High        |
+| 🟡 P2    | Split `src/index.js` into modules | High   | High        |
+| 🟡 P2    | Add tests                         | Medium | High        |
+| 🟢 P3    | Organize project structure        | Medium | Medium      |
+| 🟢 P3    | Add CI/CD                         | Medium | Medium      |
+| 🔵 P4    | TypeScript migration              | High   | Medium      |
+| 🔵 P4    | Code formatting                   | Low    | Low         |
 
 ---
 
@@ -365,4 +371,4 @@ Add to `package.json`:
 
 ---
 
-*Generated by NIM Code (DeepSeek) — suggestions based on static analysis of the codebase.*
+_Generated by NIM Code (DeepSeek) — suggestions based on static analysis of the codebase._
