@@ -12,7 +12,7 @@ describe('CORS Utilities', () => {
 
     it('should fallback to default origin when not specified or disallowed', () => {
       const headers = getCorsHeaders();
-      expect(headers['Access-Control-Allow-Origin']).toBe('https://awesomemyanmar.com');
+      expect(headers['Access-Control-Allow-Origin']).toBe('https://cctv-service-system.nyinyimin2007.workers.dev');
     });
   });
 
@@ -51,7 +51,7 @@ describe('CORS Utilities', () => {
       mockRequest.headers.get = (key) => (key === 'Origin' ? null : null);
       const response = await handleCorsRequest(mockRequest, mockEnv);
       expect(response.status).toBe(204);
-      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://awesomemyanmar.com');
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://cctv-service-system.nyinyimin2007.workers.dev');
     });
   });
 });
