@@ -109,3 +109,48 @@ export async function uploadFileToGoogleDrive(env, fileBlob, filename, clientNam
   const uploadData = (await uploadRes.json() as any);
   return uploadData.id || null;
 }
+
+export async function uploadBackupToGoogleDrive(env, backupJsonString: string, filename: string) {
+  const token = await getGoogleAccessToken(env);
+  if (!token) return null;
+
+  const mainFolderId = await getOrCreateDriveFolder(token, 'Awesome Myanmar - Service Records');
+  if (!mainFolderId) return null;
+
+  const backupsFolderId = await getOrCreateDriveFolder(token, 'Database Backups', mainFolderId);
+  if (!backupsFolderId) return null;
+
+  const metadata = JSON.stringify({
+    name: filename,
+    parents: [backupsFolderId],
+    mimeType: 'application/json'
+  });
+
+  const boundary = 'boundary_backup_123';
+  const delimiter = `\r\n--${boundary}\r\n`;
+  const closeDelimiter = `\r\n--${boundary}--`;
+
+  const multipartRequestBody = 
+    delimiter +
+    'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+    metadata +
+    delimiter +
+    'Content-Type: application/json\r\n\r\n' +
+    backupJsonString +
+    closeDelimiter;
+
+  const uploadRes = await fetch(
+    `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+      },
+      body: multipartRequestBody,
+    }
+  );
+
+  const uploadData = (await uploadRes.json() as any);
+  return uploadData.id || null;
+}

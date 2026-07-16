@@ -16,6 +16,8 @@
 import { Router } from './modules/utils/router.js';
 import { getCorsHeaders } from './modules/utils/cors.js';
 import { error } from './modules/utils/response.js';
+import { uploadBackupToGoogleDrive } from './modules/utils/google.js';
+import { sendTelegramNotification } from './modules/utils/telegram.js';
 
 // ── Route module registry ────────────────────────────────────────────────
 import * as authRoutes from './modules/routes/auth.js';
@@ -100,7 +102,79 @@ export default {
     // ── 404 fallback ────────────────────────────────────────────────────
     return wrapResponse(error(`Not found: ${method} ${url.pathname}`, 404), origin);
   },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(handleAutoBackup(env));
+  },
 };
+
+async function handleAutoBackup(env) {
+  try {
+    const db = env.DB;
+    const tables = [
+      'technicians',
+      'clients',
+      'service_records',
+      'inventory_stock',
+      'inventory_batches',
+      'inventory_items',
+      'cash_safes',
+      'cash_transactions',
+      'service_fees',
+      'system_config',
+      'landing_page'
+    ];
+
+    const backup: any = {};
+    for (const table of tables) {
+      try {
+        const result = await db.prepare(`SELECT * FROM ${table}`).all();
+        backup[table] = (result as any).results || [];
+      } catch (e) {
+        console.warn(`Auto-backup: table ${table} not found or query failed:`, e.message);
+      }
+    }
+
+    backup._exported_at = new Date().toISOString();
+    backup._exported_by = 'system_cron';
+
+    const backupJsonString = JSON.stringify(backup);
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `backup_${dateStr}_autobackup.json`;
+
+    // 1. Upload to Google Drive
+    const driveFileId = await uploadBackupToGoogleDrive(env, backupJsonString, filename);
+
+    // 2. Notify Telegram
+    let logMessage = `📊 *Database Auto-Backup Report*\n\n` +
+      `📅 *Date:* ${dateStr}\n` +
+      `📂 *Backup File:* \`${filename}\`\n`;
+
+    if (driveFileId) {
+      logMessage += `✅ *Google Drive Upload:* Successful\n` +
+        `🔑 *File ID:* \`${driveFileId}\`\n`;
+    } else {
+      logMessage += `⚠️ *Google Drive Upload:* Failed (Token/Permissions Issue)\n`;
+    }
+
+    // Include summary counts
+    logMessage += `\n📦 *Record Summaries:*`;
+    for (const table of Object.keys(backup)) {
+      if (!table.startsWith('_')) {
+        logMessage += `\n• \`${table}\`: ${backup[table].length} records`;
+      }
+    }
+
+    await sendTelegramNotification(env, logMessage);
+  } catch (err) {
+    console.error('Auto-backup cron failed:', err);
+    try {
+      await sendTelegramNotification(env, `🚨 *Database Auto-Backup Failed!*\n\n❌ *Error:* ${err.message}`);
+    } catch (e) {
+      console.error('Failed to notify Telegram about backup failure:', e);
+    }
+  }
+}
 
 /**
  * Wrap a response object or plain data into a proper Response.
