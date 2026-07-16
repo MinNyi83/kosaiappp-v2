@@ -28,3 +28,8 @@ When deployment is explicitly requested, deploy the respective layers using thes
 2. **Frontend Console (Cloudflare Pages)**:
    - **Target URL**: `https://awesomemyanmar.pages.dev/`
    - **Deployment Command**: `npx wrangler pages deploy ./public --project-name awesomemyanmar`
+
+3. **Database (Cloudflare D1)**:
+   - **Target Database**: `cctv-fsm-db`
+   - **Schema Migrations**: `npx wrangler d1 execute cctv-fsm-db --remote --file=db/migrations/schema.sql`
+

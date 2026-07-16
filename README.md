@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-
 # Awesome Myanmar CCTV & Infrastructure Platform
 
 A **field service management system** for CCTV, networking, and storage infrastructure in Myanmar. Built on Cloudflare Workers with a dark-themed, glass-morphism UI.
@@ -14,7 +12,6 @@ A **field service management system** for CCTV, networking, and storage infrastr
 | **Design**   | Dark theme, glass morphism, amber accent   |
 | **Auth**     | Google OAuth, PIN-based, username/password |
 | **Desktop**  | Electron + Tauri (Rust)                    |
-| **Mobile**   | Android (Java/Kotlin)                      |
 | **CI/CD**    | Wrangler CLI                               |
 
 ## Project Structure
@@ -46,10 +43,8 @@ A **field service management system** for CCTV, networking, and storage infrastr
 ├── wrangler.toml              # Cloudflare Workers config
 ├── package.json               # Node dependencies & scripts
 ├── tailwind.config.js         # Tailwind CSS config
-├── schema.sql                 # Database schema
-├── *.sql                      # Migration / seed SQL files
-├── *.py                       # Python data export scripts
-└── DESIGN.md                  # Full design system documentation
+├── db/migrations/             # SQL Migrations folder
+└── design.md                  # Full design system documentation
 ```
 
 ## Getting Started
@@ -83,17 +78,29 @@ Configure in `.dev.vars` (local) or Cloudflare dashboard (production):
 | `ADMIN_EMAIL`                 | Admin email for Google auth |
 | `JWT_SECRET` / `ADMIN_SECRET` | Secret for JWT tokens       |
 
-### Database
+### Database Setup & Data Sync
 
-The project uses Cloudflare D1. Run migrations:
+The project uses Cloudflare D1. To initialize or migrate database data:
 
+#### Local Setup
 ```bash
-# Apply schema
-wrangler d1 execute cctv-fsm-db --file=schema.sql
+# Apply schema to local DB
+npx wrangler d1 execute DB --local --file=db/migrations/schema.sql
 
-# Seed data
-wrangler d1 execute cctv-fsm-db --file=mock_data.sql
+# Seed local DB
+npx wrangler d1 execute DB --local --file=seed_admin_new.sql
 ```
+
+#### Production Deploy (Remote Sync)
+```bash
+# 1. Drop existing remote tables sequentially if needed
+# 2. Run remote schema creation
+npx wrangler d1 execute cctv-fsm-db --remote --file=db/migrations/schema.sql
+
+# 3. Export local DB and import to remote
+npx wrangler d1 export DB --local --output=local_dump.sql
+```
+*(Note: To sync data successfully, replace any large base64 photo strings in the SQL file with `NULL` to avoid the 100KB SQLITE_TOOBIG query constraint limit on D1).*
 
 ## Available Scripts
 
@@ -107,26 +114,26 @@ wrangler d1 execute cctv-fsm-db --file=mock_data.sql
 
 All endpoints are served from the Cloudflare Worker at `/api/...`:
 
-| Method | Path                       | Description             |
-| ------ | -------------------------- | ----------------------- |
-| POST   | `/api/auth/login`          | Technician PIN login    |
-| POST   | `/api/auth/google`         | Google OAuth login      |
-| POST   | `/api/auth/login-password` | Username/password login |
-| POST   | `/api/portal/change-pin`   | Change technician PIN   |
-| GET    | `/api/jobs`                | List jobs               |
-| POST   | `/api/jobs`                | Create job              |
-| GET    | `/api/jobs/:id`            | Get job details         |
-| PUT    | `/api/jobs/:id`            | Update job              |
-| GET    | `/api/technicians`         | List technicians        |
-| POST   | `/api/technicians`         | Create technician       |
-| GET    | `/api/inventory`           | List inventory          |
-| POST   | `/api/inventory`           | Add inventory item      |
-| GET    | `/api/clients`             | List clients            |
-| POST   | `/api/clients`             | Create client           |
+| Method | Path                       | Description                        |
+| ------ | -------------------------- | ---------------------------------- |
+| POST   | `/api/auth/login`          | Technician PIN login               |
+| POST   | `/api/auth/google`         | Google OAuth login                 |
+| POST   | `/api/auth/login-password` | Username/password login            |
+| POST   | `/api/portal/change-pin`   | Change technician PIN              |
+| GET    | `/api/jobs`                | List jobs                          |
+| POST   | `/api/jobs`                | Create job                         |
+| GET    | `/api/jobs/:id`            | Get job details                    |
+| PUT    | `/api/jobs/:id`            | Update job                         |
+| GET    | `/api/technicians`         | List technicians                   |
+| POST   | `/api/technicians`         | Create technician                  |
+| GET    | `/api/inventory`           | List inventory                     |
+| POST   | `/api/admin/inventory/add` | Add / Edit Device Catalog Model    |
+| GET    | `/api/clients`             | List clients                       |
+| POST   | `/api/clients`             | Create client                      |
 
 ## Design System
 
-See [DESIGN.md](./DESIGN.md) for the complete design token system including:
+See [design.md](./design.md) for the complete design token system including:
 
 - Color palette (dark theme with amber accent)
 - Typography (Plus Jakarta Sans, uppercase headings)
@@ -142,13 +149,11 @@ wrangler deploy
 
 # Deploy with Tailwind CSS built
 npm run build:css && wrangler deploy
+
+# Deploy Cloudflare Pages
+npx wrangler pages deploy public --project-name=awesomemyanmar
 ```
 
 ## License
 
 ISC
-=======
-
-# kosaiappp-v2
-
-> > > > > > > c5fcfb32ca579b10330cf331e121f235708e129e

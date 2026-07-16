@@ -358,3 +358,21 @@ Tauri is used to compile the admin and technician consoles into a standalone Win
 - **Tauri Config**: Defined in `src-tauri/tauri.conf.json`.
 - **Target Frontend Assets**: Build output is directed to read from `../public`.
 - **Tauri Commands**: Use `npx tauri build` to compile the release installer.
+
+## 🗄️ D1 Database Sync & Migrations
+
+When syncing database schema and data between local and remote Cloudflare D1 databases, follow these rules:
+
+1. **SQLITE_TOOBIG Limit (100KB)**: Cloudflare D1 restricts single SQL statements to 100KB.
+   - Large tables (like `technicians` with base64 profiles) must have their base64 image strings replaced with `NULL` during data migration/sync scripts.
+   - Bulk inserts must be split into individual `INSERT OR IGNORE` statement lines.
+2. **Foreign Key Dependencies**:
+   - Disable or drop remote tables in iterative dependency order (e.g. drop child tables like `inventory_items` and `service_records` before parent tables like `clients` and `technicians` to avoid `SQLITE_CONSTRAINT` failures).
+   - Rebuild schema from `db/migrations/schema.sql` (and subsequent migrations like `create_roles_table.sql`, etc.) first, then perform the data import in exact parent-to-child order: `roles` -> `clients` -> `technicians` -> `cash_safes` -> `inv_categories` -> `inv_brands` -> `inv_stock_units` -> `inv_sub_categories` -> `inventory_stock` -> `inventory_batches` -> `distributors` -> `service_fees` -> `system_config` -> `landing_page` -> `service_records` -> `messages` -> `inventory_items` -> `cash_transactions`.
+3. **Missing Column Alignments**: Always cross-reference table column structures between local SQLite and remote D1 schemas (e.g. check for `telegram_username` in `technicians`, `sub_category_id` in `inventory_stock`, and `quantity` in `inventory_batches`) and run `ALTER TABLE` to align them if missing.
+
+## 🪟 Frontend Inline JavaScript Security
+
+- **Quotes and Newline Safety**: Never pass descriptive model names, descriptions, or addresses containing random characters, quotes, or newlines directly as string parameters in inline HTML event handlers (e.g. `onclick="editItem('${item.name}')"`). This causes `SyntaxError: Invalid or unexpected token`.
+- **Lookup Pattern**: Pass only clean, alphanumeric identifier codes (e.g. `item_code` SKU) and perform the object lookup within the JavaScript function block from an in-memory data array (e.g. `activeCatalogList.find()`).
+
