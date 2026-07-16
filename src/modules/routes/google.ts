@@ -175,6 +175,56 @@ function register(router, env) {
     }
   });
 
+  // ── GET /api/admin/resolve-coords ──────────────────────────────────────
+  router.get('/api/admin/resolve-coords', async (request) => {
+    try {
+      const urlObj = new URL(request.url);
+      const url = urlObj.searchParams.get('url');
+      if (!url) return error('Missing Google Maps URL', 400);
+
+      let targetUrl = url;
+      if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
+        try {
+          const resp = await fetch(url, { method: 'HEAD', redirect: 'manual' });
+          const location = resp.headers.get('location');
+          if (location) {
+            targetUrl = location;
+          }
+        } catch (e) {
+          console.error('Failed to expand short URL:', e);
+        }
+      }
+
+      const coordsMatch = targetUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (coordsMatch) {
+        return success({
+          latitude: parseFloat(coordsMatch[1]),
+          longitude: parseFloat(coordsMatch[2]),
+          source: 'parsed',
+        });
+      }
+
+      if (env.GOOGLE_MAPS_API_KEY) {
+        const geoResp = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(targetUrl)}&key=${env.GOOGLE_MAPS_API_KEY}`
+        );
+        const geoData = (await geoResp.json()) as any;
+        if (geoData.results?.[0]?.geometry?.location) {
+          return success({
+            latitude: geoData.results[0].geometry.location.lat,
+            longitude: geoData.results[0].geometry.location.lng,
+            formatted_address: geoData.results[0].formatted_address,
+            source: 'geocoding',
+          });
+        }
+      }
+
+      return error('Could not resolve coordinates from URL', 400);
+    } catch (err) {
+      return error('Failed to resolve Maps URL: ' + err.message, 500);
+    }
+  });
+
   // ── POST /api/resolve-maps-url ────────────────────────────────────────
   router.post('/api/resolve-maps-url', async (request) => {
     try {
