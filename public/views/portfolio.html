@@ -1,0 +1,359 @@
+<div id="view-portfolio" class="space-y-6 tab-view">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-extrabold text-white tracking-tight">Portfolio Editor</h2>
+            <p class="text-xs text-slate-400 mt-1">Manage projects displayed on the portfolio page</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="/portfolio.html" target="_blank" class="bg-white/10 border border-white/10 hover:bg-white/15 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
+                View Live Page
+            </a>
+            <button onclick="showAddProjectModal()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold px-4 py-2 rounded-lg transition">
+                + Add Project
+            </button>
+        </div>
+    </div>
+
+    <!-- Projects List -->
+    <div class="glass-panel rounded-xl p-5">
+        <h3 class="text-sm font-bold text-white mb-4">Current Projects</h3>
+        <div id="portfolio-projects-list" class="space-y-3">
+            <p class="text-xs text-slate-500">Loading projects...</p>
+        </div>
+    </div>
+
+    <!-- Live Preview -->
+    <div class="glass-panel rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-white">Live Preview</h3>
+            <button onclick="refreshPreview()" class="text-xs text-amber-500 hover:text-amber-400 transition">↻ Refresh</button>
+        </div>
+        <div class="bg-black/30 rounded-xl p-4">
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button onclick="filterPreview('all')" class="preview-filter active px-3 py-1 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-500 border border-amber-500/30 transition" data-filter="all">All</button>
+                <button onclick="filterPreview('CCTV')" class="preview-filter px-3 py-1 rounded text-[10px] font-bold uppercase bg-white/5 text-slate-400 border border-white/10 transition" data-filter="CCTV">CCTV</button>
+                <button onclick="filterPreview('Networking')" class="preview-filter px-3 py-1 rounded text-[10px] font-bold uppercase bg-white/5 text-slate-400 border border-white/10 transition" data-filter="Networking">Networking</button>
+                <button onclick="filterPreview('NAS')" class="preview-filter px-3 py-1 rounded text-[10px] font-bold uppercase bg-white/5 text-slate-400 border border-white/10 transition" data-filter="NAS">NAS</button>
+                <button onclick="filterPreview('WiFi')" class="preview-filter px-3 py-1 rounded text-[10px] font-bold uppercase bg-white/5 text-slate-400 border border-white/10 transition" data-filter="WiFi">WiFi</button>
+            </div>
+            <div id="preview-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <!-- Preview cards will be loaded here -->
+            </div>
+            <div id="preview-empty" class="hidden text-center py-8 text-slate-500 text-xs">
+                No projects to preview
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Project Modal -->
+    <div id="project-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="glass-panel rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modal-title" class="text-lg font-bold text-white">Add New Project</h3>
+                <button onclick="closeProjectModal()" class="text-slate-400 hover:text-white text-xl">&times;</button>
+            </div>
+            
+            <form method="POST" id="project-form" class="space-y-4">
+                <input name="project-id" type="hidden" id="project-id">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Title</label>
+                        <input name="project-title" type="text" id="project-title" required class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Hotel Security Overhaul">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client Name</label>
+                        <input name="project-client" type="text" id="project-client" required class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Oak Palace Hotel">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Location</label>
+                        <input name="project-location" type="text" id="project-location" required class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Yangon">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Service Type</label>
+                        <select name="project-service" id="project-service" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white">
+                            <option value="CCTV">CCTV</option>
+                            <option value="Networking">Networking</option>
+                            <option value="NAS">NAS Storage</option>
+                            <option value="WiFi">WiFi</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Description</label>
+                    <textarea name="project-description" id="project-description" rows="3" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white resize-none" placeholder="Project description..."></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</label>
+                        <input name="project-date" type="date" id="project-date" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Technician</label>
+                        <input name="project-tech" type="text" id="project-tech" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Tech Team Alpha">
+                    </div>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">After Image URL</label>
+                    <input name="project-after-image" type="url" id="project-after-image" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="https://...">
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Before Image URL (Optional)</label>
+                    <input name="project-before-image" type="url" id="project-before-image" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="https://...">
+                </div>
+                
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold py-2.5 rounded-lg transition">
+                        Save Project
+                    </button>
+                    <button type="button" onclick="closeProjectModal()" class="px-4 py-2.5 text-xs font-bold text-slate-400 hover:text-white border border-white/10 rounded-lg transition">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Status Message -->
+    <div id="portfolio-status" class="hidden text-center py-3 rounded-lg text-sm font-semibold"></div>
+</div>
+
+<script>
+// Portfolio projects storage (in production, this would be in the database)
+let portfolioProjects = [
+    {
+        id: 1,
+        title: "Hotel Security Overhaul",
+        client: "Oak Palace Hotel",
+        location: "Yangon",
+        service_type: "CCTV",
+        description: "Complete 64-camera IP surveillance system with AI-powered motion detection.",
+        date: "2024-01-15",
+        technician: "Tech Team Alpha",
+        after_image: "https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=800&h=600&fit=crop",
+        before_image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&h=600&fit=crop"
+    },
+    {
+        id: 2,
+        title: "Office Network Infrastructure",
+        client: "Myanmar Tech Solutions",
+        location: "Yangon",
+        service_type: "Networking",
+        description: "Enterprise-grade fiber optic backbone with redundant switches.",
+        date: "2024-02-20",
+        technician: "Tech Team Beta",
+        after_image: "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=600&fit=crop",
+        before_image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop"
+    },
+    {
+        id: 3,
+        title: "Warehouse NAS Deployment",
+        client: "Golden Storage Co.",
+        location: "Mandalay",
+        service_type: "NAS",
+        description: "High-capacity 100TB NAS cluster with automated backups.",
+        date: "2024-03-10",
+        technician: "Tech Team Alpha",
+        after_image: "https://images.unsplash.com/photo-1597852074816-d933c7d2b988?w=800&h=600&fit=crop",
+        before_image: ""
+    }
+];
+
+// Load projects
+function loadPortfolioProjects() {
+    const container = document.getElementById('portfolio-projects-list');
+    
+    // Try to load from localStorage
+    const saved = localStorage.getItem('portfolio_projects');
+    if (saved) {
+        portfolioProjects = JSON.parse(saved);
+    }
+    
+    if (portfolioProjects.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500">No projects yet. Click "Add Project" to create one.</p>';
+        refreshPreview();
+        return;
+    }
+    
+    container.innerHTML = portfolioProjects.map(project => `
+        <div class="flex items-center justify-between p-3 bg-black/30 rounded-lg hover:bg-black/40 transition">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg overflow-hidden bg-slate-800 flex-shrink-0">
+                    <img src="${project.after_image || ''}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-white">${project.title}</p>
+                    <p class="text-xs text-slate-400">${project.client} • ${project.service_type}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="editProject(${project.id})" class="text-xs text-amber-500 hover:text-amber-400 px-2 py-1">Edit</button>
+                <button onclick="deleteProject(${project.id})" class="text-xs text-rose-400 hover:text-rose-300 px-2 py-1">Delete</button>
+            </div>
+        </div>
+    `).join('');
+    
+    refreshPreview();
+}
+
+// Preview functions
+let currentPreviewFilter = 'all';
+
+function filterPreview(type) {
+    currentPreviewFilter = type;
+    document.querySelectorAll('.preview-filter').forEach(btn => {
+        btn.classList.remove('bg-amber-500/20', 'text-amber-500', 'border-amber-500/30');
+        btn.classList.add('bg-white/5', 'text-slate-400', 'border-white/10');
+        if (btn.dataset.filter === type) {
+            btn.classList.remove('bg-white/5', 'text-slate-400', 'border-white/10');
+            btn.classList.add('bg-amber-500/20', 'text-amber-500', 'border-amber-500/30');
+        }
+    });
+    renderPreview();
+}
+
+function refreshPreview() {
+    const saved = localStorage.getItem('portfolio_projects');
+    if (saved) {
+        portfolioProjects = JSON.parse(saved);
+    }
+    renderPreview();
+}
+
+function renderPreview() {
+    const grid = document.getElementById('preview-grid');
+    const emptyState = document.getElementById('preview-empty');
+    
+    let filtered = currentPreviewFilter === 'all' 
+        ? portfolioProjects 
+        : portfolioProjects.filter(p => p.service_type === currentPreviewFilter);
+    
+    if (filtered.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+    }
+    
+    emptyState.classList.add('hidden');
+    grid.innerHTML = filtered.map(project => `
+        <div class="relative rounded-lg overflow-hidden aspect-[4/3] bg-slate-800 group cursor-pointer">
+            <img src="${project.after_image || ''}" alt="${project.title}" class="w-full h-full object-cover transition group-hover:scale-105" onerror="this.style.display='none'">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-3">
+                <span class="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded ${getServiceColor(project.service_type)}">${project.service_type}</span>
+                <p class="text-xs font-semibold text-white mt-1 truncate">${project.title}</p>
+                <p class="text-[10px] text-slate-400">${project.client}</p>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getServiceColor(type) {
+    const colors = {
+        'CCTV': 'bg-emerald-500/20 text-emerald-400',
+        'Networking': 'bg-sky-500/20 text-sky-400',
+        'NAS': 'bg-violet-500/20 text-violet-400',
+        'WiFi': 'bg-amber-500/20 text-amber-400'
+    };
+    return colors[type] || 'bg-slate-500/20 text-slate-400';
+}
+
+// Show add modal
+function showAddProjectModal() {
+    document.getElementById('modal-title').textContent = 'Add New Project';
+    document.getElementById('project-form').reset();
+    document.getElementById('project-id').value = '';
+    document.getElementById('project-modal').classList.remove('hidden');
+}
+
+// Edit project
+function editProject(id) {
+    const project = portfolioProjects.find(p => p.id === id);
+    if (!project) return;
+    
+    document.getElementById('modal-title').textContent = 'Edit Project';
+    document.getElementById('project-id').value = project.id;
+    document.getElementById('project-title').value = project.title;
+    document.getElementById('project-client').value = project.client;
+    document.getElementById('project-location').value = project.location;
+    document.getElementById('project-service').value = project.service_type;
+    document.getElementById('project-description').value = project.description;
+    document.getElementById('project-date').value = project.date;
+    document.getElementById('project-tech').value = project.technician;
+    document.getElementById('project-after-image').value = project.after_image || '';
+    document.getElementById('project-before-image').value = project.before_image || '';
+    
+    document.getElementById('project-modal').classList.remove('hidden');
+}
+
+// Delete project
+function deleteProject(id) {
+    if (!confirm('Are you sure you want to delete this project?')) return;
+    
+    portfolioProjects = portfolioProjects.filter(p => p.id !== id);
+    localStorage.setItem('portfolio_projects', JSON.stringify(portfolioProjects));
+    loadPortfolioProjects();
+    showStatus('Project deleted', 'success');
+}
+
+// Close modal
+function closeProjectModal() {
+    document.getElementById('project-modal').classList.add('hidden');
+}
+
+// Save project
+document.getElementById('project-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const id = document.getElementById('project-id').value;
+    const projectData = {
+        title: document.getElementById('project-title').value,
+        client: document.getElementById('project-client').value,
+        location: document.getElementById('project-location').value,
+        service_type: document.getElementById('project-service').value,
+        description: document.getElementById('project-description').value,
+        date: document.getElementById('project-date').value,
+        technician: document.getElementById('project-tech').value,
+        after_image: document.getElementById('project-after-image').value,
+        before_image: document.getElementById('project-before-image').value
+    };
+    
+    if (id) {
+        // Update existing
+        const index = portfolioProjects.findIndex(p => p.id == id);
+        if (index !== -1) {
+            portfolioProjects[index] = { ...portfolioProjects[index], ...projectData };
+        }
+    } else {
+        // Add new
+        projectData.id = Date.now();
+        portfolioProjects.push(projectData);
+    }
+    
+    localStorage.setItem('portfolio_projects', JSON.stringify(portfolioProjects));
+    loadPortfolioProjects();
+    closeProjectModal();
+    showStatus(id ? 'Project updated' : 'Project added', 'success');
+});
+
+// Show status message
+function showStatus(message, type) {
+    const statusEl = document.getElementById('portfolio-status');
+    statusEl.textContent = (type === 'success' ? '✓ ' : '✗ ') + message;
+    statusEl.className = `text-center py-3 rounded-lg text-sm font-semibold ${type === 'success' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'}`;
+    statusEl.classList.remove('hidden');
+    setTimeout(() => statusEl.classList.add('hidden'), 3000);
+}
+
+// Load on view display
+document.addEventListener('DOMContentLoaded', () => {
+    loadPortfolioProjects();
+});
+</script>

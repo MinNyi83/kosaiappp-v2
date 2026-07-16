@@ -1,0 +1,186 @@
+<div id="view-amc" class="space-y-8 tab-view">
+    <!-- Header Title -->
+    <div>
+        <h1 class="text-2xl font-black text-white uppercase tracking-tight">Customer Management System (CMS)</h1>
+        <p class="text-xs text-slate-400 mt-1">Configure client profiles, track active/expired AMC contracts, and filter records.</p>
+    </div>
+
+    <!-- Quick Stats Cards Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Card 1: Total Clients -->
+        <button onclick="setClientStatusCardFilter('all')" class="glass-panel p-4 rounded-xl text-left hover:border-amber-500/40 transition-all flex justify-between items-center group cursor-pointer focus:outline-none">
+            <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Clients</span>
+                <span id="cms-stat-total" class="text-2xl font-black text-white block mt-1">0</span>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-lg group-hover:scale-110 transition-transform">🏢</div>
+        </button>
+
+        <!-- Card 2: Active Contracts -->
+        <button onclick="setClientStatusCardFilter('Active')" class="glass-panel p-4 rounded-xl text-left hover:border-emerald-500/40 transition-all flex justify-between items-center group cursor-pointer focus:outline-none">
+            <div>
+                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">Active Contracts</span>
+                <span id="cms-stat-active" class="text-2xl font-black text-emerald-400 block mt-1">0</span>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg group-hover:scale-110 transition-transform">✅</div>
+        </button>
+
+        <!-- Card 3: Expired Contracts -->
+        <button onclick="setClientStatusCardFilter('Expired')" class="glass-panel p-4 rounded-xl text-left hover:border-rose-500/40 transition-all flex justify-between items-center group cursor-pointer focus:outline-none">
+            <div>
+                <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wider block">Expired Contracts</span>
+                <span id="cms-stat-expired" class="text-2xl font-black text-rose-400 block mt-1">0</span>
+            </div>
+            <div class="w-10 h-10 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold text-lg group-hover:scale-110 transition-transform">⚠️</div>
+        </button>
+    </div>
+
+    <!-- Main Workspace Split Screen -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Client Form (Left Column) -->
+        <div class="glass-panel p-6 rounded-2xl space-y-4 h-fit">
+            <h2 id="client-form-title" class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span class="text-amber-500">🏢</span> Provision Client Profile
+            </h2>
+            <form id="client-form" class="space-y-4" onsubmit="submitClient(event)">
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Client Account ID</label>
+                    <input type="text" id="client-id-field" name="id" placeholder="e.g., CLI-103" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Company Name</label>
+                    <input type="text" id="client-company-field" name="company_name" placeholder="Legal Enterprise Company Name" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Primary Contact Manager</label>
+                    <input type="text" id="client-contact-field" name="contact_person" placeholder="Primary Operations Manager Head" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Installation Address</label>
+                    <input type="text" id="client-address-field" name="address" placeholder="Physical Logistics Site Location" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Contact Phone Line</label>
+                    <input type="text" id="client-phone-field" name="phone" placeholder="Contact Mobile Sequence Line" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMC Start Date</label>
+                        <input type="date" id="client-start-field" name="amc_start" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 font-mono">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMC End Date</label>
+                        <input type="date" id="client-end-field" name="amc_end" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 font-mono">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">AMC Contract Status</label>
+                    <select id="client-status-field" name="amc_status" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                        <option value="Active" class="bg-slate-900 font-semibold text-emerald-400">Active Contract</option>
+                        <option value="Inactive" class="bg-slate-900 font-semibold text-slate-400" selected>Inactive / Suspended</option>
+                        <option value="Expired" class="bg-slate-900 font-semibold text-rose-400">Expired Contract</option>
+                        <option value="No AMC" class="bg-slate-900 font-semibold text-amber-500">No AMC</option>
+                        <option value="Individual" class="bg-slate-900 font-semibold text-indigo-400">Individual Customer</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" id="client-submit-btn" class="flex-1 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/10">
+                        Save Client Profile
+                    </button>
+                    <button type="button" id="client-cancel-edit-btn" onclick="resetClientForm()" class="hidden bg-white/5 border border-white/10 text-slate-300 font-bold text-xs px-4 rounded-xl hover:bg-white/10 transition-all">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Clients List Table (Right 2 Columns) -->
+        <div class="lg:col-span-2 glass-panel p-6 rounded-2xl space-y-4">
+            <!-- Table Header Control Bar -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <span class="text-amber-500">📋</span> Clients Directory
+                </h2>
+                
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <!-- Search Input -->
+                    <input type="text" id="client-search-input" oninput="filterAndSortClients()" placeholder="Search clients..." class="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 w-full sm:w-40 font-medium">
+                    
+                    <!-- Status Filter Dropdown (Corporate Only) -->
+                    <select id="client-status-dropdown" onchange="filterAndSortClients()" class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 font-medium">
+                        <option value="all">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Expired">Expired</option>
+                        <option value="No AMC">No AMC</option>
+                    </select>
+
+                    <!-- Sorting Dropdown -->
+                    <select id="client-sort-dropdown" onchange="filterAndSortClients()" class="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 font-medium">
+                        <option value="name-asc">Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="id-asc">Client ID (Asc)</option>
+                        <option value="expiry-soon">Expiry (Soonest)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tab Switcher Navigation -->
+            <div class="flex gap-2 border-b border-white/5 pb-2">
+                <button id="tab-client-corporate" onclick="setClientDirectoryTab('corporate')" class="text-xs font-bold px-3 py-1.5 rounded-lg transition-all text-white border border-amber-500/30 bg-amber-500/10">🏢 Corporate AMC</button>
+                <button id="tab-client-individual" onclick="setClientDirectoryTab('individual')" class="text-xs font-bold px-3 py-1.5 rounded-lg transition-all text-slate-400 border border-transparent hover:text-white">👤 Individual Clients</button>
+            </div>
+
+            <!-- Scrollable Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="border-b border-white/10 text-slate-500 font-semibold uppercase tracking-wider">
+                            <th class="py-3 px-2">ID</th>
+                            <th class="py-3 px-2">Company / Manager</th>
+                            <th class="py-3 px-2">Contact Info</th>
+                            <th class="py-3 px-2">AMC Status</th>
+                            <th class="py-3 px-2 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-list-body" class="divide-y divide-white/5 text-slate-300">
+                        <!-- Clients rows will be rendered dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Service History Modal -->
+    <div id="client-history-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-3xl shadow-2xl max-w-4xl w-full border border-white/10 max-h-[85vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center border-b border-white/5 pb-4 shrink-0">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest">📜 Customer Service History</h2>
+                    <h1 id="history-modal-client-title" class="text-lg font-black text-white uppercase mt-1">Apex Tech Solutions</h1>
+                </div>
+                <button onclick="closeClientHistoryModal()" class="text-slate-400 hover:text-white transition text-lg leading-none p-1">✕</button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto py-4 flex-1">
+                <!-- Left: Service Records List -->
+                <div class="space-y-3 pr-2">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Service Tickets</h3>
+                    <div id="history-tickets-list" class="space-y-2 max-h-[50vh] overflow-y-auto">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Right: Selected Record Detail View -->
+                <div id="history-ticket-details" class="bg-black/30 border border-white/5 rounded-2xl p-5 space-y-4 h-fit">
+                    <div class="text-center text-slate-500 py-12">
+                        <span class="text-3xl block mb-2">🎫</span>
+                        <p class="text-xs font-medium">Select a service ticket from the list to inspect operational details.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

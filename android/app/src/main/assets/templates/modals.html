@@ -1,0 +1,551 @@
+  <!-- 1. TICKET MODAL -->
+  <div class="modal-overlay" id="ticketModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="ticketModalTitle">New Service Ticket</h3>
+        <button class="modal-close" onclick="closeModal('ticketModal')">&times;</button>
+      </div>
+      <form id="ticketForm" onsubmit="saveTicket(event)">
+        <div class="modal-body">
+          <input type="hidden" id="ticketIdHidden">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ticketCustomer">Customer Name *</label>
+              <input type="text" id="ticketCustomer" required>
+            </div>
+            <div class="form-group">
+              <label for="ticketContact">Customer Contact / Phone *</label>
+              <input type="text" id="ticketContact" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ticketCategory">Category *</label>
+              <select id="ticketCategory" required>
+                <option value="Computer Repair">Computer Repair</option>
+                <option value="CCTV Installation">CCTV Installation</option>
+                <option value="Networking">Networking</option>
+                <option value="Data Storage">Data Storage</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="ticketSerial">Item Serial Number (Optional)</label>
+              <input type="text" id="ticketSerial" placeholder="e.g. SN-92931-B">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="ticketDescription">Job Description & Diagnostics *</label>
+            <textarea id="ticketDescription" required placeholder="Detail the fault reported..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ticketTech">Assign Technicians (Hold Ctrl/Cmd to select multiple) *</label>
+              <select id="ticketTech" multiple required style="height: 100px;">
+                <!-- JS populated -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Service Fee *</label>
+              <div class="price-input-container">
+                <input type="number" id="ticketPrice" value="0" min="0">
+                <select id="ticketPriceCurrency">
+                  <option value="USD">USD</option>
+                  <option value="MMK">MMK</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('ticketModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Ticket</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. AMC CONTRACT MODAL -->
+  <div class="modal-overlay" id="amcModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>New Annual Maintenance Contract</h3>
+        <button class="modal-close" onclick="closeModal('amcModal')">&times;</button>
+      </div>
+      <form id="amcForm" onsubmit="saveAMC(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="amcClient">Client / Corporate Name *</label>
+            <input type="text" id="amcClient" required placeholder="e.g. KBZ Bank Branch 4">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="amcClass">SLA/Contract Level *</label>
+              <select id="amcClass" required>
+                <option value="Bronze (SLA 48h)">Bronze (SLA 48h)</option>
+                <option value="Silver (SLA 24h)">Silver (SLA 24h)</option>
+                <option value="Gold (SLA 4h, 24/7)">Gold (SLA 4h, 24/7)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="amcNextVisit">Next Scheduled Visit Date *</label>
+              <input type="date" id="amcNextVisit" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>AMC Cost (Annual) *</label>
+              <div class="price-input-container">
+                <input type="number" id="amcPrice" value="500" min="0" required>
+                <select id="amcPriceCurrency">
+                  <option value="USD">USD</option>
+                  <option value="MMK">MMK</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="amcExpiry">Contract Expiry Date *</label>
+              <input type="date" id="amcExpiry" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('amcModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Contract</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. CUSTOMER WARRANTY REGISTER MODAL -->
+  <div class="modal-overlay" id="warrantyModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Register Customer Warranty</h3>
+        <button class="modal-close" onclick="closeModal('warrantyModal')">&times;</button>
+      </div>
+      <form id="warrantyForm" onsubmit="saveCustomerWarranty(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="warrSerial">Serial Number *</label>
+            <input type="text" id="warrSerial" required placeholder="e.g. SN-HDD-99381">
+          </div>
+          <div class="form-group">
+            <label for="warrProduct">Product Description *</label>
+            <input type="text" id="warrProduct" required placeholder="e.g. Synology NAS DS920+, 4-Bay">
+          </div>
+          <div class="form-group">
+            <label for="warrCustomer">Customer Name / Invoice No *</label>
+            <input type="text" id="warrCustomer" required placeholder="e.g. Aung Tin / INV-4882">
+          </div>
+          <div class="form-group">
+            <label for="warrExpiry">Warranty Expiration Date *</label>
+            <input type="date" id="warrExpiry" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('warrantyModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Register Warranty</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. DISTRIBUTOR RMA MODAL -->
+  <div class="modal-overlay" id="rmaModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Raise Distributor RMA / Warranty Claim</h3>
+        <button class="modal-close" onclick="closeModal('rmaModal')">&times;</button>
+      </div>
+      <form id="rmaForm" onsubmit="saveRMAClaim(event)">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="rmaSerial">Product Serial Number *</label>
+              <input type="text" id="rmaSerial" required placeholder="e.g. SN-HDD-99381">
+            </div>
+            <div class="form-group">
+              <label for="rmaProduct">Product Name / Model *</label>
+              <input type="text" id="rmaProduct" required placeholder="e.g. Seagate IronWolf 4TB HDD">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="rmaDistributor">Select Distributor *</label>
+            <select id="rmaDistributor" required>
+              <!-- JS populated -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="rmaFault">Fault Description *</label>
+            <textarea id="rmaFault" required placeholder="Describe bad sectors, power issues, etc..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('rmaModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Submit RMA Claim</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. DISTRIBUTOR REGISTER MODAL -->
+  <div class="modal-overlay" id="distributorModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Add Distributor</h3>
+        <button class="modal-close" onclick="closeModal('distributorModal')">&times;</button>
+      </div>
+      <form id="distributorForm" onsubmit="saveDistributor(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="distName">Distributor / Company Name *</label>
+            <input type="text" id="distName" required placeholder="e.g. Elite CCTV Distribution">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="distContact">Contact Person *</label>
+              <input type="text" id="distContact" required>
+            </div>
+            <div class="form-group">
+              <label for="distPhone">Contact Phone *</label>
+              <input type="text" id="distPhone" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="distEmail">Contact Email *</label>
+            <input type="email" id="distEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="distLines">Brands & hardware Classes Supplied *</label>
+            <input type="text" id="distLines" required placeholder="e.g. Hikvision, Dahua, TP-Link, Synology">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('distributorModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Distributor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. TECHNICIAN REGISTER MODAL -->
+  <div class="modal-overlay" id="techModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Add Technician / Engineer</h3>
+        <button class="modal-close" onclick="closeModal('techModal')">&times;</button>
+      </div>
+      <form id="techForm" onsubmit="saveTechnician(event)">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="techName">Technician Full Name *</label>
+              <input type="text" id="techName" required placeholder="e.g. Ye Min Aung">
+            </div>
+            <div class="form-group">
+              <label for="techPhone">Contact Phone *</label>
+              <input type="text" id="techPhone" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="techSkills">Specializations (Comma separated) *</label>
+            <input type="text" id="techSkills" required placeholder="e.g. CCTV, IP Networking, NAS Storage, PC Repairs">
+          </div>
+          <div class="form-group">
+            <label for="techStatus">Initial Availability Status *</label>
+            <select id="techStatus" required>
+              <option value="Available">Available</option>
+              <option value="On Site">On Site</option>
+              <option value="Out of Office">Out of Office</option>
+              <option value="Busy">Busy</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('techModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Save Technician</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. INVENTORY ITEM MODAL -->
+  <div class="modal-overlay" id="inventoryModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="inventoryModalTitle">Add Inventory Item</h3>
+        <button class="modal-close" onclick="closeModal('inventoryModal')">&times;</button>
+      </div>
+      <form id="inventoryForm" onsubmit="saveInventory(event)">
+        <input type="hidden" id="invEditId" value="">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group" style="flex: 1.5;">
+              <label for="invName">Item Name / SKU Description *</label>
+              <input type="text" id="invName" required placeholder="e.g. Ruijie RG-ES205GC 5-Port Gigabit Switch">
+            </div>
+            <div class="form-group" style="flex: 0.8;">
+              <label for="invDeviceCode">Device ID / Model Code *</label>
+              <input type="text" id="invDeviceCode" required placeholder="e.g. RG-ES205GC">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="invCategory">Category *</label>
+              <select id="invCategory" required>
+                <option value="Switches & Routers">Switches & Routers</option>
+                <option value="IP Cameras & Security">IP Cameras & Security</option>
+                <option value="Hard Drives & Storage">Hard Drives & Storage</option>
+                <option value="Network Cables">Network Cables</option>
+                <option value="Hardware Parts & Spares">Hardware Parts & Spares</option>
+                <option value="Other / Misc">Other / Misc</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Distributor, cost, and stock qty inputs removed since stock purchases are logged separately via transactions -->
+
+          <div style="margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--text-primary); border-top: 1px solid var(--border-color); padding-top: 0.75rem;">Selling Prices (enter both independently)</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="invPriceUSD">Selling Price (USD)</label>
+              <div class="price-input-container">
+                <input type="number" id="invPriceUSD" value="0" min="0" step="any" placeholder="0.00">
+                <span style="padding: 0 0.5rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1;">USD</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="invPriceMMK">Selling Price (MMK)</label>
+              <div class="price-input-container">
+                <input type="number" id="invPriceMMK" value="0" min="0" step="any" placeholder="0">
+                <span style="padding: 0 0.5rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1;">MMK</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('inventoryModal')">Cancel</button>
+          <button type="submit" class="btn-primary" id="inventorySaveBtn">Save Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 8. TECHNICIAN WORK PROGRESS & PHOTO UPLOAD MODAL -->
+  <div class="modal-overlay" id="progressModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Update Job Progress & Upload Evidence</h3>
+        <button class="modal-close" onclick="closeModal('progressModal')">&times;</button>
+      </div>
+      <form id="progressForm" onsubmit="submitTechProgressLog(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="progressStatus">Update Status *</label>
+            <select id="progressStatus" required>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed (Ready for Invoice)</option>
+              <option value="Pending">Pending Parts / Diagnostics</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="progressLogText">Work Done / Summary Notes *</label>
+            <textarea id="progressLogText" required placeholder="Detail the repairs done, cable lines laid, or disks mounted..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="progressSpareParts">Consume Spare Parts / Stock (Optional)</label>
+            <select id="progressSpareParts" style="width: 100%; padding: 0.5rem; background-color: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+              <option value="">-- No Spare Parts Used --</option>
+              <!-- Populated dynamically via JS -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Verify On-Site Location & Photo Upload *</label>
+            
+            <div class="upload-container" onclick="triggerPhotoFileUploader()">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <p style="font-size: 0.85rem; font-weight: 500;">Click to capture photo & fetch GPS coordinates</p>
+              <p class="field-help">Simulates GPS fetching using HTML5 Geolocation API</p>
+            </div>
+            
+            <input type="file" id="photoFileInput" accept="image/*" style="display: none;" onchange="handlePhotoSelected(event)">
+            
+            <!-- GPS data capture container -->
+            <div id="capturedGpsInfoBox" style="display: none;">
+              <span class="gps-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                GPS Coordinates: <span id="capturedLat">0</span>, <span id="capturedLng">0</span>
+              </span>
+              <p class="field-help" style="color: var(--color-success);">✔ GPS verification locked.</p>
+              <input type="hidden" id="gpsLatHidden">
+              <input type="hidden" id="gpsLngHidden">
+              <input type="hidden" id="photoBase64Hidden">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('progressModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Submit Progress Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 9. ACCOUNTING SALES INVOICE RECORD MODAL -->
+  <div class="modal-overlay" id="invoiceModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Record Sales Invoice</h3>
+        <button class="modal-close" onclick="closeModal('invoiceModal')">&times;</button>
+      </div>
+      <form id="invoiceForm" onsubmit="saveSalesInvoice(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="invCustomer">Customer / Client Name *</label>
+            <input type="text" id="invCustomer" required placeholder="e.g. Aung Myo Oo">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="invItemType">Invoice Category *</label>
+              <select id="invItemType" required>
+                <option value="Product Sale">Product Sale</option>
+                <option value="Service Fee">Service Fee</option>
+                <option value="Contract Billing">Contract Billing</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="invParticulars">Particulars Description *</label>
+              <input type="text" id="invParticulars" required placeholder="e.g. Sold 4x Hikvision IP Cameras">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Invoice Amount *</label>
+              <div class="price-input-container">
+                <input type="number" id="invCostAmount" value="0" min="0" required>
+                <select id="invCostAmountCurrency">
+                  <option value="USD">USD</option>
+                  <option value="MMK">MMK</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="invPaymentStatus">Payment Status *</label>
+              <select id="invPaymentStatus" required>
+                <option value="Paid">Paid</option>
+                <option value="Unpaid">Unpaid / Pending</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('invoiceModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Record Invoice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 10. ACCOUNTING EXPENSE RECORD MODAL -->
+  <div class="modal-overlay" id="expenseModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Record Operating Expense</h3>
+        <button class="modal-close" onclick="closeModal('expenseModal')">&times;</button>
+      </div>
+      <form id="expenseForm" onsubmit="saveOperatingExpense(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="expDesc">Expense Description *</label>
+            <input type="text" id="expDesc" required placeholder="e.g. Office Rent, Marketing, etc.">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="expCategory">Expense Category *</label>
+              <select id="expCategory" required>
+                <option value="Rent">Rent</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Software/Tools">Software/Tools</option>
+                <option value="Misc">Miscellaneous</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Amount *</label>
+              <div class="price-input-container">
+                <input type="number" id="expCostAmount" value="0" min="0" required>
+                <select id="expCostAmountCurrency">
+                  <option value="MMK">MMK</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('expenseModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Record Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 11. HR EMPLOYEE REGISTRATION MODAL -->
+  <div class="modal-overlay" id="employeeModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Register New Employee</h3>
+        <button class="modal-close" onclick="closeModal('employeeModal')">&times;</button>
+      </div>
+      <form id="employeeForm" onsubmit="saveEmployee(event)">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="empName">Full Name *</label>
+              <input type="text" id="empName" required placeholder="e.g. Maung Maung">
+            </div>
+            <div class="form-group">
+              <label for="empRole">Staff Role *</label>
+              <select id="empRole" required>
+                <option value="Admin">Admin</option>
+                <option value="Senior Tech">Senior Tech</option>
+                <option value="Field Tech">Field Tech</option>
+                <option value="Dispatcher">Dispatcher</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Monthly Base Salary *</label>
+              <div class="price-input-container">
+                <input type="number" id="empSalary" value="400000" min="0" required>
+                <select id="empSalaryCurrency">
+                  <option value="MMK">MMK</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="empCommission">Job Commission Rate (%) *</label>
+              <input type="number" id="empCommission" value="5" min="0" max="100" required>
+              <span class="field-help">% earned of ticket service fee</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeModal('employeeModal')">Cancel</button>
+          <button type="submit" class="btn-primary">Register Staff</button>
+        </div>
+      </form>
+    </div>
+  </div>

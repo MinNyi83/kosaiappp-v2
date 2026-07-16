@@ -1,0 +1,148 @@
+{
+  "name": "Inventory Low Stock Alert",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Cron - Daily 8 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hour", "expression": [8] },
+            { "field": "minute", "expression": [0] }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-request-get-inventory",
+      "name": "GET /api/inventory?low_stock=true",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/inventory",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "low_stock", "value": "true" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-format-alert",
+      "name": "Format Alert Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst inventory = items[0].json;\n\n// Handle both array and object responses\nconst stockItems = Array.isArray(inventory) ? inventory : (inventory.items || inventory.data || []);\n\nif (!stockItems.length) {\n  return { json: { alert: false, message: 'All inventory levels are healthy.' } };\n}\n\n// Group by severity\nconst critical = stockItems.filter(i => i.quantity <= (i.min_stock || 0) * 0.3);\nconst warning = stockItems.filter(i => i.quantity <= (i.min_stock || 0) && !critical.includes(i));\n\nlet message = '📦 *Daily Inventory Report*\\n\\n';\n\nif (critical.length) {\n  message += '🔴 *CRITICAL - Immediate Action Required*\\n';\n  critical.forEach(i => {\n    message += `• ${i.name}: ${i.quantity} left (min: ${i.min_stock})\\n`;\n  });\n  message += '\\n';\n}\n\nif (warning.length) {\n  message += '🟡 *Low Stock - Reorder Soon*\\n';\n  warning.forEach(i => {\n    message += `• ${i.name}: ${i.quantity} left (min: ${i.min_stock})\\n`;\n  });\n  message += '\\n';\n}\n\nmessage += `Total items below threshold: ${stockItems.length}`;\n\nreturn {\n  alert: true,\n  criticalCount: critical.length,\n  warningCount: warning.length,\n  totalLowStock: stockItems.length,\n  message: message,\n  criticalItems: critical,\n  warningItems: warning\n};"
+      }
+    },
+    {
+      "id": "switch-check-alert",
+      "name": "Check if Alert Needed",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "parameters": {
+        "dataType": "boolean",
+        "value1": "={{ $json.alert }}",
+        "options": {
+          "boolean": [
+            { "value": "true", "output": "Send Alert" },
+            { "value": "false", "output": "Skip" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-notify",
+      "name": "Telegram - Inventory Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 200],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_INVENTORY_CHAT_ID }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "http-request-create-purchase-order",
+      "name": "POST /api/purchase-orders (auto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 350],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/purchase-orders",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "items", "value": "={{ JSON.stringify($json.criticalItems.map(i => ({ item_id: i.id, quantity: i.min_stock * 2 - i.quantity, reason: 'auto-reorder-critical' }))) }}" },
+            { "name": "priority", "value": "high" },
+            { "name": "source", "value": "n8n-auto-reorder" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "noop-skip",
+      "name": "Skip (No Alert)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1050, 500],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Cron - Daily 8 AM": {
+      "main": [[ { "node": "GET /api/inventory?low_stock=true", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/inventory?low_stock=true": {
+      "main": [[ { "node": "Format Alert Message", "type": "main", "index": 0 } ]]
+    },
+    "Format Alert Message": {
+      "main": [[ { "node": "Check if Alert Needed", "type": "main", "index": 0 } ]]
+    },
+    "Check if Alert Needed": {
+      "main": [
+        [{ "node": "Telegram - Inventory Alert", "type": "main", "index": 0 }],
+        [{ "node": "Skip (No Alert)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Telegram - Inventory Alert": {
+      "main": [[ { "node": "POST /api/purchase-orders (auto)", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "inventory", "alerts"],
+  "active": false
+}

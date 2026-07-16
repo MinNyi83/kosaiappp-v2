@@ -1,0 +1,35 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>Technician & Staff Directory</h1>
+              <p>Review engineering specializations, track current availability status, and manage active service tickets.</p>
+            </div>
+            <div>
+              <button class="btn-primary" onclick="openModal('techModal')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Technician
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-toolbar">
+              <h3 style="font-size: 1rem; font-weight: 600;">Active Engineering Staff</h3>
+            </div>
+            <div class="table-wrapper">
+              <table class="filament-table">
+                <thead>
+                  <tr>
+                    <th>Tech Name</th>
+                    <th>Phone</th>
+                    <th>Specialization Tags</th>
+                    <th>Availability Status</th>
+                    <th>Active Tasks</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="techniciansTableBody">
+                  <!-- JS Injected -->
+                </tbody>
+              </table>
+            </div>
+          </div>

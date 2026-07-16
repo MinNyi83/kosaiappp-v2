@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AwesomeMyanmar - HQ Dispatch Console</title>
+    <link rel="shortcut icon" type="image/png" href="./logo.png" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: '#f59e0b',
+                            dark: '#09090b',
+                            panel: '#121218'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- jsPDF Module -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Leaflet.js (Map Component) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js (Analytics Component) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Identity Services (Sign-In) SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- FullCalendar.js (Scheduler Component) -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <!-- QRCode.js (ID Card Verification QR Generator) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            background: radial-gradient(circle at top right, #111115, #070709);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: linear-gradient(135deg, rgba(20, 20, 28, 0.7) 0%, rgba(12, 12, 18, 0.8) 100%);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .glass-panel:hover {
+            border-color: rgba(245, 158, 11, 0.15);
+            box-shadow: 0 12px 40px 0 rgba(245, 158, 11, 0.03);
+        }
+        
+        /* Modernized Inputs & Form Elements */
+        input[type="text"], input[type="password"], input[type="number"], select, textarea {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: rgba(245, 158, 11, 0.5) !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15) !important;
+            outline: none !important;
+            background: rgba(0, 0, 0, 0.4) !important;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.6); }
+
+        /* ID Card 3D flip */
+        #id-card-flipper.flipped { transform: rotateY(180deg); }
+
+
+        /* Leaflet Dark Theme Overrides */
+        .leaflet-container { background: #0c0c10 !important; border-radius: 12px; }
+        .leaflet-tile { transition: filter 0.3s ease; }
+        .dark-map-theme .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background-color: #121218 !important;
+            color: #cbd5e1 !important;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+        }
+        /* ── Mobile Sidebar ── */
+        #sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: 260px;
+            z-index: 40;
+            transform: translateX(-100%);
+            transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+            overflow-y: auto;
+        }
+        #sidebar.open { transform: translateX(0); }
+        #sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(2px);
+            z-index: 39;
+        }
+        #sidebar-overlay.open { display: block; }
+        @media (min-width: 1024px) {
+            #sidebar {
+                position: relative;
+                transform: translateX(0) !important;
+                width: 256px;
+                flex-shrink: 0;
+                transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            #sidebar.collapsed {
+                width: 78px;
+            }
+            #sidebar.collapsed .brand-text,
+            #sidebar.collapsed .brand-version,
+            #sidebar.collapsed .nav-section-title,
+            #sidebar.collapsed .tab-label {
+                display: none;
+            }
+            #sidebar.collapsed .tab-link {
+                justify-content: center;
+                padding-left: 0;
+                padding-right: 0;
+            }
+            #sidebar-overlay { display: none !important; }
+            #hamburger-btn { display: none !important; }
+        }
+        /* Dynamic Menu Glows & Active State Indicator */
+        .tab-link svg {
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+        .tab-link:hover svg {
+            transform: scale(1.15);
+        }
+        .tab-link:hover .text-emerald-400 { filter: drop-shadow(0 0 5px rgba(52, 211, 153, 0.6)); }
+        .tab-link:hover .text-sky-400 { filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.6)); }
+        .tab-link:hover .text-violet-400 { filter: drop-shadow(0 0 5px rgba(167, 139, 250, 0.6)); }
+        .tab-link:hover .text-amber-500 { filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.6)); }
+        .tab-link:hover .text-blue-400 { filter: drop-shadow(0 0 5px rgba(96, 165, 250, 0.6)); }
+        .tab-link:hover .text-yellow-400 { filter: drop-shadow(0 0 5px rgba(250, 204, 21, 0.6)); }
+        .tab-link:hover .text-indigo-400 { filter: drop-shadow(0 0 5px rgba(129, 140, 248, 0.6)); }
+        .tab-link:hover .text-rose-400 { filter: drop-shadow(0 0 5px rgba(251, 113, 133, 0.6)); }
+        .tab-link:hover .text-fuchsia-400 { filter: drop-shadow(0 0 5px rgba(232, 121, 249, 0.6)); }
+        .tab-link:hover .text-orange-400 { filter: drop-shadow(0 0 5px rgba(251, 146, 60, 0.6)); }
+        
+        /* Pill-shaped active state indicator */
+        .tab-link.bg-amber-500\/10 {
+            background-color: rgba(245, 158, 11, 0.1) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(245, 158, 11, 0.2) !important;
+            border-radius: 9999px !important;
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+        }
+        /* Smooth tab transitions */
+        .tab-view { animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        /* Accordion row expand arrows */
+        .row-expand-arrow {
+            display: inline-block;
+            transition: transform 0.2s ease;
+            margin-right: 8px;
+            color: #64748b;
+            cursor: pointer;
+        }
+        tr.expanded .row-expand-arrow {
+            transform: rotate(90deg);
+            color: #f59e0b;
+        }
+
+        /* Premium Modern SaaS Data Grid & Tables */
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        thead th {
+            color: #94a3b8 !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.1em !important;
+            padding: 14px 16px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+        tbody tr {
+            background-color: rgba(9, 9, 11, 0.3) !important;
+            transition: background-color 0.15s ease !important;
+        }
+        tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.02) !important;
+        }
+        tbody td {
+            padding: 12px 16px !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+            color: #cbd5e1;
+            font-size: 12px !important;
+        }
+        tbody td strong, tbody td .font-bold {
+            color: #ffffff !important;
+        }
+        .metric-badge {
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex overflow-x-hidden">
+
+    <!-- Google Auth Lock Screen Gateway -->
+    <div id="auth-screen" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-panel p-8 rounded-3xl shadow-2xl max-w-sm w-full space-y-6 text-center border border-white/10">
+            <div class="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center bg-zinc-900 border border-white/10 shadow-lg mb-1">
+                <img src="./logo.png" alt="Logo" class="w-10 h-10 object-contain">
+            </div>
+            <h1 class="text-2xl font-extrabold tracking-wider text-white uppercase">AWESOME Myanmar</h1>
+            <p class="text-xs text-amber-500 uppercase font-bold tracking-widest">Secure Sign-In</p>
+            
+            <!-- Login Tabs -->
+            <div class="flex border-b border-white/10 text-xs gap-2 pb-1">
+                <button type="button" id="tab-google" onclick="setLoginTab('google')" class="w-1/2 py-2 text-white font-bold border-b-2 border-amber-500 transition-all">Google Sign-In</button>
+                <button type="button" id="tab-password" onclick="setLoginTab('password')" class="w-1/2 py-2 text-slate-400 hover:text-white transition-all">Credentials</button>
+            </div>
+
+            <!-- Google Login Container -->
+            <div id="login-google-container" class="space-y-4 py-2">
+                <div id="g-signin-btn" class="flex justify-center pt-2"></div>
+                <p class="text-[10px] text-slate-500 leading-relaxed">Sign in using an authorized Google Workspace profile account to boot dispatch HQ console nodes.</p>
+            </div>
+
+            <!-- Password Login Container -->
+            <form id="login-password-container" onsubmit="handlePasswordLogin(event)" class="hidden space-y-4 text-left py-2">
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Username</label>
+                    <input type="text" id="login-username" required placeholder="Enter username" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Password</label>
+                    <input type="password" id="login-password" required placeholder="Enter password" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hidden Configuration Fields to bind existing scripts -->
+    <input type="hidden" id="api-base" value="">
+    <input type="hidden" id="admin-secret" value="">
+
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- Left Sidebar Navigation Layout -->
+    <aside id="sidebar" class="bg-[#0c0c10] border-r border-white/5 flex flex-col">
+        <!-- Logo and Brand -->
+        <div class="p-5 border-b border-white/5 flex items-center justify-between gap-2 shrink-0">
+            <div class="flex items-center gap-2 overflow-hidden">
+                <div class="w-6 h-6 rounded flex items-center justify-center bg-zinc-900 border border-white/10 shrink-0">
+                    <img src="./logo.png" alt="Logo" class="w-4 h-4 object-contain">
+                </div>
+                <span class="font-extrabold text-white tracking-wider text-sm uppercase brand-text whitespace-nowrap">AwesomeMyanmar</span>
+                <span class="text-[9px] bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded font-bold brand-version shrink-0">v1.1</span>
+            </div>
+            <!-- Close button (mobile only) -->
+            <button onclick="closeSidebar()" class="text-slate-400 hover:text-white text-xl leading-none lg:hidden">✕</button>
+            <!-- Collapse button (desktop only) -->
+            <button onclick="toggleSidebarCollapse()" class="text-slate-400 hover:text-white transition hidden lg:block" title="Toggle Sidebar">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Navigation Menu Links -->
+        <nav class="flex-1 p-4 space-y-6 overflow-y-auto">
+            <!-- ACCOUNTING & HR Section -->
+            <div class="space-y-1.5">
+                <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2 nav-section-title">Accounting & HR</p>
+                
+                <a href="#" onclick="switchTab('currency'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Cash Safe Ledger">
+                    <svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="tab-label">Cash Safe Ledger</span>
+                </a>
+
+                <a href="#" onclick="switchTab('service-fees'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Service Fee Catalog">
+                    <span class="w-4 h-4 text-center shrink-0">💵</span>
+                    <span class="tab-label">Service Fee Catalog</span>
+                </a>
+                
+                <a href="#" onclick="switchTab('reports'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Reports">
+                    <svg class="w-4 h-4 shrink-0 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="tab-label">Reports</span>
+                </a>
+                
+                <a href="#" onclick="switchTab('distributors'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Distributors">
+                    <svg class="w-4 h-4 shrink-0 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <span class="tab-label">Distributors</span>
+                </a>
+                
+                <a href="#" onclick="switchTab('landing-page'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Landing Page Editor">
+                    <svg class="w-4 h-4 shrink-0 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                    </svg>
+                    <span class="tab-label">Landing Page</span>
+                </a>
+
+                <a href="#" onclick="switchTab('portfolio'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Portfolio Editor">
+                    <svg class="w-4 h-4 shrink-0 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="tab-label">Portfolio</span>
+                </a>
+
+                <a href="#" onclick="switchTab('system-settings'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="System Settings">
+                    <svg class="w-4 h-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="tab-label">System Settings</span>
+                </a>
+            </div>
+
+            <!-- MAINTENANCE OPS Section -->
+            <div class="space-y-1.5">
+                <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2 nav-section-title">Maintenance Ops</p>
+                
+                <a href="#" id="default-tab-link" onclick="switchTab('dashboard'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-500 transition-all" title="Operations Dashboard">
+                    <svg class="w-4 h-4 shrink-0 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                    <span class="tab-label">Operations Dashboard</span>
+                </a>
+
+                <a href="#" onclick="switchTab('dispatch-map'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Live Dispatch Map">
+                    <svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="tab-label">Live Dispatch Map</span>
+                </a>
+
+                <a href="#" onclick="switchTab('ai-copilot'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="AI Copilot Center">
+                    <svg class="w-4 h-4 shrink-0 text-fuchsia-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l3.582-1.344L16 21l-.813-5.096C17.45 14.845 19 12.605 19 10c0-4.418-3.582-8-8-8s-8 3.582-8 8c0 2.605 1.55 14.845 3.813 5.904z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14a2 2 0 100-4 2 2 0 000 4z"/>
+                    </svg>
+                    <span class="tab-label">AI Copilot</span>
+                </a>
+                
+                <a href="#" onclick="switchTab('tickets'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Service Tickets">
+                    <svg class="w-4 h-4 shrink-0 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+                    </svg>
+                    <span class="tab-label">Service Tickets</span>
+                </a>
+
+                <a href="#" onclick="switchTab('jobs'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Jobs Dashboard">
+                    <svg class="w-4 h-4 shrink-0 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    <span class="tab-label">Jobs Dashboard</span>
+                </a>
+                
+                <a href="#" onclick="switchTab('amc'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Customer Management">
+                    <svg class="w-4 h-4 shrink-0 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    <span class="tab-label">Customer Management</span>
+                </a>
+                
+                <a href="#" onclick="switchTab('warranty'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Warranty & RMA">
+                    <svg class="w-4 h-4 shrink-0 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <span class="tab-label">Warranty & RMA</span>
+                </a>
+                
+                <a href="#" onclick="switchTab('user-management'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="User Management">
+                    <svg class="w-4 h-4 shrink-0 text-fuchsia-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="tab-label">User Management</span>
+                </a>
+                
+                <a href="#" onclick="switchTab('inventory'); closeSidebar();" class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all" title="Inventory Items">
+                    <svg class="w-4 h-4 shrink-0 text-orange-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    <span class="tab-label">Inventory Items</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <div class="flex-1 flex flex-col min-w-0 bg-[#09090b]">
+        <!-- Main Top Bar Header Control Desk -->
+        <header class="h-14 border-b border-white/5 px-4 md:px-8 flex items-center justify-between shrink-0 bg-[#0c0c10] gap-3">
+            <!-- Hamburger + Path -->
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Menu (mobile only) -->
+                <button id="hamburger-btn" onclick="openSidebar()" class="text-slate-300 hover:text-amber-400 transition p-1 rounded-lg" aria-label="Open menu">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                    <span class="hidden sm:inline">AwesomeMyanmar /</span>
+                    <span class="text-white" id="current-path-display">Dashboard</span>
+                </div>
+            </div>
+
+            <!-- Controls (Tech Portal, Signout) -->
+            <div class="flex items-center gap-2 md:gap-4">
+                <a href="./app.html" target="_blank" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider px-2.5 md:px-3.5 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                    🚀 <span class="hidden sm:inline">Technician Portal</span><span class="sm:hidden">Portal</span>
+                </a>
+                <button onclick="handleLogout()" class="text-rose-400 hover:text-rose-300 text-[10px] font-bold uppercase tracking-widest">
+                    <span class="hidden sm:inline">Sign Out</span><span class="sm:hidden">⏻</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area Scroll Container -->
+        <main id="app-workspace" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8">
+            <div class="flex justify-center items-center h-64">
+                <div class="animate-pulse text-amber-500 font-bold uppercase text-xs tracking-widest">Initialising dispatch HQ desks...</div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Core App Logic & Scripts (Separated to admin.js) -->
+    <script src="./admin.js?v=2.6"></script>
+</body>
+</html>

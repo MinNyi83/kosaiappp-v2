@@ -1,0 +1,194 @@
+{
+  "name": "New Job Auto-Assignment",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook - Job Created",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "kosai/job-created",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "webhookId": "kosai-job-created"
+    },
+    {
+      "id": "http-request-get-job",
+      "name": "GET /api/jobs/{id}",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/jobs/{{ $json.body.jobId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-find-available-workers",
+      "name": "Find Available Workers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "jsCode": "// Get job details\nconst job = $input.first().json;\n\n// Determine required skills from job category\nconst skillMap = {\n  'cleaning': ['cleaning', 'general'],\n  'plumbing': ['plumbing', 'general'],\n  'electrical': ['electrical', 'general'],\n  'painting': ['painting', 'general'],\n  'moving': ['moving', 'heavy_lifting', 'general'],\n  'gardening': ['gardening', 'general'],\n  'repair': ['repair', 'general'],\n  'disinfection': ['disinfection', 'cleaning', 'general']\n};\n\nconst requiredSkills = skillMap[job.category?.toLowerCase()] || ['general'];\n\nreturn {\n  jobId: job.id,\n  category: job.category,\n  requiredSkills: requiredSkills,\n  scheduledDate: job.scheduled_date,\n  priority: job.priority || 'normal',\n  location: job.location\n};"
+      }
+    },
+    {
+      "id": "http-request-get-workers",
+      "name": "GET /api/workers (available)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/workers?status=active&limit=20",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-score-and-rank",
+      "name": "Score & Rank Workers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "parameters": {
+        "jsCode": "const workers = $input.first().json.workers || $input.first().json;\nconst jobInfo = $input.all()[0].json;\n\n// Score each worker\nconst scored = workers.map(w => {\n  let score = 0;\n  \n  // Skill match (highest weight)\n  const workerSkills = (w.skills || '').toLowerCase().split(',').map(s => s.trim());\n  const matchedSkills = jobInfo.requiredSkills.filter(s => workerSkills.includes(s));\n  score += (matchedSkills.length / jobInfo.requiredSkills.length) * 50;\n  \n  // Availability (if worker has no active jobs on that date)\n  if (w.current_jobs < (w.max_jobs || 5)) {\n    score += 20;\n  }\n  \n  // Rating\n  score += (w.rating || 3) / 5 * 15;\n  \n  // Experience (years)\n  score += Math.min((w.experience_years || 0) / 10, 1) * 15;\n  \n  return { ...w, score: Math.round(score) };\n});\n\n// Sort by score descending\nscored.sort((a, b) => b.score - a.score);\n\nreturn {\n  jobId: jobInfo.jobId,\n  recommendedWorker: scored[0],\n  allRanked: scored.slice(0, 5)\n};"
+      }
+    },
+    {
+      "id": "http-request-assign-worker",
+      "name": "POST /api/jobs/{id}/assign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/jobs/{{ $json.jobId }}/assign",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "worker_id", "value": "={{ $json.recommendedWorker.id }}" },
+            { "name": "assigned_by", "value": "auto-assign-n8n" },
+            { "name": "notes", "value": "Auto-assigned by n8n workflow based on skill score" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-notify-worker",
+      "name": "Telegram - Notify Worker",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1450, 250],
+      "parameters": {
+        "chatId": "={{ $json.recommendedWorker.telegram_chat_id || $env.TELEGRAM_DEFAULT_CHAT_ID }}",
+        "text": "🔔 *New Job Assigned!*\n\nJob ID: {{ $json.jobId }}\nCategory: {{ $json.recommendedWorker.category }}\nDate: {{ $json.recommendedWorker.scheduledDate }}\n\nPlease check the Kosai portal for details.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "telegram-notify-admin",
+      "name": "Telegram - Notify Admin",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1450, 400],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "✅ *Auto-Assignment Complete*\n\nJob #{{ $json.jobId }} → {{ $json.recommendedWorker.name }}\nScore: {{ $json.recommendedWorker.score }}/100\n\nTop 5 candidates ranked.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "http-request-log-activity",
+      "name": "POST /api/activity (log)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1650, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/activity",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "type", "value": "job_assigned" },
+            { "name": "description", "value": "Auto-assigned job #{{ $json.jobId }} to worker #{{ $json.recommendedWorker.id }} ({{ $json.recommendedWorker.name }})" },
+            { "name": "reference_type", "value": "job" },
+            { "name": "reference_id", "value": "={{ $json.jobId }}" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Job Created": {
+      "main": [[ { "node": "GET /api/jobs/{id}", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/jobs/{id}": {
+      "main": [[ { "node": "Find Available Workers", "type": "main", "index": 0 } ]]
+    },
+    "Find Available Workers": {
+      "main": [[ { "node": "GET /api/workers (available)", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/workers (available)": {
+      "main": [[ { "node": "Score & Rank Workers", "type": "main", "index": 0 } ]]
+    },
+    "Score & Rank Workers": {
+      "main": [[ { "node": "POST /api/jobs/{id}/assign", "type": "main", "index": 0 } ]]
+    },
+    "POST /api/jobs/{id}/assign": {
+      "main": [[ { "node": "Telegram - Notify Worker", "type": "main", "index": 0 }, { "node": "Telegram - Notify Admin", "type": "main", "index": 1 } ]]
+    },
+    "Telegram - Notify Worker": {
+      "main": [[ { "node": "POST /api/activity (log)", "type": "main", "index": 0 } ]]
+    },
+    "Telegram - Notify Admin": {
+      "main": [[ { "node": "POST /api/activity (log)", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "jobs", "auto-assignment"],
+  "active": false
+}

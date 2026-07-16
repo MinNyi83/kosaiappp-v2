@@ -1,0 +1,170 @@
+<div id="view-tickets" class="space-y-8 tab-view">
+    <div>
+        <h1 class="text-2xl font-black text-white uppercase tracking-tight">Service Tickets</h1>
+        <p class="text-xs text-slate-400 mt-1">Dispatch new jobs, track active dispatches, and print compliant PDFs.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+        <!-- Left: Dispatch Form -->
+        <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span class="text-amber-500">🎫</span> Dispatch Service Ticket
+            </h2>
+            <form id="job-form" class="space-y-4" onsubmit="submitJob(event)">
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">New Ticket ID</label>
+                    <input type="text" name="id" placeholder="e.g., JOB-203" required class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Service Domain</label>
+                    <select name="service_type" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all">
+                        <option value="CCTV">CCTV Surveillance Array</option>
+                        <option value="Networking">Core Infrastructure Networking</option>
+                        <option value="WiFi">WiFi Mesh Deployment</option>
+                        <option value="NAS">NAS Storage Cluster</option>
+                        <option value="General Maintenance">General Maintenance</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Service Type Category</label>
+                    <select name="customer_type" onchange="toggleCustomerTypeFields(this.value)" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all">
+                        <option value="Annual">Annual Member (AMC Contract)</option>
+                        <option value="Individual">Individual Service (One-off Client)</option>
+                    </select>
+                </div>
+                <div id="corporate-client-field" class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Target Client Corporate Account</label>
+                    <input type="text" id="lookup-client-search" placeholder="Type to search corporate account..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" list="corporate-clients-datalist" autocomplete="off">
+                    <input type="hidden" id="lookup-client" name="client_id">
+                    <datalist id="corporate-clients-datalist"></datalist>
+                </div>
+                <div id="individual-customer-fields" class="space-y-3 hidden border-l-2 border-amber-500/50 pl-3">
+                    <div class="space-y-1">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Customer / Contact Name</label>
+                        <input type="text" id="lookup-individual-search" name="customer_name" placeholder="Type to search or enter new name..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all" list="individual-clients-datalist" autocomplete="off">
+                        <datalist id="individual-clients-datalist"></datalist>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Contact Phone</label>
+                        <input type="text" name="customer_phone" placeholder="Mobile number" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Service Site Address</label>
+                        <input type="text" name="customer_address" placeholder="Physical location of service" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Service Location Google Maps Share Link</label>
+                    <input type="text" id="job-maps-url" name="maps_url" placeholder="https://maps.app.goo.gl/..." oninput="resolveJobMapsUrlToCoords(this.value)" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
+                    <span id="job-resolve-status" class="block text-[8px] text-slate-500 mt-1">Coordinates: Not resolved yet</span>
+                </div>
+                <input type="hidden" name="arrival_lat" id="job-lat" value="">
+                <input type="hidden" name="arrival_lng" id="job-lng" value="">
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Assigned Operational Engineer</label>
+                    <select id="lookup-tech" name="technician_id" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Statement of Scope</label>
+                    <textarea name="job_description" placeholder="Technical instructions & specific service scope metrics..." required rows="3" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all resize-none"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/10">
+                    Commit Ticket
+                </button>
+            </form>
+        </div>
+
+        <!-- Right: Jobs Table & PDF Generator -->
+        <div class="glass-panel p-6 rounded-2xl space-y-6 md:col-span-2">
+            <!-- PDF Generation Panel -->
+            <div class="space-y-2 border-b border-white/5 pb-4">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider">📄 Generate Compliant PDF Service Receipts</h2>
+                <div class="flex gap-2">
+                    <input type="text" id="pdf-target-job-id" placeholder="Target Ticket ID (e.g., JOB-201)" class="bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-amber-500 flex-1">
+                    <button onclick="generateServiceReceiptPDF()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl whitespace-nowrap transition-all uppercase tracking-wider">
+                        Compile & Print
+                    </button>
+                </div>
+            </div>
+
+            <!-- Full Jobs Table -->
+            <div class="space-y-3">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider">Ticket Logs</h2>
+                <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4 max-h-[300px] overflow-y-auto">
+                    <table class="w-full text-xs text-left">
+                        <thead>
+                            <tr class="text-slate-500 border-b border-white/5 pb-2">
+                                <th class="pb-2">ID</th>
+                                <th class="pb-2">Client</th>
+                                <th class="pb-2">Tech</th>
+                                <th class="pb-2">Service</th>
+                                <th class="pb-2">Status</th>
+                                <th class="pb-2 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="full-jobs-body">
+                            <!-- Loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Ticket Modal -->
+    <div id="edit-ticket-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">Edit Service Ticket</h2>
+            <form id="edit-ticket-form" onsubmit="submitEditTicket(event)" class="space-y-3">
+                <input type="hidden" id="edit-ticket-id">
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Ticket ID</label>
+                    <input type="text" id="edit-ticket-id-display" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Client</label>
+                    <select id="edit-ticket-client" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Technician</label>
+                    <select id="edit-ticket-tech" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"></select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Service Type</label>
+                    <select id="edit-ticket-service-type" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                        <option value="CCTV">CCTV Surveillance Array</option>
+                        <option value="Networking">Core Infrastructure Networking</option>
+                        <option value="WiFi">WiFi Mesh Deployment</option>
+                        <option value="NAS">NAS Storage Cluster</option>
+                        <option value="General Maintenance">General Maintenance</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Status</label>
+                    <select id="edit-ticket-status" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-semibold">
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Service Location Google Maps Share Link (optional)</label>
+                    <input type="text" id="edit-ticket-maps-url" placeholder="https://maps.app.goo.gl/..." oninput="resolveEditJobMapsUrlToCoords(this.value)" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                    <span id="edit-job-resolve-status" class="block text-[8px] text-slate-500 mt-1">Coordinates: Not resolved yet</span>
+                </div>
+                <input type="hidden" id="edit-job-lat">
+                <input type="hidden" id="edit-job-lng">
+
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Statement of Scope</label>
+                    <textarea id="edit-ticket-desc" required rows="3" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white resize-none"></textarea>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeEditTicketModal()" class="flex-1 bg-white/5 hover:bg-white/10 py-2 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Cancel</button>
+                    <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,425 @@
+    <!-- Sticky Header -->
+    <header class="landing-header">
+      <div class="landing-nav-container">
+        <div class="brand-group">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="brand-icon"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          <span class="brand-name">AwesomeMyanmar</span>
+        </div>
+        <nav class="nav-links-desktop">
+          <a href="#services-sec" class="nav-link">Services</a>
+          <a href="#beforeafter-sec" class="nav-link">Gallery</a>
+          <a href="#calculator-sec" class="nav-link">Quote Calculator</a>
+          <a href="#booking-sec" class="nav-link">Book Appointment</a>
+        </nav>
+        <div class="header-ctas">
+          <a href="tel:+95912345678" class="contact-phone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>+95 9 12345678</span>
+          </a>
+          <button class="btn-secondary" onclick="showPortalLogin()">Portal Login</button>
+          <a href="#booking-sec" class="btn-primary">Request Support</a>
+        </div>
+        
+        <!-- Mobile Hamburger Button -->
+        <button class="landing-hamburger" id="landingMenuBtn" aria-label="Toggle Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Mobile Navigation Drawer / Menu -->
+      <div class="landing-nav-mobile" id="landingNavMobile">
+        <nav class="nav-links-mobile">
+          <a href="#services-sec" class="nav-link" onclick="toggleLandingMobileMenu()">Services</a>
+          <a href="#beforeafter-sec" class="nav-link" onclick="toggleLandingMobileMenu()">Gallery</a>
+          <a href="#calculator-sec" class="nav-link" onclick="toggleLandingMobileMenu()">Quote Calculator</a>
+          <a href="#booking-sec" class="nav-link" onclick="toggleLandingMobileMenu()">Book Appointment</a>
+        </nav>
+        <div class="mobile-ctas">
+          <a href="tel:+95912345678" class="contact-phone">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>+95 9 12345678</span>
+          </a>
+          <button class="btn-secondary" onclick="showPortalLogin(); toggleLandingMobileMenu()">Portal Login</button>
+          <a href="#booking-sec" class="btn-primary" onclick="toggleLandingMobileMenu()">Request Support</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-grid">
+        <div class="hero-text-col">
+          <span class="hero-tagline">Elite Security & Network Integrators</span>
+          <h1>Secure Your Business. <br><span class="gradient-text">Connect Your Team.</span></h1>
+          <p>We install enterprise-grade CCTV security systems, build ultra-fast local networks, and deploy secure backup storage for businesses and premium residences across Myanmar.</p>
+          <div class="hero-buttons">
+            <a href="#booking-sec" class="btn-primary hero-btn">Book a Repair</a>
+            <a href="#calculator-sec" class="btn-secondary hero-btn">Get a Free CCTV Quote</a>
+          </div>
+        </div>
+        <div class="hero-img-col">
+          <div class="hero-image-wrapper">
+            <img src="hero_image.png" alt="CCTV Setup" class="hero-main-img">
+            <div class="floating-badge-glass">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <div>
+                <h4>99.9% Uptime</h4>
+                <p>Enterprise Networks</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Back to Home Button -->
+        <div style="text-align: center; margin-top: 3rem;">
+          <button class="btn-secondary" onclick="scrollToTop()">Back to Home</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust Triggers -->
+    <section class="trust-triggers-sec">
+      <div class="container-center">
+        <p class="trust-label">OFFICIAL SERVICE PARTNER FOR LEADING BRANDS</p>
+        <div class="brand-logos-grid">
+          <div class="brand-logo-item">
+            <span>HIKVISION</span>
+          </div>
+          <div class="brand-logo-item">
+            <span>CISCO</span>
+          </div>
+          <div class="brand-logo-item">
+            <span>UBIQUITI</span>
+          </div>
+          <div class="brand-logo-item">
+            <span>DAHUA</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section class="services-sec" id="services-sec">
+      <div class="container-center">
+        <span class="section-badge">Transparent Service Menus</span>
+        <h2>Professional Service Packages</h2>
+        <p class="section-desc">Fixed rates, upfront estimations, and zero hidden charges for diagnostic and installation procedures.</p>
+        
+        <div class="pricing-grid">
+          <!-- Card 1 -->
+          <div class="pricing-card">
+            <div class="card-glow"></div>
+            <div class="pricing-card-header">
+              <h3>Home CCTV Audit</h3>
+              <p class="package-for">For residences & small shops</p>
+              <div class="package-price">
+                <span class="price-val">45,000</span>
+                <span class="price-cur">MMK</span>
+              </div>
+            </div>
+            <ul class="package-features">
+              <li>Full check of up to 8 security cameras</li>
+              <li>DVR/NVR configuration and storage audit</li>
+              <li>Mobile viewing synchronization</li>
+              <li>Cable integrity diagnostics</li>
+            </ul>
+            <div class="pricing-card-footer">
+              <a href="#booking-sec" onclick="selectServicePackage('CCTV Audit', 45000)" class="btn-primary card-btn">Book Inspection</a>
+            </div>
+          </div>
+
+          <!-- Card 2 (Popular) -->
+          <div class="pricing-card popular">
+            <div class="card-glow"></div>
+            <span class="popular-tag">MOST POPULAR</span>
+            <div class="pricing-card-header">
+              <h3>Office Network Audit</h3>
+              <p class="package-for">For small & medium enterprises</p>
+              <div class="package-price">
+                <span class="price-val">95,000</span>
+                <span class="price-cur">MMK</span>
+              </div>
+            </div>
+            <ul class="package-features">
+              <li>Wi-Fi network signal optimizations</li>
+              <li>Spaghetti cabling analysis & patch tracking</li>
+              <li>Router and firewall security diagnostics</li>
+              <li>Bandwidth bottlenecks analysis</li>
+            </ul>
+            <div class="pricing-card-footer">
+              <a href="#booking-sec" onclick="selectServicePackage('Network Setup', 95000)" class="btn-primary card-btn">Book Troubleshooting</a>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="pricing-card">
+            <div class="card-glow"></div>
+            <div class="pricing-card-header">
+              <h3>Enterprise NAS Setup</h3>
+              <p class="package-for">High Availability local storage</p>
+              <div class="package-price">
+                <span class="price-val">150,000</span>
+                <span class="price-cur">MMK</span>
+              </div>
+            </div>
+            <ul class="package-features">
+              <li>RAID architecture config & disks audit</li>
+              <li>Automatic data backup pipelines mapping</li>
+              <li>Granular user access permissions setup</li>
+              <li>Local network file access configuration</li>
+            </ul>
+            <div class="pricing-card-footer">
+              <a href="#booking-sec" onclick="selectServicePackage('NAS Storage', 150000)" class="btn-primary card-btn">Book Deployment</a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Back to Home Button -->
+        <div style="text-align: center; margin-top: 3rem;">
+          <button class="btn-secondary" onclick="scrollToTop()">Back to Home</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Before & After Comparison Slider -->
+    <section class="beforeafter-sec" id="beforeafter-sec">
+      <div class="container-center">
+        <span class="section-badge">Visual Proof of Quality</span>
+        <h2>Before & After Cabling Audit</h2>
+        <p class="section-desc">Messy network cables decrease speed, trap heat, and cause connectivity dropouts. We clean it up.</p>
+        
+        <div class="ba-slider-container">
+          <div class="ba-slider-wrapper" id="baSliderWrapper">
+            <!-- After Image -->
+            <div class="ba-image-after">
+              <img src="cable_after.png" alt="Clean Cables">
+              <span class="ba-label right">AFTER AWESOMEMYANMAR</span>
+            </div>
+            <!-- Before Image (Resizable container) -->
+            <div class="ba-image-before" id="baBeforeContainer">
+              <img src="cable_before.png" alt="Messy Cables">
+              <span class="ba-label left">BEFORE REPAIR</span>
+            </div>
+            <!-- Slider Handle -->
+            <div class="ba-slider-handle" id="baSliderHandle">
+              <div class="ba-handle-line"></div>
+              <div class="ba-handle-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </div>
+              <div class="ba-handle-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quote Calculator Section -->
+    <section class="calculator-sec" id="calculator-sec">
+      <div class="container-center">
+        <div class="calculator-layout-card">
+          <div class="calculator-controls">
+            <span class="section-badge">Cost Estimations</span>
+            <h2>Interactive Quote Calculator</h2>
+            <p>Select your deployment scopes below to estimate cost in MMK and converted USD instantly.</p>
+            
+            <div class="calc-control-group">
+              <div class="control-label-row">
+                <label for="calcCameras">Security Cameras</label>
+                <span class="calc-val-badge" id="calcCamerasVal">4 Cameras</span>
+              </div>
+              <input type="range" id="calcCameras" min="0" max="32" value="4" oninput="updateCalculatorCost()">
+            </div>
+
+            <div class="calc-control-group">
+              <div class="control-label-row">
+                <label for="calcDrops">Network LAN Drops</label>
+                <span class="calc-val-badge" id="calcDropsVal">8 drops</span>
+              </div>
+              <input type="range" id="calcDrops" min="0" max="100" value="8" oninput="updateCalculatorCost()">
+            </div>
+
+            <div class="calc-control-group">
+              <div class="control-label-row">
+                <label for="calcStorage">Dedicated NAS Storage</label>
+                <span class="calc-val-badge" id="calcStorageVal">4 TB</span>
+              </div>
+              <input type="range" id="calcStorage" min="2" max="40" step="2" value="4" oninput="updateCalculatorCost()">
+            </div>
+          </div>
+
+          <div class="calculator-preview-display">
+            <div class="calc-preview-header">
+              <h4>Estimated Setup Summary</h4>
+            </div>
+            <div class="calc-metrics-row">
+              <div class="calc-metric-box">
+                <span class="calc-metric-lbl">TOTAL ESTIMATION (MMK)</span>
+                <span class="calc-metric-number text-amber" id="calcResultMMK">545,000</span>
+              </div>
+              <div class="calc-metric-box" style="border-left: 1px solid var(--border-color);">
+                <span class="calc-metric-lbl">ESTIMATION (USD)</span>
+                <span class="calc-metric-number" id="calcResultUSD">$272.50</span>
+              </div>
+            </div>
+            
+            <form class="calc-lead-form" onsubmit="submitCalculatorLead(event)">
+              <div class="form-group">
+                <label for="calcEmail">Claim This Estimation</label>
+                <input type="email" id="calcEmail" placeholder="Enter your email to save this quote" required>
+              </div>
+              <button type="submit" class="btn-primary" style="justify-content: center; width: 100%; margin-top: 0.5rem;">
+                Claim Quote & Request Booking
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Back to Home Button -->
+        <div style="text-align: center; margin-top: 3rem;">
+          <button class="btn-secondary" onclick="scrollToTop()">Back to Home</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Booking calendar & Wizard form -->
+    <section class="booking-sec" id="booking-sec">
+      <div class="container-center">
+        <span class="section-badge">Instant Scheduling</span>
+        <h2>Schedule Site Inspection</h2>
+        <p class="section-desc">Select an available slot from our calendar, then fill in your request description below.</p>
+        
+        <div class="booking-layout-grid">
+          <!-- Calendar Card -->
+          <div class="calendar-card">
+            <div class="calendar-header-row">
+              <h4 id="calendarMonthYear">June 2026</h4>
+            </div>
+            <div class="calendar-weekdays-row">
+              <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            </div>
+            <div class="calendar-grid-days" id="calendarGridDays">
+              <!-- Rendered via JS -->
+            </div>
+            <div class="calendar-legend">
+              <span class="legend-item"><span class="legend-dot available"></span>Available</span>
+              <span class="legend-item"><span class="legend-dot selected"></span>Selected</span>
+            </div>
+          </div>
+
+          <!-- Form Wizard Column -->
+          <div class="booking-wizard-card">
+            <!-- Form Header Progress -->
+            <div class="wizard-progress-bar">
+              <div class="wizard-step-node active" id="nodeStep1">1</div>
+              <div class="wizard-line" id="lineStep1_2"></div>
+              <div class="wizard-step-node" id="nodeStep2">2</div>
+            </div>
+            
+            <form id="landingBookingWizard" onsubmit="handleWizardSubmit(event)">
+              <!-- STEP 1: Details & Time slot -->
+              <div class="wizard-step-panel active" id="wizardPanel1">
+                <h4 class="panel-title">Step 1: Service details</h4>
+                
+                <div class="form-group">
+                  <label for="bookCategory">Select Service Required *</label>
+                  <select id="bookCategory" required>
+                    <option value="CCTV Audit">CCTV Inspection & Audit</option>
+                    <option value="Network Setup">Network Diagnostics & Troubleshooting</option>
+                    <option value="NAS Storage">NAS/Backup Storage Configuration</option>
+                    <option value="PC Repair">General hardware Support</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Scheduled Appointment Slot *</label>
+                  <div class="date-time-badge-group">
+                    <input type="text" id="bookDate" placeholder="Select a date from calendar" readonly required class="input-badge-style">
+                    <select id="bookTimeSlot" required disabled>
+                      <option value="" disabled selected>Select time slot</option>
+                      <option value="09:00 AM">09:00 AM - Morning Slot</option>
+                      <option value="11:30 AM">11:30 AM - Midday Slot</option>
+                      <option value="02:00 PM">02:00 PM - Afternoon Slot</option>
+                      <option value="04:30 PM">04:30 PM - Late Slot</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="bookDesc">Support Request Notes *</label>
+                  <textarea id="bookDesc" rows="3" placeholder="Describe camera positioning, cabling issues, network outages, or storage capacity needs..." required></textarea>
+                </div>
+
+                <div class="panel-actions-row">
+                  <button type="button" class="btn-primary" style="margin-left: auto;" onclick="goToWizardStep(2)">Next: Contact Details</button>
+                </div>
+              </div>
+
+              <!-- STEP 2: Contact details -->
+              <div class="wizard-step-panel" id="wizardPanel2">
+                <h4 class="panel-title">Step 2: Contact Information</h4>
+                
+                <div class="form-group">
+                  <label for="bookName">Your Name *</label>
+                  <input type="text" id="bookName" placeholder="e.g. U Hla Aung" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="bookEmail">Email Address *</label>
+                  <input type="email" id="bookEmail" placeholder="e.g. user@domain.com" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="bookPhone">Phone Number *</label>
+                  <input type="tel" id="bookPhone" placeholder="e.g. +95 9 12345678" required>
+                </div>
+
+                <div class="panel-actions-row">
+                  <button type="button" class="btn-secondary" onclick="goToWizardStep(1)">Back</button>
+                  <button type="submit" class="btn-primary">Confirm Site Inspection</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Back to Home Button -->
+        <div style="text-align: center; margin-top: 3rem;">
+          <button class="btn-secondary" onclick="scrollToTop()">Back to Home</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+      <div class="container-center footer-grid">
+        <div class="footer-col-about">
+          <div class="brand-group" style="margin-bottom: 0.75rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="brand-icon"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <span class="brand-name">AwesomeMyanmar</span>
+          </div>
+          <p>Professional integration for security architectures and high-throughput network channels.</p>
+        </div>
+        <div class="footer-col-links">
+          <h4>Support & Links</h4>
+          <a href="#services-sec">Tiered Packages</a>
+          <a href="#calculator-sec">Interactive Quote</a>
+          <a href="#booking-sec">Calendar Schedule</a>
+          <a href="javascript:void(0)" onclick="showPortalLogin()">Portal Administration</a>
+        </div>
+        <div class="footer-col-info">
+          <h4>Contact & Info</h4>
+          <p>Yangon, Myanmar</p>
+          <p>Support Hotline: +95 9 12345678</p>
+          <p>Email: support@awesomemyanmar.com</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 AwesomeMyanmar. All Rights Reserved. Designed for leads & support bookings.</p>
+      </div>
+    </footer>
+
+    <!-- Back to Top FAB -->
+    <button id="backToTopBtn" class="fab-btn" onclick="scrollToTop()" title="Back to Top">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </button>

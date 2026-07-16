@@ -1,0 +1,105 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>Deployment & Infrastructure Console</h1>
+              <p>Setup guides for native Docker Synology NAS mounts and routing utilizing free, zero-config trycloudflare.com tunnels.</p>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- trycloudflare setup -->
+            <div class="table-card" style="padding: 1.5rem;">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--primary);">1. Quick Tunnel Setup (trycloudflare.com)</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                Route traffic on-the-fly to your local server without a Cloudflare account. Ideal for field technician testing.
+              </p>
+              
+              <div class="terminal-card">
+                <div class="terminal-header">
+                  <span class="terminal-title">Start trycloudflare Tunnel locally (bash)</span>
+                  <button class="btn-copy" onclick="copyText('cfTryScript')">Copy Command</button>
+                </div>
+                <div class="terminal-body" id="cfTryScript"># Run a transient cloudflared docker instance on your host
+docker run --rm --name temp-cloudflare-tunnel --network host cloudflare/cloudflared:latest tunnel --url http://localhost:8080
+
+# Check container output logs to retrieve the generated *.trycloudflare.com url:
+# Example: +------------------------------------------------------------+
+# Example: |  Your quick tunnel has been created!                       |
+# Example: |  URL: https://random-generated-sub.trycloudflare.com      |
+# Example: +------------------------------------------------------------+</div>
+              </div>
+            </div>
+
+            <!-- Synology Volume mount block -->
+            <div class="table-card" style="padding: 1.5rem;">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--primary);">2. Synology Volume Direct Docker Mounts</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                Mount your Synology NAS shared folder directly inside your <code>docker-compose.yml</code> using native NFS/CIFS drivers.
+              </p>
+              
+              <div class="terminal-card">
+                <div class="terminal-header">
+                  <span class="terminal-title">docker-compose.yml NFS & CIFS volume options</span>
+                  <button class="btn-copy" onclick="copyText('dockerVolMountScript')">Copy Volume Templates</button>
+                </div>
+                <div class="terminal-body yaml-format" id="dockerVolMountScript"># --- OPTION A: NATIVE NFS VOLUME DECLARATION ---
+volumes:
+  synology-nfs-uploads:
+    driver: local
+    driver_opts:
+      type: "nfs"
+      o: "addr=192.168.1.100,rw,nolock,hard,nfsvers=4"
+      device: ":/volume1/service-uploads"
+
+# --- OPTION B: NATIVE CIFS/SMB VOLUME DECLARATION ---
+volumes:
+  synology-smb-uploads:
+    driver: local
+    driver_opts:
+      type: "cifs"
+      o: "username=nas_username,password=nas_password,rw,vers=3.0,domain=WORKGROUP"
+      device: "//192.168.1.100/service-uploads"</div>
+              </div>
+            </div>
+
+            <!-- Docker stack block -->
+            <div class="table-card" style="padding: 1.5rem;">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--primary);">3. trycloudflare Unified Docker Compose Stack</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                A single file mapping the volume mount to the container and running <code>cloudflared</code> as a transient quick tunnel.
+              </p>
+
+              <div class="terminal-card">
+                <div class="terminal-header">
+                  <span class="terminal-title">docker-compose.yml (trycloudflare quick tunnel version)</span>
+                  <button class="btn-copy" onclick="copyText('dockerComposeScript')">Copy YAML</button>
+                </div>
+                <div class="terminal-body yaml-format" id="dockerComposeScript">version: '3.8'
+
+services:
+  # The Service Management Dashboard Application
+  service-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: awesomemyanmar-app
+    ports:
+      - "8080:80"
+    volumes:
+      # Code volume
+      - ./:/usr/share/nginx/html:ro
+      # Synology mounted folder for uploads
+      - /var/www/awesomemyanmar/uploads:/usr/share/nginx/html/uploads:rw
+    restart: unless-stopped
+
+  # Cloudflare transient quick tunnel (Zero Login required)
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cf-tunnel-try
+    # Tunnel to the service-app container on port 80 dynamically
+    command: tunnel --no-autoupdate --url http://service-app:80
+    restart: unless-stopped
+    depends_on:
+      - service-app</div>
+              </div>
+            </div>
+          </div>

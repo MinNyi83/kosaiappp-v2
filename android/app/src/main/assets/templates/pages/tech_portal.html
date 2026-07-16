@@ -1,0 +1,91 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1 id="techPortalGreeting">My Assigned Tasks</h1>
+              <p>Select your assigned tickets below to log site progress, upload site photos, and capture GPS coordinates.</p>
+            </div>
+            
+            <div class="form-group" style="width: 200px;">
+              <label for="techSelectDropdown">Select Technician Profile</label>
+              <select id="techSelectDropdown" onchange="switchActiveTechProfile()">
+                <!-- JS populated -->
+              </select>
+            </div>
+          </div>
+
+          <div class="tech-portal-layout">
+            <!-- Tech Active Jobs -->
+            <div class="table-card">
+              <div class="table-toolbar">
+                <h3 style="font-size: 1rem; font-weight: 600;">My Open Service Tickets</h3>
+              </div>
+              <div class="table-wrapper">
+                <table class="filament-table">
+                  <thead>
+                    <tr>
+                      <th>Ticket ID</th>
+                      <th>Customer / Unit</th>
+                      <th>Category</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="techTasksTableBody">
+                    <!-- JS Injected -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Selected Job Detail Pane -->
+            <div id="techTicketDetailCard" class="ticket-detail-view" style="display: none;">
+              <div class="detail-header">
+                <div>
+                  <h3 id="detTicketId" style="font-size: 1.1rem; color: var(--primary);">TKT-1002</h3>
+                  <span id="detCategory" class="badge status-info">CCTV Setup</span>
+                </div>
+                <div id="detStatusBadgeContainer">
+                  <span id="detStatus" class="badge status-pending">Pending</span>
+                </div>
+              </div>
+
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <label>Customer Name</label>
+                  <span id="detCustomerName">John Doe</span>
+                </div>
+                <div class="detail-item">
+                  <label>Phone / Address</label>
+                  <span id="detCustomerContact">09-xxx / Yangon</span>
+                </div>
+                <div class="detail-item">
+                  <label>Job Description</label>
+                  <span id="detDescription">Resolve camera feed drops.</span>
+                </div>
+                <div class="detail-item">
+                  <label>Service Cost</label>
+                  <span id="detCost">$150.00 / 675,000 MMK</span>
+                </div>
+              </div>
+
+              <!-- Tech Action Panel -->
+              <div id="techTicketActionsBlock" style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+                <h4 style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.75rem;">Site Operations Checklist</h4>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                  <button class="btn-primary" id="btnStartJob" onclick="updateTechTicketStatus('In Progress')">Mark: En Route / Start Job</button>
+                  <button class="btn-secondary" id="btnLogProgress" onclick="openProgressUploadModal()">Log Progress & Capture Site Details</button>
+                </div>
+              </div>
+
+              <!-- Work Log Timeline -->
+              <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+                <h4 style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.75rem;">Service Progression Logs</h4>
+                <div class="log-timeline" id="detTimeline">
+                  <!-- Injected log timeline -->
+                </div>
+              </div>
+            </div>
+
+            <div id="techPortalPlaceholder" class="table-card" style="padding: 3rem; text-align: center; color: var(--text-muted);">
+              Select a service ticket from the list to view client details, upload photos, and update site progress.
+            </div>
+          </div>

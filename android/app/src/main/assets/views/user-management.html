@@ -1,0 +1,327 @@
+<div id="view-user-management" class="space-y-8 tab-view">
+    <div>
+        <h1 class="text-2xl font-black text-white uppercase tracking-tight">User Management</h1>
+        <p class="text-xs text-slate-400 mt-1">Approve team members, assign access scopes, or deactivate technicians.</p>
+    </div>
+
+    <!-- User Access & Role approvals -->
+    <div class="grid md:grid-cols-3 gap-8">
+        <!-- Left Form: Create User -->
+        <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span>👤</span> Add User / Technician
+            </h2>
+            <p class="text-[10px] text-slate-400">Create a new local login credentials profile.</p>
+            <form onsubmit="submitNewUser(event)" class="space-y-3">
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Technician ID (Optional)</label>
+                    <input type="text" id="new-user-id" placeholder="e.g. TECH-101 (Leave blank to auto-generate)" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Username</label>
+                    <input type="text" id="new-user-username" required placeholder="e.g. jdoe" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Password</label>
+                    <input type="password" id="new-user-password" required placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Full Name</label>
+                    <input type="text" id="new-user-name" required placeholder="e.g. John Doe" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Nickname (for AI Dispatch)</label>
+                    <input type="text" id="new-user-nickname" placeholder="e.g. Nyi Nyi" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Role</label>
+                    <select id="new-user-role" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-semibold">
+                        <option value="Technician" class="bg-slate-900">Technician</option>
+                        <option value="Sales" class="bg-slate-900">Sales</option>
+                        <option value="Admin" class="bg-slate-900">Admin</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Phone (Optional)</label>
+                    <input type="text" id="new-user-phone" placeholder="e.g. +9591234567" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Email (Optional)</label>
+                    <input type="email" id="new-user-email" placeholder="e.g. jdoe@example.com" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Login PIN (4-6 digits)</label>
+                    <input type="text" id="new-user-pin" required pattern="[0-9]*" inputmode="numeric" maxlength="6" placeholder="e.g. 1234" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Create Account</button>
+            </form>
+        </div>
+
+        <!-- Right Table: Accounts list -->
+        <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span>👥</span> Registered Accounts
+            </h2>
+            <p class="text-xs text-slate-400">Approve new registered accounts, assign access scopes, or deactivate technicians.</p>
+            <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+                <table class="w-full text-xs text-left">
+                    <thead>
+                        <tr class="text-slate-500 border-b border-white/5 pb-2">
+                            <th class="pb-2">ID</th>
+                            <th class="pb-2">Name</th>
+                            <th class="pb-2">Nickname</th>
+                            <th class="pb-2">Email / Username</th>
+                            <th class="pb-2">Role</th>
+                            <th class="pb-2">Status</th>
+                            <th class="pb-2 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tech-list-body">
+                        <tr>
+                            <td colspan="7" class="py-4 text-center text-slate-600">Loading user accounts list...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Technician Modal -->
+    <div id="edit-tech-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-2xl max-w-sm w-full space-y-4">
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">Edit Technician Account</h2>
+            <form id="edit-tech-form" onsubmit="submitEditTechnician(event)" class="space-y-3">
+                <input type="hidden" id="edit-tech-id">
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Full Name</label>
+                    <input type="text" id="edit-tech-name" required class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Nickname</label>
+                    <input type="text" id="edit-tech-nickname" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Phone</label>
+                    <input type="text" id="edit-tech-phone" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Email</label>
+                    <input type="email" id="edit-tech-email" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Username</label>
+                    <input type="text" id="edit-tech-username" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Password (Leave blank to keep current)</label>
+                    <input type="password" id="edit-tech-password" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Login PIN</label>
+                    <input type="text" id="edit-tech-pin" required pattern="[0-9]*" inputmode="numeric" maxlength="6" class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeEditTechModal()" class="flex-1 bg-white/5 hover:bg-white/10 py-2 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Cancel</button>
+                    <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Technician Job History Modal -->
+    <div id="tech-history-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-3xl shadow-2xl max-w-4xl w-full border border-white/10 max-h-[85vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center border-b border-white/5 pb-4 shrink-0">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest">📜 Technician Assigned Job History</h2>
+                    <h1 id="history-modal-tech-title" class="text-lg font-black text-white uppercase mt-1">Technician Name</h1>
+                </div>
+                <button onclick="closeTechHistoryModal()" class="text-slate-400 hover:text-white transition text-lg leading-none p-1">✕</button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto py-4 flex-1">
+                <!-- Left: Job List -->
+                <div class="space-y-3 pr-2">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Assigned Service Tickets</h3>
+                    <div id="tech-history-tickets-list" class="space-y-2 max-h-[50vh] overflow-y-auto">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Right: Selected Record Detail View -->
+                <div id="tech-history-ticket-details" class="bg-black/30 border border-white/5 rounded-2xl p-5 space-y-4 h-fit">
+                    <div class="text-center text-slate-500 py-12">
+                        <span class="text-3xl block mb-2">🎫</span>
+                        <p class="text-xs font-medium">Select an assigned job ticket from the list to inspect operational details.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- 🪪 TECHNICIAN ID CARD MODAL                                   -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div id="tech-id-card-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel rounded-3xl shadow-2xl border border-white/10 w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden">
+
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center px-6 py-4 border-b border-white/5 shrink-0">
+                <div>
+                    <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Security Identification</p>
+                    <h2 class="text-base font-black text-white uppercase tracking-tight">🪪 Technician ID Card</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="downloadTechIdPdf()" class="bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-600/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export PDF
+                    </button>
+                    <button onclick="document.getElementById('tech-id-card-modal').classList.add('hidden')" class="text-slate-400 hover:text-white transition text-lg leading-none p-1">✕</button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="flex flex-col md:flex-row gap-6 p-6 overflow-y-auto flex-1">
+
+                <!-- Left: Card Preview (3D Flip) -->
+                <div class="flex flex-col items-center gap-4 shrink-0">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Card Preview</p>
+
+                    <!-- 3D Card Flip Scene -->
+                    <div id="id-card-scene" style="width:240px;height:150px;perspective:800px;cursor:pointer" onclick="document.getElementById('id-card-flipper').classList.toggle('flipped')" title="Click to flip">
+                        <div id="id-card-flipper" style="position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 0.6s cubic-bezier(0.4,0,0.2,1)">
+
+                            <!-- FRONT FACE -->
+                            <div id="id-card-front" style="position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#1a1a2e 0%,#0f0f1a 60%,#1a1a2e 100%);border:1px solid rgba(245,158,11,0.25);box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+                                <!-- Gold bar accent -->
+                                <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b)"></div>
+                                <!-- Decorative grid pattern -->
+                                <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(245,158,11,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,0.03) 1px,transparent 1px);background-size:12px 12px;pointer-events:none"></div>
+
+                                <div style="padding:12px;display:flex;gap:10px;align-items:flex-start;position:relative;z-index:1">
+                                    <!-- Photo -->
+                                    <div id="id-card-photo-front" style="width:52px;height:65px;border-radius:6px;background:rgba(99,102,241,0.15);border:1.5px solid rgba(99,102,241,0.35);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem">👷</div>
+
+                                    <!-- Info -->
+                                    <div style="flex:1;min-width:0">
+                                        <div style="font-size:7px;font-weight:800;color:#f59e0b;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">Awesome Myanmar</div>
+                                        <div id="id-card-name-front" style="font-size:10px;font-weight:800;color:#fff;letter-spacing:0.04em;text-transform:uppercase;line-height:1.2;margin-bottom:3px">TECHNICIAN NAME</div>
+                                        <div id="id-card-role-front" style="font-size:7.5px;color:#94a3b8;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">Field Engineer</div>
+                                        <div id="id-card-id-front" style="font-family:monospace;font-size:7px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:2px 5px;display:inline-block;color:#818cf8;font-weight:700">TECH-001</div>
+                                    </div>
+
+                                    <!-- Mini QR -->
+                                    <img id="id-card-qr-mini" width="38" height="38" style="flex-shrink:0;border-radius:4px;background:#fff;padding:2px" src="" alt="QR">
+                                </div>
+
+                                <!-- Bottom bar -->
+                                <div style="position:absolute;bottom:0;left:0;right:0;padding:5px 12px;background:rgba(245,158,11,0.08);border-top:1px solid rgba(245,158,11,0.15);display:flex;justify-content:space-between;align-items:center">
+                                    <span id="id-card-phone-front" style="font-size:7px;color:#64748b;font-family:monospace">—</span>
+                                    <span style="font-size:6px;color:#374151;font-weight:700;letter-spacing:0.08em;text-transform:uppercase">Field Tech • Active</span>
+                                </div>
+                            </div>
+
+                            <!-- BACK FACE -->
+                            <div id="id-card-back" style="position:absolute;width:100%;height:100%;backface-visibility:hidden;transform:rotateY(180deg);border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#0f0f1a,#1a1a2e);border:1px solid rgba(245,158,11,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+                                <div style="position:absolute;top:0;left:0;right:0;height:28px;background:linear-gradient(90deg,#1e1b4b,#312e81);display:flex;align-items:center;padding:0 12px">
+                                    <span style="font-size:7px;font-weight:800;color:rgba(255,255,255,0.6);letter-spacing:0.12em;text-transform:uppercase">Awesome Myanmar — Security ID</span>
+                                </div>
+                                <!-- Magnetic stripe simulation -->
+                                <div style="margin:12px;height:18px;background:linear-gradient(180deg,#1e1e1e,#2a2a2a,#1a1a1a);border-radius:2px"></div>
+                                <div style="padding:0 12px;font-size:7px;color:#4b5563;line-height:1.6">
+                                    <div>If found, please return this card to Awesome Myanmar.</div>
+                                    <div>This card is property of Awesome Myanmar Co. Ltd.</div>
+                                    <div>Unauthorized use is strictly prohibited.</div>
+                                </div>
+                                <!-- Large QR on back -->
+                                <div style="position:absolute;bottom:8px;right:10px">
+                                    <img id="id-card-qr-back" width="55" height="55" style="border-radius:4px;background:#fff;padding:3px" src="" alt="QR">
+                                </div>
+                                <!-- Contact bottom -->
+                                <div style="position:absolute;bottom:10px;left:12px">
+                                    <div style="font-size:6.5px;color:#374151;font-weight:700;text-transform:uppercase;letter-spacing:0.08em">awesome-myanmar.com</div>
+                                    <div id="id-card-email-back" style="font-size:6.5px;color:#4b5563;font-family:monospace;margin-top:2px">—</div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <p class="text-[9px] text-slate-600 uppercase tracking-wider">Click card to flip</p>
+
+                    <!-- Photo Upload -->
+                    <div class="w-full space-y-2">
+                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Profile Photo</p>
+                        <label class="block cursor-pointer border border-dashed border-white/15 rounded-xl p-3 text-center hover:border-amber-500/40 transition">
+                            <input type="file" id="id-card-photo-upload" accept="image/*" class="hidden" onchange="handleIdCardPhotoUpload(this)">
+                            <span class="text-slate-500 text-xs">📸 Drop or click to upload photo</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Right: Technician Info Panel -->
+                <div class="flex-1 space-y-5">
+                    <div class="space-y-1">
+                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Cardholder Details</p>
+                        <div class="glass-panel rounded-xl p-4 space-y-3 border border-white/5">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Full Name</span>
+                                <span id="id-info-name" class="text-white font-bold">—</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Employee ID</span>
+                                <span id="id-info-id" class="text-indigo-400 font-mono font-bold">—</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Role</span>
+                                <span id="id-info-role" class="text-amber-400 font-semibold">—</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Phone</span>
+                                <span id="id-info-phone" class="text-slate-300 font-mono">—</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Email</span>
+                                <span id="id-info-email" class="text-slate-300 font-mono truncate max-w-[160px]">—</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Status</span>
+                                <span id="id-info-status" class="text-emerald-400 font-bold">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QR Code full display -->
+                    <div class="space-y-2">
+                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Verification QR Code</p>
+                        <div class="glass-panel rounded-xl p-4 flex items-center gap-4 border border-white/5">
+                            <img id="id-qr-display" width="80" height="80" style="border-radius:6px;background:#fff;padding:4px;flex-shrink:0" src="" alt="QR">
+                            <div class="space-y-1">
+                                <p class="text-xs font-bold text-white">Scan to Verify Identity</p>
+                                <p id="id-qr-url" class="text-[9px] text-slate-500 font-mono break-all">—</p>
+                                <p class="text-[9px] text-slate-600">Level M error correction · 2.5mm quiet zone</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDF Print Specs -->
+                    <div class="space-y-2">
+                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Print Specifications</p>
+                        <div class="glass-panel rounded-xl p-4 space-y-2 border border-white/5 text-xs text-slate-400">
+                            <div class="flex justify-between"><span>Format</span><span class="text-white font-semibold">CR80 — 85.6 × 53.98 mm</span></div>
+                            <div class="flex justify-between"><span>Resolution</span><span class="text-white font-semibold">300 DPI</span></div>
+                            <div class="flex justify-between"><span>Bleed</span><span class="text-white font-semibold">3 mm all sides</span></div>
+                            <div class="flex justify-between"><span>QR Error Level</span><span class="text-white font-semibold">Level M (15%)</span></div>
+                            <div class="flex justify-between"><span>Font</span><span class="text-white font-semibold">Plus Jakarta Sans</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+

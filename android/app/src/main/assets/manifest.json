@@ -1,0 +1,17 @@
+{
+  "name": "Technician Hub",
+  "short_name": "Tech Hub",
+  "description": "AwesomeMyanmar Sales & Maintenance Portal",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "hero_image.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

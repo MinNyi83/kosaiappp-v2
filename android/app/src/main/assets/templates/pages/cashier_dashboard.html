@@ -1,0 +1,76 @@
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Cashier Terminal Dashboard</h1>
+    <p>Manage the register cash drawers, log currency exchanges, and monitor cashier transactions.</p>
+  </div>
+  <div>
+    <button class="btn-primary" onclick="navigateToPage('posPage')">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM3 18h1M3 14h1M3 10h1M3 6h1"/></svg>
+      Open POS Terminal
+    </button>
+  </div>
+</div>
+
+<!-- Cash Drawers Balances -->
+<div class="stats-grid">
+  <div class="stat-card accented">
+    <span class="stat-title">USD Cash Drawer <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+    <span class="stat-value" id="cashierBalanceUSD">$0.00</span>
+    <span class="stat-subtext">Active physical USD cash in safe</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-title">MMK Cash Drawer <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+    <span class="stat-value highlight" id="cashierBalanceMMK">0 MMK</span>
+    <span class="stat-subtext">Active physical MMK cash in safe</span>
+  </div>
+</div>
+
+<div class="pos-container" style="margin-top: 1.5rem; height: auto;">
+  <!-- Left Side: Cash Exchange Form -->
+  <div class="table-card" style="flex: 1; padding: 1.5rem;">
+    <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary);">Record Cash Exchange</h3>
+    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Log when MMK cash is spent from the drawer to purchase physical USD cash.</p>
+    
+    <form id="cashExchangeForm" onsubmit="recordCashExchange(event)">
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="exchangeSpentMMK">MMK Cash Spent *</label>
+        <input type="number" id="exchangeSpentMMK" min="1000" placeholder="e.g. 4500000" required oninput="calculateExchangeRate()">
+      </div>
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="exchangeBoughtUSD">USD Cash Received *</label>
+        <input type="number" id="exchangeBoughtUSD" min="1" step="any" placeholder="e.g. 1000" required oninput="calculateExchangeRate()">
+      </div>
+      <div class="form-group" style="margin-bottom: 1.5rem;">
+        <label>Effective Rate (calculated)</label>
+        <div id="exchangeEffectiveRate" class="mono-text" style="font-size: 0.95rem; font-weight: 600; padding: 0.5rem 0; color: var(--text-secondary);">0.00 MMK/USD</div>
+      </div>
+      
+      <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.65rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        Execute Exchange
+      </button>
+    </form>
+  </div>
+
+  <!-- Right Side: Cash Ledger -->
+  <div class="table-card" style="flex: 2;">
+    <div class="table-toolbar">
+      <h3 style="font-size: 1.1rem; font-weight: 600;">Cashier Register Ledger</h3>
+    </div>
+    <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
+      <table class="filament-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description / Ref</th>
+            <th style="text-align: right;">USD Change</th>
+            <th style="text-align: right;">MMK Change</th>
+          </tr>
+        </thead>
+        <tbody id="cashierLedgerBody">
+          <!-- Injected by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

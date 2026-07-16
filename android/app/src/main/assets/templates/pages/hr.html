@@ -1,0 +1,63 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>HR Management & Payroll Console</h1>
+              <p>Manage staff payroll structures, base salaries, technician ticket commissions, and attendance sheets.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <button class="btn-secondary" onclick="syncZKBioDeviceNetwork()" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
+                Sync ZKBio Device Network
+              </button>
+              <button class="btn-primary" onclick="openModal('employeeModal')">
+                Register New Employee
+              </button>
+            </div>
+          </div>
+
+          <!-- Staff Attendance & Base directory -->
+          <div class="table-card">
+            <div class="table-toolbar">
+              <h3 style="font-size: 1rem; font-weight: 600;">Active Employees Directory</h3>
+            </div>
+            <div class="table-wrapper">
+              <table class="filament-table">
+                <thead>
+                  <tr>
+                    <th>Emp ID</th>
+                    <th>Name / Role</th>
+                    <th>Base Salary (Monthly)</th>
+                    <th>Job Commission Rate</th>
+                    <th>Attendance Check</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="hrEmployeeTableBody">
+                  <!-- JS Injected -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Commission and Monthly payroll calculations -->
+          <div class="table-card">
+            <div class="table-toolbar">
+              <h3 style="font-size: 1rem; font-weight: 600;">Active Month Payroll & Commissions</h3>
+            </div>
+            <div class="table-wrapper">
+              <table class="filament-table">
+                <thead>
+                  <tr>
+                    <th>Staff Name</th>
+                    <th>Base Salary</th>
+                    <th>Completed Tickets</th>
+                    <th>Total Commissions Earned</th>
+                    <th>Total Salary Due</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="hrPayrollTableBody">
+                  <!-- JS Injected -->
+                </tbody>
+              </table>
+            </div>
+          </div>

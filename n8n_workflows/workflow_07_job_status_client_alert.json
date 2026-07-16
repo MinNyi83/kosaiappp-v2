@@ -1,0 +1,162 @@
+{
+  "name": "Job Status Change → Client Alert",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook - Job Status Change",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "kosai/job-status-change",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "webhookId": "kosai-job-status-change"
+    },
+    {
+      "id": "http-get-job",
+      "name": "GET /api/jobs/{id}",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/jobs/{{ $json.body.jobId || $json.body.job_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-build-status-message",
+      "name": "Build Status Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "jsCode": "const job = $input.first().json;\nconst event = $input.all()[0].json.body || {};\n\nconst oldStatus = event.old_status || event.oldStatus;\nconst newStatus = event.new_status || event.newStatus || job.status;\n\nconst statusEmojis = {\n  'pending': '🕐',\n  'assigned': '🔗',\n  'in_progress': '🛠️',\n  'completed': '✅',\n  'cancelled': '❌',\n  'on_hold': '⏸️',\n  'rescheduled': '📅'\n};\n\nconst statusMessages = {\n  'assigned': `Your job has been assigned to a worker! They'll be in touch shortly.`,\n  'in_progress': `Great news! Work has started on your job.`,\n  'completed': `Your job has been completed! We'd love to hear your feedback.`,\n  'cancelled': `Your job has been cancelled. If this was a mistake, please contact us.`,\n  'on_hold': `Your job has been temporarily put on hold. We'll update you when it resumes.`,\n  'rescheduled': `Your job has been rescheduled. Please check the new date/time.`\n};\n\nconst emoji = statusEmojis[newStatus] || '📋';\nconst message = statusMessages[newStatus] || `Your job status has been updated to: ${newStatus}`;\n\nlet telegramMsg = `${emoji} *Job Status Update*\\n\\n`;\ntelegramMsg += `🔧 Job #${job.id}: ${job.title || job.description || 'Service Job'}\\n`;\ntelegramMsg += `📊 Status: *${oldStatus || '?'}* → *${newStatus}*\\n\\n`;\ntelegramMsg += `${message}\\n`;\n\nif (job.worker_name) {\n  telegramMsg += `\\n👷 Assigned Worker: ${job.worker_name}`;\n}\nif (job.scheduled_date) {\n  telegramMsg += `\\n📅 Scheduled: ${job.scheduled_date}`;\n}\nif (job.estimated_completion) {\n  telegramMsg += `\\n⏱️ Est. Completion: ${job.estimated_completion}`;\n}\n\ntelegramMsg += `\\n\\n💬 Questions? Reply to this message or contact support.`;\n\nreturn {\n  jobId: job.id,\n  clientId: job.client_id,\n  clientName: job.client_name,\n  clientTelegramId: job.client_telegram_id,\n  oldStatus: oldStatus,\n  newStatus: newStatus,\n  telegramMessage: telegramMsg,\n  isCompleted: newStatus === 'completed',\n  isCancelled: newStatus === 'cancelled'\n};"
+      }
+    },
+    {
+      "id": "telegram-notify-client",
+      "name": "Telegram → Client",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "parameters": {
+        "chatId": "={{ $json.clientTelegramId || $env.TELEGRAM_DEFAULT_CHAT_ID }}",
+        "text": "={{ $json.telegramMessage }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "switch-completed",
+      "name": "Job Completed?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [850, 450],
+      "parameters": {
+        "dataType": "boolean",
+        "value1": "={{ $json.isCompleted }}",
+        "options": {
+          "boolean": [
+            { "value": "true", "output": "Send Feedback Request" },
+            { "value": "false", "output": "Skip Feedback" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-feedback-request",
+      "name": "Telegram → Feedback Request",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 450],
+      "parameters": {
+        "chatId": "={{ $json.clientTelegramId || $env.TELEGRAM_DEFAULT_CHAT_ID }}",
+        "text": "⭐ *How was your experience?*\\n\\nWe'd love to hear your feedback on Job #{{ $json.jobId }}!\\n\\nPlease reply with a rating (1-5) and any comments.\\n\\nYour feedback helps us improve! 🙏",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "http-log-activity",
+      "name": "POST /api/activity (status change)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 600],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/activity",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "type", "value": "job_status_notified" },
+            { "name": "description", "value": "Client {{ $json.clientName }} notified of job #{{ $json.jobId }} status change: {{ $json.oldStatus }} → {{ $json.newStatus }}" },
+            { "name": "reference_type", "value": "job" },
+            { "name": "reference_id", "value": "={{ $json.jobId }}" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "noop-skip-feedback",
+      "name": "Skip Feedback",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1050, 350],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Webhook - Job Status Change": {
+      "main": [[ { "node": "GET /api/jobs/{id}", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/jobs/{id}": {
+      "main": [[ { "node": "Build Status Message", "type": "main", "index": 0 } ]]
+    },
+    "Build Status Message": {
+      "main": [[ { "node": "Telegram → Client", "type": "main", "index": 0 }, { "node": "Job Completed?", "type": "main", "index": 1 } ]]
+    },
+    "Telegram → Client": {
+      "main": [[ { "node": "POST /api/activity (status change)", "type": "main", "index": 0 } ]]
+    },
+    "Job Completed?": {
+      "main": [
+        [{ "node": "Telegram → Feedback Request", "type": "main", "index": 0 }],
+        [{ "node": "Skip Feedback", "type": "main", "index": 0 }]
+      ]
+    },
+    "Telegram → Feedback Request": {
+      "main": [[ { "node": "POST /api/activity (status change)", "type": "main", "index": 0 } ]]
+    },
+    "Skip Feedback": {
+      "main": [[ { "node": "POST /api/activity (status change)", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "jobs", "client-notifications"],
+  "active": false
+}

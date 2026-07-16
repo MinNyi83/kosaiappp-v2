@@ -1,0 +1,56 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>Service Tickets</h1>
+              <p>Manage, diagnose, and track repair tasks for CCTV, PCs, network nodes, and servers.</p>
+            </div>
+            <div>
+              <button class="btn-primary" onclick="openModal('ticketModal')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Ticket
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-toolbar">
+              <div class="search-box">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" id="ticketSearchInput" placeholder="Search customer, ID or serial..." onkeyup="filterTickets()">
+              </div>
+              <div class="toolbar-filters">
+                <select class="filter-select" id="ticketCategoryFilter" onchange="filterTickets()">
+                  <option value="">All Categories</option>
+                  <option value="Computer Repair">Computer Repair</option>
+                  <option value="CCTV Installation">CCTV Installation</option>
+                  <option value="Networking">Networking</option>
+                  <option value="Data Storage">Data Storage</option>
+                </select>
+                <select class="filter-select" id="ticketStatusFilter" onchange="filterTickets()">
+                  <option value="">All Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="filament-table">
+                <thead>
+                  <tr>
+                    <th>Ticket ID</th>
+                    <th>Customer</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Technician</th>
+                    <th>Status</th>
+                    <th>Fees</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ticketsTableBody">
+                  <!-- JS injected rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>

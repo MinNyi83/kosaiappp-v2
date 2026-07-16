@@ -1,0 +1,215 @@
+{
+  "name": "Invoice → Payment Reconciliation",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Cron - Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "minute", "expression": [0] }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-unpaid-invoices",
+      "name": "GET /api/invoices?status=unpaid",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/invoices",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "unpaid" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-recent-payments",
+      "name": "GET /api/payments?since=24h",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 450],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/payments",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "since", "value": "24h" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-match-payments",
+      "name": "Match Payments to Invoices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 375],
+      "parameters": {
+        "jsCode": "const inputData = $input.all();\n\nconst invoices = Array.isArray(inputData[0].json) ? inputData[0].json : (inputData[0].json.invoices || inputData[0].json.data || []);\nconst payments = Array.isArray(inputData[1].json) ? inputData[1].json : (inputData[1].json.payments || inputData[1].json.data || []);\n\nconst matched = [];\nconst unmatchedPayments = [];\nconst updatedInvoices = [];\n\n// Try to match payments to invoices by reference or amount\npayments.forEach(payment => {\n  let found = false;\n  \n  // Match by invoice_reference if present\n  if (payment.invoice_id) {\n    const invoice = invoices.find(inv => inv.id === payment.invoice_id);\n    if (invoice) {\n      matched.push({\n        invoiceId: invoice.id,\n        paymentId: payment.id,\n        amount: payment.amount,\n        invoiceAmount: invoice.total_amount,\n        matchType: 'direct_reference',\n        clientId: invoice.client_id,\n        clientName: invoice.client_name\n      });\n      updatedInvoices.push({\n        id: invoice.id,\n        status: Math.abs(payment.amount - invoice.total_amount) < 0.01 ? 'paid' : 'partial',\n        paid_amount: payment.amount,\n        payment_id: payment.id\n      });\n      found = true;\n    }\n  }\n  \n  // Try fuzzy match by client + amount\n  if (!found) {\n    const possibleInvoices = invoices.filter(inv => \n      inv.client_id === payment.client_id &&\n      Math.abs(inv.total_amount - payment.amount) < 5\n    );\n    \n    if (possibleInvoices.length === 1) {\n      const invoice = possibleInvoices[0];\n      matched.push({\n        invoiceId: invoice.id,\n        paymentId: payment.id,\n        amount: payment.amount,\n        invoiceAmount: invoice.total_amount,\n        matchType: 'fuzzy_amount',\n        clientId: invoice.client_id,\n        clientName: invoice.client_name\n      });\n      updatedInvoices.push({\n        id: invoice.id,\n        status: 'paid',\n        paid_amount: payment.amount,\n        payment_id: payment.id\n      });\n      found = true;\n    }\n  }\n  \n  if (!found) {\n    unmatchedPayments.push(payment);\n  }\n});\n\n// Find overdue invoices (unpaid > 30 days)\nconst now = new Date();\nconst overdueInvoices = invoices.filter(inv => {\n  if (inv.status === 'paid') return false;\n  const dueDate = new Date(inv.due_date || inv.created_at);\n  const daysDiff = (now - dueDate) / (1000 * 60 * 60 * 24);\n  return daysDiff > 30;\n});\n\nreturn {\n  matchedCount: matched.length,\n  unmatchedCount: unmatchedPayments.length,\n  overdueCount: overdueInvoices.length,\n  matches: matched,\n  unmatchedPayments: unmatchedPayments,\n  overdueInvoices: overdueInvoices,\n  invoicesToUpdate: updatedInvoices\n};"
+      }
+    },
+    {
+      "id": "http-update-invoice",
+      "name": "PATCH /api/invoices/{id} (mark paid)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 250],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/invoices/{{ $json.invoicesToUpdate[0].id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "status", "value": "={{ $json.invoicesToUpdate[0].status }}" },
+            { "name": "paid_amount", "value": "={{ $json.invoicesToUpdate[0].paid_amount }}" },
+            { "name": "payment_id", "value": "={{ $json.invoicesToUpdate[0].payment_id }}" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "switch-has-overdue",
+      "name": "Has Overdue Invoices?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [850, 450],
+      "parameters": {
+        "dataType": "number",
+        "value1": "={{ $json.overdueCount }}",
+        "options": {
+          "number": [
+            { "value": "0", "output": "No Overdue" },
+            { "value": ">0", "output": "Has Overdue" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-overdue-alert",
+      "name": "Telegram - Overdue Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 450],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "⚠️ *Overdue Invoice Alert*\\n\\n{{ $json.overdueCount }} invoice(s) are overdue (>30 days):\\n\\n{{ $json.overdueInvoices.map(i => `• #${i.id}: $${i.total_amount} - ${i.client_name}`).join('\\n') }}\\n\\nTotal overdue: ${{ $json.overdueInvoices.reduce((s,i) => s + i.total_amount, 0) }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "telegram-summary",
+      "name": "Telegram - Reconciliation Summary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 600],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "🔄 *Payment Reconciliation Complete*\\n\\n✅ Matched: {{ $json.matchedCount }} payments\\n❌ Unmatched: {{ $json.unmatchedCount }} payments\\n⚠️ Overdue: {{ $json.overdueCount }} invoices\\n\\n{{ $json.unmatchedCount > 0 ? '❗ Unmatched payments need manual review.' : 'All payments reconciled successfully.' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "noop-skip",
+      "name": "Skip (No Updates)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1050, 100],
+      "parameters": {}
+    },
+    {
+      "id": "switch-has-matches",
+      "name": "Has Matches?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [850, 100],
+      "parameters": {
+        "dataType": "number",
+        "value1": "={{ $json.matchedCount }}",
+        "options": {
+          "number": [
+            { "value": "0", "output": "No Matches" },
+            { "value": ">0", "output": "Has Matches" }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron - Every Hour": {
+      "main": [[ { "node": "GET /api/invoices?status=unpaid", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/invoices?status=unpaid": {
+      "main": [[ { "node": "Match Payments to Invoices", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/payments?since=24h": {
+      "main": [[ { "node": "Match Payments to Invoices", "type": "main", "index": 0 } ]]
+    },
+    "Match Payments to Invoices": {
+      "main": [[ { "node": "Has Matches?", "type": "main", "index": 0 }, { "node": "Has Overdue Invoices?", "type": "main", "index": 1 } ]]
+    },
+    "Has Matches?": {
+      "main": [
+        [{ "node": "Skip (No Updates)", "type": "main", "index": 0 }],
+        [{ "node": "PATCH /api/invoices/{id} (mark paid)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Has Overdue Invoices?": {
+      "main": [
+        [{ "node": "Telegram - Reconciliation Summary", "type": "main", "index": 0 }],
+        [{ "node": "Telegram - Overdue Alert", "type": "main", "index": 0 }]
+      ]
+    },
+    "PATCH /api/invoices/{id} (mark paid)": {
+      "main": [[ { "node": "Telegram - Reconciliation Summary", "type": "main", "index": 0 } ]]
+    },
+    "Telegram - Overdue Alert": {
+      "main": [[ { "node": "Telegram - Reconciliation Summary", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "invoices", "payments", "reconciliation"],
+  "active": false
+}

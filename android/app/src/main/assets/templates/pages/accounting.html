@@ -1,0 +1,63 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>Accounting & Profit/Loss Ledger</h1>
+              <p>Review customer billing invoices, distributor parts expenses, engineer commissions, and store profit margins.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn-primary" onclick="openModal('invoiceModal')">
+                Record Sales Invoice
+              </button>
+              <button class="btn-secondary" onclick="openModal('expenseModal')">
+                Record Operating Expense
+              </button>
+            </div>
+          </div>
+
+          <!-- P&L Metric Cards -->
+          <div class="stats-grid">
+            <div class="stat-card revenue-profit">
+              <span class="stat-title">Gross Revenue <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z"/></svg></span>
+              <span class="stat-value" id="accRevenueUSD">$0.00</span>
+              <span class="stat-subtext success-highlight" id="accRevenueMMK">0 MMK</span>
+            </div>
+            <div class="stat-card expense-loss">
+              <span class="stat-title">Operating Expenses <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13l-3 3m0 0l-3-3m3 3V8m0-13a9 9 0 110 18 9 9 0 010-18z"/></svg></span>
+              <span class="stat-value" id="accExpenseUSD">$0.00</span>
+              <span class="stat-subtext" id="accExpenseMMK" style="color: var(--color-danger);">0 MMK</span>
+            </div>
+            <div class="stat-card accented">
+              <span class="stat-title">Net Profit Margin <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></span>
+              <span class="stat-value" id="accProfitUSD">$0.00</span>
+              <span class="stat-subtext highlight" id="accProfitMMK">0 MMK</span>
+            </div>
+          </div>
+
+          <!-- Transaction Ledger -->
+          <div class="table-card">
+            <div class="table-toolbar">
+              <h3 style="font-size: 1rem; font-weight: 600;">Transaction History Ledger</h3>
+              <select class="filter-select" id="accountingTypeFilter" onchange="renderAccounting()">
+                <option value="">All Transactions</option>
+                <option value="Credit">Credits (Inflow)</option>
+                <option value="Debit">Debits (Outflow)</option>
+              </select>
+            </div>
+            <div class="table-wrapper">
+              <table class="filament-table">
+                <thead>
+                  <tr>
+                    <th>Ref ID</th>
+                    <th>Particulars / Description</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Amount (Original)</th>
+                    <th>Amount (Converted)</th>
+                  </tr>
+                </thead>
+                <tbody id="accountingTableBody">
+                  <!-- Injected rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>

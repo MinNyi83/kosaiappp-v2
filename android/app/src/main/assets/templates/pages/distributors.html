@@ -1,0 +1,38 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>Distributors Directory</h1>
+              <p>Procurement channels for spare parts, network switches, CCTV kits, and storage storage arrays.</p>
+            </div>
+            <div>
+              <button class="btn-primary" onclick="openModal('distributorModal')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Distributor
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-toolbar">
+              <div class="search-box">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" id="distributorSearchInput" placeholder="Search distributor or product lines..." onkeyup="filterDistributors()">
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="filament-table">
+                <thead>
+                  <tr>
+                    <th>Distributor Name</th>
+                    <th>Contact Person</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Product Lines Supplied</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="distributorsTableBody">
+                  <!-- JS Injected -->
+                </tbody>
+              </table>
+            </div>
+          </div>

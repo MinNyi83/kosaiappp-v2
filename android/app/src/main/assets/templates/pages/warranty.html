@@ -1,0 +1,65 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>Warranty & RMA Claims</h1>
+              <p>Track hardware serial number warranties and dispatch defective goods to distributors for RMA processing.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn-secondary" onclick="openModal('warrantyModal')">
+                Register Customer Warranty
+              </button>
+              <button class="btn-primary" onclick="openModal('rmaModal')">
+                Raise Distributor RMA Claim
+              </button>
+            </div>
+          </div>
+          
+          <div class="warranty-portal-layout">
+            
+            <!-- Customer Warranty List -->
+            <div class="table-card">
+              <div class="table-toolbar">
+                <h3 style="font-size: 0.95rem; font-weight: 600;">Customer Product Warranties</h3>
+              </div>
+              <div class="table-wrapper">
+                <table class="filament-table">
+                  <thead>
+                    <tr>
+                      <th>Serial No.</th>
+                      <th>Product</th>
+                      <th>Customer</th>
+                      <th>Expiry</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="customerWarrantyTableBody">
+                    <!-- Injected -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <!-- Distributor RMA Claims -->
+            <div class="table-card">
+              <div class="table-toolbar">
+                <h3 style="font-size: 0.95rem; font-weight: 600;">Active Distributor RMA / Claims</h3>
+              </div>
+              <div class="table-wrapper">
+                <table class="filament-table">
+                  <thead>
+                    <tr>
+                      <th>RMA ID</th>
+                      <th>Serial / Product</th>
+                      <th>Distributor</th>
+                      <th>Sent Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="distributorRMATableBody">
+                    <!-- Injected -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+          </div>

@@ -1,0 +1,27 @@
+{
+  "name": "v2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "admin.js",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260715.1",
+    "@tailwindcss/cli": "^4.3.2",
+    "autoprefixer": "^10.5.2",
+    "better-sqlite3": "^12.11.1",
+    "postcss": "^8.5.16",
+    "prettier": "^3.9.5",
+    "tailwindcss": "^4.3.2",
+    "vitest": "^4.1.10",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "dev": "npx wrangler dev",
+    "build:css": "tailwindcss -i ./public/input.css -o ./public/tailwind.css",
+    "watch:css": "tailwindcss -i ./public/input.css -o ./public/tailwind.css --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

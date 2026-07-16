@@ -1,0 +1,151 @@
+7:    if (method === "OPTIONS") {
+13:      if (url.pathname === "/api/auth/login" && method === "POST") {
+45:      if (url.pathname === "/api/auth/google" && method === "POST") {
+70:        if (email === adminEmail || email === "admin@example.com") {
+124:      if (url.pathname === "/api/auth/login-password" && method === "POST") {
+137:          if (username === "admin" && password === "AdminPass123!") {
+170:      if (url.pathname === "/api/portal/change-pin" && method === "POST") {
+196:      if (url.pathname.startsWith("/api/verify-tech/") && method === "GET") {
+197:        const techId = url.pathname.split("/api/verify-tech/")[1];
+267:      if (url.pathname === "/api/setup/google-drive" && method === "GET") {
+277:      if (url.pathname === "/api/setup/google-drive/callback" && method === "GET") {
+315:      if (url.pathname === "/api/jobs" && method === "GET") {
+327:      if (url.pathname === "/api/jobs/update" && method === "POST") {
+355:          if (beforeFile && typeof beforeFile !== 'string' && beforeFile.size > 0 && typeof beforeFile.arrayBuffer === 'function') {
+373:          if (afterFile && typeof afterFile !== 'string' && afterFile.size > 0 && typeof afterFile.arrayBuffer === 'function') {
+411:        if (hardwareAction === "sell" && serialNumber) {
+422:        } else if (hardwareAction === "replace" && serialNumber) {
+521:        if (status === 'Completed') {
+537:      // ==========================================
+539:      // ==========================================
+542:      if (url.pathname === "/api/admin/inventory/categories" && method === "GET") {
+546:      if (url.pathname === "/api/admin/inventory/categories/add" && method === "POST") {
+552:      if (url.pathname === "/api/admin/inventory/categories/update" && method === "POST") {
+558:      if (url.pathname === "/api/admin/inventory/categories/delete" && method === "POST") {
+565:      if (url.pathname === "/api/admin/inventory/sub-categories" && method === "GET") {
+571:      if (url.pathname === "/api/admin/inventory/sub-categories/add" && method === "POST") {
+577:      if (url.pathname === "/api/admin/inventory/sub-categories/update" && method === "POST") {
+583:      if (url.pathname === "/api/admin/inventory/sub-categories/delete" && method === "POST") {
+590:      if (url.pathname === "/api/admin/inventory/brands" && method === "GET") {
+594:      if (url.pathname === "/api/admin/inventory/brands/add" && method === "POST") {
+600:      if (url.pathname === "/api/admin/inventory/brands/update" && method === "POST") {
+606:      if (url.pathname === "/api/admin/inventory/brands/delete" && method === "POST") {
+613:      if (url.pathname === "/api/admin/inventory/units" && method === "GET") {
+617:      if (url.pathname === "/api/admin/inventory/units/add" && method === "POST") {
+623:      if (url.pathname === "/api/admin/inventory/units/delete" && method === "POST") {
+629:      // ==========================================
+631:      // ==========================================
+633:      if (url.pathname === "/api/admin/inventory/list" && method === "GET") {
+639:      if (url.pathname === "/api/external/inventory/search" && method === "GET") {
+652:      if (url.pathname === "/api/external/jobs/create" && method === "POST") {
+656:        if (targetClientId === 'Individual') {
+687:      if (url.pathname === "/api/admin/inventory/restock" && method === "POST") {
+714:      if (url.pathname === "/api/admin/inventory/add" && method === "POST") {
+746:      if (url.pathname === "/api/admin/inventory/delete" && method === "POST") {
+757:      if (url.pathname === "/api/admin/inventory/catalog/price" && method === "POST") {
+770:      if (url.pathname === "/api/admin/inventory/batches" && method === "GET") {
+780:          const serials = items.results.filter(i => i.batch_code === b.batch_code);
+790:      if (url.pathname === "/api/admin/inventory/batches/create" && method === "POST") {
+850:      if (url.pathname === "/api/admin/inventory/batches/edit" && method === "POST") {
+870:      if (url.pathname === "/api/admin/rma/list" && method === "GET") {
+879:      if (url.pathname === "/api/admin/rma/update" && method === "POST") {
+890:      if (url.pathname === "/api/admin/distributors/list" && method === "GET") {
+895:      if (url.pathname === "/api/admin/distributors/add" && method === "POST") {
+904:      if (url.pathname === "/api/admin/distributors/delete" && method === "DELETE") {
+911:      if (url.pathname === "/api/admin/warranty/list" && method === "GET") {
+920:      if (url.pathname === "/api/admin/warranty/register" && method === "POST") {
+929:      if (url.pathname === "/api/admin/rma/raise" && method === "POST") {
+939:      if (url.pathname === "/api/admin/rma/resolve" && method === "POST") {
+950:      if (url.pathname === "/api/pos/checkout" && method === "POST") {
+970:        if (!client_id || !Array.isArray(cart) || cart.length === 0) {
+976:        const activeRate = currency_type === 'USD_CUSTOM' ? customRate : standardRate;
+1035:        const activeCurrency = currency_type === 'MMK' ? 'MMK' : 'USD';
+1041:          const equivalent = activeCurrency === 'USD' ? amount * activeRate : amount / activeRate;
+1046:          ).bind(activeCurrency, amount, activeRate, equivalent, noteText, activeCurrency === 'MMK' ? 1 : 0).run();
+1049:          if (method === 'Cash' || method === 'USD') {
+1050:            if (activeCurrency === 'USD') {
+1068:          const totalInvAmt = activeCurrency === 'USD' ? totalUsd : totalMmk;
+1115:      if (url.pathname === "/api/pos/credits" && method === "GET") {
+1128:      if (url.pathname === "/api/pos/sales" && method === "GET") {
+1140:      if (url.pathname === "/api/pos/save-invoice-drive" && method === "POST") {
+1169:      if (url.pathname === "/api/pos/resolve-serial" && method === "GET") {
+1215:      if (url.pathname === "/api/portal/warranties" && method === "GET") {
+1224:      if (url.pathname === "/api/admin/cash/safe" && method === "GET") {
+1231:      if (url.pathname === "/api/admin/cash/transactions" && method === "GET") {
+1236:      if (url.pathname === "/api/admin/cash/transact" && method === "POST") {
+1240:        const equiv = primary_currency === "USD" ? numAmount * numRate : numAmount;
+1250:        if (transaction_type === "Deposit") {
+1251:          if (primary_currency === "USD" && recMMK === 1) {
+1253:          } else if (primary_currency === "USD") {
+1258:        } else if (transaction_type === "Withdrawal") {
+1259:          if (primary_currency === "USD" && recMMK === 1) {
+1261:          } else if (primary_currency === "USD") {
+1272:      if (url.pathname === "/api/admin/lookups" && method === "GET") {
+1284:      if (url.pathname === "/api/admin/technicians" && method === "GET") {
+1294:      if (url.pathname === "/api/admin/technicians/update" && method === "POST") {
+1332:      if (url.pathname === "/api/admin/technicians/delete" && method === "POST") {
+1353:      if (url.pathname === "/api/admin/technicians/create" && method === "POST") {
+1391:      if (url.pathname === "/api/admin/clients" && method === "POST") {
+1410:      if (url.pathname === "/api/admin/config" && method === "GET") {
+1425:      if (url.pathname === "/api/admin/config/save" && method === "POST") {
+1441:      if (url.pathname === "/api/admin/roles/list" && method === "GET") {
+1451:      if (url.pathname === "/api/admin/roles/save" && method === "POST") {
+1467:      if (url.pathname === "/api/admin/roles/delete" && method === "POST") {
+1476:        if (name === "Admin") {
+1484:      if (url.pathname === "/api/admin/clients/list" && method === "GET") {
+1494:      if (url.pathname === "/api/admin/clients/edit" && method === "POST") {
+1510:      if (url.pathname === "/api/admin/clients/delete" && method === "POST") {
+1528:      if (url.pathname === "/api/admin/jobs" && method === "POST") {
+1537:        if (customer_type === 'Individual') {
+1538:          if (!targetClientId || targetClientId === 'null' || targetClientId === '') {
+1629:      if (url.pathname === "/api/admin/jobs/edit" && method === "POST") {
+1729:      if (url.pathname === "/api/admin/jobs/cancel" && method === "POST") {
+1748:      if (url.pathname === "/api/service-fees" && method === "GET") {
+1754:      if (url.pathname === "/api/admin/service-fees/manage" && method === "POST") {
+1762:        if (action === "create") {
+1769:        if (action === "update") {
+1776:        if (action === "delete") {
+1785:      if (url.pathname === "/api/admin/jobs/ai-polish" && method === "POST") {
+1838:      if (url.pathname === "/api/admin/ai/auto-dispatch" && method === "POST") {
+1878:          if (!aiData || !aiData.candidates || aiData.candidates.length === 0) {
+1898:      if (url.pathname === "/api/admin/ai/route-optimize" && method === "POST") {
+1912:        if (results.length === 0) {
+1938:          if (!aiData || !aiData.candidates || aiData.candidates.length === 0) {
+1955:      if (url.pathname === "/api/admin/ai/chat-data" && method === "POST") {
+2024:      if (url.pathname === "/api/admin/ai/transcribe" && method === "POST") {
+2057:      if (url.pathname === "/api/telegram-webhook" && method === "POST") {
+2071:            if (command === "/status") {
+2132:            if (command === "/assign") {
+2272:      if (url.pathname === "/api/admin/resolve-coords" && method === "GET") {
+2327:      if (url.pathname === "/api/portal/history" && method === "GET") {
+2341:      if (url.pathname === "/api/portal/transactions" && method === "GET") {
+2356:      if (url.pathname === "/api/jobs/schedule" && method === "POST") {
+2365:      if (url.pathname === "/api/jobs/receipt" && method === "GET") {
+2382:      if (url.pathname === "/api/admin/backup" && method === "GET") {
+2415:      if (url.pathname === "/api/admin/restore" && method === "POST") {
+2521:      if (url.pathname === "/api/landing-page" && method === "GET") {
+2558:        if (!countResult || countResult.count === 0) {
+2618:      if (url.pathname === "/api/admin/hq-config" && method === "POST") {
+2632:      if (url.pathname === "/api/landing-page" && method === "POST") {
+2659:      if (url.pathname === "/api/contact" && method === "POST") {
+2681:      if (url.pathname === "/api/exchange-rate" && method === "GET") {
+2686:      if (url.pathname === "/api/inventory/serials" && method === "GET") {
+2711:      if (url.pathname === "/api/admin/jobs/add" && method === "POST") {
+2719:        if (body.customer_type === 'Individual' || targetClientId === 'Individual') {
+2730:        const techId = body.technician_id === "UNASSIGNED" ? null : body.technician_id;
+2742:      if (err.message === "FORBIDDEN_READ_ONLY") {
+3024:    if (oldSecret === env.ADMIN_SECRET || oldSecret === "SuperSecureAdminPass123!") {
+3036:  if (payload.id === "ADMIN-HUB" || payload.role === "Admin") {
+3056:  if (url.pathname.startsWith("/api/admin/clients")) {
+3058:  } else if (url.pathname.startsWith("/api/admin/technicians") || url.pathname.startsWith("/api/admin/users") || url.pathname.startsWith("/api/admin/roles")) {
+3060:  } else if (url.pathname.startsWith("/api/admin/jobs") || url.pathname.startsWith("/api/jobs")) {
+3062:  } else if (url.pathname.startsWith("/api/admin/service-fees") || url.pathname.startsWith("/api/service-fees")) {
+3064:  } else if (url.pathname.startsWith("/api/admin/cash-safe")) {
+3066:  } else if (url.pathname.startsWith("/api/pos")) {
+3068:  } else if (url.pathname.startsWith("/api/admin/inventory")) {
+3070:  } else if (url.pathname.startsWith("/api/admin/config")) {
+3078:    if (method === "GET") {
+3079:      if (access === "read" || access === "write") {
+3084:      if (access === "write") {
+3117:                         res.status === 400 || 
+3118:                         res.status === 403;

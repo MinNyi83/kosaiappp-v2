@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Awesome Myanmar</title>
+    <link rel="stylesheet" href="tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Leaflet.js for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { scroll-behavior: smooth; }
+        
+        html { scroll-padding-top: 80px; }
+        
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.05), transparent 45%),
+                        radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 40%),
+                        #09090b;
+        }
+        
+        .glass-panel {
+            background: rgba(18, 18, 24, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+        
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover::before { left: 100%; }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Leaflet Dark Theme */
+        .leaflet-container { 
+            background: #0c0c10 !important; 
+            border-radius: 16px; 
+        }
+        .leaflet-tile { filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%); }
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background-color: #121218 !important;
+            color: #cbd5e1 !important;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .leaflet-control-zoom a {
+            background-color: #121218 !important;
+            color: #fff !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        .leaflet-control-zoom a:hover {
+            background-color: #1c1c1e !important;
+        }
+        
+        /* Hamburger Menu */
+        #hamburger-btn.active .hamburger-line:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+        #hamburger-btn.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+        #hamburger-btn.active .hamburger-line:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+        
+        #mobile-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        #mobile-menu.open { max-height: 400px; }
+        
+        /* Contact Info Cards */
+        .contact-card {
+            background: rgba(18, 18, 24, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-card:hover {
+            border-color: rgba(245, 158, 11, 0.3);
+            background: rgba(245, 158, 11, 0.05);
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-white/5 bg-black/30 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-amber-500 text-xl">⚙️</span>
+                <span class="font-extrabold text-white tracking-wider text-sm uppercase">Awesome Myanmar</span>
+            </div>
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
+                <a href="/" class="text-slate-400 hover:text-white transition">Home</a>
+                <a href="/portal.html" class="text-slate-400 hover:text-white transition">Portal</a>
+                <a href="/contact.html" class="text-amber-500">Contact</a>
+                <a href="/admin.html" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-1.5 rounded-lg transition">Staff Console</a>
+            </nav>
+            <!-- Hamburger Button -->
+            <button id="hamburger-btn" class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5" aria-label="Toggle menu">
+                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+                <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+            </button>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden border-t border-white/5 bg-black/50 backdrop-blur-md">
+            <nav class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 text-xs font-bold uppercase tracking-wider">
+                <a href="/" class="text-slate-400 hover:text-white transition py-2">Home</a>
+                <a href="/portal.html" class="text-slate-400 hover:text-white transition py-2">Portal</a>
+                <a href="/contact.html" class="text-amber-500 py-2">Contact</a>
+                <a href="/admin.html" class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-2 rounded-lg transition text-center mt-2">Staff Console</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-12 md:py-16">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <p class="text-amber-500 text-xs font-bold uppercase tracking-[0.3em] mb-3">Get In Touch</p>
+            <h1 class="text-3xl md:text-5xl font-black text-white uppercase tracking-tight mb-4">Contact Us</h1>
+            <p class="text-slate-400 text-sm md:text-base max-w-xl mx-auto">
+                Have a question or need a quote? Our team is ready to help you with your security and infrastructure needs.
+            </p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl mx-auto px-4 pb-16">
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Contact Form -->
+            <div class="glass-panel p-6 md:p-8 rounded-2xl">
+                <h2 class="text-xl font-bold text-white mb-6">Send us a Message</h2>
+                
+                <form method="POST" id="contact-form" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Full Name</label>
+                            <input name="contact-name" type="text" id="contact-name" required placeholder="Your name" class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phone Number</label>
+                            <input name="contact-phone" type="tel" id="contact-phone" required placeholder="09-XXXXXXXXX" class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email Address</label>
+                        <input name="contact-email" type="email" id="contact-email" required placeholder="your@email.com" class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none">
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Service Interest</label>
+                        <select name="contact-service" id="contact-service" class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none">
+                            <option value="">Select a service</option>
+                            <option value="CCTV">CCTV & Surveillance</option>
+                            <option value="Networking">Mesh Networking</option>
+                            <option value="NAS">NAS Storage</option>
+                            <option value="General">General Inquiry</option>
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Message</label>
+                        <textarea name="contact-message" id="contact-message" required rows="4" placeholder="Tell us about your project or question..." class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none resize-none"></textarea>
+                    </div>
+                    
+                    <button type="submit" id="contact-submit" class="btn-primary w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                        <span id="submit-text">Send Message</span>
+                        <div id="submit-spinner" class="spinner hidden"></div>
+                    </button>
+                </form>
+                
+                <!-- Success Message -->
+                <div id="success-message" class="hidden text-center py-8">
+                    <div class="text-4xl mb-4">✅</div>
+                    <h3 class="text-lg font-bold text-white mb-2">Message Sent!</h3>
+                    <p class="text-sm text-slate-400">We'll get back to you within 24 hours.</p>
+                    <button onclick="resetForm()" class="mt-4 text-amber-500 text-sm font-semibold hover:text-amber-400 transition">Send another message</button>
+                </div>
+            </div>
+
+            <!-- Contact Info & Map -->
+            <div class="space-y-6">
+                <!-- Contact Info Cards -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="contact-card">
+                        <div class="text-amber-500 text-xl mb-2">📍</div>
+                        <h3 class="text-sm font-bold text-white mb-1">Address</h3>
+                        <p class="text-xs text-slate-400" id="contact-info-address">No. 123, Pyay Road<br/>Yangon, Myanmar</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="text-amber-500 text-xl mb-2">📞</div>
+                        <h3 class="text-sm font-bold text-white mb-1">Phone</h3>
+                        <p class="text-xs text-slate-400" id="contact-info-phone">+95 9 1234 5678</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="text-amber-500 text-xl mb-2">✉️</div>
+                        <h3 class="text-sm font-bold text-white mb-1">Email</h3>
+                        <p class="text-xs text-slate-400" id="contact-info-email">info@awesomemyanmar.com</p>
+                    </div>
+                    <div class="contact-card">
+                        <div class="text-amber-500 text-xl mb-2">🕐</div>
+                        <h3 class="text-sm font-bold text-white mb-1">Hours</h3>
+                        <p class="text-xs text-slate-400" id="contact-info-hours">Mon - Sat: 9:00 AM - 5:30 PM</p>
+                    </div>
+                </div>
+
+                <!-- Map -->
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div id="map" class="h-64 md:h-80"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 bg-black/50 py-8 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 space-y-4">
+            <div class="flex items-center justify-center gap-2">
+                <span class="text-amber-500">⚙️</span>
+                <span class="font-bold text-white tracking-wider uppercase">Awesome Myanmar</span>
+            </div>
+            <p>&copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Menu
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        hamburgerBtn.addEventListener('click', () => {
+            hamburgerBtn.classList.toggle('active');
+            mobileMenu.classList.toggle('hidden');
+            mobileMenu.classList.toggle('open');
+        });
+
+        // Initialize Map
+        const map = L.map('map', {
+            zoomControl: true,
+            scrollWheelZoom: false
+        }).setView([16.774680, 96.160812], 15); // Yangon coordinates
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Custom marker
+        const marker = L.marker([16.774680, 96.160812]).addTo(map);
+        marker.bindPopup(`
+            <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 4px;">
+                <strong style="color: #f59e0b;">Awesome Myanmar</strong><br/>
+                <span style="color: #64748b; font-size: 12px;">CCTV & Infrastructure Solutions</span><br/>
+                <span style="color: #94a3b8; font-size: 11px;">No.159, Ground Floor, 39th Street (Middle Block), Kyut Tada Township, Yangon</span>
+            </div>
+        `).openPopup();
+
+        // Contact Form
+        const API_BASE_URL = window.location.origin;
+        
+        document.getElementById('contact-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('contact-submit');
+            const btnText = document.getElementById('submit-text');
+            const btnSpinner = document.getElementById('submit-spinner');
+            const form = document.getElementById('contact-form');
+            const successMsg = document.getElementById('success-message');
+            
+            // Show loading
+            submitBtn.disabled = true;
+            btnText.textContent = 'Sending...';
+            btnSpinner.classList.remove('hidden');
+            
+            // Get form data
+            const name = document.getElementById('contact-name').value.trim();
+            const phone = document.getElementById('contact-phone').value.trim();
+            const email = document.getElementById('contact-email').value.trim();
+            const service = document.getElementById('contact-service').value;
+            const message = document.getElementById('contact-message').value.trim();
+            
+            try {
+                // Submit to public contact endpoint
+                const payload = {
+                    name: name,
+                    phone: phone,
+                    email: email,
+                    service: service,
+                    message: message
+                };
+
+                const res = await fetch(`${API_BASE_URL}/api/contact`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    // Show success
+                    form.classList.add('hidden');
+                    successMsg.classList.remove('hidden');
+                } else {
+                    throw new Error('Failed to send');
+                }
+            } catch (err) {
+                alert('Failed to send message. Please try again or contact us directly.');
+                submitBtn.disabled = false;
+                btnText.textContent = 'Send Message';
+                btnSpinner.classList.add('hidden');
+            }
+        });
+
+        function resetForm() {
+            const form = document.getElementById('contact-form');
+            const successMsg = document.getElementById('success-message');
+            const submitBtn = document.getElementById('contact-submit');
+            const btnText = document.getElementById('submit-text');
+            const btnSpinner = document.getElementById('submit-spinner');
+            
+            form.reset();
+            form.classList.remove('hidden');
+            successMsg.classList.add('hidden');
+            submitBtn.disabled = false;
+            btnText.textContent = 'Send Message';
+            btnSpinner.classList.add('hidden');
+        }
+
+        async function fetchContactDetails() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/landing-page`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const content = data.value;
+                    if (content) {
+                        if (content.address) document.getElementById('contact-info-address').innerHTML = content.address.replace(/\n/g, '<br/>');
+                        if (content.phone) document.getElementById('contact-info-phone').innerHTML = content.phone.replace(/\n/g, '<br/>');
+                        if (content.email) document.getElementById('contact-info-email').innerHTML = content.email.replace(/\n/g, '<br/>');
+                        if (content.hours) document.getElementById('contact-info-hours').innerHTML = content.hours.replace(/\n/g, '<br/>');
+                        
+                        // Update Map
+                        if (content.map_lat && content.map_lng) {
+                            const lat = parseFloat(content.map_lat);
+                            const lng = parseFloat(content.map_lng);
+                            map.setView([lat, lng], 15);
+                            marker.setLatLng([lat, lng]);
+                            marker.getPopup().setContent(`
+                                <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 4px;">
+                                    <strong style="color: #f59e0b;">Awesome Myanmar</strong><br/>
+                                    <span style="color: #64748b; font-size: 12px;">CCTV & Infrastructure Solutions</span><br/>
+                                    <span style="color: #94a3b8; font-size: 11px;">${content.address || 'Yangon, Myanmar'}</span>
+                                </div>
+                            `);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to load contact details from CMS', e);
+            }
+        }
+
+        // Trigger on load
+        window.addEventListener('DOMContentLoaded', fetchContactDetails);
+    </script>
+</body>
+</html>

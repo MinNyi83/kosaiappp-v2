@@ -1,0 +1,200 @@
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const method = request.method;
+
+    // Handle cross-origin isolation (CORS preflight checks)
+    if (method === "OPTIONS") {
+      return new Response(null, { headers: getCorsHeaders() });
+    }
+
+    try {
+      // --- TECHNICIAN AUTHENTICATION ---
+      if (url.pathname === "/api/auth/login" && method === "POST") {
+        const { id, pin } = await request.json();
+        if (!id) {
+          return new Response(JSON.stringify({ error: "Missing account ID" }), { status: 400, headers: getCorsHeaders() });
+        }
+
+        const tech = await env.DB.prepare(
+          "SELECT * FROM technicians WHERE id = ? AND active = 1"
+        ).bind(id).first();
+
+        if (!tech) {
+          return new Response(JSON.stringify({ error: "Technician not found or inactive" }), { status: 401, headers: getCorsHeaders() });
+        }
+
+        // Validate PIN
+        if (tech.pin && tech.pin !== pin) {
+          return new Response(JSON.stringify({ error: "Invalid PIN" }), { status: 401, headers: getCorsHeaders() });
+        }
+
+        return jsonResponse({
+          success: true,
+          user: { 
+            id: tech.id, 
+            name: tech.name, 
+            role: tech.role,
+            phone: tech.phone,
+            email: tech.email,
+            photo: tech.photo
+          }
+        });
+      }
+      // --- GOOGLE SIGN-IN AUTHENTICATION ---
+      if (url.pathname === "/api/auth/google" && method === "POST") {
+        const { token } = await request.json();
+        if (!token) {
+          return new Response(JSON.stringify({ error: "Missing identity token" }), { status: 400, headers: getCorsHeaders() });
+        }
+
+        // Call Google's secure validation endpoint
+        const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+        if (!verifyRes.ok) {
+          return new Response(JSON.stringify({ error: "Invalid Google identity token" }), { status: 401, headers: getCorsHeaders() });
+        }
+
+        const payload = await verifyRes.json();
+        const expectedClientId = env.GOOGLE_CLIENT_ID || "12345-abcde.apps.googleusercontent.com";
+
+        // Validate the Client ID Audience
+        if (payload.aud !== expectedClientId) {
+          return new Response(JSON.stringify({ error: "Token client ID mismatch" }), { status: 401, headers: getCorsHeaders() });
+        }
+
+        const email = payload.email;
+        const name = payload.name;
+
+        // Check if user is Admin
+        const adminEmail = env.ADMIN_EMAIL || "nyinyimin2007@gmail.com";
+        if (email === adminEmail || email === "admin@example.com") {
+          const userPayload = { id: "ADMIN-HUB", name: name, role: "Admin", email: email, permissions: "read_write" };
+          const secretKey = env.JWT_SECRET || env.ADMIN_SECRET || "AwesomeMyanmarSecret123!";
+          const sessionToken = await generateJWT({ ...userPayload, exp: Date.now() + 24 * 60 * 60 * 1000 }, secretKey);
+          return jsonResponse({
+            success: true,
+            user: userPayload,
+            token: sessionToken
+          });
+        }
+
+        // Otherwise look up Technician in database by email (regardless of active status)
+        let tech = await env.DB.prepare(
+          "SELECT * FROM technicians WHERE email = ?"
+        ).bind(email).first();
+
+        if (!tech) {
+          const newId = `TECH-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+          await env.DB.prepare(
+            "INSERT INTO technicians (id, name, role, phone, active, email, permissions) VALUES (?, ?, 'Technician', '', 0, ?, 'read_write')"
+          ).bind(newId, name, email).run();
+
+          return new Response(
+            JSON.stringify({ error: `Your account registration (${email}) has been submitted and is pending administrator approval.` }),
+            { status: 401, headers: getCorsHeaders() }
+          );
+        }
+
+        if (tech.active !== 1) {
+          return new Response(
+            JSON.stringify({ error: `Your account (${email}) is pending administrator approval or has been deactivated.` }),
+            { status: 401, headers: getCorsHeaders() }
+          );
+        }
+
+        const userPayload = { 
+          id: tech.id, 
+          name: tech.name, 
+          role: tech.role, 
+          email: email,
+          phone: tech.phone,
+          photo: tech.photo,
+          permissions: tech.permissions || "read_write"
+        };
+        const secretKey = env.JWT_SECRET || env.ADMIN_SECRET || "AwesomeMyanmarSecret123!";
+        const sessionToken = await generateJWT({ ...userPayload, exp: Date.now() + 24 * 60 * 60 * 1000 }, secretKey);
+        return jsonResponse({
+          success: true,
+          user: userPayload,
+          token: sessionToken
+        });
+      }
+
+      // --- USERNAME/PASSWORD AUTHENTICATION (ADMIN & TECH) ---
+      if (url.pathname === "/api/auth/login-password" && method === "POST") {
+        const { username, password } = await request.json();
+        if (!username || !password) {
+          return new Response(JSON.stringify({ error: "Missing username or password" }), { status: 400, headers: getCorsHeaders() });
+        }
+
+        // Query technician by username
+        const tech = await env.DB.prepare(
+          "SELECT * FROM technicians WHERE username = ?"
+        ).bind(username).first();
+
+        if (!tech) {
+          // Hardcoded fallback for default admin account
+          if (username === "admin" && password === "AdminPass123!") {
+            const adminEmail = env.ADMIN_EMAIL || "nyinyimin2007@gmail.com";
+            const userPayload = { id: "ADMIN-HUB", name: "System Admin", role: "Admin", email: adminEmail, permissions: "read_write" };
+            const secretKey = env.JWT_SECRET || env.ADMIN_SECRET || "AwesomeMyanmarSecret123!";
+            const token = await generateJWT({ ...userPayload, exp: Date.now() + 24 * 60 * 60 * 1000 }, secretKey);
+            return jsonResponse({
+              success: true,
+              user: userPayload,
+              token: token
+            });
+          }
+          return new Response(JSON.stringify({ error: "Invalid credentials" }), { status: 401, headers: getCorsHeaders() });
+        }
+
+        if (tech.password !== password) {
+          return new Response(JSON.stringify({ error: "Invalid credentials" }), { status: 401, headers: getCorsHeaders() });
+        }
+
+        if (tech.active !== 1) {
+          return new Response(JSON.stringify({ error: "Your account is pending administrator approval or has been deactivated." }), { status: 401, headers: getCorsHeaders() });
+        }
+
+        const userPayload = { id: tech.id, name: tech.name, role: tech.role, email: tech.email || "", permissions: tech.permissions || "read_write" };
+        const secretKey = env.JWT_SECRET || env.ADMIN_SECRET || "AwesomeMyanmarSecret123!";
+        const token = await generateJWT({ ...userPayload, exp: Date.now() + 24 * 60 * 60 * 1000 }, secretKey);
+        return jsonResponse({
+          success: true,
+          user: userPayload,
+          token: token
+        });
+      }
+
+      // --- TECHNICIAN CHANGE PIN ENDPOINT ---
+      if (url.pathname === "/api/portal/change-pin" && method === "POST") {
+        const { id, oldPin, newPin } = await request.json();
+        if (!id || !oldPin || !newPin) {
+          return new Response(JSON.stringify({ error: "Missing required parameters" }), { status: 400, headers: getCorsHeaders() });
+        }
+
+        const tech = await env.DB.prepare(
+          "SELECT pin FROM technicians WHERE id = ? AND active = 1"
+        ).bind(id).first();
+
+        if (!tech) {
+          return new Response(JSON.stringify({ error: "Technician not found or inactive" }), { status: 404, headers: getCorsHeaders() });
+        }
+
+        if (tech.pin !== oldPin) {
+          return new Response(JSON.stringify({ error: "Incorrect current PIN" }), { status: 400, headers: getCorsHeaders() });
+        }
+
+        await env.DB.prepare(
+          "UPDATE technicians SET pin = ? WHERE id = ?"
+        ).bind(newPin, id).run();
+
+        return jsonResponse({ success: true, message: "Security PIN code changed successfully." });
+      }
+
+      // --- PUBLIC TECHNICIAN ID VERIFICATION (QR Code scan target) ---
+      if (url.pathname.startsWith("/api/verify-tech/") && method === "GET") {
+        const techId = url.pathname.split("/api/verify-tech/")[1];
+        if (!techId) {
+          return new Response("Missing technician ID", { status: 400, headers: getCorsHeaders() });
+        }

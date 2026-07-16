@@ -1,0 +1,198 @@
+{
+  "name": "Client Onboarding Sequence",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook - Client Created",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "kosai/client-created",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "webhookId": "kosai-client-created"
+    },
+    {
+      "id": "http-get-client",
+      "name": "GET /api/clients/{id}",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/clients/{{ $json.body.clientId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-prepare-data",
+      "name": "Prepare Onboarding Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "jsCode": "const client = $input.first().json;\n\nconst welcomeTicket = {\n  title: `Welcome ${client.name} - Onboarding`,\n  description: `New client onboarding tasks:\\n1. Set up client profile\\n2. Schedule initial consultation\\n3. Assign account manager\\n4. Configure service preferences`,\n  priority: 'high',\n  client_id: client.id,\n  type: 'onboarding'\n};\n\nconst welcomeMessage = `🎉 *Welcome to Kosai, ${client.name}!*\\n\\nWe're excited to have you on board! Here's what happens next:\\n\\n1️⃣ Your account is being set up\\n2️⃣ An account manager will contact you within 24 hours\\n3️⃣ You can start booking services immediately\\n\\nNeed help? Reply to this message or call our support team.`;\n\nreturn {\n  client: client,\n  welcomeTicket: welcomeTicket,\n  welcomeMessage: welcomeMessage,\n  clientPhone: client.phone,\n  clientName: client.name\n};"
+      }
+    },
+    {
+      "id": "http-create-ticket",
+      "name": "POST /api/tickets (welcome)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/tickets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "title", "value": "={{ $json.welcomeTicket.title }}" },
+            { "name": "description", "value": "={{ $json.welcomeTicket.description }}" },
+            { "name": "priority", "value": "={{ $json.welcomeTicket.priority }}" },
+            { "name": "client_id", "value": "={{ $json.welcomeTicket.client_id }}" },
+            { "name": "type", "value": "={{ $json.welcomeTicket.type }}" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-welcome",
+      "name": "Telegram - Welcome Client",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 350],
+      "parameters": {
+        "chatId": "={{ $json.client.telegram_chat_id || $env.TELEGRAM_DEFAULT_CHAT_ID }}",
+        "text": "={{ $json.welcomeMessage }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "http-create-activity",
+      "name": "POST /api/activity (onboarding)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 500],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/activity",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "type", "value": "client_onboarding" },
+            { "name": "description", "value": "Onboarding started for client {{ $json.client.name }} (ID: {{ $json.client.id }})" },
+            { "name": "reference_type", "value": "client" },
+            { "name": "reference_id", "value": "={{ $json.client.id }}" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wait-24h",
+      "name": "Wait 24 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "parameters": {
+        "resume": "duration",
+        "amount": 24,
+        "unit": "hours"
+      }
+    },
+    {
+      "id": "http-check-followup",
+      "name": "GET /api/clients/{id} (follow-up)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/clients/{{ $json.client.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-followup",
+      "name": "Telegram - Follow-up",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1450, 300],
+      "parameters": {
+        "chatId": "={{ $json.client.telegram_chat_id || $env.TELEGRAM_DEFAULT_CHAT_ID }}",
+        "text": "👋 *How's everything going, {{ $json.client.name }}?*\\n\\nIt's been 24 hours since you joined Kosai!\\n\\nIf you need any assistance, have questions, or want to book a service, just let us know. We're here to help!\\n\\nReply to this message or visit the portal anytime.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Client Created": {
+      "main": [[ { "node": "GET /api/clients/{id}", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/clients/{id}": {
+      "main": [[ { "node": "Prepare Onboarding Data", "type": "main", "index": 0 } ]]
+    },
+    "Prepare Onboarding Data": {
+      "main": [[ { "node": "POST /api/tickets (welcome)", "type": "main", "index": 0 }, { "node": "Telegram - Welcome Client", "type": "main", "index": 1 }, { "node": "POST /api/activity (onboarding)", "type": "main", "index": 2 } ]]
+    },
+    "POST /api/tickets (welcome)": {
+      "main": [[ { "node": "Wait 24 Hours", "type": "main", "index": 0 } ]]
+    },
+    "Telegram - Welcome Client": {
+      "main": [[ { "node": "Wait 24 Hours", "type": "main", "index": 0 } ]]
+    },
+    "POST /api/activity (onboarding)": {
+      "main": [[ { "node": "Wait 24 Hours", "type": "main", "index": 0 } ]]
+    },
+    "Wait 24 Hours": {
+      "main": [[ { "node": "GET /api/clients/{id} (follow-up)", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/clients/{id} (follow-up)": {
+      "main": [[ { "node": "Telegram - Follow-up", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "clients", "onboarding"],
+  "active": false
+}

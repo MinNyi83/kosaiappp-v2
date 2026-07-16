@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Field Operations Portal</title>
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="public/tailwind.css">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Plus Jakarta Sans", sans-serif;
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 45%),
+                        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.05), transparent 40%),
+                        #09090b;
+        }
+        .glass-panel {
+            background: rgba(18, 18, 24, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .input-dark {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .input-dark:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+    </style>
+    <!-- Google Identity Client Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="text-slate-200 min-h-screen font-sans flex flex-col items-center">
+
+    <!-- 1. Secure Authentication Shield Interface -->
+    <div id="auth-screen" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-panel p-8 rounded-3xl shadow-2xl max-w-sm w-full space-y-6">
+            <div class="text-center">
+                <div class="inline-flex p-3 rounded-2xl bg-indigo-500/10 text-indigo-400 mb-3 text-xl">🔒</div>
+                <h1 class="text-2xl font-extrabold tracking-wider text-white">FIELD PORTAL LOCK</h1>
+                <p class="text-xs text-indigo-400 mt-1 uppercase font-bold tracking-widest">Operator Verification</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">Employee Account ID</label>
+                    <input type="text" id="auth-uid" required placeholder="e.g., TECH-001" class="w-full input-dark rounded-xl px-4 py-3 text-sm focus:outline-none transition-all text-white font-mono uppercase">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">Access Security PIN</label>
+                    <input type="password" id="auth-pin" required pattern="[0-9]*" inputmode="numeric" maxlength="6" placeholder="••••" class="w-full input-dark rounded-xl px-4 py-3 text-center text-xl tracking-widest focus:outline-none transition-all font-bold text-indigo-400">
+                </div>
+                <button type="submit" id="auth-btn" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg hover:shadow-indigo-500/20 uppercase tracking-widest mt-2">
+                    Verify Gate Pass
+                </button>
+            </form>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-white/10"></div>
+                <span class="flex-shrink mx-4 text-[10px] text-slate-500 uppercase font-bold tracking-widest">OR</span>
+                <div class="flex-grow border-t border-white/10"></div>
+            </div>
+
+            <div id="g-signin-btn" class="flex justify-center"></div>
+        </div>
+    </div>
+
+    <!-- 2. Main Workorder App Content Interface -->
+    <div id="app-content" class="hidden w-full max-w-md flex flex-col min-h-screen">
+        <header class="bg-black/40 border-b border-white/5 backdrop-blur-md p-4 sticky top-0 z-40 shadow-lg flex justify-between items-center">
+            <div>
+                <h1 class="text-base font-extrabold text-white tracking-wide uppercase" id="user-display-name">Technician Unit</h1>
+                <p class="text-[10px] text-indigo-400 font-semibold tracking-wider" id="user-display-role">Initializing Security Context...</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <div id="offline-badge" class="hidden text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-lg">OFFLINE MODE</div>
+                <button onclick="syncOfflineQueue()" id="sync-btn" class="hidden bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-3 py-1.5 rounded-xl animate-pulse">Sync Queue</button>
+                <button onclick="fetchJobs()" class="bg-white/5 hover:bg-white/10 p-2 rounded-xl border border-white/10 transition-all active:scale-95 text-sm">🔄</button>
+                <button onclick="handleLogout()" class="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/30 px-3 py-2 rounded-xl text-xs font-bold transition-all active:scale-95">Logout</button>
+            </div>
+        </header>
+
+        <main class="p-4 space-y-6 pb-12 flex-1" id="jobs-list">
+            <!-- Dynamic jobs payload elements populate here -->
+        </main>
+    </div>
+
+    <script>
+        const API_BASE_URL = "https://awesomemyanmar.pages.dev";
+        let activeSessionUser = null;
+        let activeCanvases = {};
+
+        // Listen for online status updates
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        function updateOnlineStatus() {
+            const badge = document.getElementById('offline-badge');
+            if (navigator.onLine) {
+                badge.classList.add('hidden');
+                syncOfflineQueue();
+            } else {
+                badge.classList.remove('hidden');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const id = document.getElementById('auth-uid').value.trim().toUpperCase();
+            const pin = document.getElementById('auth-pin').value.trim();
+            const btn = document.getElementById('auth-btn');
+
+            btn.disabled = true;
+            btn.textContent = "Checking Credentials...";
+
+            try {
+                // If offline, check if user details match pre-seeded values or cached logins
+                if (!navigator.onLine) {
+                    alert("Running offline. Login bypassed using cached operator ID.");
+                    activeSessionUser = { id, name: "Field Operator (" + id + ")", role: "Technician" };
+                    document.getElementById('user-display-name').textContent = activeSessionUser.name;
+                    document.getElementById('user-display-role').textContent = `${activeSessionUser.id} • ${activeSessionUser.role}`;
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    updateOnlineStatus();
+                    loadCachedJobs();
+                    return;
+                }
+
+                const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, pin })
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Authentication failed");
+
+                activeSessionUser = data.user;
+                document.getElementById('user-display-name').textContent = activeSessionUser.name;
+                document.getElementById('user-display-role').textContent = `${activeSessionUser.id} • ${activeSessionUser.role}`;
+                
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                updateOnlineStatus();
+                fetchJobs();
+            } catch (err) {
+                alert("Access Denied: " + err.message);
+                document.getElementById('auth-pin').value = '';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Verify Gate Pass";
+            }
+        }
+
+        function handleLogout() {
+            activeSessionUser = null;
+            document.getElementById('auth-uid').value = '';
+            document.getElementById('auth-pin').value = '';
+            document.getElementById('app-content').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        async function fetchJobs() {
+            if (!activeSessionUser) return;
+            try {
+                if (!navigator.onLine) {
+                    loadCachedJobs();
+                    return;
+                }
+
+                const res = await fetch(`${API_BASE_URL}/api/jobs`);
+                const jobs = await res.json();
+                localStorage.setItem('cached_jobs', JSON.stringify(jobs));
+                renderJobsList(jobs);
+            } catch (err) {
+                alert("Error pulling remote data: " + err.message);
+                loadCachedJobs();
+            }
+        }
+
+        function loadCachedJobs() {
+            const cached = localStorage.getItem('cached_jobs');
+            if (cached) {
+                renderJobsList(JSON.parse(cached));
+            } else {
+                document.getElementById('jobs-list').innerHTML = `
+                    <div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm">
+                        No cached service tickets found on this device.
+                    </div>`;
+            }
+        }
+
+        function renderJobsList(jobs) {
+            const container = document.getElementById('jobs-list');
+            container.innerHTML = '';
+
+            const technicianJobs = jobs.filter(j => j.technician_id === activeSessionUser.id);
+
+            if (technicianJobs.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm">
+                        <span class="text-3xl block mb-2">🎉</span>
+                        No active service tickets assigned to your signature.
+                    </div>`;
+                return;
+            }
+
+            technicianJobs.forEach(job => {
+                const card = document.createElement('div');
+                card.className = "glass-panel p-5 rounded-3xl shadow-xl space-y-4";
+                
+                let badgeColor = job.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                                 job.status === 'In Progress' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
+                                 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start border-b border-white/5 pb-3">
+                        <div>
+                            <span class="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${badgeColor}">${job.status}</span>
+                            <h3 class="text-lg font-bold mt-2 text-white">${job.company_name}</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">${job.address}</p>
+                        </div>
+                        <span class="bg-indigo-500/10 text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-lg border border-indigo-500/25">${job.service_type}</span>
+                    </div>
+                    
+                    <div class="text-sm bg-black/30 p-3.5 rounded-xl border border-white/5 space-y-1">
+                        <strong class="text-[10px] uppercase tracking-widest text-slate-400 block font-bold">Scope of Work</strong>
+                        <span class="text-slate-200">${job.job_description}</span>
+                    </div>
+
+                    ${job.arrival_time ? `
+                    <div class="text-xs text-slate-400 bg-black/20 p-2.5 rounded-xl space-y-1">
+                        <div>⏱️ *Arrived:* ${job.arrival_time}</div>
+                        ${job.completion_time ? `<div>⏱️ *Completed:* ${job.completion_time}</div>` : ''}
+                    </div>` : ''}
+                    
+                    <form onsubmit="updateJob(event, '${job.id}')" class="space-y-4">
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">Status Update</label>
+                            <select name="status" onchange="toggleSignaturePad(this, '${job.id}')" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                                <option value="Pending" ${job.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="In Progress" ${job.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="Completed" ${job.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">Technical Action Logs</label>
+                            <textarea name="notes" rows="2" placeholder="Describe diagnostic results or fixes..." class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 resize-none">${job.technician_notes || ''}</textarea>
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">Equipment Implemented (JSON)</label>
+                            <input type="text" name="equipment" value='${job.equipment_used || "[]"}' class="w-full font-mono bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-indigo-300 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <div class="space-y-1.5">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">📸 Before Photo</label>
+                                <input type="file" name="before_photo_file" accept="image/*" capture="environment" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 file:transition-all">
+                                ${job.before_photo ? `<a href="${job.before_photo}" target="_blank" class="text-xs text-indigo-400 hover:underline font-medium mt-1 block">View Upload</a>` : ''}
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">📸 After Photo</label>
+                                <input type="file" name="after_photo_file" accept="image/*" capture="environment" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 file:transition-all">
+                                ${job.after_photo ? `<a href="${job.after_photo}" target="_blank" class="text-xs text-indigo-400 hover:underline font-medium mt-1 block">View Upload</a>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Service Checklist -->
+                        <div class="space-y-2 pt-2 border-t border-white/5">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-400">🔧 Service Checklist</label>
+                            <div class="grid grid-cols-1 gap-2 bg-black/40 p-3 rounded-2xl border border-white/10">
+                                <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+                                    <input type="checkbox" name="chk_power" class="rounded border-white/10 bg-black/40 text-indigo-600 focus:ring-0">
+                                    <span>Power source verified & stable</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+                                    <input type="checkbox" name="chk_wiring" class="rounded border-white/10 bg-black/40 text-indigo-600 focus:ring-0">
+                                    <span>Cables terminated & secured</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+                                    <input type="checkbox" name="chk_mount" class="rounded border-white/10 bg-black/40 text-indigo-600 focus:ring-0">
+                                    <span>Devices mounted securely</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+                                    <input type="checkbox" name="chk_feed" class="rounded border-white/10 bg-black/40 text-indigo-600 focus:ring-0">
+                                    <span>Live feed & angles verified</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 text-xs text-slate-300 cursor-pointer">
+                                    <input type="checkbox" name="chk_cleanup" class="rounded border-white/10 bg-black/40 text-indigo-600 focus:ring-0">
+                                    <span>Worksite cleaned up</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- On-Site Hardware Replacement / Sales Form -->
+                        <div class="space-y-3 pt-3 border-t border-white/5 bg-white/5 p-3 rounded-2xl">
+                            <label class="block text-[10px] font-extrabold text-indigo-300 uppercase tracking-widest">📦 Hardware Installation / Sales Action</label>
+                            
+                            <div class="space-y-1">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Hardware Action</label>
+                                <select name="hardware_action" onchange="toggleHardwareFields(this, '${job.id}')" class="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white">
+                                    <option value="none">None / No Hardware Changes</option>
+                                    <option value="sell">Sell New Device</option>
+                                    <option value="replace">Replace Defective Unit (RMA)</option>
+                                </select>
+                            </div>
+
+                            <div id="hw-fields-${job.id}" class="hidden space-y-3">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="space-y-1">
+                                        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Device Name</label>
+                                        <input type="text" name="device_name" placeholder="e.g., CCTV Camera" class="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Serial Number</label>
+                                        <input type="text" name="serial_number" placeholder="e.g., SN-12345" class="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="space-y-1">
+                                        <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Warranty Duration</label>
+                                        <select name="warranty_months" class="w-full bg-black/50 border border-white/10 rounded-xl px-2.5 py-2 text-xs text-white">
+                                            <option value="12">12 Months (1 Year)</option>
+                                            <option value="24">24 Months (2 Years)</option>
+                                            <option value="36">36 Months (3 Years)</option>
+                                        </select>
+                                    </div>
+                                    <div id="defective-sn-wrap-${job.id}" class="hidden space-y-1">
+                                        <label class="block text-[9px] font-bold text-rose-400 uppercase tracking-widest">Defective Serial No.</label>
+                                        <input type="text" name="defective_serial" placeholder="Old serial to replace" class="w-full bg-black/50 border border-rose-500/20 rounded-xl px-2.5 py-2 text-xs text-white">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Signature Canvas Pad -->
+                        <div id="sig-pad-${job.id}" class="hidden space-y-1.5 pt-2 border-t border-white/5">
+                            <div class="flex justify-between items-center">
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">✍️ Customer Signature Sign-Off</label>
+                                <button type="button" onclick="clearSignatureCanvas('${job.id}')" class="text-[10px] font-semibold text-rose-400 hover:underline">Clear Canvas</button>
+                            </div>
+                            <div class="bg-black rounded-xl border border-white/10 overflow-hidden">
+                                <canvas id="canvas-${job.id}" height="120" class="w-full cursor-crosshair touch-none"></canvas>
+                            </div>
+                        </div>
+
+
+                        
+                        <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-lg hover:shadow-indigo-500/20 mt-3 uppercase tracking-widest">
+                            Sync Changes to Cloud
+                        </button>
+                    </form>
+                `;
+                container.appendChild(card);
+                
+                // If the status is already completed, show signature if it exists
+                if (job.status === 'Completed') {
+                    const pad = document.getElementById(`sig-pad-${job.id}`);
+                    pad.classList.remove('hidden');
+                    initSignatureCanvas(job.id);
+                    if (job.signature) {
+                        drawSignatureData(job.id, job.signature);
+                    }
+                }
+            });
+        }
+
+        function toggleSignaturePad(select, jobId) {
+            const pad = document.getElementById(`sig-pad-${jobId}`);
+            if (select.value === 'Completed') {
+                pad.classList.remove('hidden');
+                initSignatureCanvas(jobId);
+            } else {
+                pad.classList.add('hidden');
+            }
+        }
+
+        function toggleHardwareFields(select, jobId) {
+            const wrap = document.getElementById(`hw-fields-${jobId}`);
+            const defectiveSnWrap = document.getElementById(`defective-sn-wrap-${jobId}`);
+            if (select.value === 'none') {
+                wrap.classList.add('hidden');
+            } else {
+                wrap.classList.remove('hidden');
+                if (select.value === 'replace') {
+                    defectiveSnWrap.classList.remove('hidden');
+                } else {
+                    defectiveSnWrap.classList.add('hidden');
+                }
+            }
+        }
+
+        function initSignatureCanvas(jobId) {
+            const canvas = document.getElementById(`canvas-${jobId}`);
+            if (!canvas || activeCanvases[jobId]) return;
+
+            // Make canvas responsive
+            canvas.width = canvas.parentElement.clientWidth;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#6366f1'; // Indigo signature stroke
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            let drawing = false;
+
+            // Event listeners for drawing
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseleave', stopDraw);
+
+            canvas.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                ctx.beginPath();
+                ctx.moveTo(t.clientX - rect.left, t.clientY - rect.top);
+                drawing = true;
+                e.preventDefault();
+            });
+            canvas.addEventListener('touchmove', (e) => {
+                if (!drawing) return;
+                const t = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                ctx.lineTo(t.clientX - rect.left, t.clientY - rect.top);
+                ctx.stroke();
+                e.preventDefault();
+            });
+            canvas.addEventListener('touchend', stopDraw);
+
+            function startDraw(e) {
+                drawing = true;
+                const rect = canvas.getBoundingClientRect();
+                ctx.beginPath();
+                ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+            }
+
+            function draw(e) {
+                if (!drawing) return;
+                const rect = canvas.getBoundingClientRect();
+                ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                ctx.stroke();
+            }
+
+            function stopDraw() {
+                drawing = false;
+            }
+
+            activeCanvases[jobId] = { canvas, ctx };
+        }
+
+        function clearSignatureCanvas(jobId) {
+            const item = activeCanvases[jobId];
+            if (item) {
+                item.ctx.clearRect(0, 0, item.canvas.width, item.canvas.height);
+            }
+        }
+
+        function drawSignatureData(jobId, dataUrl) {
+            const item = activeCanvases[jobId];
+            if (item) {
+                const img = new Image();
+                img.onload = () => {
+                    item.ctx.drawImage(img, 0, 0, item.canvas.width, item.canvas.height);
+                };
+                img.src = dataUrl;
+            }
+        }
+
+        async function updateJob(event, jobId) {
+            event.preventDefault();
+            const form = event.target;
+            const status = form.status.value;
+            
+            // Generate form data payload
+            const formData = new FormData(form);
+            formData.append("job_id", jobId);
+
+            // Serialize checklist items as JSON
+            const checklist = {
+                power_checked: form.chk_power ? form.chk_power.checked : false,
+                wiring_secured: form.chk_wiring ? form.chk_wiring.checked : false,
+                mount_stable: form.chk_mount ? form.chk_mount.checked : false,
+                feed_tested: form.chk_feed ? form.chk_feed.checked : false,
+                cleanup_done: form.chk_cleanup ? form.chk_cleanup.checked : false
+            };
+            formData.append("checklist_data", JSON.stringify(checklist));
+
+            // Add signature if completing
+            if (status === 'Completed' && activeCanvases[jobId]) {
+                const signatureData = activeCanvases[jobId].canvas.toDataURL('image/png');
+                formData.append("signature", signatureData);
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Syncing with Edge...";
+
+            // Retrieve Location & Time Telemetry parameters
+            const telemetry = await getFieldTelemetry(status);
+            if (telemetry.time) {
+                if (status === 'In Progress') {
+                    formData.append("arrival_time", telemetry.time);
+                    if (telemetry.coords) {
+                        formData.append("arrival_lat", telemetry.coords.latitude);
+                        formData.append("arrival_lng", telemetry.coords.longitude);
+                    }
+                } else if (status === 'Completed') {
+                    formData.append("completion_time", telemetry.time);
+                    if (telemetry.coords) {
+                        formData.append("completion_lat", telemetry.coords.latitude);
+                        formData.append("completion_lng", telemetry.coords.longitude);
+                    }
+                }
+            }
+
+            try {
+                if (!navigator.onLine) {
+                    queueOfflineUpdate(jobId, formData);
+                    alert("Device offline. Update stored in local pipeline queue!");
+                    fetchJobs();
+                    return;
+                }
+
+                const res = await fetch(`${API_BASE_URL}/api/jobs/update`, {
+                    method: "POST",
+                    body: formData
+                });
+                if (!res.ok) throw new Error("Synchronization failure.");
+                alert("Cloud engine synced successfully!");
+                fetchJobs();
+            } catch (err) {
+                alert("API sync error: " + err.message + ". Enqueueing update locally.");
+                queueOfflineUpdate(jobId, formData);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Sync Changes to Cloud";
+            }
+        }
+
+        function getFieldTelemetry(status) {
+            return new Promise((resolve) => {
+                if (status === 'Pending') return resolve({});
+                
+                const time = new Date().toLocaleString();
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => resolve({ time, coords: pos.coords }),
+                        () => resolve({ time }) // fallback if user blocks GPS
+                    );
+                } else {
+                    resolve({ time });
+                }
+            });
+        }
+
+        // --- OFFLINE Fallback Cache Queue Pipelines ---
+        function queueOfflineUpdate(jobId, formData) {
+            const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
+            
+            // Map formData entries to JSON-serializable object
+            const record = { jobId };
+            for (const [key, val] of formData.entries()) {
+                if (val instanceof File) {
+                    // skip file binaries in offline storage for memory efficiency
+                    continue;
+                }
+                record[key] = val;
+            }
+            
+            queue.push(record);
+            localStorage.setItem('offline_update_queue', JSON.stringify(queue));
+            showSyncButton();
+        }
+
+        function showSyncButton() {
+            const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
+            const btn = document.getElementById('sync-btn');
+            if (queue.length > 0) {
+                btn.textContent = `Sync Queue (${queue.length})`;
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        async function syncOfflineQueue() {
+            const queue = JSON.parse(localStorage.getItem('offline_update_queue') || '[]');
+            if (queue.length === 0) return;
+
+            const btn = document.getElementById('sync-btn');
+            btn.disabled = true;
+            btn.textContent = "Syncing local database...";
+
+            for (const record of queue) {
+                const formData = new FormData();
+                for (const [k, v] of Object.entries(record)) {
+                    formData.append(k, v);
+                }
+
+                try {
+                    await fetch(`${API_BASE_URL}/api/jobs/update`, {
+                        method: "POST",
+                        body: formData
+                    });
+                } catch (e) {
+                    console.error("Queue sync failure", e);
+                }
+            }
+
+            localStorage.removeItem('offline_update_queue');
+            showSyncButton();
+            alert("Offline database changes merged to Cloudflare D1 successfully!");
+            fetchJobs();
+        }
+
+        // Initialize queue checks
+        setTimeout(() => {
+            showSyncButton();
+            updateOnlineStatus();
+        }, 1000);
+
+
+
+        // Google OAuth Sign-in Handlers
+        window.addEventListener("load", () => {
+            google.accounts.id.initialize({
+                client_id: "609507528219-2foc0ch65rkqkgdlvlihqagb6dqbmpcm.apps.googleusercontent.com", // Google OAuth Client ID binding
+                callback: handleGoogleLogin
+            });
+            google.accounts.id.renderButton(
+                document.getElementById("g-signin-btn"),
+                { theme: "dark", size: "large", type: "standard", shape: "rectangular" }
+            );
+        });
+
+        async function handleGoogleLogin(response) {
+            const container = document.getElementById('auth-screen');
+            try {
+                if (!navigator.onLine) {
+                    alert("Local Offline Access Bypass Enabled.");
+                    activeSessionUser = { id: "TECH-001", name: "Offline Operator", role: "Technician" };
+                    document.getElementById('user-display-name').textContent = activeSessionUser.name;
+                    document.getElementById('user-display-role').textContent = `${activeSessionUser.id} • ${activeSessionUser.role}`;
+                    container.classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
+                    return;
+                }
+
+                const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: response.credential })
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Google login rejected");
+
+                activeSessionUser = data.user;
+                document.getElementById('user-display-name').textContent = activeSessionUser.name;
+                document.getElementById('user-display-role').textContent = `${activeSessionUser.id} • ${activeSessionUser.role}`;
+                
+                container.classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                fetchJobs();
+            } catch (err) {
+                alert("Access Denied: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<div id="view-landing-page" class="space-y-6 tab-view">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-xl font-extrabold text-white tracking-tight">Landing Page Editor</h2>
+            <p class="text-xs text-slate-400 mt-1">Manage content displayed on the public landing page</p>
+        </div>
+        <button onclick="saveLandingPage()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold px-4 py-2 rounded-lg transition">
+            Save Changes
+        </button>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="glass-panel rounded-xl p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span class="text-amber-500">🎯</span> Hero Section
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Eyebrow Text</label>
+                <input name="lp-eyebrow" type="text" id="lp-eyebrow" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Trusted Security Solutions">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Headline</label>
+                <input name="lp-headline" type="text" id="lp-headline" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Next-Gen CCTV & Infrastructure Systems">
+            </div>
+        </div>
+        <div class="space-y-1">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Description</label>
+            <textarea name="lp-description" id="lp-description" rows="2" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white resize-none" placeholder="We deliver state-of-the-art surveillance..."></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Primary Button Text</label>
+                <input name="lp-btn-primary" type="text" id="lp-btn-primary" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Request a Free Quotation">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Secondary Button Text</label>
+                <input name="lp-btn-secondary" type="text" id="lp-btn-secondary" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Access Client Portal">
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="glass-panel rounded-xl p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span class="text-amber-500">📊</span> Stats Section
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stat 1 Value</label>
+                <input name="lp-stat1-value" type="text" id="lp-stat1-value" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="500+">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stat 1 Label</label>
+                <input name="lp-stat1-label" type="text" id="lp-stat1-label" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Projects Completed">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stat 2 Value</label>
+                <input name="lp-stat2-value" type="text" id="lp-stat2-value" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="150+">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stat 2 Label</label>
+                <input name="lp-stat2-label" type="text" id="lp-stat2-label" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Active Clients">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stat 3 Value</label>
+                <input name="lp-stat3-value" type="text" id="lp-stat3-value" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="10+">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stat 3 Label</label>
+                <input name="lp-stat3-label" type="text" id="lp-stat3-label" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Years Experience">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stat 4 Value</label>
+                <input name="lp-stat4-value" type="text" id="lp-stat4-value" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="24/7">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stat 4 Label</label>
+                <input name="lp-stat4-label" type="text" id="lp-stat4-label" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Support Available">
+            </div>
+        </div>
+    </div>
+
+    <!-- Services Section -->
+    <div class="glass-panel rounded-xl p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span class="text-amber-500">🔧</span> Services Section
+        </h3>
+        <div class="space-y-1">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Section Title</label>
+            <input name="lp-services-title" type="text" id="lp-services-title" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Our Services">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Service 1 -->
+            <div class="bg-black/30 rounded-lg p-3 space-y-2">
+                <p class="text-[10px] font-bold text-amber-500">Service 1</p>
+                <input name="lp-service1-title" type="text" id="lp-service1-title" class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-white" placeholder="CCTV & Surveillance">
+                <textarea name="lp-service1-desc" id="lp-service1-desc" rows="2" class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-white resize-none" placeholder="HD cameras, AI tracking..."></textarea>
+            </div>
+            <!-- Service 2 -->
+            <div class="bg-black/30 rounded-lg p-3 space-y-2">
+                <p class="text-[10px] font-bold text-amber-500">Service 2</p>
+                <input name="lp-service2-title" type="text" id="lp-service2-title" class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-white" placeholder="Mesh Networking">
+                <textarea name="lp-service2-desc" id="lp-service2-desc" rows="2" class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-white resize-none" placeholder="Enterprise wireless, fiber..."></textarea>
+            </div>
+            <!-- Service 3 -->
+            <div class="bg-black/30 rounded-lg p-3 space-y-2">
+                <p class="text-[10px] font-bold text-amber-500">Service 3</p>
+                <input name="lp-service3-title" type="text" id="lp-service3-title" class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-white" placeholder="NAS Storage">
+                <textarea name="lp-service3-desc" id="lp-service3-desc" rows="2" class="w-full bg-black/40 border border-white/10 rounded px-3 py-1.5 text-xs text-white resize-none" placeholder="High-reliability storage..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="glass-panel rounded-xl p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span class="text-amber-500">📍</span> Contact Information
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Address</label>
+                <input name="lp-address" type="text" id="lp-address" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="No. 123, Security Road, Yangon">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phone</label>
+                <input name="lp-phone" type="text" id="lp-phone" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="+95 9 443 882 991">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email</label>
+                <input name="lp-email" type="text" id="lp-email" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="info@awesomemyanmar.com">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Business Hours</label>
+                <input name="lp-hours" type="text" id="lp-hours" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="Mon-Sat: 9AM-6PM">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Map Latitude</label>
+                <input name="lp-map-lat" type="number" step="any" id="lp-map-lat" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="16.8661">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Map Longitude</label>
+                <input name="lp-map-lng" type="number" step="any" id="lp-map-lng" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="96.1951">
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="glass-panel rounded-xl p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span class="text-amber-500">📄</span> Footer
+        </h3>
+        <div class="space-y-1">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Copyright Text</label>
+            <input name="lp-copyright" type="text" id="lp-copyright" class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" placeholder="© 2026 Awesome Myanmar. All rights reserved.">
+        </div>
+    </div>
+
+    <!-- Status Message -->
+    <div id="lp-status" class="hidden text-center py-3 rounded-lg text-sm font-semibold"></div>
+</div>
+
+<script>
+// Load landing page content on view load
+function loadLandingPageContent() {
+    const baseUrl = document.getElementById('api-base').value;
+    
+    fetch(`${baseUrl}/api/landing-page`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.value) {
+                const content = data.value;
+                // Hero
+                document.getElementById('lp-eyebrow').value = content.eyebrow || '';
+                document.getElementById('lp-headline').value = content.headline || '';
+                document.getElementById('lp-description').value = content.description || '';
+                document.getElementById('lp-btn-primary').value = content.btn_primary || '';
+                document.getElementById('lp-btn-secondary').value = content.btn_secondary || '';
+                
+                // Stats
+                document.getElementById('lp-stat1-value').value = content.stat1_value || '';
+                document.getElementById('lp-stat1-label').value = content.stat1_label || '';
+                document.getElementById('lp-stat2-value').value = content.stat2_value || '';
+                document.getElementById('lp-stat2-label').value = content.stat2_label || '';
+                document.getElementById('lp-stat3-value').value = content.stat3_value || '';
+                document.getElementById('lp-stat3-label').value = content.stat3_label || '';
+                document.getElementById('lp-stat4-value').value = content.stat4_value || '';
+                document.getElementById('lp-stat4-label').value = content.stat4_label || '';
+                
+                // Services
+                document.getElementById('lp-services-title').value = content.services_title || '';
+                document.getElementById('lp-service1-title').value = content.service1_title || '';
+                document.getElementById('lp-service1-desc').value = content.service1_desc || '';
+                document.getElementById('lp-service2-title').value = content.service2_title || '';
+                document.getElementById('lp-service2-desc').value = content.service2_desc || '';
+                document.getElementById('lp-service3-title').value = content.service3_title || '';
+                document.getElementById('lp-service3-desc').value = content.service3_desc || '';
+                
+                // Contact
+                document.getElementById('lp-address').value = content.address || '';
+                document.getElementById('lp-phone').value = content.phone || '';
+                document.getElementById('lp-email').value = content.email || '';
+                document.getElementById('lp-hours').value = content.hours || '';
+                document.getElementById('lp-map-lat').value = content.map_lat || '';
+                document.getElementById('lp-map-lng').value = content.map_lng || '';
+                
+                // Footer
+                document.getElementById('lp-copyright').value = content.copyright || '';
+            }
+        })
+        .catch(err => console.error('Failed to load landing page content:', err));
+}
+
+// Save landing page content
+function saveLandingPage() {
+    const baseUrl = document.getElementById('api-base').value;
+    const statusEl = document.getElementById('lp-status');
+    
+    const content = {
+        // Hero
+        eyebrow: document.getElementById('lp-eyebrow').value,
+        headline: document.getElementById('lp-headline').value,
+        description: document.getElementById('lp-description').value,
+        btn_primary: document.getElementById('lp-btn-primary').value,
+        btn_secondary: document.getElementById('lp-btn-secondary').value,
+        
+        // Stats
+        stat1_value: document.getElementById('lp-stat1-value').value,
+        stat1_label: document.getElementById('lp-stat1-label').value,
+        stat2_value: document.getElementById('lp-stat2-value').value,
+        stat2_label: document.getElementById('lp-stat2-label').value,
+        stat3_value: document.getElementById('lp-stat3-value').value,
+        stat3_label: document.getElementById('lp-stat3-label').value,
+        stat4_value: document.getElementById('lp-stat4-value').value,
+        stat4_label: document.getElementById('lp-stat4-label').value,
+        
+        // Services
+        services_title: document.getElementById('lp-services-title').value,
+        service1_title: document.getElementById('lp-service1-title').value,
+        service1_desc: document.getElementById('lp-service1-desc').value,
+        service2_title: document.getElementById('lp-service2-title').value,
+        service2_desc: document.getElementById('lp-service2-desc').value,
+        service3_title: document.getElementById('lp-service3-title').value,
+        service3_desc: document.getElementById('lp-service3-desc').value,
+        
+        // Contact
+        address: document.getElementById('lp-address').value,
+        phone: document.getElementById('lp-phone').value,
+        email: document.getElementById('lp-email').value,
+        hours: document.getElementById('lp-hours').value,
+        map_lat: document.getElementById('lp-map-lat').value,
+        map_lng: document.getElementById('lp-map-lng').value,
+        
+        // Footer
+        copyright: document.getElementById('lp-copyright').value
+    };
+    
+    fetch(`${baseUrl}/api/landing-page`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(content)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            statusEl.textContent = '✓ Landing page content saved successfully!';
+            statusEl.className = 'text-center py-3 rounded-lg text-sm font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+            statusEl.classList.remove('hidden');
+            setTimeout(() => statusEl.classList.add('hidden'), 3000);
+        } else {
+            throw new Error(data.error || 'Failed to save');
+        }
+    })
+    .catch(err => {
+        statusEl.textContent = '✗ Failed to save: ' + err.message;
+        statusEl.className = 'text-center py-3 rounded-lg text-sm font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+        statusEl.classList.remove('hidden');
+        setTimeout(() => statusEl.classList.add('hidden'), 3000);
+    });
+}
+
+// Auto-load when view is displayed
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('view-landing-page')) {
+        loadLandingPageContent();
+    }
+});
+</script>

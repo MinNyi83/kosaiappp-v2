@@ -1,0 +1,360 @@
+{
+  "name": "Data Backup & Sync to Google Sheets",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Cron - Daily 2 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hour", "expression": [2] },
+            { "field": "minute", "expression": [0] }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-clients",
+      "name": "GET /api/clients",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 100],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/clients",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "limit", "value": "1000" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-jobs",
+      "name": "GET /api/jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 230],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/jobs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "limit", "value": "1000" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-workers",
+      "name": "GET /api/workers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 360],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/workers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "limit", "value": "1000" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-invoices",
+      "name": "GET /api/invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 490],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/invoices",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "limit", "value": "1000" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-inventory",
+      "name": "GET /api/inventory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 620],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/inventory",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "limit", "value": "1000" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-transform-clients",
+      "name": "Transform → Clients Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 100],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst items = Array.isArray(data) ? data : (data.clients || data.data || []);\n\nreturn items.map(c => ({\n  json: {\n    'ID': c.id,\n    'Name': c.name,\n    'Phone': c.phone,\n    'Email': c.email || '',\n    'Address': c.address || '',\n    'Status': c.status || 'active',\n    'Created': c.created_at || c.createdAt || '',\n    'Total Jobs': c.total_jobs || c.job_count || 0,\n    'Total Spent': c.total_spent || 0\n  }\n}));"
+      }
+    },
+    {
+      "id": "code-transform-jobs",
+      "name": "Transform → Jobs Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 230],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst items = Array.isArray(data) ? data : (data.jobs || data.data || []);\n\nreturn items.map(j => ({\n  json: {\n    'ID': j.id,\n    'Title': j.title || j.description || '',\n    'Category': j.category || '',\n    'Status': j.status || '',\n    'Client': j.client_name || '',\n    'Worker': j.worker_name || '',\n    'Scheduled': j.scheduled_date || '',\n    'Completed': j.completed_at || j.completedAt || '',\n    'Amount': j.amount || j.total_amount || 0,\n    'Priority': j.priority || 'normal',\n    'Location': j.location || ''\n  }\n}));"
+      }
+    },
+    {
+      "id": "code-transform-workers",
+      "name": "Transform → Workers Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 360],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst items = Array.isArray(data) ? data : (data.workers || data.data || []);\n\nreturn items.map(w => ({\n  json: {\n    'ID': w.id,\n    'Name': w.name,\n    'Phone': w.phone || '',\n    'Skills': w.skills || '',\n    'Status': w.status || 'active',\n    'Rating': w.rating || 0,\n    'Current Jobs': w.current_jobs || 0,\n    'Max Jobs': w.max_jobs || 5,\n    'Experience (yrs)': w.experience_years || 0,\n    'Joined': w.created_at || w.createdAt || ''\n  }\n}));"
+      }
+    },
+    {
+      "id": "code-transform-invoices",
+      "name": "Transform → Invoices Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 490],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst items = Array.isArray(data) ? data : (data.invoices || data.data || []);\n\nreturn items.map(i => ({\n  json: {\n    'ID': i.id,\n    'Client': i.client_name || '',\n    'Amount': i.total_amount || i.amount || 0,\n    'Status': i.status || '',\n    'Due Date': i.due_date || '',\n    'Paid Amount': i.paid_amount || 0,\n    'Created': i.created_at || i.createdAt || '',\n    'Job ID': i.job_id || ''\n  }\n}));"
+      }
+    },
+    {
+      "id": "code-transform-inventory",
+      "name": "Transform → Inventory Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 620],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst items = Array.isArray(data) ? data : (data.items || data.data || []);\n\nreturn items.map(i => ({\n  json: {\n    'ID': i.id,\n    'Name': i.name,\n    'Category': i.category || '',\n    'Quantity': i.quantity || 0,\n    'Min Stock': i.min_stock || 0,\n    'Unit': i.unit || 'pcs',\n    'Unit Price': i.unit_price || 0,\n    'Supplier': i.supplier || '',\n    'Last Restocked': i.last_restocked || ''\n  }\n}));"
+      }
+    },
+    {
+      "id": "google-sheets-clients",
+      "name": "Google Sheets → Clients",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [850, 100],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "Clients",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": "={{ $json | toSnakeCase }}"
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "google-sheets-jobs",
+      "name": "Google Sheets → Jobs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [850, 230],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "Jobs",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": "={{ $json | toSnakeCase }}"
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "google-sheets-workers",
+      "name": "Google Sheets → Workers",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [850, 360],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "Workers",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": "={{ $json | toSnakeCase }}"
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "google-sheets-invoices",
+      "name": "Google Sheets → Invoices",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [850, 490],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "Invoices",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": "={{ $json | toSnakeCase }}"
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "google-sheets-inventory",
+      "name": "Google Sheets → Inventory",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [850, 620],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "Inventory",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": "={{ $json | toSnakeCase }}"
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED"
+        }
+      }
+    },
+    {
+      "id": "telegram-backup-confirm",
+      "name": "Telegram → Backup Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 375],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "💾 *Daily Backup Complete* ✅\\n\\n📊 Google Sheet updated with:\\n• 👥 Clients\\n• 🔧 Jobs\\n• 👷 Workers\\n• 🧾 Invoices\\n• 📦 Inventory\\n\\n🕐 {{ $now.format('YYYY-MM-DD HH:mm') }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron - Daily 2 AM": {
+      "main": [[ { "node": "GET /api/clients", "type": "main", "index": 0 }, { "node": "GET /api/jobs", "type": "main", "index": 1 }, { "node": "GET /api/workers", "type": "main", "index": 2 }, { "node": "GET /api/invoices", "type": "main", "index": 3 }, { "node": "GET /api/inventory", "type": "main", "index": 4 } ]]
+    },
+    "GET /api/clients": {
+      "main": [[ { "node": "Transform → Clients Sheet", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/jobs": {
+      "main": [[ { "node": "Transform → Jobs Sheet", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/workers": {
+      "main": [[ { "node": "Transform → Workers Sheet", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/invoices": {
+      "main": [[ { "node": "Transform → Invoices Sheet", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/inventory": {
+      "main": [[ { "node": "Transform → Inventory Sheet", "type": "main", "index": 0 } ]]
+    },
+    "Transform → Clients Sheet": {
+      "main": [[ { "node": "Google Sheets → Clients", "type": "main", "index": 0 } ]]
+    },
+    "Transform → Jobs Sheet": {
+      "main": [[ { "node": "Google Sheets → Jobs", "type": "main", "index": 0 } ]]
+    },
+    "Transform → Workers Sheet": {
+      "main": [[ { "node": "Google Sheets → Workers", "type": "main", "index": 0 } ]]
+    },
+    "Transform → Invoices Sheet": {
+      "main": [[ { "node": "Google Sheets → Invoices", "type": "main", "index": 0 } ]]
+    },
+    "Transform → Inventory Sheet": {
+      "main": [[ { "node": "Google Sheets → Inventory", "type": "main", "index": 0 } ]]
+    },
+    "Google Sheets → Clients": {
+      "main": [[ { "node": "Telegram → Backup Confirmation", "type": "main", "index": 0 } ]]
+    },
+    "Google Sheets → Jobs": {
+      "main": [[ { "node": "Telegram → Backup Confirmation", "type": "main", "index": 0 } ]]
+    },
+    "Google Sheets → Workers": {
+      "main": [[ { "node": "Telegram → Backup Confirmation", "type": "main", "index": 0 } ]]
+    },
+    "Google Sheets → Invoices": {
+      "main": [[ { "node": "Telegram → Backup Confirmation", "type": "main", "index": 0 } ]]
+    },
+    "Google Sheets → Inventory": {
+      "main": [[ { "node": "Telegram → Backup Confirmation", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "backup", "google-sheets", "sync"],
+  "active": false
+}

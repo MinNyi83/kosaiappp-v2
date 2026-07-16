@@ -1,0 +1,27 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>System Settings</h1>
+              <p>Configure global variables, exchange rates, and brand identity.</p>
+            </div>
+          </div>
+
+          <div class="table-card" style="padding: 1.5rem; max-width: 600px;">
+            <form onsubmit="handleSettingsSave(event)">
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="form-group">
+                  <label for="settingsCompanyName">Company Name</label>
+                  <input type="text" id="settingsCompanyName" required>
+                </div>
+                <div class="form-group">
+                  <label for="settingsExchangeRate">Base Exchange Rate (1 USD to MMK)</label>
+                  <input type="number" id="settingsExchangeRate" min="1" required>
+                </div>
+                <div class="form-group">
+                  <label for="settingsLogoUrl">Custom Logo URL (or Base64)</label>
+                  <input type="text" id="settingsLogoUrl" placeholder="https://example.com/logo.png">
+                  <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Leave blank to use default system logo.</p>
+                </div>
+                <button type="submit" class="btn-primary" style="align-self: flex-start; margin-top: 0.5rem;">Save Settings</button>
+              </div>
+            </form>
+          </div>

@@ -1,0 +1,5 @@
+Fetch https://developers.cloudflare.com/agent-setup/prompt.md
+
+database_name = "cctv-fsm-db"
+database_id = "a887d01b-41ac-4ef7-9e9d-464a3f52f15b"
+

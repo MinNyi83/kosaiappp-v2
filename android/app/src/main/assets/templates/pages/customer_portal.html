@@ -1,0 +1,196 @@
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Client Portal & Order Hub</h1>
+    <p>Submit repair requests, check warranties, request hardware quotes, and order security/network equipment.</p>
+  </div>
+</div>
+
+<div class="pos-container" style="gap: 1.5rem; height: auto; align-items: flex-start;">
+  <!-- Left Side: Order & Quotation Form -->
+  <div style="flex: 1.2; display: flex; flex-direction: column; gap: 1.5rem;">
+    <div class="table-card" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary);">Request Device Quote / Place Order</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Select products, choose a billing currency, and submit your order query.</p>
+      
+      <form id="customerOrderForm" onsubmit="submitCustomerOrder(event)">
+        <div class="form-row" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label for="custOrderName">Your Name *</label>
+            <input type="text" id="custOrderName" placeholder="e.g. U Thura Aung" required>
+          </div>
+          <div class="form-group">
+            <label for="custOrderPhone">Phone Contact *</label>
+            <input type="text" id="custOrderPhone" placeholder="e.g. 09-971234567" required>
+          </div>
+        </div>
+        
+        <div class="form-row" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label for="custOrderProduct">Product / Device *</label>
+            <select id="custOrderProduct" onchange="updateCustomerOrderProductPrice()" required>
+              <!-- Injected by JS -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="custOrderQty">Order Qty *</label>
+            <input type="number" id="custOrderQty" min="1" value="1" oninput="calculateCustomerOrderTotal()" required>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label for="custOrderCurrency">Billing Currency *</label>
+            <select id="custOrderCurrency" onchange="updateCustomerOrderProductPrice()" required>
+              <option value="USD">USD</option>
+              <option value="MMK">MMK</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Item Price (Unit)</label>
+            <div style="font-weight: 600; padding: 0.5rem; background: var(--bg-primary); border-radius: 4px; border: 1px solid var(--border-color); font-family: monospace;" id="custOrderUnitPriceDisplay">$0.00</div>
+          </div>
+        </div>
+
+        <div style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.75rem; margin-bottom: 1.5rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; font-weight: bold;">
+          <span>Estimated Total Cost:</span>
+          <span id="custOrderTotalDisplay" style="font-family: monospace; color: var(--primary); font-size: 1.1rem;">$0.00</span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="custOrderNotes">Additional Delivery Info / Custom Requirements</label>
+          <input type="text" id="custOrderNotes" placeholder="e.g. Need delivery to Mandalay branch / request quotation PDF">
+        </div>
+        
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.65rem;">
+          Submit Order / Quotation Request
+        </button>
+      </form>
+    </div>
+
+    <!-- Request Technical Support Form -->
+    <div class="table-card" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary);">Request Technical Support</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Fill out the details below to request CCTV, storage, or network support.</p>
+      
+      <form id="customerTicketForm" onsubmit="submitCustomerTicket(event)">
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label for="custTicketName">Your Name *</label>
+          <input type="text" id="custTicketName" placeholder="e.g. U Thura Aung" required>
+        </div>
+        <div class="form-row" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label for="custTicketPhone">Phone Contact *</label>
+            <input type="text" id="custTicketPhone" placeholder="e.g. 09-971234567" required>
+          </div>
+          <div class="form-group">
+            <label for="custTicketCategory">Issue Category *</label>
+            <select id="custTicketCategory" required>
+              <option value="CCTV Installation">CCTV Security Systems</option>
+              <option value="Networking">IP Networking & Wi-Fi</option>
+              <option value="Data Storage">NAS / Server Storage Array</option>
+              <option value="PC/Laptop Repair">Computer Hardware Repair</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+          <label for="custTicketSerial">Device Serial No (if applicable)</label>
+          <input type="text" id="custTicketSerial" placeholder="e.g. SN-SYN-884920">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="custTicketDesc">Description of Technical Problem *</label>
+          <textarea id="custTicketDesc" rows="3" placeholder="Describe what needs repair or setup..." required style="width:100%; padding:0.5rem; background-color:var(--bg-primary); border:1px solid var(--border-color); color:var(--text-primary); border-radius:4px; outline:none; resize:none;"></textarea>
+        </div>
+        
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.65rem;">
+          Submit Support Ticket
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right Side: Order Status and Warranty Tracker -->
+  <div style="flex: 1.3; display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Active Orders Tracking List -->
+    <div class="table-card" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Order & Quotation History</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Track the status of your submitted orders and quotation queries.</p>
+      
+      <div class="form-row" style="margin-bottom: 1rem; gap: 0.5rem; align-items: flex-end;">
+        <div class="form-group" style="flex: 3; margin-bottom: 0;">
+          <input type="text" id="custOrderTrackPhone" placeholder="Enter phone number to track orders...">
+        </div>
+        <button type="button" class="btn-primary" onclick="searchCustomerOrders()" style="padding: 0.6rem 1rem;">
+          Find Orders
+        </button>
+      </div>
+
+      <div class="table-wrapper" style="max-height: 250px; overflow-y: auto;">
+        <table class="filament-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Device</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="custOrdersTrackerBody">
+            <tr><td colspan="4" style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">Enter phone contact to track orders.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Ticket Status Tracker -->
+    <div class="table-card" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Ticket Status Tracker</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Enter your Ticket ID or registered Phone Number to view live repair tracking.</p>
+      
+      <div class="form-row" style="margin-bottom: 1.5rem; gap: 0.5rem; align-items: flex-end;">
+        <div class="form-group" style="flex: 3; margin-bottom: 0;">
+          <input type="text" id="custTrackQuery" placeholder="e.g. TKT-1001 or 09-974883921">
+        </div>
+        <button type="button" class="btn-primary" onclick="searchCustomerTicket()" style="padding: 0.6rem 1rem;">
+          Track Status
+        </button>
+      </div>
+
+      <!-- Tracking Results Panel -->
+      <div id="custTrackerPanel" style="display: none;">
+        <div style="border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.25rem; background-color: var(--bg-primary); margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 id="trackTicketId" style="font-family: monospace; font-size: 1.05rem; font-weight: 700; color: var(--primary);">TKT-XXXX</h4>
+            <span id="trackTicketStatus" class="badge" style="font-size: 0.725rem;">Pending</span>
+          </div>
+          <div style="font-size: 0.875rem; margin-bottom: 0.5rem;"><strong>Client Name:</strong> <span id="trackTicketCust">Name</span></div>
+          <div style="font-size: 0.875rem; margin-bottom: 0.5rem;"><strong>Category:</strong> <span id="trackTicketCat">Category</span></div>
+          <div style="font-size: 0.875rem; margin-bottom: 0.5rem;"><strong>Details:</strong> <span id="trackTicketDesc">Description</span></div>
+          <div style="font-size: 0.875rem;"><strong>Assigned Engineer:</strong> <span id="trackTicketTech">Engineer</span></div>
+        </div>
+        
+        <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 1rem;">Engineering Updates Timeline</h4>
+        <div id="trackTicketTimeline" class="customer-timeline">
+          <!-- Injected timeline elements -->
+        </div>
+      </div>
+      <div id="custTrackerEmpty" style="text-align: center; padding: 1.5rem 0; color: var(--text-muted); font-size: 0.875rem;">
+        No tracking query executed yet. Input a contact detail above to search.
+      </div>
+    </div>
+
+    <!-- Warranty Search -->
+    <div class="table-card" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Warranty Verification</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Lookup active coverage for components sold by AwesomeMyanmar.</p>
+      
+      <div class="search-box" style="margin-bottom: 1rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="custWarrantySearch" placeholder="Enter hardware serial number..." onkeyup="searchCustomerWarranty()">
+      </div>
+      
+      <div id="custWarrantyResults">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
+</div>

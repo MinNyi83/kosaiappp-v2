@@ -1,0 +1,170 @@
+{
+  "name": "Daily Operations Digest",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Cron - Daily 7 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hour", "expression": [7] },
+            { "field": "minute", "expression": [0] }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-today-jobs",
+      "name": "GET /api/jobs?date=today",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 150],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/jobs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "date", "value": "today" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-active-workers",
+      "name": "GET /api/workers?status=active",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/workers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "active" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-pending-invoices",
+      "name": "GET /api/invoices?status=pending",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 450],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/invoices",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "pending" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-low-stock",
+      "name": "GET /api/inventory?low_stock=true",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 600],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/inventory",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "low_stock", "value": "true" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-build-digest",
+      "name": "Build Daily Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 375],
+      "parameters": {
+        "jsCode": "const inputData = $input.all();\n\n// Parse all API responses\nconst jobs = Array.isArray(inputData[0].json) ? inputData[0].json : (inputData[0].json.jobs || inputData[0].json.data || []);\nconst workers = Array.isArray(inputData[1].json) ? inputData[1].json : (inputData[1].json.workers || inputData[1].json.data || []);\nconst invoices = Array.isArray(inputData[2].json) ? inputData[2].json : (inputData[2].json.invoices || inputData[2].json.data || []);\nconst inventory = Array.isArray(inputData[3].json) ? inputData[3].json : (inputData[3].json.items || inputData[3].json.data || []);\n\n// Analyze jobs\nconst todayJobs = jobs.filter(j => {\n  const jobDate = j.scheduled_date || j.date;\n  if (!jobDate) return true;\n  const today = new Date().toISOString().split('T')[0];\n  return jobDate === today;\n});\n\nconst pendingJobs = todayJobs.filter(j => j.status === 'pending' || j.status === 'assigned');\nconst inProgressJobs = todayJobs.filter(j => j.status === 'in_progress');\nconst completedJobs = todayJobs.filter(j => j.status === 'completed');\n\n// Worker stats\nconst availableWorkers = workers.filter(w => (w.current_jobs || 0) < (w.max_jobs || 5));\nconst busyWorkers = workers.filter(w => (w.current_jobs || 0) >= (w.max_jobs || 5));\n\n// Invoice stats\nconst totalPendingAmount = invoices.reduce((s, i) => s + (i.total_amount || i.amount || 0), 0);\n\n// Inventory stats\nconst criticalItems = inventory.filter(i => i.quantity <= (i.min_stock || 0) * 0.3);\n\n// Build the digest message\nconst dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\n\nlet message = `☀️ *Kosai Daily Operations Digest*\\n📅 ${dateStr}\\n\\n`;\n\nmessage += `━━━━━━━━━━━━━━━━━━━\\n*📋 JOBS TODAY*\\n━━━━━━━━━━━━━━━━━━━\\n`;\nmessage += `📌 Total: ${todayJobs.length}\\n`;\nmessage += `⏳ Pending: ${pendingJobs.length}\\n`;\nmessage += `🛠️ In Progress: ${inProgressJobs.length}\\n`;\nmessage += `✅ Completed: ${completedJobs.length}\\n\\n`;\n\nmessage += `━━━━━━━━━━━━━━━━━━━\\n*👷 WORKERS*\\n━━━━━━━━━━━━━━━━━━━\\n`;\nmessage += `🟢 Available: ${availableWorkers.length}\\n`;\nmessage += `🔴 Fully Booked: ${busyWorkers.length}\\n`;\nmessage += `👥 Total Active: ${workers.length}\\n\\n`;\n\nmessage += `━━━━━━━━━━━━━━━━━━━\\n*💰 FINANCIALS*\\n━━━━━━━━━━━━━━━━━━━\\n`;\nmessage += `🧾 Pending Invoices: ${invoices.length}\\n`;\nmessage += `💵 Total Outstanding: $${totalPendingAmount.toFixed(2)}\\n\\n`;\n\nmessage += `━━━━━━━━━━━━━━━━━━━\\n*📦 INVENTORY*\\n━━━━━━━━━━━━━━━━━━━\\n`;\nmessage += `🟡 Low Stock Items: ${inventory.length}\\n`;\nif (criticalItems.length > 0) {\n  message += `🔴 *CRITICAL:* ${criticalItems.map(i => i.name).join(', ')}\\n`;\n}\nmessage += `\\n`;\n\nmessage += `━━━━━━━━━━━━━━━━━━━\\n`;\nmessage += `📊 *Summary:* ${pendingJobs.length} jobs pending, ${availableWorkers.length} workers available, $${totalPendingAmount.toFixed(2)} outstanding\\n\\n`;\nmessage += `💡 *Tip:* Check the Kosai portal for detailed reports.`;\n\nreturn {\n  digest: message,\n  stats: {\n    totalJobs: todayJobs.length,\n    pendingJobs: pendingJobs.length,\n    inProgressJobs: inProgressJobs.length,\n    completedJobs: completedJobs.length,\n    availableWorkers: availableWorkers.length,\n    busyWorkers: busyWorkers.length,\n    totalWorkers: workers.length,\n    pendingInvoices: invoices.length,\n    totalOutstanding: totalPendingAmount,\n    lowStockItems: inventory.length,\n    criticalItems: criticalItems.length\n  }\n};"
+      }
+    },
+    {
+      "id": "telegram-broadcast",
+      "name": "Telegram → Operations Group",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 375],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_OPERATIONS_CHAT_ID || $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "={{ $json.digest }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron - Daily 7 AM": {
+      "main": [[ { "node": "GET /api/jobs?date=today", "type": "main", "index": 0 }, { "node": "GET /api/workers?status=active", "type": "main", "index": 1 }, { "node": "GET /api/invoices?status=pending", "type": "main", "index": 2 }, { "node": "GET /api/inventory?low_stock=true", "type": "main", "index": 3 } ]]
+    },
+    "GET /api/jobs?date=today": {
+      "main": [[ { "node": "Build Daily Digest", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/workers?status=active": {
+      "main": [[ { "node": "Build Daily Digest", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/invoices?status=pending": {
+      "main": [[ { "node": "Build Daily Digest", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/inventory?low_stock=true": {
+      "main": [[ { "node": "Build Daily Digest", "type": "main", "index": 0 } ]]
+    },
+    "Build Daily Digest": {
+      "main": [[ { "node": "Telegram → Operations Group", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "daily-digest", "operations"],
+  "active": false
+}

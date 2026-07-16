@@ -1,0 +1,56 @@
+          <div class="page-header">
+            <div class="page-title-group">
+              <h1>Inventory & Sales</h1>
+              <p>Keep track of stocks for hard drives, network cables, security IP cams, and spare hardware parts.</p>
+            </div>
+            <div>
+              <button class="btn-primary" onclick="openAddInventoryModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Inventory Item
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-toolbar" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+              <div class="search-box" style="flex: 2; min-width: 250px; max-width: 400px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" id="inventorySearchInput" placeholder="Search inventory by name/SKU/Device ID..." onkeyup="filterInventory()">
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex: 1.5; min-width: 300px; justify-content: flex-end;">
+                <select id="inventoryStockFilter" onchange="filterInventory()" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary);">
+                  <option value="">All Stock Levels</option>
+                  <option value="low">Low Stock (< 10 units)</option>
+                  <option value="out">Out of Stock (0 units)</option>
+                </select>
+                <select id="inventoryCategoryFilter" onchange="filterInventory()" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-surface); color: var(--text-primary);">
+                  <option value="">All Categories</option>
+                  <option value="Switches & Routers">Switches & Routers</option>
+                  <option value="IP Cameras & Security">IP Cameras & Security</option>
+                  <option value="Hard Drives & Storage">Hard Drives & Storage</option>
+                  <option value="Network Cables">Network Cables</option>
+                  <option value="Hardware Parts & Spares">Hardware Parts & Spares</option>
+                  <option value="Other / Misc">Other / Misc</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="filament-table">
+                <thead>
+                  <tr>
+                    <th>Item / Device ID</th>
+                    <th>Category</th>
+                    <th>Distributor</th>
+                    <th>Qty in Stock</th>
+                    <th>Cost Price</th>
+                    <th>Selling Price (USD)</th>
+                    <th>Selling Price (MMK)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="inventoryTableBody">
+                  <!-- JS Injected -->
+                </tbody>
+              </table>
+            </div>
+          </div>

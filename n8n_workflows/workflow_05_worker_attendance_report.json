@@ -1,0 +1,132 @@
+{
+  "name": "Worker Attendance Report",
+  "nodes": [
+    {
+      "id": "cron-trigger",
+      "name": "Cron - Monday 9 AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hour", "expression": [9] },
+            { "field": "minute", "expression": [0] },
+            { "field": "weekday", "expression": [1] }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-attendance",
+      "name": "GET /api/attendance?week=last",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/attendance",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "week", "value": "last" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-get-workers",
+      "name": "GET /api/workers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 450],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/workers",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-build-report",
+      "name": "Build Weekly Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 375],
+      "parameters": {
+        "jsCode": "const inputData = $input.all();\n\nconst attendanceRecords = Array.isArray(inputData[0].json) ? inputData[0].json : (inputData[0].json.records || inputData[0].json.data || []);\nconst workers = Array.isArray(inputData[1].json) ? inputData[1].json : (inputData[1].json.workers || inputData[1].json.data || []);\n\n// Build worker lookup\nconst workerMap = {};\nworkers.forEach(w => { workerMap[w.id] = w; });\n\n// Aggregate attendance per worker\nconst workerStats = {};\nattendanceRecords.forEach(record => {\n  const wid = record.worker_id || record.workerId;\n  if (!workerStats[wid]) {\n    workerStats[wid] = {\n      workerId: wid,\n      workerName: workerMap[wid]?.name || `Worker #${wid}`,\n      totalDays: 0,\n      onTime: 0,\n      late: 0,\n      absent: 0,\n      totalHours: 0,\n      days: []\n    };\n  }\n  \n  const status = (record.status || 'present').toLowerCase();\n  workerStats[wid].totalDays++;\n  \n  if (status === 'present' || status === 'on_time') {\n    workerStats[wid].onTime++;\n  } else if (status === 'late') {\n    workerStats[wid].late++;\n  } else if (status === 'absent') {\n    workerStats[wid].absent++;\n  }\n  \n  workerStats[wid].totalHours += record.hours_worked || record.hours || 0;\n  workerStats[wid].days.push({\n    date: record.date,\n    status: status,\n    hours: record.hours_worked || record.hours || 0\n  });\n});\n\nconst reportRows = Object.values(workerStats).map(ws => ({\n  ...ws,\n  attendanceRate: ws.totalDays > 0 ? Math.round((ws.onTime / ws.totalDays) * 100) : 0,\n  avgHours: ws.totalDays > 0 ? (ws.totalHours / ws.totalDays).toFixed(1) : 0\n}));\n\nreportRows.sort((a, b) => a.attendanceRate - b.attendanceRate);\n\n// Generate CSV\nconst csvHeader = 'Worker ID,Worker Name,Total Days,On Time,Late,Absent,Attendance %,Total Hours,Avg Hours/Day\\n';\nconst csvRows = reportRows.map(r => \n  `${r.workerId},${r.workerName},${r.totalDays},${r.onTime},${r.late},${r.absent},${r.attendanceRate}%,${r.totalHours.toFixed(1)},${r.avgHours}`\n).join('\\n');\n\nconst csvContent = csvHeader + csvRows;\n\n// Generate summary message\nconst totalWorkers = reportRows.length;\nconst avgAttendance = totalWorkers > 0 ? Math.round(reportRows.reduce((s, r) => s + r.attendanceRate, 0) / totalWorkers) : 0;\nconst totalLate = reportRows.reduce((s, r) => s + r.late, 0);\nconst totalAbsent = reportRows.reduce((s, r) => s + r.absent, 0);\n\nconst problemWorkers = reportRows.filter(r => r.attendanceRate < 80);\n\nlet message = `📊 *Weekly Attendance Report*\\n\\n`;\nmessage += `📅 Week: Last Week\\n`;\nmessage += `👥 Workers tracked: ${totalWorkers}\\n`;\nmessage += `📈 Avg attendance rate: ${avgAttendance}%\\n`;\nmessage += `⏰ Total late arrivals: ${totalLate}\\n`;\nmessage += `❌ Total absences: ${totalAbsent}\\n\\n`;\n\nif (problemWorkers.length > 0) {\n  message += `⚠️ *Workers needing attention (<80% attendance):*\\n`;\n  problemWorkers.forEach(w => {\n    message += `• ${w.workerName}: ${w.attendanceRate}% (${w.late} late, ${w.absent} absent)\\n`;\n  });\n}\n\nreturn {\n  summary: message,\n  report: reportRows,\n  csvContent: csvContent,\n  totalWorkers: totalWorkers,\n  avgAttendance: avgAttendance,\n  problemWorkers: problemWorkers.length\n};"
+      }
+    },
+    {
+      "id": "email-send-report",
+      "name": "Email - Send CSV Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM }}",
+        "toEmail": "={{ $env.REPORT_RECIPIENTS }}",
+        "subject": "Weekly Attendance Report - {{ $now.format('YYYY-MM-DD') }}",
+        "text": "={{ $json.summary + '\\n\\nSee attached CSV for full details.' }}",
+        "options": {
+          "attachment": [
+            {
+              "parameter": "attachmentField",
+              "attachmentType": "inline",
+              "fileName": "attendance_report_{{ $now.format('YYYY-MM-DD') }}.csv",
+              "data": "={{ $json.csvContent }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-summary",
+      "name": "Telegram - Report Summary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 450],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "={{ $json.summary }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron - Monday 9 AM": {
+      "main": [[ { "node": "GET /api/attendance?week=last", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/attendance?week=last": {
+      "main": [[ { "node": "Build Weekly Report", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/workers": {
+      "main": [[ { "node": "Build Weekly Report", "type": "main", "index": 0 } ]]
+    },
+    "Build Weekly Report": {
+      "main": [[ { "node": "Email - Send CSV Report", "type": "main", "index": 0 }, { "node": "Telegram - Report Summary", "type": "main", "index": 1 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "attendance", "workers", "report"],
+  "active": false
+}

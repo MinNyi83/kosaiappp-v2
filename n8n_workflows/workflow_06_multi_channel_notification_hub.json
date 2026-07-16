@@ -1,0 +1,222 @@
+{
+  "name": "Multi-Channel Notification Hub",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook - Any Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "kosai/notify",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "webhookId": "kosai-notify"
+    },
+    {
+      "id": "code-parse-event",
+      "name": "Parse & Route Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "jsCode": "const event = $input.first().json.body || $input.first().json;\n\n// Define routing rules\nconst routingRules = {\n  'job_created': { channels: ['telegram_admin', 'telegram_worker'], priority: 'high' },\n  'job_assigned': { channels: ['telegram_worker', 'telegram_client'], priority: 'normal' },\n  'job_completed': { channels: ['telegram_client', 'telegram_admin'], priority: 'normal' },\n  'payment_received': { channels: ['telegram_admin', 'email_invoice'], priority: 'normal' },\n  'invoice_overdue': { channels: ['telegram_admin', 'email_client'], priority: 'high' },\n  'inventory_low': { channels: ['telegram_admin', 'telegram_inventory'], priority: 'high' },\n  'worker_absent': { channels: ['telegram_admin'], priority: 'medium' },\n  'client_feedback': { channels: ['telegram_admin', 'email_manager'], priority: 'medium' },\n  'expense_submitted': { channels: ['telegram_admin'], priority: 'normal' },\n  'system_alert': { channels: ['telegram_admin', 'email_admin'], priority: 'critical' }\n};\n\nconst eventType = event.type || event.event_type || 'system_alert';\nconst rules = routingRules[eventType] || { channels: ['telegram_admin'], priority: 'normal' };\n\n// Build message templates per channel\nconst templates = {\n  telegram_admin: buildTelegramMessage(eventType, event, 'admin'),\n  telegram_worker: buildTelegramMessage(eventType, event, 'worker'),\n  telegram_client: buildTelegramMessage(eventType, event, 'client'),\n  telegram_inventory: buildTelegramMessage(eventType, event, 'inventory'),\n  email_invoice: buildEmailMessage(eventType, event, 'invoice'),\n  email_client: buildEmailMessage(eventType, event, 'client'),\n  email_manager: buildEmailMessage(eventType, event, 'manager'),\n  email_admin: buildEmailMessage(eventType, event, 'admin')\n};\n\nreturn {\n  eventType: eventType,\n  priority: rules.priority,\n  channels: rules.channels,\n  rawEvent: event,\n  messages: rules.channels.reduce((acc, ch) => {\n    acc[ch] = templates[ch] || templates.telegram_admin;\n    return acc;\n  }, {})\n};\n\nfunction buildTelegramMessage(type, data, audience) {\n  const emojis = {\n    job_created: '📋', job_assigned: '🔗', job_completed: '✅',\n    payment_received: '💰', invoice_overdue: '⚠️', inventory_low: '📦',\n    worker_absent: '❌', client_feedback: '💬', expense_submitted: '🧾',\n    system_alert: '🚨'\n  };\n  const emoji = emojis[type] || '🔔';\n  \n  let msg = `${emoji} *${type.replace(/_/g, ' ').toUpperCase()}*\\n\\n`;\n  \n  if (data.description) msg += `${data.description}\\n\\n`;\n  if (data.client_name) msg += `👤 Client: ${data.client_name}\\n`;\n  if (data.worker_name) msg += `👷 Worker: ${data.worker_name}\\n`;\n  if (data.amount) msg += `💵 Amount: $${data.amount}\\n`;\n  if (data.job_id || data.jobId) msg += `🔧 Job #${data.job_id || data.jobId}\\n`;\n  if (data.invoice_id || data.invoiceId) msg += `🧾 Invoice #${data.invoice_id || data.invoiceId}\\n`;\n  \n  msg += `\\n🕐 ${new Date().toLocaleString()}`;\n  \n  return msg;\n}\n\nfunction buildEmailMessage(type, data, audience) {\n  return {\n    subject: `[Kosai] ${type.replace(/_/g, ' ').toUpperCase()} - ${data.client_name || data.description || ''}`,\n    body: `Event: ${type}\\n\\n${data.description || ''}\\n\\n---\\nKosai Notification System\\n${new Date().toISOString()}`\n  };\n}"
+      }
+    },
+    {
+      "id": "switch-telegram-admin",
+      "name": "Route: Telegram Admin",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [650, 150],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.channels.includes('telegram_admin') ? 'yes' : 'no' }}",
+        "options": {
+          "string": [
+            { "value": "yes", "output": "Send" },
+            { "value": "no", "output": "Skip" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "switch-telegram-worker",
+      "name": "Route: Telegram Worker",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [650, 280],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.channels.includes('telegram_worker') ? 'yes' : 'no' }}",
+        "options": {
+          "string": [
+            { "value": "yes", "output": "Send" },
+            { "value": "no", "output": "Skip" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "switch-telegram-client",
+      "name": "Route: Telegram Client",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [650, 410],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.channels.includes('telegram_client') ? 'yes' : 'no' }}",
+        "options": {
+          "string": [
+            { "value": "yes", "output": "Send" },
+            { "value": "no", "output": "Skip" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "switch-email",
+      "name": "Route: Email Channels",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [650, 540],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.channels.some(c => c.startsWith('email_')) ? 'yes' : 'no' }}",
+        "options": {
+          "string": [
+            { "value": "yes", "output": "Send" },
+            { "value": "no", "output": "Skip" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-admin-send",
+      "name": "Telegram → Admin Chat",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 150],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "={{ $json.messages.telegram_admin }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "telegram-worker-send",
+      "name": "Telegram → Worker Chat",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 280],
+      "parameters": {
+        "chatId": "={{ $json.rawEvent.telegram_chat_id || $env.TELEGRAM_DEFAULT_CHAT_ID }}",
+        "text": "={{ $json.messages.telegram_worker }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "telegram-client-send",
+      "name": "Telegram → Client Chat",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [850, 410],
+      "parameters": {
+        "chatId": "={{ $json.rawEvent.client_telegram_id || $env.TELEGRAM_DEFAULT_CHAT_ID }}",
+        "text": "={{ $json.messages.telegram_client }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "email-send",
+      "name": "Email → Recipients",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [850, 540],
+      "parameters": {
+        "fromEmail": "={{ $env.SMTP_FROM }}",
+        "toEmail": "={{ $env.ADMIN_EMAIL }}",
+        "subject": "={{ $json.messages.email_admin?.subject || 'Kosai Notification' }}",
+        "text": "={{ $json.messages.email_admin?.body || 'See details in Kosai portal.' }}"
+      }
+    },
+    {
+      "id": "noop-skip-admin",
+      "name": "Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [850, 80],
+      "parameters": {}
+    },
+    {
+      "id": "noop-skip-worker",
+      "name": "Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [850, 220],
+      "parameters": {}
+    },
+    {
+      "id": "noop-skip-client",
+      "name": "Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [850, 350],
+      "parameters": {}
+    },
+    {
+      "id": "noop-skip-email",
+      "name": "Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [850, 480],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Webhook - Any Event": {
+      "main": [[ { "node": "Parse & Route Event", "type": "main", "index": 0 } ]]
+    },
+    "Parse & Route Event": {
+      "main": [[ { "node": "Route: Telegram Admin", "type": "main", "index": 0 }, { "node": "Route: Telegram Worker", "type": "main", "index": 1 }, { "node": "Route: Telegram Client", "type": "main", "index": 2 }, { "node": "Route: Email Channels", "type": "main", "index": 3 } ]]
+    },
+    "Route: Telegram Admin": {
+      "main": [
+        [{ "node": "Telegram → Admin Chat", "type": "main", "index": 0 }],
+        [{ "node": "Skip", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route: Telegram Worker": {
+      "main": [
+        [{ "node": "Telegram → Worker Chat", "type": "main", "index": 0 }],
+        [{ "node": "Skip", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route: Telegram Client": {
+      "main": [
+        [{ "node": "Telegram → Client Chat", "type": "main", "index": 0 }],
+        [{ "node": "Skip", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route: Email Channels": {
+      "main": [
+        [{ "node": "Email → Recipients", "type": "main", "index": 0 }],
+        [{ "node": "Skip", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "notifications", "multi-channel"],
+  "active": false
+}

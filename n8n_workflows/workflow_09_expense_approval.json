@@ -1,0 +1,216 @@
+{
+  "name": "Expense Approval Workflow",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook - Expense Submitted",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "kosai/expense-submitted",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "webhookId": "kosai-expense-submitted"
+    },
+    {
+      "id": "http-get-expense",
+      "name": "GET /api/expenses/{id}",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/expenses/{{ $json.body.expenseId || $json.body.expense_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-evaluate-expense",
+      "name": "Evaluate Expense",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "jsCode": "const expense = $input.first().json;\n\n// Auto-approval rules\nconst autoApproveThreshold = 50; // Amounts <= $50 auto-approved\nconst requiresManagerApproval = expense.amount > autoApproveThreshold;\n\n// Check for suspicious patterns\nconst suspiciousCategories = ['entertainment', 'gifts', 'travel'];\nconst isSuspicious = suspiciousCategories.includes((expense.category || '').toLowerCase()) && expense.amount > 100;\n\nlet message = '';\nlet decision = '';\n\nif (expense.amount <= autoApproveThreshold) {\n  decision = 'auto_approved';\n  message = `✅ *Expense Auto-Approved*\\n\\nAmount $${expense.amount} is under the $${autoApproveThreshold} auto-approval threshold.`;\n} else if (isSuspicious) {\n  decision = 'requires_review';\n  message = `⚠️ *Expense Requires Review*\\n\\nCategory \"${expense.category}\" over $100 flagged for manual review.`;\n} else {\n  decision = 'pending_manager';\n  message = `👤 *Expense Pending Manager Approval*\\n\\nAmount $${expense.amount} requires manager approval.`;\n}\n\nreturn {\n  expenseId: expense.id,\n  amount: expense.amount,\n  category: expense.category,\n  description: expense.description,\n  submittedBy: expense.submitted_by || expense.worker_name || expense.worker_id,\n  decision: decision,\n  requiresApproval: requiresManagerApproval || isSuspicious,\n  approvalMessage: message,\n  approvalUrl: `${$env.KOSAI_BASE_URL}/admin/expenses?id=${expense.id}`\n};"
+      }
+    },
+    {
+      "id": "switch-auto-approve",
+      "name": "Auto-Approve?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [850, 200],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.decision }}",
+        "options": {
+          "string": [
+            { "value": "auto_approved", "output": "Auto-Approve" },
+            { "value": "pending_manager", "output": "Manager Approval" },
+            { "value": "requires_review", "output": "Manual Review" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-auto-approve",
+      "name": "PATCH /api/expenses/{id} (approve)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 100],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/expenses/{{ $json.expenseId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "status", "value": "approved" },
+            { "name": "approved_by", "value": "n8n-auto-approver" },
+            { "name": "notes", "value": "Auto-approved (under $50 threshold)" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "telegram-manager-request",
+      "name": "Telegram → Manager (Approve?)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "🗳️ *Expense Approval Required*\\n\\n📋 ${$json.description || 'No description'}\\n💵 Amount: *$${$json.amount}*\\n📂 Category: ${$json.category}\\n👤 By: ${$json.submittedBy}\\n\\n🔗 ${$json.approvalUrl}\\n\\nReply *APPROVE* or *REJECT* to this message.",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "telegram-review-flag",
+      "name": "Telegram → Admin (Review)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1050, 500],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_ADMIN_CHAT_ID }}",
+        "text": "🔍 *Expense Flagged for Review*\\n\\n📋 ${$json.description || 'No description'}\\n💵 Amount: *$${$json.amount}*\\n📂 Category: ${$json.category} (suspicious)\\n👤 By: ${$json.submittedBy}\\n\\n⚠️ This expense has been flagged due to category + amount.\\n\\n🔗 ${$json.approvalUrl}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "telegram-auto-approved",
+      "name": "Telegram → Submitter (Approved)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1250, 100],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_DEFAULT_CHAT_ID }}",
+        "text": "={{ $json.approvalMessage + '\\n\\nExpense #' + $json.expenseId + ' has been approved.' }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      }
+    },
+    {
+      "id": "wait-manager-response",
+      "name": "Wait for Response (24h)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "parameters": {
+        "resume": "duration",
+        "amount": 24,
+        "unit": "hours"
+      }
+    },
+    {
+      "id": "http-log-activity",
+      "name": "POST /api/activity (expense)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/activity",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "type", "value": "expense_{{ $json.decision }}" },
+            { "name": "description", "value": "Expense #{{ $json.expenseId }} - ${{ $json.amount }} - {{ $json.category }} - Decision: {{ $json.decision }}" },
+            { "name": "reference_type", "value": "expense" },
+            { "name": "reference_id", "value": "={{ $json.expenseId }}" }
+          ]
+        },
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Expense Submitted": {
+      "main": [[ { "node": "GET /api/expenses/{id}", "type": "main", "index": 0 } ]]
+    },
+    "GET /api/expenses/{id}": {
+      "main": [[ { "node": "Evaluate Expense", "type": "main", "index": 0 } ]]
+    },
+    "Evaluate Expense": {
+      "main": [[ { "node": "Auto-Approve?", "type": "main", "index": 0 } ]]
+    },
+    "Auto-Approve?": {
+      "main": [
+        [{ "node": "PATCH /api/expenses/{id} (approve)", "type": "main", "index": 0 }],
+        [{ "node": "Telegram → Manager (Approve?)", "type": "main", "index": 0 }],
+        [{ "node": "Telegram → Admin (Review)", "type": "main", "index": 0 }]
+      ]
+    },
+    "PATCH /api/expenses/{id} (approve)": {
+      "main": [[ { "node": "Telegram → Submitter (Approved)", "type": "main", "index": 0 } ]]
+    },
+    "Telegram → Manager (Approve?)": {
+      "main": [[ { "node": "Wait for Response (24h)", "type": "main", "index": 0 } ]]
+    },
+    "Telegram → Admin (Review)": {
+      "main": [[ { "node": "Wait for Response (24h)", "type": "main", "index": 0 } ]]
+    },
+    "Telegram → Submitter (Approved)": {
+      "main": [[ { "node": "POST /api/activity (expense)", "type": "main", "index": 0 } ]]
+    },
+    "Wait for Response (24h)": {
+      "main": [[ { "node": "POST /api/activity (expense)", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["kosai", "expenses", "approval"],
+  "active": false
+}

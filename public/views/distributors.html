@@ -1,0 +1,81 @@
+<div id="view-distributors" class="space-y-8 tab-view">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-black text-white uppercase tracking-tight">Distributors Directory</h1>
+            <p class="text-xs text-slate-400 mt-1">Procurement channels for spare parts, network switches, CCTV kits, and storage arrays.</p>
+        </div>
+        <button onclick="openAddDistributorModal()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-1.5">
+            <span>+</span> Add Distributor
+        </button>
+    </div>
+
+    <div class="glass-panel p-6 rounded-2xl space-y-4">
+        <div class="flex justify-between items-center gap-4 flex-wrap">
+            <div class="max-w-xs flex-1">
+                <input name="distributor-search-input" type="text" id="distributor-search-input" onkeyup="filterDistributors()" placeholder="Search distributor or product lines..." class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all">
+            </div>
+            <button type="button" onclick="exportTableToExcel('distributors-table','Distributors')" class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Excel
+            </button>
+        </div>
+        <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+            <table id="distributors-table" class="w-full text-xs text-left">
+                <thead>
+                    <tr class="text-slate-500 border-b border-white/5 pb-2">
+                        <th class="pb-2">DISTRIBUTOR NAME</th>
+                        <th class="pb-2">CONTACT PERSON</th>
+                        <th class="pb-2">PHONE</th>
+                        <th class="pb-2">EMAIL</th>
+                        <th class="pb-2">PRODUCT LINES SUPPLIED</th>
+                        <th class="pb-2 text-right">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="distributors-list-body">
+                    <tr>
+                        <td colspan="6" class="py-4 text-center text-slate-600">Loading distributors...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ADD DISTRIBUTOR -->
+<div id="modal-add-distributor" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
+        <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Add Distributor</h3>
+            <button onclick="closeAddDistributorModal()" class="text-slate-400 hover:text-white">✕</button>
+        </div>
+        <form method="POST" onsubmit="submitAddDistributor(event)" class="space-y-3">
+            <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Distributor Name</label>
+                <input type="text" name="name" required placeholder="e.g. Elite CCTV & IT Distribution" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Contact Person</label>
+                <input type="text" name="contact_person" required placeholder="e.g. Ko Hlaing" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone</label>
+                    <input type="text" name="phone" required placeholder="e.g. 09-443882991" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Email</label>
+                    <input type="email" name="email" required placeholder="sales@elitecctv.com.mm" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Product Lines Supplied</label>
+                <input type="text" name="product_lines" required placeholder="e.g. Hikvision, Dahua, Ruijie" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-black uppercase tracking-wider transition">Save Distributor</button>
+        </form>
+    </div>
+</div>

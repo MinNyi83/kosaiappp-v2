@@ -1,0 +1,24 @@
+name = "cctv-service-system"
+main = "src/index.js"
+compatibility_date = "2026-07-04"
+compatibility_flags = [ "nodejs_compat" ]
+
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cctv-fsm-db"
+database_id = "a887d01b-41ac-4ef7-9e9d-464a3f52f15b"
+
+[vars]
+GOOGLE_CLIENT_ID = "609507528219-2foc0ch65rkqkgdlvlihqagb6dqbmpcm.apps.googleusercontent.com"
+ADMIN_EMAIL = "nyinyimin2007@gmail.com"
+
+[triggers]
+crons = ["0 0 * * *"]
+
+[ai]
+binding = "AI"
+
+[assets]
+directory = "./public"
+

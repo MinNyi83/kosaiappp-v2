@@ -1,0 +1,171 @@
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Currency & Transaction Manager</h1>
+    <p>Manage double-currency cash safe reserves. Every transaction uses its own manual exchange rate per payment line — no fixed global rate required.</p>
+  </div>
+</div>
+
+<!-- Cash Reserves Stats -->
+<div class="stats-grid">
+  <div class="stat-card accented">
+    <span class="stat-title">Cash Balance (USD) <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+    <span class="stat-value" id="ownerBalanceUSD">$0.00</span>
+    <span class="stat-subtext">Total USD cash reserve across safes</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-title">Cash Balance (MMK) <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+    <span class="stat-value highlight" id="ownerBalanceMMK">0 MMK</span>
+    <span class="stat-subtext">Total MMK cash reserve across safes</span>
+  </div>
+</div>
+
+<div class="pos-container" style="gap: 1.5rem; height: auto; align-items: flex-start;">
+  <!-- Left Side: Transaction Logger -->
+  <div style="flex: 1.2; display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- Record Transaction Split Form -->
+    <div class="table-card" style="padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary);">Record Transaction with Payment Splits</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Log transactions that involve multiple currencies and customized exchange rates.</p>
+      
+      <form id="splitTransactionForm" onsubmit="saveSplitTransaction(event)">
+        <div class="form-row" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label for="splitTransType">Transaction Type *</label>
+            <select id="splitTransType" onchange="handleSplitTypeChange()" required>
+              <option value="buy">Purchase from Distributor (Buy)</option>
+              <option value="sell">Sale to Customer (Sell)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="splitTransDevice">Product / Device *</label>
+            <select id="splitTransDevice" required>
+              <!-- Injected by JS -->
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label for="splitTransQty">Quantity *</label>
+            <input type="number" id="splitTransQty" min="1" value="1" required oninput="calculateSplitTotalTarget()">
+          </div>
+          <div class="form-group">
+            <label for="splitTransTotalUSD">Total Amount (Base USD) *</label>
+            <input type="number" id="splitTransTotalUSD" min="0.01" step="any" placeholder="3000" required oninput="calculateSplitTotalTarget()">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+          <label style="font-weight: 600; font-size: 0.8rem; color: var(--text-primary);">Payment Breakdown Splits</label>
+          <button type="button" class="btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" onclick="addPaymentSplitRow()">
+            + Add Payment row
+          </button>
+        </div>
+
+        <div id="paymentSplitsContainer" style="margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+          <!-- Split rows injected here -->
+        </div>
+
+        <!-- Validation Summary -->
+        <div style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.75rem; margin-bottom: 1.5rem; font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.25rem;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>Target USD:</span>
+            <span id="splitTargetUSD" class="mono-text">$0.00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Allocated Split Value:</span>
+            <span id="splitAllocatedUSD" class="mono-text">$0.00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>Unpaid Balance:</span>
+            <span id="splitBalanceUSD" class="mono-text" style="color: var(--color-danger);">$0.00</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="splitTransNotes">Notes</label>
+          <input type="text" id="splitTransNotes" placeholder="e.g. Purchased NAS from distributor / Walk-in sale">
+        </div>
+        
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.65rem;">
+          Record Split Transaction
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right Side: Financial Period Reports -->
+  <div class="table-card" style="flex: 1.5; padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600;">Profit & Loss Period Reports</h3>
+      <div class="pos-category-filters" id="reportPeriodFilters" style="margin-bottom: 0;">
+        <button class="category-pill active" onclick="loadReportPeriod('daily')">Daily</button>
+        <button class="category-pill" onclick="loadReportPeriod('weekly')">Weekly</button>
+        <button class="category-pill" onclick="loadReportPeriod('monthly')">Monthly</button>
+      </div>
+    </div>
+
+    <!-- Report Output Summary -->
+    <div style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+      <div style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;" id="reportPeriodDates">Period: Today</div>
+      
+      <div class="pos-divider" style="margin: 0.25rem 0;"></div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h4 style="font-size: 0.85rem; color: var(--text-secondary);">Total Purchases (Buy cost)</h4>
+          <div style="font-size: 1rem; font-family: monospace; font-weight: 600;" id="reportBuyCost">$0.00 / 0 MMK</div>
+        </div>
+        <div style="text-align: right;">
+          <h4 style="font-size: 0.85rem; color: var(--text-secondary);">Total Sales (Revenue)</h4>
+          <div style="font-size: 1rem; font-family: monospace; font-weight: 600;" id="reportSellCost">$0.00 / 0 MMK</div>
+        </div>
+      </div>
+
+      <div class="pos-divider" style="margin: 0.25rem 0;"></div>
+
+      <div>
+        <h4 style="font-size: 0.85rem; color: var(--text-secondary);">Gross Profit / Margins</h4>
+        <div style="font-size: 1.3rem; font-family: monospace; font-weight: 700; color: var(--color-success);" id="reportProfit">$0.00 / 0 MMK</div>
+      </div>
+    </div>
+
+    <h4 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem;">Transaction History (Selected Period)</h4>
+    <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
+      <table class="filament-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Item</th>
+            <th>USD Value</th>
+            <th>Payment Splits</th>
+          </tr>
+        </thead>
+        <tbody id="periodTransactionsBody">
+          <!-- Injected by JS -->
+        </tbody>
+      </table>
+    </div>
+    <!-- Credit Ledger (Accounts Receivable & Payable) -->
+    <div class="table-card" style="margin-top: 1.5rem; padding: 1.5rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary);">Credit Ledger (Payable / Receivable)</h3>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem;">Track outstanding debts to distributors (buy) and customer credit accounts (sell).</p>
+      <div class="table-wrapper" style="max-height: 350px; overflow-y: auto;">
+        <table class="filament-table">
+          <thead>
+            <tr>
+              <th>Entity</th>
+              <th>Type</th>
+              <th>Detail</th>
+              <th>Total (USD)</th>
+              <th>Remaining (USD)</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="creditLedgerBody">
+            <!-- Injected by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
