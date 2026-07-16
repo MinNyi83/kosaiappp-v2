@@ -18,26 +18,26 @@ import { getCorsHeaders } from "./modules/utils/cors.js";
 import { error } from "./modules/utils/response.js";
 
 // ── Route module registry ────────────────────────────────────────────────
-import authRoutes from "./modules/routes/auth.js";
-import techniciansRoutes from "./modules/routes/technicians.js";
-import clientsRoutes from "./modules/routes/clients.js";
-import jobsRoutes from "./modules/routes/jobs.js";
-import inventoryRoutes from "./modules/routes/inventory.js";
-import invoicesRoutes from "./modules/routes/invoices.js";
-import expensesRoutes from "./modules/routes/expenses.js";
-import attendanceRoutes from "./modules/routes/attendance.js";
-import reportsRoutes from "./modules/routes/reports.js";
-import adminRoutes from "./modules/routes/admin.js";
-import aiRoutes from "./modules/routes/ai.js";
-import telegramRoutes from "./modules/routes/telegram.js";
-import publicRoutes from "./modules/routes/public.js";
-import googleRoutes from "./modules/routes/google.js";
-import batchesRoutes from "./modules/routes/batches.js";
-import rmaRoutes from "./modules/routes/rma.js";
-import distributorsRoutes from "./modules/routes/distributors.js";
-import cashsafeRoutes from "./modules/routes/cashsafe.js";
-import servicefeesRoutes from "./modules/routes/servicefees.js";
-import landingRoutes from "./modules/routes/landing.js";
+import * as authRoutes from "./modules/routes/auth.js";
+import * as techniciansRoutes from "./modules/routes/technicians.js";
+import * as clientsRoutes from "./modules/routes/clients.js";
+import * as jobsRoutes from "./modules/routes/jobs.js";
+import * as inventoryRoutes from "./modules/routes/inventory.js";
+import * as invoicesRoutes from "./modules/routes/invoices.js";
+import * as expensesRoutes from "./modules/routes/expenses.js";
+import * as attendanceRoutes from "./modules/routes/attendance.js";
+import * as reportsRoutes from "./modules/routes/reports.js";
+import * as adminRoutes from "./modules/routes/admin.js";
+import * as aiRoutes from "./modules/routes/ai.js";
+import * as telegramRoutes from "./modules/routes/telegram.js";
+import * as publicRoutes from "./modules/routes/public.js";
+import * as googleRoutes from "./modules/routes/google.js";
+import * as batchesRoutes from "./modules/routes/batches.js";
+import * as rmaRoutes from "./modules/routes/rma.js";
+import * as distributorsRoutes from "./modules/routes/distributors.js";
+import * as cashsafeRoutes from "./modules/routes/cashsafe.js";
+import * as servicefeesRoutes from "./modules/routes/servicefees.js";
+import * as landingRoutes from "./modules/routes/landing.js";
 
 const routeModules = [
   authRoutes,

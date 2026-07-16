@@ -4,7 +4,7 @@
 
 import { success, error } from "../utils/response.js";
 import { verifyToken } from "../utils/jwt.js";
-import { saveToGoogleDrive } from "../utils/google.js";
+import { uploadFileToGoogleDrive } from "../utils/google.js";
 
 function register(router, env) {
   const db = env.DB;
@@ -115,12 +115,16 @@ function register(router, env) {
       const pdfContent = generateInvoiceHTML(invoice);
 
       // Save to Google Drive (requires OAuth setup)
-      const driveResult = await saveToGoogleDrive(env, {
-        fileName: `Invoice_${invoice.id}.html`,
-        content: pdfContent,
-        mimeType: "text/html",
-        folderName: "Invoices",
-      });
+      const fileBlob = new Blob([pdfContent], { type: "text/html" });
+      const driveFileId = await uploadFileToGoogleDrive(
+        env,
+        fileBlob,
+        `Invoice_${invoice.id}.html`,
+        invoice.client_name || "Unknown Client",
+        "Invoices"
+      );
+      
+      const driveResult = { fileId: driveFileId, webViewLink: null };
 
       await db
         .prepare("UPDATE invoices SET drive_file_id = ?, drive_url = ? WHERE id = ?")

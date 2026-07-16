@@ -164,4 +164,4 @@ function register(router, env) {
   });
 }
 
-export { register };
+export default { register };
