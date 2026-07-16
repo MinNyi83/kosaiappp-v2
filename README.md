@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Awesome Myanmar CCTV & Infrastructure Platform
 
 A **field service management system** for CCTV, networking, and storage infrastructure in Myanmar. Built on Cloudflare Workers with a dark-themed, glass-morphism UI.
@@ -145,3 +146,6 @@ npm run build:css && wrangler deploy
 ## License
 
 ISC
+=======
+# kosaiappp-v2
+>>>>>>> c5fcfb32ca579b10330cf331e121f235708e129e
