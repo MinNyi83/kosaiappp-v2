@@ -376,3 +376,17 @@ When syncing database schema and data between local and remote Cloudflare D1 dat
 - **Quotes and Newline Safety**: Never pass descriptive model names, descriptions, or addresses containing random characters, quotes, or newlines directly as string parameters in inline HTML event handlers (e.g. `onclick="editItem('${item.name}')"`). This causes `SyntaxError: Invalid or unexpected token`.
 - **Lookup Pattern**: Pass only clean, alphanumeric identifier codes (e.g. `item_code` SKU) and perform the object lookup within the JavaScript function block from an in-memory data array (e.g. `activeCatalogList.find()`).
 
+## 🔐 Authentication & Security Quirks
+
+When developing or debugging authentication flows in this project, remember the following critical quirks:
+
+1. **Content Security Policy (CSP)**: 
+   - Cloudflare Pages enforces a strict CSP in `public/_headers`.
+   - If UI components (like `fonts.gstatic.com` or third-party scripts) fail to load, check the `connect-src` or `script-src` directives in `_headers`.
+2. **Technician PIN Hashing**:
+   - The local database (`local_dump.sql` / seed data) stores technician PINs in plain text (e.g. `'1234'`).
+   - The `/api/auth/login` endpoint's `verifyPin` function in `src/modules/routes/auth.ts` must support plain-text string matching fallback (`plainPin === storedHash`) before attempting bcrypt/SHA-256 checks, otherwise valid local logins will be rejected.
+3. **QR Code Dependencies**:
+   - Do NOT use `cdn.jsdelivr.net` for `qrcode.min.js`, as their build paths often break. Use `cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js`.
+4. **Google Identity Services (GSI)**:
+   - If the Google Sign-In button fails with a `403 Forbidden` (`[GSI_LOGGER]`), the current testing origin (e.g., `http://127.0.0.1:8787`) must be manually added to the **Authorized JavaScript origins** in the Google Cloud Console. This cannot be bypassed through code.
