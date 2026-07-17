@@ -4,6 +4,22 @@
 
 import { success, error } from '../utils/response.js';
 import { verifyToken } from '../utils/jwt.js';
+import { fetchGeminiWithFallback } from '../utils/gemini.js';
+import { validateSql, ALLOWED_TABLES } from '../utils/sql-validator.js';
+
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+function checkRateLimit(key: string, maxRequests = 20, windowMs = 60000): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (entry.count >= maxRequests) return false;
+  entry.count++;
+  return true;
+}
 
 function register(router, env) {
   const db = env.DB;
@@ -22,10 +38,13 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
+      if (!checkRateLimit(`polish:${user.id}`, 15)) {
+        return error('Rate limit exceeded. Try again in a minute.', 429);
+      }
+
       const { text } = (await request.json() as any);
       if (!text) return error('Missing text', 400);
 
-      // Use Gemini or OpenAI to polish notes
       const polished = await polishWithAI(text, env);
       return success({ original: text, polished });
     } catch (err) {
@@ -39,13 +58,17 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
+      if (!checkRateLimit(`dispatch:${user.id}`, 10)) {
+        return error('Rate limit exceeded. Try again in a minute.', 429);
+      }
+
       const { job_id, client_location, job_type, priority } = (await request.json() as any);
 
       // Find available technicians based on location, skills, and workload
       const availableTechs = await db
         .prepare(
           'SELECT t.id, t.name, t.specialties, ' +
-            "(SELECT COUNT(*) FROM jobs WHERE assigned_to = t.id AND status IN ('assigned', 'in_progress')) as active_jobs " +
+            "(SELECT COUNT(*) FROM service_records WHERE technician_id = t.id AND status IN ('Pending', 'In Progress')) as active_jobs " +
             'FROM technicians t WHERE t.active = 1 ORDER BY active_jobs ASC LIMIT 10'
         )
         .all();
@@ -56,7 +79,7 @@ function register(router, env) {
         score -= tech.active_jobs * 20; // Penalize busy techs
         if (tech.specialties) {
           const specs = (JSON.parse(tech.specialties) as any);
-          if (job_type && specs.some((s) => s.toLowerCase().includes(job_type.toLowerCase()))) {
+          if (job_type && specs.some((s: string) => s.toLowerCase().includes(job_type.toLowerCase()))) {
             score += 30; // Bonus for matching specialty
           }
         }
@@ -69,7 +92,7 @@ function register(router, env) {
       if (bestTech && job_id) {
         await db
           .prepare(
-            "UPDATE jobs SET assigned_to = ?, status = 'assigned', updated_at = datetime('now') WHERE id = ?"
+            "UPDATE service_records SET technician_id = ?, status = 'In Progress', updated_at = datetime('now') WHERE id = ?"
           )
           .bind(bestTech.id, job_id)
           .run();
@@ -95,23 +118,16 @@ function register(router, env) {
 
       const jobs = await db
         .prepare(
-          "SELECT j.id, j.title, c.address, c.name as client_name FROM jobs j JOIN clients c ON j.client_id = c.id WHERE j.assigned_to = ? AND j.scheduled_date = ? AND j.status IN ('assigned', 'pending') ORDER BY j.priority DESC"
+          "SELECT sr.id, sr.service_type, sr.status, c.company_name, c.address FROM service_records sr LEFT JOIN clients c ON sr.client_id = c.id WHERE sr.technician_id = ? AND sr.status IN ('Pending', 'In Progress') ORDER BY sr.created_at ASC"
         )
-        .bind(technician_id, date)
+        .bind(technician_id)
         .all();
-
-      // Simple optimization: sort by priority then by address proximity
-      // In production, integrate with Google Maps Distance Matrix API
-      const optimized = jobs.results.sort((a, b) => {
-        const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
-        return (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
-      });
 
       return success({
         technician_id,
         date,
-        total_jobs: optimized.length,
-        optimized_route: optimized,
+        total_jobs: jobs.results.length,
+        optimized_route: jobs.results,
       });
     } catch (err) {
       return error('Failed to optimize route: ' + err.message, 500);
@@ -124,18 +140,28 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
+      if (!checkRateLimit(`copilot:${user.id}`, 10)) {
+        return error('Rate limit exceeded. Try again in a minute.', 429);
+      }
+
       const { query } = (await request.json() as any);
       if (!query) return error('Missing query', 400);
 
       // Natural language to SQL — use AI model to generate SQL
       const sql = await nlToSql(query, env);
 
+      // Security: validate the generated SQL before execution
+      const validationError = validateSql(sql);
+      if (validationError) {
+        return error(`Query rejected: ${validationError}`, 400);
+      }
+
       try {
         const result = await db.prepare(sql).all();
         return success({
           query,
           sql,
-          results: result.results,
+          results: result.results.slice(0, 50), // Limit results
           row_count: result.results.length,
         });
       } catch (dbErr) {
@@ -152,17 +178,38 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
+      if (!checkRateLimit(`transcribe:${user.id}`, 5)) {
+        return error('Rate limit exceeded. Try again in a minute.', 429);
+      }
+
       const formData = await request.formData();
-      const audio = formData.get('audio');
+      const audio = formData.get('audio') as File | null;
       if (!audio) return error('Missing audio file', 400);
 
-      // In production, send to Whisper API or similar
-      // For now, return a placeholder
-      return success({
-        transcription: '[Voice transcription would be processed here]',
-        file_name: audio.name,
-        file_size: audio.size,
+      const GEMINI_API_KEY = env.GEMINI_API_KEY;
+      if (!GEMINI_API_KEY) {
+        return error('Transcription service not configured', 503);
+      }
+
+      // Convert audio to base64 for Gemini
+      const arrayBuffer = await audio.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+      const result = await fetchGeminiWithFallback(GEMINI_API_KEY, {
+        contents: [{
+          parts: [
+            { inline_data: { mime_type: audio.type || 'audio/ogg', data: base64 } },
+            { text: 'Transcribe this audio accurately. Return only the transcribed text, no commentary.' }
+          ]
+        }]
       });
+
+      const transcription = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!transcription) {
+        return error('Could not transcribe audio', 422);
+      }
+
+      return success({ transcription, file_name: audio.name, file_size: audio.size });
     } catch (err) {
       return error('Failed to transcribe: ' + err.message, 500);
     }
@@ -183,25 +230,13 @@ async function polishWithAI(text, env) {
   }
 
   try {
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Polish the following service technician notes for clarity and professionalism. Fix grammar and spelling, but keep the technical details intact:\n\n${text}`,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
-    const data = (await resp.json() as any);
+    const data = await fetchGeminiWithFallback(GEMINI_API_KEY, {
+      contents: [{
+        parts: [{
+          text: `Polish the following service technician notes for clarity and professionalism. Fix grammar and spelling, but keep the technical details intact:\n\n${text}`
+        }]
+      }]
+    });
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || text;
   } catch {
     return text;
@@ -217,56 +252,34 @@ async function nlToSql(query, env) {
     // Fallback: simple keyword matching
     const q = query.toLowerCase();
     if (q.includes('job') && q.includes('count'))
-      return 'SELECT status, COUNT(*) as count FROM jobs GROUP BY status';
+      return 'SELECT status, COUNT(*) as count FROM service_records GROUP BY status';
     if (q.includes('client') && q.includes('recent'))
       return 'SELECT * FROM clients ORDER BY created_at DESC LIMIT 10';
     if (q.includes('expense') && q.includes('total'))
       return 'SELECT category, SUM(amount) as total FROM expenses GROUP BY category';
-    return 'SELECT * FROM jobs LIMIT 10';
+    return 'SELECT * FROM service_records LIMIT 10';
   }
 
   try {
     const schema = await getSchemaSummary(env.DB);
-    const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Given this SQLite schema:\n${schema}\n\nConvert this natural language query to SQL. Return ONLY the SQL, no explanation:\n"${query}"`,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
-    const data = (await resp.json() as any);
+    const data = await fetchGeminiWithFallback(GEMINI_API_KEY, {
+      contents: [{
+        parts: [{
+          text: `Given this SQLite schema:\n${schema}\n\nConvert this natural language query to SQL. Return ONLY the SQL, no explanation. Only use SELECT statements on these tables: ${ALLOWED_TABLES.join(', ')}:\n"${query}"`
+        }]
+      }]
+    });
     let sql = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     sql = sql.replace(/```sql|```/gi, '').trim();
     return sql;
   } catch {
-    return 'SELECT * FROM jobs LIMIT 10';
+    return 'SELECT * FROM service_records LIMIT 10';
   }
 }
 
 async function getSchemaSummary(db) {
-  const tables = [
-    'technicians',
-    'clients',
-    'jobs',
-    'inventory',
-    'expenses',
-    'attendance',
-    'invoices',
-    'system_config',
-  ];
   const schemas = [];
-  for (const table of tables) {
+  for (const table of ALLOWED_TABLES) {
     const info = await db.prepare(`PRAGMA table_info(${table})`).all();
     const cols = info.results
       .map(
@@ -279,4 +292,3 @@ async function getSchemaSummary(db) {
 }
 
 export { register };
-

@@ -4,6 +4,8 @@
 
 import { success, error } from '../utils/response.js';
 import { verifyToken } from '../utils/jwt.js';
+import { fetchGeminiWithFallback } from '../utils/gemini.js';
+import { validateSql, ALLOWED_TABLES } from '../utils/sql-validator.js';
 
 function register(router, env) {
   const db = env.DB;
@@ -120,16 +122,16 @@ function register(router, env) {
       const offset = (page - 1) * limit;
 
       let query =
-        'SELECT c.*, (SELECT COUNT(*) FROM jobs WHERE client_id = c.id) as job_count FROM clients c WHERE 1=1';
+        'SELECT c.*, (SELECT COUNT(*) FROM service_records WHERE client_id = c.id) as job_count FROM clients c WHERE 1=1';
       const params = [];
 
       if (search) {
         const like = `%${search}%`;
-        query += ' AND (c.name LIKE ? OR c.phone LIKE ? OR c.email LIKE ?)';
+        query += ' AND (c.company_name LIKE ? OR c.phone LIKE ? OR c.contact_person LIKE ?)';
         params.push(like, like, like);
       }
 
-      query += ' ORDER BY c.name ASC LIMIT ? OFFSET ?';
+      query += ' ORDER BY c.company_name ASC LIMIT ? OFFSET ?';
       params.push(limit, offset);
 
       const result = await db
@@ -522,24 +524,10 @@ const backup: any = {};
 
       if (GEMINI_API_KEY) {
         try {
-          const endpoints = [
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-            `https://api.gemini.tams.tech/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-          ];
-          for (const endpoint of endpoints) {
-            const resp = await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: `Polish the following CCTV/IT service technician notes for clarity and professionalism. Fix grammar and spelling. Keep all technical details intact. Return only the polished text:\n\n${raw}` }] }],
-              }),
-            });
-            if (resp.ok) {
-              const data = (await resp.json() as any);
-              polished = data?.candidates?.[0]?.content?.parts?.[0]?.text || raw;
-              break;
-            }
-          }
+          const data = await fetchGeminiWithFallback(GEMINI_API_KEY, {
+            contents: [{ parts: [{ text: `Polish the following CCTV/IT service technician notes for clarity and professionalism. Fix grammar and spelling. Keep all technical details intact. Return only the polished text:\n\n${raw}` }] }]
+          });
+          polished = data?.candidates?.[0]?.content?.parts?.[0]?.text || raw;
         } catch (_) { /* use raw */ }
       }
 
@@ -550,7 +538,7 @@ const backup: any = {};
   });
 
   // ── POST /api/admin/ai/chat-data ──────────────────────────────────────
-  // AI Copilot chat with business data context
+  // AI Copilot chat with database query execution
   router.post('/api/admin/ai/chat-data', async (request) => {
     try {
       const user = await authenticate(request);
@@ -562,47 +550,132 @@ const backup: any = {};
 
       const GEMINI_API_KEY = env.GEMINI_API_KEY;
 
-      // Gather quick context
+      // Gather context for SQL generation
+      const schema = await getSchemaSummary(db);
       const [jobCount, clientCount, techCount] = await Promise.all([
         db.prepare("SELECT COUNT(*) as c FROM service_records").first(),
         db.prepare("SELECT COUNT(*) as c FROM clients").first(),
         db.prepare("SELECT COUNT(*) as c FROM technicians WHERE active = 1").first(),
       ]);
 
-      const context = `You are an AI assistant for an Awesome Myanmar CCTV & IT service company.
-Current system stats: ${jobCount?.c ?? 0} total jobs, ${clientCount?.c ?? 0} clients, ${techCount?.c ?? 0} active technicians.
-Answer helpfully and concisely. If asked about specific data, note that you have limited access.`;
+      const systemPrompt = `You are a SQLite SQL generator. Given a database schema and a natural language question, output ONLY a valid SQLite SELECT query. No explanation, no markdown, no semicolons. Just the raw SQL.
 
-      let reply = 'I am your AI assistant. How can I help you manage your service operations?';
+Database schema:
+${schema}`;
 
-      if (GEMINI_API_KEY) {
-        try {
-          const msgs = [
-            { role: 'user', parts: [{ text: context }] },
-            { role: 'model', parts: [{ text: 'Understood. I will assist with service operations.' }] },
-            ...(Array.isArray(history) ? history : []),
-            { role: 'user', parts: [{ text: userMsg }] },
-          ];
-          const endpoints = [
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-            `https://api.gemini.tams.tech/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-          ];
-          for (const endpoint of endpoints) {
-            const resp = await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ contents: msgs }),
-            });
-            if (resp.ok) {
-              const data = (await resp.json() as any);
-              reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || reply;
-              break;
-            }
+      let sql = '';
+      let results = [];
+      let reply = '';
+
+      // First: try keyword matching (reliable)
+      {
+        const q = userMsg.toLowerCase();
+
+        // Jobs queries
+        if (q.includes('job') && (q.includes('assigned') || q.includes('technician') || q.includes('tech'))) {
+          // Extract technician ID if mentioned
+          const techMatch = q.match(/technician\s*(\d+)|tech\s*(\d+)/);
+          const techId = techMatch ? techMatch[1] : null;
+          if (techId) {
+            sql = `SELECT id, job_description, service_type, status, created_at FROM service_records WHERE technician_id LIKE '%${techId}%' ORDER BY created_at DESC LIMIT 20`;
+          } else {
+            sql = "SELECT id, job_description, service_type, status, technician_id FROM service_records WHERE status IN ('Pending', 'In Progress') ORDER BY created_at DESC LIMIT 20";
           }
-        } catch (_) { /* use default reply */ }
+        } else if (q.includes('job') && (q.includes('pending') || q.includes('new'))) {
+          sql = "SELECT id, job_description, service_type, status FROM service_records WHERE status = 'Pending' ORDER BY created_at DESC LIMIT 20";
+        } else if (q.includes('job') && (q.includes('progress') || q.includes('active'))) {
+          sql = "SELECT id, job_description, service_type, status FROM service_records WHERE status = 'In Progress' ORDER BY created_at DESC LIMIT 20";
+        } else if (q.includes('job') && (q.includes('completed') || q.includes('done') || q.includes('finished'))) {
+          sql = "SELECT id, job_description, service_type, completed_at FROM service_records WHERE status = 'Completed' ORDER BY completed_at DESC LIMIT 20";
+        } else if (q.includes('job') && q.includes('count')) {
+          sql = 'SELECT status, COUNT(*) as count FROM service_records GROUP BY status';
+        } else if (q.includes('job') || q.includes('ticket') || q.includes('dispatch')) {
+          sql = "SELECT id, job_description, service_type, status FROM service_records ORDER BY created_at DESC LIMIT 20";
+        }
+
+        // Technician queries
+        else if (q.includes('technician') && q.includes('count')) {
+          sql = 'SELECT COUNT(*) as count FROM technicians WHERE active = 1';
+        } else if (q.includes('technician') || q.includes('engineer') || q.includes('staff')) {
+          sql = 'SELECT id, name, role, active FROM technicians ORDER BY name';
+        }
+
+        // Client queries
+        else if (q.includes('client') && q.includes('count')) {
+          sql = 'SELECT COUNT(*) as count FROM clients';
+        } else if (q.includes('client') || q.includes('customer')) {
+          sql = 'SELECT id, name, phone, email FROM clients ORDER BY name LIMIT 20';
+        }
+
+        // Attendance queries
+        else if (q.includes('attendance') || q.includes('clock') || q.includes('check')) {
+          sql = "SELECT a.date, t.name, a.clock_in, a.clock_out FROM attendance a JOIN technicians t ON a.technician_id = t.id WHERE a.date >= date('now', '-7 days') ORDER BY a.date DESC, a.clock_in DESC LIMIT 20";
+        }
+
+        // Inventory queries
+        else if (q.includes('inventory') || q.includes('stock')) {
+          sql = 'SELECT item_code, item_name, current_stock FROM inventory_items ORDER BY item_name LIMIT 20';
+        }
+
+        // Financial queries
+        else if (q.includes('revenue') || q.includes('income') || q.includes('cash') || q.includes('transaction')) {
+          sql = 'SELECT category, SUM(amount) as total FROM cash_transactions GROUP BY category';
+        }
+
+        // Count queries
+        else if (q.includes('count') || q.includes('how many')) {
+          if (q.includes('job') || q.includes('ticket') || q.includes('dispatch')) {
+            sql = 'SELECT status, COUNT(*) as count FROM service_records GROUP BY status';
+          } else if (q.includes('client') || q.includes('customer')) {
+            sql = 'SELECT COUNT(*) as count FROM clients';
+          } else if (q.includes('technician') || q.includes('engineer') || q.includes('staff')) {
+            sql = 'SELECT COUNT(*) as count FROM technicians WHERE active = 1';
+          } else {
+            sql = 'SELECT COUNT(*) as count FROM service_records';
+          }
+        }
+
+        // Default fallback
+        else {
+          sql = 'SELECT id, name, role FROM technicians LIMIT 10';
+        }
       }
 
-      return success({ reply, message: reply });
+      // If no SQL from keywords, try Gemini
+      if (!sql && GEMINI_API_KEY) {
+        try {
+          const data = await fetchGeminiWithFallback(GEMINI_API_KEY, {
+            contents: [
+              { role: 'user', parts: [{ text: `You are a SQL generator. Given this SQLite schema:\n${schema}\n\nConvert this question to SQL: ${userMsg}\n\nReturn ONLY the SELECT query.` }] },
+            ],
+          });
+          const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (rawText) {
+            const selectMatch = rawText.match(/(SELECT\s+[\s\S]+)/i);
+            if (selectMatch) sql = selectMatch[1].replace(/```/g, '').replace(/;$/, '').trim();
+          }
+        } catch (e) { console.error('Gemini error:', e); }
+      }
+
+      // Validate and execute SQL
+      if (sql) {
+        const validationError = validateSql(sql);
+        if (!validationError) {
+          try {
+            const dbResult = await db.prepare(sql).all();
+            results = dbResult.results.slice(0, 50);
+            reply = `Found ${results.length} result(s).`;
+          } catch (dbErr) {
+            reply = `SQL error: ${dbErr.message}`;
+          }
+        } else {
+          reply = `Query blocked: ${validationError}`;
+        }
+      } else {
+        reply = 'I could not generate a query for that question. Try rephrasing.';
+      }
+
+      return success({ reply, message: reply, query: userMsg, sql, results, summary: reply });
     } catch (err) {
       return error('AI chat failed: ' + err.message, 500);
     }
@@ -635,6 +708,67 @@ Answer helpfully and concisely. If asked about specific data, note that you have
       });
     } catch (err) {
       return error('Route optimize failed: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/admin/ai/auto-dispatch ──────────────────────────────────
+  router.post('/api/admin/ai/auto-dispatch', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const { text, job_type, priority } = (await request.json() as any);
+
+      // Find available technicians based on workload
+      const availableTechs = await db
+        .prepare(
+          'SELECT t.id, t.name, ' +
+            "(SELECT COUNT(*) FROM service_records WHERE technician_id = t.id AND status IN ('Pending', 'In Progress')) as active_jobs " +
+            'FROM technicians t WHERE t.active = 1 ORDER BY active_jobs ASC LIMIT 10'
+        )
+        .all();
+
+      // Score each technician
+      const scored = availableTechs.results.map((tech) => {
+        let score = 100;
+        score -= tech.active_jobs * 20;
+        return { ...tech, score };
+      });
+
+      scored.sort((a, b) => b.score - a.score);
+      const bestTech = scored[0];
+
+      // If text provided, use AI to analyze the complaint
+      let explanation = `Recommended ${bestTech?.name || 'no technician'} based on workload and specialty matching.`;
+      let domain = job_type || 'General';
+
+      if (text && env.GEMINI_API_KEY) {
+        try {
+          const data = await fetchGeminiWithFallback(env.GEMINI_API_KEY, {
+            contents: [{
+              parts: [{
+                text: `Analyze this service complaint and suggest: 1) domain (CCTV, Networking, WiFi, NAS, General), 2) priority (urgent/high/normal/low), 3) brief explanation. Complaint: "${text}"`
+              }]
+            }]
+          });
+          const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          explanation = aiReply;
+          // Extract domain from AI response
+          const domainMatch = aiReply.match(/(?:domain|category|type)[:\s]*(\w+)/i);
+          if (domainMatch) domain = domainMatch[1];
+        } catch (_) {}
+      }
+
+      return success({
+        domain,
+        suggested_technician_id: bestTech?.id || null,
+        suggested_technician_name: bestTech?.name || null,
+        explanation,
+        recommendation: bestTech || null,
+        alternatives: scored.slice(1, 4),
+      });
+    } catch (err) {
+      return error('Auto-dispatch failed: ' + err.message, 500);
     }
   });
 
@@ -751,6 +885,18 @@ Answer helpfully and concisely. If asked about specific data, note that you have
       return error('Failed to fetch credits: ' + err.message, 500);
     }
   });
+}
+
+async function getSchemaSummary(db) {
+  const schemas = [];
+  for (const table of ALLOWED_TABLES) {
+    const info = await db.prepare(`PRAGMA table_info(${table})`).all();
+    const cols = info.results
+      .map((c) => `  ${c.name} ${c.type}${c.pk ? ' PRIMARY KEY' : ''}${c.notnull ? ' NOT NULL' : ''}`)
+      .join('\n');
+    schemas.push(`TABLE ${table}:\n${cols}`);
+  }
+  return schemas.join('\n\n');
 }
 
 export { register };

@@ -403,6 +403,10 @@ function switchTab(tabId) {
     loadJobsDashboardData();
   }
 
+  if (tabId === 'attendance' && typeof window.loadAttendance === 'function') {
+    window.loadAttendance();
+  }
+
   if (tabId === 'portfolio' && typeof loadPortfolioProjects === 'function') {
     loadPortfolioProjects();
   }
@@ -450,6 +454,7 @@ async function initializeAdminDesk() {
     { name: 'landing-page', file: 'landing-page.html' },
     { name: 'portfolio', file: 'portfolio.html' },
     { name: 'jobs', file: 'jobs.html' },
+    { name: 'attendance', file: 'attendance.html' },
   ];
 
   try {

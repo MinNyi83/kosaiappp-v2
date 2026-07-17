@@ -772,6 +772,31 @@
           <a
             href="#"
             onclick="
+              switchTab('attendance');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+            title="Attendance"
+          >
+            <svg
+              class="w-4 h-4 shrink-0 text-green-400"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span class="tab-label">Attendance</span>
+          </a>
+
+          <a
+            href="#"
+            onclick="
               switchTab('amc');
               closeSidebar();
             "
