@@ -1,0 +1,143 @@
+{
+  "name": "Facebook Messenger Client Chat",
+  "nodes": [
+    {
+      "id": "webhook-fb-messenger",
+      "name": "Webhook - Facebook Messenger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "parameters": {
+        "path": "kosai/facebook/messenger",
+        "httpMethod": "POST",
+        "options": { "rawBody": true }
+      },
+      "webhookId": "kosai-fb-messenger"
+    },
+    {
+      "id": "code-verify-and-parse",
+      "name": "Verify & Parse Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// Facebook webhook verification\nif (body['hub.mode'] === 'subscribe' && body['hub.verify_token'] === $env.FB_VERIFY_TOKEN) {\n  return [{ json: { type: 'verification', challenge: body['hub.challenge'] } }];\n}\n\n// Parse incoming message\nconst entry = (body.entry || [])[0];\nif (!entry) return [{ json: { type: 'empty' } }];\n\nconst messaging = (entry.messaging || [])[0];\nif (!messaging) return [{ json: { type: 'empty' } }];\n\nconst senderId = messaging.sender?.id;\nconst messageText = messaging.message?.text || '';\nconst isEcho = messaging.message?.is_echo;\nconst postback = messaging.postback?.title;\n\n// Skip echoes from our own messages\nif (isEcho) return [{ json: { type: 'echo_skip' } }];\n\nreturn [{ json: {\n  type: 'message',\n  senderId,\n  text: messageText,\n  postback,\n  timestamp: messaging.timestamp,\n  pageId: entry.id\n}}];"
+      }
+    },
+    {
+      "id": "switch-message-type",
+      "name": "Route Message Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json.type === 'message' }}", "value2": true }
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-classify-intent",
+      "name": "Classify Message Intent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 200],
+      "parameters": {
+        "jsCode": "const msg = $input.first().json;\nconst text = (msg.text || '').toLowerCase().trim();\n\n// Intent classification\nlet intent = 'general';\nlet autoReply = null;\n\nconst greetings = ['hello', 'hi', 'hey', 'good morning', 'good evening', 'mingalabar'];\nconst services = ['cctv', 'camera', 'network', 'wifi', 'nas', 'storage', 'install', 'repair', 'maintenance'];\nconst pricing = ['price', 'cost', 'quote', 'quotation', 'how much', 'rate'];\nconst schedule = ['schedule', 'book', 'appointment', 'visit', 'come'];\nconst complaint = ['problem', 'issue', 'broken', 'not working', 'complaint', 'help'];\nconst status = ['status', 'update', 'job', 'ticket', 'progress'];\n\nif (greetings.some(g => text.includes(g))) {\n  intent = 'greeting';\n  autoReply = 'Hello! Welcome to Awesome Myanmar. We provide CCTV, Networking, WiFi, and NAS solutions. How can we help you today?';\n} else if (pricing.some(p => text.includes(p))) {\n  intent = 'pricing';\n  autoReply = 'Thank you for your interest! Our pricing depends on your specific requirements. Please share your site details and we will prepare a custom quotation for you.';\n} else if (schedule.some(s => text.includes(s))) {\n  intent = 'scheduling';\n  autoReply = 'We would be happy to schedule a site visit! Please provide:\\n1. Your location/address\\n2. Preferred date and time\\n3. Type of service needed';\n} else if (services.some(s => text.includes(s))) {\n  intent = 'service_inquiry';\n  autoReply = 'We specialize in CCTV, Networking, WiFi Mesh, and NAS Storage systems. Could you tell us more about what you need?';\n} else if (complaint.some(c => text.includes(c))) {\n  intent = 'complaint';\n  autoReply = 'We are sorry to hear you are having issues. Could you please describe the problem in more detail? We will prioritize your request.';\n} else if (status.some(s => text.includes(s))) {\n  intent = 'status_check';\n  autoReply = 'Please provide your Job ID or Client ID and we will check the status for you right away.';\n} else if (msg.postback) {\n  intent = 'postback';\n  if (msg.postback === 'GET_STARTED') {\n    autoReply = 'Welcome to Awesome Myanmar! We provide professional CCTV, Networking, and Infrastructure solutions. Choose an option below or type your question.';\n  }\n}\n\nreturn [{ json: { ...msg, intent, autoReply } }];"
+      }
+    },
+    {
+      "id": "switch-needs-human",
+      "name": "Needs Human Agent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1050, 200],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json.autoReply !== null && $json.autoReply !== undefined }}", "value2": true }
+          ]
+        }
+      }
+    },
+    {
+      "id": "fb-send-auto-reply",
+      "name": "Send Auto-Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 100],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/me/messages?access_token={{ $env.FB_PAGE_ACCESS_TOKEN }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ recipient: { id: $json.senderId }, message: { text: $json.autoReply }, messaging_type: 'RESPONSE' }) }}",
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "tg-alert-agent",
+      "name": "Alert Human Agent",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1250, 320],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=\\ud83d\\udcac *Facebook Messenger - Needs Reply*\\n\\nIntent: {{ $json.intent }}\\nFrom: FB User #{{ $json.senderId }}\\nMessage: {{ $json.text }}\\n\\nReply via Facebook Page or Kosai portal.",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "credentials": { "telegramApi": { "id": "telegram-bot", "name": "Kosai Telegram Bot" } },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code-log-conversation",
+      "name": "Log Conversation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nreturn [{ json: {\n  type: 'facebook_message',\n  senderId: data.senderId,\n  text: data.text,\n  intent: data.intent,\n  autoReply: data.autoReply,\n  channel: 'facebook_messenger',\n  timestamp: new Date().toISOString()\n}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Facebook Messenger": {
+      "main": [[{ "node": "Verify & Parse Message", "type": "main", "index": 0 }]]
+    },
+    "Verify & Parse Message": {
+      "main": [[{ "node": "Route Message Type", "type": "main", "index": 0 }]]
+    },
+    "Route Message Type": {
+      "main": [
+        [{ "node": "Classify Message Intent", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Classify Message Intent": {
+      "main": [[{ "node": "Needs Human Agent?", "type": "main", "index": 0 }]]
+    },
+    "Needs Human Agent?": {
+      "main": [
+        [{ "node": "Send Auto-Reply", "type": "main", "index": 0 }],
+        [{ "node": "Alert Human Agent", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Auto-Reply": {
+      "main": [[{ "node": "Log Conversation", "type": "main", "index": 0 }]]
+    },
+    "Alert Human Agent": {
+      "main": [[{ "node": "Log Conversation", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["kosai", "facebook", "messenger", "chat"],
+  "active": false
+}

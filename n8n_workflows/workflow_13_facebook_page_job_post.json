@@ -1,0 +1,141 @@
+{
+  "name": "Facebook Page - Job Completion Post",
+  "nodes": [
+    {
+      "id": "webhook-job-completed",
+      "name": "Webhook - Job Completed",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "parameters": {
+        "path": "kosai/facebook/job-post",
+        "httpMethod": "POST",
+        "options": { "rawBody": true }
+      },
+      "webhookId": "kosai-fb-job-post"
+    },
+    {
+      "id": "http-get-job",
+      "name": "GET Job Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/jobs/{{ $json.body.jobId || $json.body.job_id || $json.body.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code-build-post",
+      "name": "Build Facebook Post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "parameters": {
+        "jsCode": "const job = $input.first().json.data || $input.first().json;\n\nconst serviceEmojis = {\n  'CCTV': '\\ud83d\\udcf9',\n  'Networking': '\\ud83d\\udd17',\n  'WiFi': '\\ud83d\\udcf6',\n  'NAS': '\\ud83d\\udcbe',\n  'General Maintenance': '\\ud83d\\udee0\\ufe0f'\n};\n\nconst emoji = serviceEmojis[job.service_type] || '\\u2705';\nconst clientName = job.company_name || 'Our Client';\nconst serviceType = job.service_type || 'Service';\nconst description = job.job_description || '';\n\n// Build the post text\nlet postText = `${emoji} *Another Successful Installation!*\\n\\n`;\npostText += `We are proud to have completed another ${serviceType} project for ${clientName}.\\n\\n`;\npostText += `Our expert team delivered:\\n`;\npostText += `- Professional ${serviceType} installation\\n`;\npostText += `- Quality equipment and workmanship\\n`;\npostText += `- Full system testing and handover\\n\\n`;\npostText += `Need similar services? Contact us today!\\n\\n`;\npostText += `\\ud83d\\udcdd Awesome Myanmar CCTV & Infrastructure Solutions\\n`;\npostText += `\\ud83d\\udcde Contact us for a free consultation\\n`;\npostText += `\\ud83d\\udccd Serving businesses across Myanmar`;\n\n// Check if there is a before/after photo\nconst hasPhoto = job.after_photo && job.after_photo.startsWith('data:image');\n\nreturn [{ json: {\n  postText,\n  jobId: job.id,\n  serviceType,\n  clientName,\n  hasPhoto,\n  photoData: hasPhoto ? job.after_photo : null,\n  jobType: job.service_type\n}}];"
+      }
+    },
+    {
+      "id": "if-has-photo",
+      "name": "Has Photo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json.hasPhoto }}", "value2": true }
+          ]
+        }
+      }
+    },
+    {
+      "id": "fb-post-text-only",
+      "name": "Post Text Only",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.FB_PAGE_ID }}/feed?access_token={{ $env.FB_PAGE_ACCESS_TOKEN }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $json.postText }) }}",
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "fb-post-with-photo",
+      "name": "Post With Photo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1050, 400],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.FB_PAGE_ID }}/photos?access_token={{ $env.FB_PAGE_ACCESS_TOKEN }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ url: $json.photoData, caption: $json.postText }) }}",
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "tg-confirm-post",
+      "name": "Confirm Post Published",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1250, 300],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=\\ud83d\\udce2 *Facebook Post Published*\\n\\nJob #{{ $('Build Facebook Post').first().json.jobId }}\\nService: {{ $('Build Facebook Post').first().json.serviceType }}\\nClient: {{ $('Build Facebook Post').first().json.clientName }}\\nPhoto: {{ $('Build Facebook Post').first().json.hasPhoto ? 'Yes' : 'No' }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "credentials": { "telegramApi": { "id": "telegram-bot", "name": "Kosai Telegram Bot" } },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Webhook - Job Completed": {
+      "main": [[{ "node": "GET Job Details", "type": "main", "index": 0 }]]
+    },
+    "GET Job Details": {
+      "main": [[{ "node": "Build Facebook Post", "type": "main", "index": 0 }]]
+    },
+    "Build Facebook Post": {
+      "main": [[{ "node": "Has Photo?", "type": "main", "index": 0 }]]
+    },
+    "Has Photo?": {
+      "main": [
+        [{ "node": "Post Text Only", "type": "main", "index": 0 }],
+        [{ "node": "Post With Photo", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post Text Only": {
+      "main": [[{ "node": "Confirm Post Published", "type": "main", "index": 0 }]]
+    },
+    "Post With Photo": {
+      "main": [[{ "node": "Confirm Post Published", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["kosai", "facebook", "pages", "marketing"],
+  "active": false
+}

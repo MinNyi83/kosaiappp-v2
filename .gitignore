@@ -69,3 +69,11 @@ logs/
 *.exe
 *.dmg
 *.pkg
+
+# Excel
+excel/
+Excel/
+*.xls
+*.xlsx
+*.xlsm
+*.csv

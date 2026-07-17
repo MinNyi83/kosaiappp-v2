@@ -1,0 +1,160 @@
+{
+  "name": "Facebook Lead Ads -> Kosai Client",
+  "nodes": [
+    {
+      "id": "webhook-fb-leads",
+      "name": "Webhook - Facebook Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "parameters": {
+        "path": "kosai/facebook/leads",
+        "httpMethod": "POST",
+        "options": { "rawBody": true }
+      },
+      "webhookId": "kosai-fb-leads"
+    },
+    {
+      "id": "code-parse-lead",
+      "name": "Parse Facebook Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// Facebook Lead Ads webhook format\nconst entry = (body.entry || [])[0];\nif (!entry) return [{ json: { type: 'empty' } }];\n\nconst leadData = (entry.changes || [])[0]?.value;\nif (!leadData || !leadData.leadgen_id) return [{ json: { type: 'empty' } }];\n\n// Extract field data\nconst fields = {};\n(leadData.field_data || []).forEach(f => {\n  fields[f.name] = (f.values || [])[0] || '';\n});\n\nreturn [{ json: {\n  type: 'lead',\n  leadgenId: leadData.leadgen_id,\n  formId: leadData.form_id,\n  createdTime: leadData.created_time,\n  fieldName: fields.name || fields.full_name || '',\n  fieldEmail: fields.email || '',\n  fieldPhone: fields.phone_number || fields.phone || '',\n  fieldCompany: fields.company_name || fields.company || '',\n  fieldService: fields.service_interest || fields.service || '',\n  fieldMessage: fields.message || fields.details || '',\n  fieldBudget: fields.budget || '',\n  rawFields: fields\n}}];"
+      }
+    },
+    {
+      "id": "http-check-existing",
+      "name": "Check Existing Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [650, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/clients",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [{ "name": "search", "value": "={{ $json.fieldEmail || $json.fieldPhone }}" }]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "code-create-or-find",
+      "name": "Create Client or Find Existing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "parameters": {
+        "jsCode": "const lead = $('Parse Facebook Lead').first().json;\nconst existingResp = $('Check Existing Client').first().json;\nconst existing = Array.isArray(existingResp) ? existingResp : (existingResp.data?.clients || existingResp.clients || []);\n\nif (existing.length > 0) {\n  // Client already exists - just log the lead\n  return [{ json: {\n    isNew: false,\n    clientId: existing[0].id,\n    clientName: existing[0].company_name,\n    lead\n  }}];\n}\n\n// Create new client\nreturn [{ json: {\n  isNew: true,\n  clientData: {\n    company_name: lead.fieldCompany || lead.fieldName || 'Facebook Lead',\n    contact_person: lead.fieldName,\n    phone: lead.fieldPhone,\n    address: 'Facebook Lead - ' + (lead.fieldService || 'General Inquiry'),\n    amc_status: 'Individual'\n  },\n  lead\n}}];"
+      }
+    },
+    {
+      "id": "if-new-client",
+      "name": "New Client?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json.isNew }}", "value2": true }
+          ]
+        }
+      }
+    },
+    {
+      "id": "http-create-client",
+      "name": "POST Create Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOSAI_BASE_URL }}/api/clients",
+        "sendHeaders": true,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.clientData) }}",
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "fb-send-welcome",
+      "name": "Send Facebook Welcome",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/me/messages?access_token={{ $env.FB_PAGE_ACCESS_TOKEN }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ recipient: { tag: 'NON_PROMOTIONAL_SUBSCRIPTION' }, message: { text: 'Thank you for your interest in Awesome Myanmar! Our team will contact you shortly to discuss your ' + ($json.lead.fieldService || 'service') + ' requirements.' } }) }}",
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "tg-new-lead",
+      "name": "Alert - New Lead",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1450, 400],
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=\\ud83d\\udce3 *New Facebook Lead!*\\n\\nName: {{ $json.lead.fieldName }}\\nEmail: {{ $json.lead.fieldEmail }}\\nPhone: {{ $json.lead.fieldPhone }}\\nService: {{ $json.lead.fieldService || 'General' }}\\nMessage: {{ $json.lead.fieldMessage || 'N/A' }}\\n\\nClient ID: {{ $json.isNew ? 'Newly created' : $json.clientId }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "credentials": { "telegramApi": { "id": "telegram-bot", "name": "Kosai Telegram Bot" } },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Webhook - Facebook Lead": {
+      "main": [[{ "node": "Parse Facebook Lead", "type": "main", "index": 0 }]]
+    },
+    "Parse Facebook Lead": {
+      "main": [[{ "node": "Check Existing Client", "type": "main", "index": 0 }]]
+    },
+    "Check Existing Client": {
+      "main": [[{ "node": "Create Client or Find Existing", "type": "main", "index": 0 }]]
+    },
+    "Create Client or Find Existing": {
+      "main": [[{ "node": "New Client?", "type": "main", "index": 0 }]]
+    },
+    "New Client?": {
+      "main": [
+        [{ "node": "POST Create Client", "type": "main", "index": 0 }],
+        [{ "node": "Send Facebook Welcome", "type": "main", "index": 0 }]
+      ]
+    },
+    "POST Create Client": {
+      "main": [[{ "node": "Send Facebook Welcome", "type": "main", "index": 0 }]]
+    },
+    "Send Facebook Welcome": {
+      "main": [[{ "node": "Alert - New Lead", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "tags": ["kosai", "facebook", "leads", "crm"],
+  "active": false
+}
