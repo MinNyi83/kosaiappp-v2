@@ -44,7 +44,7 @@ function register(router, env) {
 
       const result = await db
         .prepare(
-          'SELECT id, name, email, phone, role, active FROM technicians ORDER BY name ASC'
+          'SELECT id, name, nickname, email, phone, role, active, username, pin, telegram_username, photo, permissions FROM technicians ORDER BY name ASC'
         )
         .all();
 

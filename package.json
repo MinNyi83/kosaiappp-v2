@@ -19,6 +19,9 @@
   },
   "scripts": {
     "dev": "npx wrangler dev",
+    "deploy:worker": "npx wrangler deploy",
+    "deploy:pages": "npx wrangler pages deploy public --project-name=awesomemyanmar --commit-dirty=true",
+    "deploy": "npx wrangler deploy && npx wrangler pages deploy public --project-name=awesomemyanmar --commit-dirty=true",
     "build:css": "tailwindcss -i ./public/input.css -o ./public/tailwind.css",
     "watch:css": "tailwindcss -i ./public/input.css -o ./public/tailwind.css --watch",
     "test": "vitest run",

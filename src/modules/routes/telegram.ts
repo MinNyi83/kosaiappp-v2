@@ -67,39 +67,58 @@ function register(router, env) {
 
 async function handleCommand(chatId, command, from, db, env) {
   const cmds = {
-    '/start': 'Welcome to Kosai Service Bot! Use /help to see available commands.',
+    '/start': 'Welcome to Awesome Myanmar Bot! Use /help to see available commands.',
     '/help': getHelpText(),
     '/jobs': async () => {
+      let techId = null;
       const tech = await db
-        .prepare('SELECT id FROM technicians WHERE telegram_id = ?')
-        .bind(from.id)
+        .prepare('SELECT id FROM technicians WHERE id = ?')
+        .bind(from.id.toString())
         .first();
-      if (!tech) return 'You are not registered as a technician. Contact your admin.';
+      if (tech) {
+        techId = tech.id;
+      } else {
+        const username = (from.username || '').replace(/^@/, '');
+        const techByName = await db
+          .prepare("SELECT id FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)")
+          .bind(username)
+          .first();
+        if (!techByName) return 'You are not registered as a technician. Contact your admin.';
+        techId = techByName.id;
+      }
       const jobs = await db
         .prepare(
-          "SELECT id, title, status, priority FROM jobs WHERE assigned_to = ? AND status IN ('pending', 'assigned', 'in_progress') ORDER BY priority DESC, scheduled_date ASC LIMIT 5"
+          "SELECT id, job_description, service_type, status FROM service_records WHERE technician_id = ? AND status IN ('Pending', 'In Progress') ORDER BY created_at DESC LIMIT 5"
         )
-        .bind(tech.id)
+        .bind(techId)
         .all();
       if (jobs.results.length === 0) return 'No active jobs assigned to you.';
       return (
-        '📋 *Your Active Jobs:*\n\n' +
-        jobs.results.map((j) => `• #${j.id}: ${j.title} [${j.status}]`).join('\n')
+        '*Your Active Jobs:*\n\n' +
+        jobs.results.map((j) => `• #${j.id}: ${j.job_description?.substring(0, 50)} [${j.status}]`).join('\n')
       );
     },
     '/status': async () => {
+      let techId = null;
+      let techName = null;
       const tech = await db
-        .prepare('SELECT id, name FROM technicians WHERE telegram_id = ?')
-        .bind(from.id)
+        .prepare('SELECT id, name FROM technicians WHERE id = ?')
+        .bind(from.id.toString())
         .first();
-      if (!tech) return 'Not registered.';
-      const att = await db
-        .prepare(
-          "SELECT * FROM attendance WHERE technician_id = ? AND date = date('now') AND clock_out IS NULL"
-        )
-        .bind(tech.id)
-        .first();
-      return att ? `✅ You are clocked in (since ${att.clock_in})` : '❌ You are clocked out.';
+      if (tech) {
+        techId = tech.id;
+        techName = tech.name;
+      } else {
+        const username = (from.username || '').replace(/^@/, '');
+        const techByName = await db
+          .prepare("SELECT id, name FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)")
+          .bind(username)
+          .first();
+        if (!techByName) return 'Not registered.';
+        techId = techByName.id;
+        techName = techByName.name;
+      }
+      return `Hello ${techName}! You are registered as a technician.`;
     },
   };
 
@@ -119,29 +138,39 @@ async function handleCommand(chatId, command, from, db, env) {
 }
 
 async function handleCallbackQuery(chatId, data, from, db, env) {
-  // Parse callback data: action:jobId
   const [action, jobId] = data.split(':');
   let reply = 'Processing...';
 
   switch (action) {
     case 'accept_job':
+      let techId = null;
       const tech = await db
-        .prepare('SELECT id FROM technicians WHERE telegram_id = ?')
-        .bind(from.id)
+        .prepare('SELECT id FROM technicians WHERE id = ?')
+        .bind(from.id.toString())
         .first();
       if (tech) {
-        await db
-          .prepare("UPDATE jobs SET status = 'assigned', assigned_to = ? WHERE id = ?")
-          .bind(tech.id, jobId)
-          .run();
-        reply = `✅ Job #${jobId} accepted!`;
+        techId = tech.id;
       } else {
-        reply = '❌ You are not registered.';
+        const username = (from.username || '').replace(/^@/, '');
+        const techByName = await db
+          .prepare("SELECT id FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)")
+          .bind(username)
+          .first();
+        techId = techByName?.id;
+      }
+      if (techId) {
+        await db
+          .prepare("UPDATE service_records SET status = 'In Progress', technician_id = ? WHERE id = ?")
+          .bind(techId, jobId)
+          .run();
+        reply = `Job #${jobId} accepted!`;
+      } else {
+        reply = 'You are not registered.';
       }
       break;
     case 'complete_job':
-      await db.prepare("UPDATE jobs SET status = 'completed' WHERE id = ?").bind(jobId).run();
-      reply = `✅ Job #${jobId} marked as completed.`;
+      await db.prepare("UPDATE service_records SET status = 'Completed' WHERE id = ?").bind(jobId).run();
+      reply = `Job #${jobId} marked as completed.`;
       break;
     default:
       reply = 'Unknown action.';
@@ -151,43 +180,47 @@ async function handleCallbackQuery(chatId, data, from, db, env) {
 }
 
 async function handleJobCreation(chatId, text, from, db, env) {
-  // Simple auto-dispatch: create a job from a Telegram message
+  let techId = null;
   const tech = await db
-    .prepare('SELECT id FROM technicians WHERE telegram_id = ?')
-    .bind(from.id)
+    .prepare('SELECT id FROM technicians WHERE id = ?')
+    .bind(from.id.toString())
     .first();
-  if (!tech) {
-    return sendTelegramMessage(
-      env,
-      chatId,
-      'You are not registered as a technician. Contact your admin.'
-    );
+  if (tech) {
+    techId = tech.id;
+  } else {
+    const username = (from.username || '').replace(/^@/, '');
+    const techByName = await db
+      .prepare("SELECT id FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)")
+      .bind(username)
+      .first();
+    if (!techByName) {
+      return sendTelegramMessage(
+        env,
+        chatId,
+        'You are not registered as a technician. Contact your admin.'
+      );
+    }
+    techId = techByName.id;
   }
 
-  const id = 'JOB-' + Date.now().toString(36).toUpperCase();
+  const id = 'JOB-TG-' + Date.now().toString(36).toUpperCase();
   await db
     .prepare(
-      "INSERT INTO jobs (id, title, description, status, created_by, notes) VALUES (?, ?, ?, 'pending', ?, ?)"
+      "INSERT INTO service_records (id, technician_id, service_type, status, job_description) VALUES (?, ?, 'General Maintenance', 'Pending', ?)"
     )
-    .bind(
-      id,
-      text.substring(0, 100),
-      text,
-      tech.id,
-      `Created via Telegram by ${from.first_name || from.id}`
-    )
+    .bind(id, techId, text.substring(0, 500))
     .run();
 
   await sendTelegramMessage(
     env,
     chatId,
-    `✅ Job created: #${id}\n\nTitle: ${text.substring(0, 100)}`
+    `Job created: #${id}\n\nDescription: ${text.substring(0, 100)}`
   );
 }
 
 function getHelpText() {
   return (
-    '🤖 *Kosai Bot Commands*\n\n' +
+    '🤖 *Awesome Myanmar Bot*\n\n' +
     '/start - Welcome message\n' +
     '/help - Show this help\n' +
     '/jobs - List your active jobs\n' +
