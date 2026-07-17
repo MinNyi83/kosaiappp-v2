@@ -69,7 +69,7 @@ function register(router, env) {
         .first();
       if (!existing) return error('Technician not found', 404);
 
-      const allowed = ['name', 'email', 'phone', 'role', 'active', 'specialties'];
+      const allowed = ['name', 'nickname', 'email', 'phone', 'role', 'active', 'specialties', 'photo', 'username', 'pin', 'telegram_username'];
       const updates = [];
       const values = [];
 

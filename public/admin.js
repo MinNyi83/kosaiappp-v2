@@ -251,15 +251,15 @@ async function handleGoogleLogin(response) {
       body: JSON.stringify({ token: response.credential }),
     });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Google auth rejected');
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Google auth rejected');
 
-    if (data.user.role !== 'Admin') {
+    if (result.data.technician.role !== 'Admin') {
       throw new Error('Your account does not have Admin privileges.');
     }
 
-    localStorage.setItem('admin_user', JSON.stringify(data.user));
-    localStorage.setItem('admin_token', data.token);
+    localStorage.setItem('admin_user', JSON.stringify(result.data.technician));
+    localStorage.setItem('admin_token', result.data.token);
     document.getElementById('auth-screen').classList.add('hidden');
     initializeAdminDesk();
   } catch (err) {
@@ -3089,10 +3089,10 @@ async function updateTechnicianStatus(id, active) {
   const role = document.getElementById(`role-${id}`).value;
 
   try {
-    const res = await fetch(`${baseUrl}/api/admin/technicians/update`, {
-      method: 'POST',
+    const res = await fetch(`${baseUrl}/api/admin/technicians/${id}`, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ id, role, active }),
+      body: JSON.stringify({ role, active }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -3116,10 +3116,10 @@ async function saveTechnicianRole(id) {
     const row = Array.from(tbody.querySelectorAll('tr')).find((tr) => tr.innerHTML.includes(id));
     const active = row.innerHTML.includes('bg-emerald-500/10') ? 1 : 0;
 
-    const res = await fetch(`${baseUrl}/api/admin/technicians/update`, {
-      method: 'POST',
+    const res = await fetch(`${baseUrl}/api/admin/technicians/${id}`, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ id, role, active }),
+      body: JSON.stringify({ role, active }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -3269,10 +3269,10 @@ window.handleIdCardPhotoUpload = async function (input) {
         const baseUrl = document.getElementById('api-base').value;
         const token = localStorage.getItem('admin_token');
         try {
-          const res = await fetch(`${baseUrl}/api/admin/technicians/update`, {
-            method: 'POST',
+          const res = await fetch(`${baseUrl}/api/admin/technicians/${_idCardCurrentTech.id}`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ id: _idCardCurrentTech.id, photo: dataUrl }),
+            body: JSON.stringify({ photo: dataUrl }),
           });
           const data = await res.json();
           if (res.ok) {
@@ -3317,7 +3317,7 @@ window.downloadTechIdPdf = function () {
     <meta charset="UTF-8">
     <title>ID Card — ${name}</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -3391,8 +3391,8 @@ window.submitEditTechnician = async function (e) {
   if (password) payload.password = password;
 
   try {
-    const res = await fetch(`${baseUrl}/api/admin/technicians/update`, {
-      method: 'POST',
+    const res = await fetch(`${baseUrl}/api/admin/technicians/${id}`, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     });

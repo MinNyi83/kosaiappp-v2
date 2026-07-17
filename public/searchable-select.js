@@ -1,24 +1,24 @@
-﻿/**
+/**
  * searchable-select.js  v1.0
  * Universal progressive-enhancement library for searchable/filterable dropdowns.
- * Wraps any native <select> in-place — native select stays hidden so form
+ * Wraps any native <select> in-place � native select stays hidden so form
  * submission and existing JS that reads .value both continue working.
  *
  * Usage:
  *   makeSearchable(document.getElementById('my-select'));
- *   makeSearchable(el, { placeholder: 'Filter…', accentColor: '#f59e0b' });
+ *   makeSearchable(el, { placeholder: 'Filter�', accentColor: '#f59e0b' });
  *
  * Public API on el._ss:
- *   el._ss.open()       – open dropdown
- *   el._ss.close()      – close dropdown
- *   el._ss.sync()       – re-read native select value into text input
- *   el._ss.rebuild()    – rebuild option list from current native options
- *   el._ss.setValue(v)  – programmatically set value + sync display
+ *   el._ss.open()       � open dropdown
+ *   el._ss.close()      � close dropdown
+ *   el._ss.sync()       � re-read native select value into text input
+ *   el._ss.rebuild()    � rebuild option list from current native options
+ *   el._ss.setValue(v)  � programmatically set value + sync display
  */
 (function () {
   'use strict';
 
-  // ── Shared click-outside listener (one for entire page) ─────────────────
+  // -- Shared click-outside listener (one for entire page) -----------------
   let _outsideActive = false;
   function _ensureOutside() {
     if (_outsideActive) return;
@@ -43,7 +43,7 @@
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────
+  // ------------------------------------------------------------------------
   window.makeSearchable = function (selectEl, opts) {
     if (!selectEl || selectEl._searchableInit) return;
 
@@ -54,7 +54,7 @@
 
     var cfg = Object.assign(
       {
-        placeholder: 'Search or select…',
+        placeholder: 'Search or select�',
         accentColor: '#6366f1',
       },
       opts || {}
@@ -62,11 +62,11 @@
 
     var accent = cfg.accentColor;
 
-    // ── Hide native select ──────────────────────────────────────────────
+    // -- Hide native select ----------------------------------------------
     var origClass = selectEl.className || '';
     selectEl.style.display = 'none';
 
-    // ── Wrapper ────────────────────────────────────────────────────────
+    // -- Wrapper --------------------------------------------------------
     var isFullWidth = origClass.indexOf('w-full') !== -1;
     var wrapper = document.createElement('div');
     wrapper.className = 'ss-wrapper';
@@ -78,7 +78,7 @@
     selectEl.parentNode.insertBefore(wrapper, selectEl);
     wrapper.appendChild(selectEl);
 
-    // ── Input row ──────────────────────────────────────────────────────
+    // -- Input row ------------------------------------------------------
     var row = document.createElement('div');
     row.style.cssText = 'position:relative;';
     wrapper.appendChild(row);
@@ -92,7 +92,7 @@
     input.style.cssText = 'width:100%;padding-right:1.75rem;box-sizing:border-box;display:block;';
     row.appendChild(input);
 
-    // ── Chevron ────────────────────────────────────────────────────────
+    // -- Chevron --------------------------------------------------------
     var chevron = document.createElement('span');
     chevron.className = 'ss-chevron';
     chevron.innerHTML =
@@ -101,7 +101,7 @@
       'position:absolute;right:0.5rem;top:50%;transform:translateY(-50%);color:#64748b;display:flex;align-items:center;cursor:pointer;transition:transform 0.15s;';
     row.appendChild(chevron);
 
-    // ── Dropdown panel ─────────────────────────────────────────────────
+    // -- Dropdown panel -------------------------------------------------
     var dd = document.createElement('div');
     dd.className = 'ss-dropdown';
     dd.style.cssText = [
@@ -121,7 +121,7 @@
     ].join(';');
     wrapper.appendChild(dd);
 
-    // ── Option building ─────────────────────────────────────────────────
+    // -- Option building -------------------------------------------------
     function buildList(q) {
       dd.innerHTML = '';
       q = (q || '').trim().toLowerCase();
@@ -248,7 +248,7 @@
       }
     }
 
-    // ── Input events ────────────────────────────────────────────────────
+    // -- Input events ----------------------------------------------------
     input.addEventListener('focus', open);
 
     input.addEventListener('input', function () {
@@ -293,7 +293,7 @@
       }
     });
 
-    // ── MutationObserver: react to dynamic option changes ───────────────
+    // -- MutationObserver: react to dynamic option changes ---------------
     new MutationObserver(function () {
       syncFromNative();
       if (dd.style.display !== 'none') buildList(input.value);
@@ -302,7 +302,7 @@
     syncFromNative();
     _ensureOutside();
 
-    // ── Public API ──────────────────────────────────────────────────────
+    // -- Public API ------------------------------------------------------
     selectEl._ss = {
       open: open,
       close: close,
@@ -317,7 +317,7 @@
     };
   };
 
-  // ── Convenience batch function ───────────────────────────────────────────
+  // -- Convenience batch function -------------------------------------------
   window.makeSearchableAll = function (selectors, root, opts) {
     var r = root || document;
     var sels = Array.isArray(selectors) ? selectors : [selectors];

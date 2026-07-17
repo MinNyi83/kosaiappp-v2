@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kosai-tech-portal-v1';
+const CACHE_NAME = 'kosai-tech-portal-v3';
 const ASSETS_TO_CACHE = [
   './app.html',
   './app.js',
@@ -34,10 +34,19 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  // Serve from cache, fallback to network
+  // Skip cross-origin requests
+  if (!event.request.url.startsWith(self.location.origin)) return;
+  // Network-first for JS/HTML, cache-first for others
+  const isCode = event.request.url.match(/\.(js|html)(\?|$)/);
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    isCode
+      ? fetch(event.request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return response;
+        }).catch(() => caches.match(event.request))
+      : caches.match(event.request).then((response) => {
+          return response || fetch(event.request);
+        })
   );
 });

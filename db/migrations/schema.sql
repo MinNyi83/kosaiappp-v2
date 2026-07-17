@@ -25,6 +25,7 @@ CREATE TABLE technicians (
     password TEXT,
     pin TEXT DEFAULT '1234',
     photo TEXT,
+    last_login TEXT,
     permissions TEXT CHECK(permissions IN ('read', 'read_write')) DEFAULT 'read_write'
 );
 
