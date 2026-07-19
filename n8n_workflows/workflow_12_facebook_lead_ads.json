@@ -35,13 +35,13 @@
         "url": "={{ $env.KOSAI_BASE_URL }}/api/clients",
         "sendQuery": true,
         "queryParameters": {
-          "parameters": [{ "name": "search", "value": "={{ $json.fieldEmail || $json.fieldPhone }}" }]
+          "parameters": [
+            { "name": "search", "value": "={{ $json.fieldEmail || $json.fieldPhone }}" }
+          ]
         },
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }]
         }
       },
       "onError": "continueRegularOutput"
@@ -64,9 +64,7 @@
       "position": [1050, 300],
       "parameters": {
         "conditions": {
-          "boolean": [
-            { "value1": "={{ $json.isNew }}", "value2": true }
-          ]
+          "boolean": [{ "value1": "={{ $json.isNew }}", "value2": true }]
         }
       }
     },
@@ -105,9 +103,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ recipient: { tag: 'NON_PROMOTIONAL_SUBSCRIPTION' }, message: { text: 'Thank you for your interest in Awesome Myanmar! Our team will contact you shortly to discuss your ' + ($json.lead.fieldService || 'service') + ' requirements.' } }) }}",
         "headerParameters": {
-          "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
-          ]
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
         }
       },
       "onError": "continueRegularOutput"

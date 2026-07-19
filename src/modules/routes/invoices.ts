@@ -60,7 +60,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { client_id, items, amount, due_date, notes } = body;
 
       if (!client_id || !amount) {
@@ -95,7 +95,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { payment_method, payment_ref, amount_paid } = (await request.json() as any);
+      const { payment_method, payment_ref, amount_paid } = (await request.json()) as any;
 
       const existing = await db
         .prepare('SELECT * FROM invoices WHERE id = ?')
@@ -169,7 +169,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { client_id, items, payments, notes } = (await request.json() as any);
+      const { client_id, items, payments, notes } = (await request.json()) as any;
       if (!items || !items.length) return error('No items in cart', 400);
 
       // Calculate totals
@@ -222,7 +222,8 @@ function register(router, env) {
 }
 
 function generateInvoiceHTML(invoice) {
-  const items = typeof invoice.items === 'string' ? (JSON.parse(invoice.items) as any) : invoice.items || [];
+  const items =
+    typeof invoice.items === 'string' ? (JSON.parse(invoice.items) as any) : invoice.items || [];
   const itemsHtml = items
     .map(
       (item) =>
@@ -241,4 +242,3 @@ function generateInvoiceHTML(invoice) {
 }
 
 export { register };
-

@@ -10,36 +10,48 @@
 
 ## 🏗 Overview
 
-This project uses AI agents to provide intelligent assistance for field service management. The system features a main UI (`app.html`, `app.js`), an admin dashboard (`admin.html`, `admin.js`), and a Cloudflare Worker backend (`wrangler.toml`, `src/index.js`, `functions/api/`). The core architecture is based on the **Field Service Worker** template, extended with admin interfaces, AI dispatching, and automated reporting.
+This project uses AI agents to provide intelligent assistance for field service management. The system features a technician UI (`public/app.html`, `public/app.js`), an admin dashboard (`public/admin.html`, `public/admin.js`), and a modular Cloudflare Worker backend (`src/index.ts`, `src/modules/routes/`). The core architecture uses a **modular router pattern** with domain-specific route modules.
 
 ## 🧩 Key Components
 
 ### 1. **Field Service Worker Backend**
 
-**Location**: `src/index.js`, `wrangler.toml`, `functions/`
+**Location**: `src/index.ts`, `src/modules/routes/`, `wrangler.toml`
 
 **Features**:
 
 - Cloudflare Worker API endpoints for job management, technician dispatch, client profiles, and service scheduling
 - D1 database for persistent storage
 - AI integration using Gemini API for ticket triaging and dispatch matching
-- WebSocket support for real-time job updates
 - Telegram bot webhook integration (`/api/telegram-webhook`)
 - **Google Drive Storage Integration (OAuth User Consent - Option B)**: Automated upload of site photos (`before_photo` and `after_photo`) into organized subfolders on the admin's personal Google Drive without requiring technicians to have Gmail accounts.
+- **Modular Route Architecture**: Each domain (auth, technicians, clients, jobs, inventory, invoices, etc.) registers routes via a `register(router, env)` function in `src/modules/routes/`
 
-**Key Functions**:
+**Key Modules** (`src/modules/routes/`):
 
-- `handleRequest()`: Main request router
-- `jobService.createJob()`: Create new work orders
-- `technicianService.assignTechnician()`: Assign technicians to jobs
-- `clientService.createClient()`: Manage client profiles
-- `aiService.getBestTechnician()`: AI-powered technician matching
-- `getGoogleAccessToken()`: Refreshes Google access token using the user's Client ID, Client Secret, and Refresh Token.
-- `uploadFileToGoogleDrive()`: Main upload engine that constructs subfolders (`ClientName/JobID/`) and posts the files.
-- `getOrCreateDriveFolder()`: Helper to search or recursively create folders in Google Drive.
-- `telegramService.sendTelegramPhotoNotification()`: Outbound Telegram notifications (downloads images from Google Drive using OAuth first to pass binary streams to Telegram).
+- `auth.ts` - Authentication (login, PIN, Google OAuth)
+- `technicians.ts` - Technician CRUD & management
+- `clients.ts` - Client CRUD & AMC tracking
+- `jobs.ts` - Service records & job management
+- `inventory.ts` - Stock, batches, items, catalog
+- `invoices.ts` - Invoice generation & management
+- `expenses.ts` - Expense tracking
+- `attendance.ts` - Technician attendance
+- `reports.ts` - Dynamic report builder
+- `admin.ts` - Admin dashboard data
+- `ai.ts` - AI dispatch & diagnostics
+- `telegram.ts` - Telegram bot webhook
+- `batches.ts`, `rma.ts`, `distributors.ts`, `cashsafe.ts`, `servicefees.ts`, `landing.ts`
 
-### 2. **Main UI**
+**Utility Modules** (`src/modules/utils/`):
+
+- `router.ts` - Lightweight request router
+- `cors.ts`, `response.ts` - HTTP helpers
+- `jwt.ts` - JWT token management
+- `telegram.ts`, `viber.ts`, `google.ts`, `gemini.ts` - External service integrations
+- `rate-limit.ts`, `sql-validator.ts` - Security utilities
+
+### 2. **Main UI (Technician Mobile Console)**
 
 **Location**: `public/app.html`, `public/app.js`
 
@@ -52,7 +64,7 @@ This project uses AI agents to provide intelligent assistance for field service 
 
 ### 3. **Admin Dashboard**
 
-**Location**: `admin.html`, `admin.js`
+**Location**: `public/admin.html`, `public/admin.js`
 
 **Features**:
 
@@ -102,8 +114,9 @@ GOOGLE_DRIVE_FOLDER_ID="your_google_drive_folder_id"
 ### Database Setup
 
 1. Create a D1 database: `wrangler d1 create cctv-fsm-db`
-2. Run migrations: `npx wrangler d1 execute cctv-fsm-db --local --remote --file=schema.sql`
-3. Update `wrangler.toml` with your database ID and name
+2. Run schema migration: `npx wrangler d1 execute cctv-fsm-db --local --file=db/migrations/schema.sql`
+3. Seed mock data: `npx wrangler d1 execute cctv-fsm-db --local --file=db/migrations/mock_data.sql`
+4. Update `wrangler.toml` with your database ID and name
 
 ### Local Development
 
@@ -117,82 +130,260 @@ Deploy to Cloudflare Workers: `npx wrangler deploy`
 
 ```
 cctv-service-system/
-├── .env                     # Environment variables
+├── .dev.vars                # Local environment variables (secrets)
 ├── wrangler.toml            # Cloudflare Worker configuration
 ├── src/
-│   └── index.js             # Main Worker application
+│   ├── index.ts             # Main Worker entry point
+│   ├── modules/
+│   │   ├── routes/          # Route modules (auth, technicians, clients, jobs, etc.)
+│   │   └── utils/           # Utilities (router, cors, jwt, telegram, google, etc.)
+│   └── types/
+│       └── schema.ts        # TypeScript types for database schema
 ├── public/
 │   ├── app.html             # Technician UI
 │   ├── app.js               # Technician UI logic
 │   ├── admin.html           # Admin dashboard
 │   ├── admin.js             # Admin dashboard logic
-│   ├── style.css            # Global styles
-│   └── favicon.svg          # Favicon
+│   ├── tailwind.css         # Compiled Tailwind CSS
+│   ├── input.css            # Tailwind input CSS
+│   ├── manifest.json        # PWA manifest
+│   ├── sw.js                # Service worker
+│   └── views/               # Admin view partials (dashboard, jobs, inventory, etc.)
+├── db/
+│   ├── migrations/          # SQL migrations (schema.sql, mock_data.sql, etc.)
+│   └── seeds/               # Seed data files
 ├── functions/
-│   ├── api/
-│   │   └── [[path]].js      # API route handler
-│   └── asset-management/
-│       └── [[path]].js      # Asset management endpoints
-├── schema.sql               # D1 database schema
+│   └── api/
+│       └── [[path]].js      # Cloudflare Pages API proxy
+├── schema.sql               # Legacy schema (use db/migrations/schema.sql)
 ├── AGENTS.md                # AI agent configuration
 ├── .agents/
 │   ├── AGENTS.md            # Project rules
 │   └── skills/
 │       ├── telegram-bot/
 │       │   └── SKILL.md     # Telegram bot integration
-│       └── cloudflare-polling-limits/
-│           └── SKILL.md     # Cloudflare usage limits
+│       ├── cloudflare-polling-limits/
+│       │   └── SKILL.md     # Cloudflare usage limits
+│       ├── cloudflare-local-first/
+│       │   └── SKILL.md     # Local-first development
+│       ├── cms-assistant/
+│       │   └── SKILL.md     # Client management assistant
+│       └── ui-layout-guidance/
+│           └── SKILL.md     # UI layout guidelines
 ├── exchange_token.js        # Google OAuth callback helper
 ├── package.json             # Project dependencies
+├── design.md                # Design system documentation
+├── docs/                    # Additional documentation
+└── src-tauri/               # Tauri desktop app config
 ```
 
 ## ⚙️ API Endpoints
 
 ### Google Drive Setup Flow
 
-- `GET /api/setup/google-drive`: Starts OAuth authorization redirect
-- `GET /api/setup/google-drive/callback`: Exposes success screen showing generated Refresh Token
+- `GET /api/auth/google/drive-url`: Starts OAuth authorization redirect
+- `GET /api/auth/google/drive-callback`: Exposes success screen showing generated Refresh Token
+
+### Authentication
+
+- `POST /api/auth/login`: Technician login (PIN/password)
+- `POST /api/auth/verify`: Verify JWT token
+- `POST /api/auth/logout`: Logout
+- `GET /api/auth/profile`: Get current user profile
+- `PUT /api/technicians/:id/pin`: Change technician PIN
 
 ### Job Management
 
-- `POST /api/admin/jobs/create`: Create new job
-- `POST /api/admin/jobs/assign`: Assign technician to job
-- `POST /api/admin/jobs/complete`: Mark job as complete
+- `GET /api/jobs`: List jobs (with filters: status, technician_id, client_id, date_from, date_to, search)
+- `GET /api/jobs/active`: Get active jobs
+- `GET /api/jobs/calendar`: Get jobs for calendar view
+- `GET /api/jobs/receipt`: Generate job receipt
 - `GET /api/jobs/:id`: Get job details
+- `POST /api/jobs`: Create new job
+- `PUT /api/jobs/:id`: Update job
+- `DELETE /api/jobs/:id`: Delete job
+- `POST /api/jobs/:id/status`: Update job status
 
 ### Technician Management
 
-- `POST /api/admin/technicians/create`: Create technician
-- `POST /api/admin/technicians/edit`: Edit technician
-- `POST /api/admin/technicians/delete`: Delete technician
-- `GET /api/technicians/active`: Get active technicians
+- `GET /api/technicians`: List technicians
+- `GET /api/technicians/:id`: Get technician details
+- `POST /api/technicians`: Create technician
+- `PUT /api/technicians/:id`: Update technician
+- `DELETE /api/technicians/:id`: Delete technician
 
 ### Client Management
 
-- `POST /api/admin/clients/create`: Create client
-- `POST /api/admin/clients/edit`: Edit client
-- `POST /api/admin/clients/delete`: Delete client
-- `GET /api/admin/clients/list`: List all clients
+- `GET /api/clients`: List clients
+- `GET /api/clients/:id`: Get client details
+- `POST /api/clients`: Create client
+- `PUT /api/clients/:id`: Update client
+- `DELETE /api/clients/:id`: Delete client
 
-### Service Fee Management
+### Inventory Management
 
-- `POST /api/admin/service-fees/set`: Set service fee
-- `POST /api/admin/service-fees/delete`: Delete service fee
-- `GET /api/service-fees/:type`: Get service fee by type
+- `GET /api/inventory`: List inventory items
+- `GET /api/inventory/:id`: Get inventory item
+- `POST /api/inventory`: Add inventory item
+- `PUT /api/inventory/:id`: Update inventory item
+- `DELETE /api/inventory/:id`: Delete inventory item
+- `POST /api/inventory/:id/adjust`: Adjust stock quantity
+- `GET /api/inventory/low-stock`: Get low stock items
+- `GET /api/inventory/categories`: Get categories
 
-### Cash Safe Management
+### Admin Inventory
 
-- `POST /api/admin/cash-safe/record`: Record cash safe transaction
-- `GET /api/admin/cash-safe/balance`: Get cash safe balance
+- `GET /api/admin/inventory/list`: Admin inventory list
+- `GET /api/admin/inventory/batches`: Admin batch list
+- `GET /api/admin/inventory/categories`: Admin categories
+- `GET /api/admin/inventory/sub-categories`: Admin sub-categories
+- `GET /api/admin/inventory/brands`: Admin brands
+- `GET /api/admin/inventory/units`: Admin units
+- `GET /api/admin/warranty/list`: Warranty list
+- `GET /api/admin/rma/list`: RMA list
+- `POST /api/admin/inventory/catalog/price`: Set catalog price
+- `POST /api/admin/inventory/batches/create`: Create batch
+- `POST /api/admin/inventory/batches/edit`: Edit batch
+- `POST /api/admin/inventory/add`: Add inventory (admin)
+- `POST /api/admin/inventory/delete`: Delete inventory (admin)
+
+### Batches & Serials
+
+- `GET /api/batches`: List batches
+- `POST /api/batches`: Create batch
+- `PUT /api/batches/:id`: Update batch
+- `GET /api/serials`: List serials
+- `POST /api/serials/verify`: Verify serial
+
+### Invoices & POS
+
+- `GET /api/invoices`: List invoices
+- `POST /api/invoices`: Create invoice
+- `PUT /api/invoices/:id/pay`: Mark invoice as paid
+- `POST /api/invoices/:id/save-drive`: Save invoice to Google Drive
+- `POST /api/pos/checkout`: POS checkout
+- `GET /api/pos/sales`: POS sales list
+- `GET /api/pos/credits`: POS credits
+
+### Service Fees
+
+- `GET /api/service-fees`: List service fees
+- `POST /api/service-fees`: Create service fee
+- `PUT /api/service-fees/:id`: Update service fee
+- `DELETE /api/service-fees/:id`: Delete service fee
+- `POST /api/admin/service-fees/manage`: Admin manage service fees
+
+### Cash Safe
+
+- `GET /api/cash-safe/balance`: Get cash safe balance
+- `GET /api/cash-safe/transactions`: List transactions
+- `POST /api/cash-safe/deposit`: Deposit
+- `POST /api/cash-safe/withdraw`: Withdraw
+- `GET /api/admin/cash/safe`: Admin cash safe
+- `GET /api/admin/cash/transactions`: Admin transactions
+- `POST /api/admin/cash/transact`: Admin transact
+
+### Attendance
+
+- `POST /api/attendance/clock-in`: Clock in
+- `POST /api/attendance/clock-out`: Clock out
+- `GET /api/attendance`: List attendance
+- `GET /api/attendance/status`: Attendance status
+
+### Distributors
+
+- `GET /api/distributors`: List distributors
+- `POST /api/distributors`: Create distributor
+- `PUT /api/distributors/:id`: Update distributor
+- `DELETE /api/distributors/:id`: Delete distributor
+
+### Expenses
+
+- `GET /api/expenses`: List expenses
+- `POST /api/expenses`: Create expense
+- `PUT /api/expenses/:id/approve`: Approve expense
+- `PUT /api/expenses/:id/reject`: Reject expense
+
+### RMA & Warranty
+
+- `GET /api/rma`: List RMA
+- `POST /api/rma`: Create RMA
+- `PUT /api/rma/:id/status`: Update RMA status
+- `GET /api/warranty/check`: Check warranty
+
+### Reports
+
+- `GET /api/reports/dashboard`: Dashboard report
+- `GET /api/reports/jobs`: Jobs report
+- `GET /api/reports/revenue`: Revenue report
+- `GET /api/reports/export`: Export report
 
 ### AI Features
 
-- `POST /api/ai/dispatch`: AI-powered technician dispatch
-- `POST /api/ai/diagnose`: AI diagnostics and repair suggestions
+- `POST /api/ai/polish-notes`: Polish job notes with AI
+- `POST /api/ai/auto-dispatch`: AI auto-dispatch
+- `POST /api/ai/route-optimize`: AI route optimization
+- `POST /api/ai/copilot`: AI copilot chat
+- `POST /api/ai/transcribe`: Transcribe audio
+
+### Admin
+
+- `GET /api/admin/lookups`: Admin lookups
+- `GET /api/admin/technicians`: Admin technician list
+- `PUT /api/admin/technicians/:id`: Admin update technician
+- `DELETE /api/admin/technicians/:id`: Admin delete technician
+- `GET /api/admin/clients`: Admin client list
+- `GET /api/admin/config/:key`: Get config
+- `POST /api/admin/config`: Set config
+- `GET /api/admin/roles`: List roles
+- `POST /api/admin/roles`: Create role
+- `DELETE /api/admin/roles/:id`: Delete role
+- `POST /api/admin/backup`: Trigger backup
+- `POST /api/admin/restore`: Restore backup
+- `GET /api/admin/stats`: Admin stats
+- `GET /api/landing-page`: Get landing page
+- `POST /api/landing-page`: Update landing page
+- `POST /api/admin/hq-config`: HQ config
+- `POST /api/admin/jobs/ai-polish`: AI polish job notes
+- `POST /api/admin/ai/chat-data`: AI chat data
+- `POST /api/admin/ai/route-optimize`: AI route optimize
+- `POST /api/admin/ai/auto-dispatch`: AI auto dispatch
+- `POST /api/admin/ai/transcribe`: AI transcribe
+- `GET /api/jobs/receipt`: Job receipt
+- `GET /api/portal/history`: Portal history
+
+### Public
+
+- `POST /api/public/contact`: Contact form
+- `GET /api/public/exchange-rate`: Exchange rate
+- `GET /api/public/serials`: Public serials
+- `GET /api/public/technician/:id`: Public technician
+- `GET /api/public/landing`: Public landing
+- `GET /api/public/service-fees`: Public service fees
+
+### Google & Maps
+
+- `POST /api/auth/google`: Google auth
+- `POST /api/auth/login-password`: Password login
+- `GET /api/auth/google/drive-url`: Google Drive URL
+- `GET /api/admin/resolve-coords`: Resolve coordinates
+- `POST /api/resolve-maps-url`: Resolve Maps URL
+
+### Telegram
+
+- `POST /api/telegram/webhook`: Telegram webhook
+- `POST /api/telegram/send`: Send Telegram message
+
+### Landing Page Admin
+
+- `GET /api/admin/landing`: Admin landing list
+- `POST /api/admin/landing`: Admin create landing
+- `PUT /api/admin/landing/:id`: Admin update landing
+- `DELETE /api/admin/landing/:id`: Admin delete landing
 
 ## 🤖 AI Dispatching
 
-The AI dispatch system automatically matches technicians to jobs based on issue description and technician skills. See `src/index.js` for implementation details.
+The AI dispatch system automatically matches technicians to jobs based on issue description and technician skills. See `src/modules/routes/ai.ts` and `src/modules/routes/admin.ts` for implementation details.
 
 **Example Prompt:**
 
@@ -214,6 +405,8 @@ The system uses WebSocket connections to provide real-time updates for:
 - System notifications
 
 ## 📝 Database Schema
+
+The complete schema is defined in `db/migrations/schema.sql`. Key tables include:
 
 ### Customers Table
 
@@ -243,7 +436,10 @@ CREATE TABLE technicians (
   email TEXT,
   username TEXT,
   password TEXT,
-  pin TEXT DEFAULT '1234'
+  pin TEXT DEFAULT '1234',
+  photo TEXT,
+  last_login TEXT,
+  permissions TEXT CHECK(permissions IN ('read', 'read_write')) DEFAULT 'read_write'
 );
 ```
 
@@ -275,26 +471,70 @@ CREATE TABLE service_records (
 );
 ```
 
+### Additional Tables
+
+- **Inventory**: `inventory_stock`, `inventory_batches`, `inventory_items`, `stock_code_map`
+- **Cash Management**: `cash_safes`, `cash_transactions`
+- **Configuration**: `service_fees`, `system_config`
+
 ## 🤖 Telegram Bot System
 
-The project integrates a Telegram bot dispatcher engine (`/api/telegram-webhook`) that interfaces with active technicians and dispatch coordinators.
+The project integrates a Telegram bot dispatcher engine (`/api/telegram/webhook`) that interfaces with active technicians and dispatch coordinators.
 
 ### Webhook API Actions
 
-- **`POST /api/telegram-webhook`**: Receives webhook payloads from the Telegram API.
+- **`POST /api/telegram/webhook`**: Receives webhook payloads from the Telegram API.
 
 ### Webhook Features & Command Flow
 
-1. **Slash Commands**:
-   - `/status [Ticket ID]`: Queries and formats work order details, tech assignment, status, and checklist data (renders the new multi-state indicators: 🟢 Good, 🟡 Repair, 🔵 Fixed, 🟣 Change).
-   - `/assign [Ticket ID] [Tech ID/Name/Nickname]`: Searches active technician and sets assignment for the ticket. Supports multi-word names (e.g. Hein Lin Htet).
-2. **AI Multimodal Dispatching & Transcription**:
-   - **Voice Messages**: Receives voice messages (`audio/ogg`), gets the audio file path, downloads the bytes, and transcribes the speech with Gemini `gemini-2.5-flash`.
-   - **Auto-Matcher**: Feeds transcribed text to Gemini to choose the service domain (CCTV, Networking, WiFi, NAS, General Maintenance) and assign the best technician based on experience or name/nickname mentions. Creates client and job records in D1.
-   - **Dispatch Confirmation**: Messages the Telegram dispatch group with details of the assigned technician and new Job ID.
-3. **Outbound Notifications**:
-   - Sends before and after site photos automatically upon technician site updates.
-   - Dispatches database backup logs alerts to the Telegram group chat on backups.
+1. **Slash Commands** (15+ commands):
+   - `/start` - Welcome message
+   - `/help` - Show all commands
+   - `/clock` - Quick clock status summary
+   - `/checkin` or `/clockin` - Clock in for today
+   - `/checkout` or `/clockout` - Clock out
+   - `/status` - Check clock-in status & active jobs
+   - `/report` - Weekly attendance summary
+   - `/team` - See who is currently clocked in
+   - `/leaderboard` - Weekly hours leaderboard
+   - `/history` - My clock-in/out history this week
+   - `/jobs` - List your active jobs
+   - `/completed` - List your completed jobs
+   - `/today` - Show today's jobs & attendance
+   - `/ticket JOB-xxx` - View job details
+   - `/accept JOB-xxx` - Accept a job assignment
+   - `/assign JOB-xxx TechName` - Assign technician
+   - `/cancel JOB-xxx` - Cancel a job
+
+2. **Inline Keyboards** (callback buttons):
+   - `accept_job` - Accept job assignment
+   - `complete_job` - Mark job as completed
+
+3. **AI Voice Transcription & Auto-Dispatch**:
+   - **Voice Messages**: Receives voice messages (`audio/ogg`), downloads via Telegram Bot API `getFile`, transcribes with Gemini `gemini-2.5-flash` using prompt: _"Transcribe this spoken technical issue or service complaint into plain English text. Do not summarize, output only the transcribed text."_
+   - **Auto-Matcher**: Feeds transcribed text to Gemini to choose service domain (CCTV, Networking, WiFi, NAS, General Maintenance) and assign best technician based on skills or name/nickname mentions. Creates client and job records in D1 (`CLI-TG-...`, `JOB-TG-...`).
+   - **Dispatch Confirmation**: Messages the Telegram dispatch group with assigned technician details and new Job ID.
+
+4. **Photo Messages**:
+   - Receives photos, downloads highest resolution, uploads to Google Drive via `uploadFileToGoogleDrive` (organized in `Awesome Myanmar - Service Records / {Client} / {JobID}/`).
+   - Creates job record with `before_photo` pointing to Drive link.
+   - Sends confirmation with job ID.
+
+5. **Plain Text Messages**: Auto-creates job ticket from any text message.
+
+### Outbound Notifications
+
+The application triggers outbound alerts to the Telegram channel in these scenarios:
+
+1. **Site Photos / Job Completion**:
+   - Sends text and before/after photos during site uploads in `src/index.ts`.
+   - **Photo Delivery Pipeline**: Instead of passing raw Google Drive URLs (which Telegram cannot download because they require authorization), the worker retrieves the binary stream from Google Drive using the OAuth refresh token, formats it, and transmits it directly via `sendTelegramPhotoNotification`.
+
+2. **System Database Backups**:
+   - Sends database backup logs automatically upon backup events (cron at midnight).
+
+3. **Job Assignment Notifications**:
+   - Notifies technicians when assigned to a job via `/assign` or `accept_job` callback.
 
 ## 📊 Executive Reporting System
 
@@ -380,7 +620,7 @@ When syncing database schema and data between local and remote Cloudflare D1 dat
 
 When developing or debugging authentication flows in this project, remember the following critical quirks:
 
-1. **Content Security Policy (CSP)**: 
+1. **Content Security Policy (CSP)**:
    - Cloudflare Pages enforces a strict CSP in `public/_headers`.
    - If UI components (like `fonts.gstatic.com` or third-party scripts) fail to load, check the `connect-src` or `script-src` directives in `_headers`.
 2. **Technician PIN Hashing**:

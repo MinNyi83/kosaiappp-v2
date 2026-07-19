@@ -30,8 +30,10 @@ const originalFetch = window.fetch;
 window.fetch = async function (url, options = {}) {
   let finalUrl = url;
   if (finalUrl) {
-    if (finalUrl.includes('/api/admin/inventory/list')) finalUrl = finalUrl.replace('/api/admin/inventory/list', '/api/inventory');
-    if (finalUrl.includes('/api/admin/clients/list')) finalUrl = finalUrl.replace('/api/admin/clients/list', '/api/clients');
+    if (finalUrl.includes('/api/admin/inventory/list'))
+      finalUrl = finalUrl.replace('/api/admin/inventory/list', '/api/inventory');
+    if (finalUrl.includes('/api/admin/clients/list'))
+      finalUrl = finalUrl.replace('/api/admin/clients/list', '/api/clients');
 
     if (finalUrl.includes('/api/')) {
       options.headers = options.headers || {};
@@ -52,9 +54,12 @@ window.fetch = async function (url, options = {}) {
     res.json = async function () {
       const data = await originalJson();
       if (data && typeof data === 'object' && data.success === true && 'data' in data) {
-        if (finalUrl.includes('/api/jobs') && data.data && Array.isArray(data.data.jobs)) return data.data.jobs;
-        if (finalUrl.includes('/api/clients') && data.data && Array.isArray(data.data.clients)) return data.data.clients;
-        if (finalUrl.includes('/api/inventory') && data.data && Array.isArray(data.data.items)) return data.data.items;
+        if (finalUrl.includes('/api/jobs') && data.data && Array.isArray(data.data.jobs))
+          return data.data.jobs;
+        if (finalUrl.includes('/api/clients') && data.data && Array.isArray(data.data.clients))
+          return data.data.clients;
+        if (finalUrl.includes('/api/inventory') && data.data && Array.isArray(data.data.items))
+          return data.data.items;
         return data.data;
       }
       return data;
@@ -77,6 +82,14 @@ const cashPerPage = 10;
 let inventoryItems = [];
 let stockPage = 1;
 const stockPerPage = 10;
+let catalogPage = 1;
+let catalogTotalPages = 1;
+let catalogTotal = 0;
+const catalogPerPage = 50;
+let pricingPage = 1;
+let pricingTotalPages = 1;
+let pricingTotal = 0;
+const pricingPerPage = 50;
 let clientsList = [];
 
 // Mobile sidebar controls
@@ -99,6 +112,30 @@ function initAdmin() {
   const sidebar = document.getElementById('sidebar');
   if (sidebar && localStorage.getItem('sidebar_collapsed') === 'true') {
     sidebar.classList.add('collapsed');
+  }
+
+  // Touch swipe support for mobile sidebar
+  let touchStartX = 0;
+  let touchCurrentX = 0;
+  const overlay = document.getElementById('sidebar-overlay');
+
+  if (sidebar && overlay) {
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      touchCurrentX = e.touches[0].clientX;
+      const diff = touchStartX - touchCurrentX;
+
+      // Swipe left to close
+      if (sidebar.classList.contains('open') && diff > 50) {
+        closeSidebar();
+      }
+    }, { passive: true });
+
+    // Close sidebar on overlay click
+    overlay.addEventListener('click', closeSidebar);
   }
 
   const loginForm = document.getElementById('login-password-container');
@@ -165,8 +202,8 @@ async function handlePasswordLogin(e) {
     authScreen.classList.add('hidden');
     initializeAdminDesk();
   } catch (err) {
-    console.error("Login failed:", err);
-    alert(err.message);
+    console.error('Login failed:', err);
+    showToast(err.message || 'Error', 'error');
   }
 }
 
@@ -206,14 +243,14 @@ async function submitNewUser(e) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('User account created successfully.');
+      showToast('User account created successfully!', 'success');
       e.target.reset();
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 }
 
@@ -263,7 +300,7 @@ async function handleGoogleLogin(response) {
     document.getElementById('auth-screen').classList.add('hidden');
     initializeAdminDesk();
   } catch (err) {
-    alert('Access Denied: ' + err.message);
+    showToast('Access Denied', 'error');
   }
 }
 
@@ -294,9 +331,9 @@ async function triggerBackup() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    alert('Database backup file generated and downloaded successfully!');
+    showToast('Backup downloaded successfully!', 'success');
   } catch (e) {
-    alert('Backup failed: ' + e.message);
+    showToast('Backup failed', 'error');
   }
 }
 
@@ -331,13 +368,13 @@ async function handleRestoreFile(event) {
       });
       const resData = await res.json();
       if (res.ok) {
-        alert('Database restored successfully! Reloading dashboard metrics...');
+        showToast('Database restored successfully!', 'success');
         refreshDashboardData();
       } else {
         throw new Error(resData.error || 'Restoration failed.');
       }
     } catch (err) {
-      alert('Restoration process aborted: ' + err.message);
+      showToast('Restore aborted', 'warning');
     } finally {
       event.target.value = '';
     }
@@ -386,6 +423,14 @@ function switchTab(tabId) {
     activeLink.classList.remove('text-slate-400');
     activeLink.classList.add('bg-amber-500/10', 'text-amber-500');
   }
+
+  // Update mobile bottom nav
+  document.querySelectorAll('.mobile-nav-btn').forEach((btn) => {
+    btn.classList.remove('active-mobile-nav');
+    if (btn.dataset.tab === tabId) {
+      btn.classList.add('active-mobile-nav');
+    }
+  });
 
   // Fix Leaflet rendering delay when opening a previously hidden container
   if (tabId === 'dispatch-map') {
@@ -730,7 +775,7 @@ function saveHQConfig(e) {
   })
     .then((res) => res.json())
     .then((data) => {
-      alert('Head Office Location settings saved and synchronized successfully!');
+      showToast('HQ settings saved!', 'success');
       if (map) {
         map.setView([hq.lat, hq.lng], 12);
         refreshDashboardData();
@@ -738,7 +783,7 @@ function saveHQConfig(e) {
     })
     .catch((err) => {
       console.error('Failed to sync HQ config to D1:', err);
-      alert('Saved locally, but failed to sync to database: ' + err.message);
+      showToast('Saved locally, sync failed', 'warning');
     });
 }
 
@@ -888,7 +933,7 @@ async function refreshDashboardData() {
     loadTechniciansData,
     loadServiceFeesData,
     loadClientsData,
-    populateReports
+    populateReports,
   ];
 
   for (const task of tasks) {
@@ -934,6 +979,7 @@ async function populateReports() {
     }
 
     const amcBody = document.getElementById('report-amc-body');
+    if (amcBody) {
     amcBody.innerHTML = '';
     Object.entries(amcCounts).forEach(([status, count]) => {
       let badgeClass = 'text-slate-400';
@@ -949,6 +995,7 @@ async function populateReports() {
                         </tr>
                     `;
     });
+    }
 
     const techLoad = {};
     if (lookups && Array.isArray(lookups.technicians)) {
@@ -967,6 +1014,7 @@ async function populateReports() {
     });
 
     const techsBody = document.getElementById('report-techs-body');
+    if (techsBody) {
     techsBody.innerHTML = '';
     Object.values(techLoad).forEach((t) => {
       const rate = t.load > 0 ? Math.round(((t.load - t.activeTickets) / t.load) * 100) : 0;
@@ -978,6 +1026,7 @@ async function populateReports() {
                         </tr>
                     `;
     });
+    }
   } catch (e) {
     console.error('Failed to populate reports:', e);
   }
@@ -1041,17 +1090,29 @@ window.loadInventoryData = async function () {
   const baseUrl = document.getElementById('api-base').value;
   const token = localStorage.getItem('admin_token');
   try {
-    // 1. Fetch catalog
-    const catRes = await fetch(`${baseUrl}/api/admin/inventory/list`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (catRes.ok) activeCatalogList = await catRes.json();
+    // 1. Fetch catalog (first page to get total count)
+    const catRes = await fetch(
+      `${baseUrl}/api/admin/inventory/list?page=1&limit=${catalogPerPage}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    if (catRes.ok) {
+      const catResData = await catRes.json();
+      const catData = catResData.data || catResData;
+      activeCatalogList = catData.items || [];
+      catalogTotal = catData.total || 0;
+      catalogTotalPages = catData.totalPages || 1;
+    }
 
     // 2. Fetch batches
     const batRes = await fetch(`${baseUrl}/api/admin/inventory/batches`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (batRes.ok) activeBatchesList = await batRes.json();
+    if (batRes.ok) {
+      const batResData = await batRes.json();
+      activeBatchesList = batResData.data || batResData;
+    }
 
     // 3. Fetch master data
     await loadMasterData();
@@ -1075,10 +1136,22 @@ async function loadMasterData() {
       fetch(`${baseUrl}/api/admin/inventory/brands`, { headers: h }),
       fetch(`${baseUrl}/api/admin/inventory/units`, { headers: h }),
     ]);
-    if (catR.ok) masterCategories = await catR.json();
-    if (subR.ok) masterSubCategories = await subR.json();
-    if (brandR.ok) masterBrands = await brandR.json();
-    if (unitR.ok) masterUnits = await unitR.json();
+    if (catR.ok) {
+      const d = await catR.json();
+      masterCategories = d.data || d;
+    }
+    if (subR.ok) {
+      const d = await subR.json();
+      masterSubCategories = d.data || d;
+    }
+    if (brandR.ok) {
+      const d = await brandR.json();
+      masterBrands = d.data || d;
+    }
+    if (unitR.ok) {
+      const d = await unitR.json();
+      masterUnits = d.data || d;
+    }
 
     populateMasterDropdowns();
     renderMasterLists();
@@ -1136,8 +1209,7 @@ function populateMasterDropdowns() {
     .map((u) => `<option value="${u.abbreviation}">${u.abbreviation} (${u.name})</option>`)
     .join('');
   const catalogUmEl = document.getElementById('catalog-um');
-  if (catalogUmEl)
-    catalogUmEl.innerHTML = '<option value="">— Select Unit —</option>' + unitOpts;
+  if (catalogUmEl) catalogUmEl.innerHTML = '<option value="">— Select Unit —</option>' + unitOpts;
 }
 
 function renderMasterLists() {
@@ -1293,7 +1365,7 @@ window.switchInvModule = function (module) {
 window.setInventoryTab = window.switchInvModule;
 
 window.editInventoryItem = function (item_code) {
-  const item = activeCatalogList.find(i => i.item_code === item_code);
+  const item = activeCatalogList.find((i) => i.item_code === item_code);
   if (!item) return;
 
   window.switchInvModule('add-model');
@@ -1369,10 +1441,10 @@ window.submitMasterData = async function (type, e) {
       await loadMasterData();
     } else {
       const d = await res.json();
-      alert(d.error || 'Failed');
+      showToast(d.error || 'Operation failed', 'error');
     }
   } catch (err) {
-    alert('Error: ' + err.message);
+    showToast(err.message || 'Error', 'error');
   }
 };
 
@@ -1396,10 +1468,10 @@ window.submitSubCategory = async function (e) {
       await loadMasterData();
     } else {
       const d = await res.json();
-      alert(d.error || 'Failed');
+      showToast(d.error || 'Operation failed', 'error');
     }
   } catch (err) {
-    alert('Error: ' + err.message);
+    showToast(err.message || 'Error', 'error');
   }
 };
 
@@ -1420,10 +1492,10 @@ window.editCategoryPrompt = async function (id, currentName, currentCode) {
       await loadMasterData();
     } else {
       const d = await res.json();
-      alert(d.error || 'Failed');
+      showToast(d.error || 'Operation failed', 'error');
     }
   } catch (err) {
-    alert('Error: ' + err.message);
+    showToast(err.message || 'Error', 'error');
   }
 };
 
@@ -1444,10 +1516,10 @@ window.editBrandPrompt = async function (id, currentName, currentCode) {
       await loadMasterData();
     } else {
       const d = await res.json();
-      alert(d.error || 'Failed');
+      showToast(d.error || 'Operation failed', 'error');
     }
   } catch (err) {
-    alert('Error: ' + err.message);
+    showToast(err.message || 'Error', 'error');
   }
 };
 
@@ -1479,10 +1551,10 @@ window.editSubCategoryPrompt = async function (id, currentName, currentCode, cur
       await loadMasterData();
     } else {
       const d = await res.json();
-      alert(d.error || 'Failed');
+      showToast(d.error || 'Operation failed', 'error');
     }
   } catch (err) {
-    alert('Error: ' + err.message);
+    showToast(err.message || 'Error', 'error');
   }
 };
 
@@ -1505,10 +1577,10 @@ window.submitStockUnit = async function (e) {
       await loadMasterData();
     } else {
       const d = await res.json();
-      alert(d.error || 'Failed');
+      showToast(d.error || 'Operation failed', 'error');
     }
   } catch (err) {
-    alert('Error: ' + err.message);
+    showToast(err.message || 'Error', 'error');
   }
 };
 
@@ -1525,10 +1597,10 @@ window.deleteMasterItem = async function (type, id) {
     if (res.ok) await loadMasterData();
     else {
       const d = await res.json();
-      alert(d.error || 'Failed');
+      showToast(d.error || 'Operation failed', 'error');
     }
   } catch (err) {
-    alert('Error: ' + err.message);
+    showToast(err.message || 'Error', 'error');
   }
 };
 
@@ -1554,38 +1626,8 @@ window.filterMasterTable = function (tbodyId, inputId) {
 
 // ── Pricing table search & filter ──
 window.filterPricingTable = function () {
-  const q = (document.getElementById('pricing-search-input')?.value || '').toLowerCase();
-  const cat = (document.getElementById('pricing-filter-category')?.value || '').toLowerCase();
-  const table = document.getElementById('pricing-table');
-  const activeFilters = table ? table.activeExcelFilters : null;
-
-  document.querySelectorAll('#sales-pricing-body tr').forEach((row) => {
-    if (row.classList.contains('empty-state-row')) return;
-    const text = row.textContent.toLowerCase();
-    const cells = row.querySelectorAll('td');
-
-    const searchMatch = !q || text.includes(q);
-
-    let catMatch = true;
-    if (cat && cells.length > 2) {
-      const catText = cells[2].textContent.trim().toLowerCase();
-      catMatch = catText === cat;
-    }
-
-    let excelMatch = true;
-    if (activeFilters) {
-      for (const [colIndex, allowedSet] of Object.entries(activeFilters)) {
-        if (!cells[colIndex]) continue;
-        const cellText = cells[colIndex].textContent.trim();
-        if (!allowedSet.has(cellText)) {
-          excelMatch = false;
-          break;
-        }
-      }
-    }
-
-    row.style.display = searchMatch && catMatch && excelMatch ? '' : 'none';
-  });
+  pricingPage = 1; // Reset to page 1 on filter change
+  renderSalesPricing();
 };
 
 window.filterPricingByCategory = function (val) {
@@ -1594,38 +1636,8 @@ window.filterPricingByCategory = function (val) {
 
 // ── Catalog table search & filter ──
 window.filterCatalogTable = function () {
-  const q = (document.getElementById('catalog-search-input')?.value || '').toLowerCase();
-  const cat = (document.getElementById('catalog-filter-category')?.value || '').toLowerCase();
-  const table = document.getElementById('catalog-table');
-  const activeFilters = table ? table.activeExcelFilters : null;
-
-  document.querySelectorAll('#catalog-models-body tr').forEach((row) => {
-    if (row.classList.contains('empty-state-row')) return;
-    const text = row.textContent.toLowerCase();
-    const cells = row.querySelectorAll('td');
-
-    const searchMatch = !q || text.includes(q);
-
-    let catMatch = true;
-    if (cat && cells.length > 2) {
-      const catText = cells[2].textContent.trim().toLowerCase();
-      catMatch = catText === cat;
-    }
-
-    let excelMatch = true;
-    if (activeFilters) {
-      for (const [colIndex, allowedSet] of Object.entries(activeFilters)) {
-        if (!cells[colIndex]) continue;
-        const cellText = cells[colIndex].textContent.trim();
-        if (!allowedSet.has(cellText)) {
-          excelMatch = false;
-          break;
-        }
-      }
-    }
-
-    row.style.display = searchMatch && catMatch && excelMatch ? '' : 'none';
-  });
+  catalogPage = 1; // Reset to page 1 on filter change
+  renderSalesPricing();
 };
 
 window.filterCatalogByCategory = function (val) {
@@ -1638,7 +1650,7 @@ window.exportTableToExcel = function (tableId, filename) {
   function doExport() {
     const table = document.getElementById(tableId);
     if (!table) {
-      alert('Table not found');
+      showToast('Table not found', 'warning');
       return;
     }
     const wb = XLSX.utils.table_to_book(table, { sheet: filename });
@@ -2192,101 +2204,202 @@ function renderSalesPricing() {
   let pricingRowsHtml = '';
   let catalogRowsHtml = '';
 
-  const limit = 200;
-
-  activeCatalogList.forEach((item, i) => {
+  // Build select options for all items
+  activeCatalogList.forEach((item) => {
     const opt = `<option value="${item.item_code}">${item.item_name} [${item.item_code}]</option>`;
     batchSelectHtml += opt;
     updateSelectHtml += opt;
     filterSelectHtml += `<option value="${item.item_code}">${item.item_name}</option>`;
-
-    if (i < limit) {
-      const priceUSD = item.unit_price
-        ? `$${parseFloat(item.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : '—';
-      const priceMMK = item.unit_price_mmk
-        ? `Ks ${parseInt(item.unit_price_mmk).toLocaleString()}`
-        : '—';
-      const usdColor = item.unit_price ? 'text-emerald-400' : 'text-slate-600';
-      const mmkColor = item.unit_price_mmk ? 'text-amber-400' : 'text-slate-600';
-
-      const inStock = activeBatchesList
-        .filter((b) => b.item_code === item.item_code)
-        .reduce((sum, b) => {
-          const isSerial = b.serials && b.serials.length > 0;
-          return (
-            sum +
-            (isSerial
-              ? b.serials.filter((s) => s.status === 'Active').length
-              : b.remaining_qty || 0)
-          );
-        }, 0);
-      const stockColor =
-        inStock > 5 ? 'text-emerald-400' : inStock > 0 ? 'text-amber-400' : 'text-rose-400';
-      const um = item.stocking_um || 'pcs';
-
-      pricingRowsHtml += `
-                        <tr class="border-b border-white/5 transition-all text-[11px] cursor-default"
-                            style="border-left: 2px solid transparent;"
-                            onmouseenter="this.style.background='rgba(245,158,11,0.03)'; this.style.borderLeftColor='rgba(245,158,11,0.3)';"
-                            onmouseleave="this.style.background=''; this.style.borderLeftColor='transparent';">
-                            <td class="px-4 py-2.5 font-mono text-[10px] font-bold text-sky-400">${item.item_code}</td>
-                            <td class="px-4 py-2.5 text-white font-medium">${item.item_name}</td>
-                            <td class="px-4 py-2.5"><span class="cat-pill">${item.category || '—'}</span></td>
-                            <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || '—'}</td>
-                            <td class="px-4 py-2.5 text-center">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${stockColor}" style="background: ${inStock > 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'}; border: 1px solid ${inStock > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}">
-                                    <span class="w-1.5 h-1.5 rounded-full inline-block" style="background: currentColor;"></span>
-                                    ${inStock} ${um}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2.5 text-right font-mono font-bold text-[12px] ${usdColor}">${priceUSD}</td>
-                            <td class="px-4 py-2.5 text-right font-mono font-bold text-[12px] ${mmkColor}">${priceMMK}</td>
-                            <td class="px-4 py-2.5 text-center">
-                                <button onclick="window.switchInvModule('update-price'); setTimeout(() => { const s = document.getElementById('price-update-item-code'); if(s){ s.value='${item.item_code}'; window.populatePriceFields('${item.item_code}'); } }, 50);"
-                                    class="px-2.5 py-1 text-[9px] font-bold text-sky-400 rounded transition-all"
-                                    style="background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2);"
-                                    onmouseenter="this.style.background='rgba(14,165,233,0.15)'"
-                                    onmouseleave="this.style.background='rgba(14,165,233,0.08)'">
-                                    Edit Price
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-
-      catalogRowsHtml += `
-                        <tr class="border-b border-white/5 transition-all text-[11px]"
-                            style="border-left: 2px solid transparent;"
-                            onmouseenter="this.style.background='rgba(99,102,241,0.03)'; this.style.borderLeftColor='rgba(99,102,241,0.3)';"
-                            onmouseleave="this.style.background=''; this.style.borderLeftColor='transparent';">
-                            <td class="px-4 py-2.5 font-mono text-[10px] font-bold text-sky-400">${item.item_code}</td>
-                            <td class="px-4 py-2.5 text-white font-medium">${item.item_name}</td>
-                            <td class="px-4 py-2.5"><span class="cat-pill">${item.category || '—'}</span></td>
-                            <td class="px-4 py-2.5 text-[10px] text-slate-500">${item.sub_category_id || '—'}</td>
-                            <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || '—'}</td>
-                            <td class="px-4 py-2.5 font-mono text-[10px] text-violet-400">${um}</td>
-                            <td class="px-4 py-2.5 text-center">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${stockColor}" style="background: ${inStock > 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'}; border: 1px solid ${inStock > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}">
-                                    <span class="w-1.5 h-1.5 rounded-full inline-block" style="background: currentColor;"></span>
-                                    ${inStock} ${um}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2.5 text-right whitespace-nowrap">
-                                <button onclick="editInventoryItem('${window.escapeHTML(item.item_code)}')" class="px-2.5 py-1 text-[9px] font-bold text-amber-400 rounded transition-all mr-1"
-                                    style="background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15);">Edit</button>
-                                <button onclick="deleteInventoryItem('${item.item_code}')" class="px-2.5 py-1 text-[9px] font-bold text-rose-400 rounded transition-all"
-                                    style="background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.15);">Remove</button>
-                            </td>
-                        </tr>
-                    `;
-    }
   });
 
-  if (activeCatalogList.length > limit) {
-    const messageHtml = `<tr><td colspan="8" class="px-4 py-4 text-center text-slate-500 text-[11px] font-semibold bg-white/5 border-t border-white/10">Showing first ${limit} of ${activeCatalogList.length} items. Use search to filter.</td></tr>`;
-    pricingRowsHtml += messageHtml;
-    catalogRowsHtml += messageHtml;
+  // Get current search/filter values
+  const catalogSearch = (
+    document.getElementById('catalog-search-input')?.value || ''
+  ).toLowerCase();
+  const catalogCat = (
+    document.getElementById('catalog-filter-category')?.value || ''
+  ).toLowerCase();
+  const pricingSearch = (
+    document.getElementById('pricing-search-input')?.value || ''
+  ).toLowerCase();
+  const pricingCat = (
+    document.getElementById('pricing-filter-category')?.value || ''
+  ).toLowerCase();
+
+  // Filter items for catalog
+  const filteredCatalog = activeCatalogList.filter((item) => {
+    const text =
+      `${item.item_code} ${item.item_name} ${item.category} ${item.brand_id}`.toLowerCase();
+    const searchMatch = !catalogSearch || text.includes(catalogSearch);
+    const catMatch = !catalogCat || (item.category || '').toLowerCase() === catalogCat;
+    return searchMatch && catMatch;
+  });
+
+  // Filter items for pricing
+  const filteredPricing = activeCatalogList.filter((item) => {
+    const text =
+      `${item.item_code} ${item.item_name} ${item.category} ${item.brand_id}`.toLowerCase();
+    const searchMatch = !pricingSearch || text.includes(pricingSearch);
+    const catMatch = !pricingCat || (item.category || '').toLowerCase() === pricingCat;
+    return searchMatch && catMatch;
+  });
+
+  // Pagination for catalog
+  const catalogFilteredTotal = filteredCatalog.length;
+  const catalogTotalPagesCalc = Math.ceil(catalogFilteredTotal / catalogPerPage);
+  const catalogStart = (catalogPage - 1) * catalogPerPage;
+  const catalogPageItems = filteredCatalog.slice(catalogStart, catalogStart + catalogPerPage);
+
+  // Pagination for pricing
+  const pricingFilteredTotal = filteredPricing.length;
+  const pricingTotalPagesCalc = Math.ceil(pricingFilteredTotal / pricingPerPage);
+  const pricingStart = (pricingPage - 1) * pricingPerPage;
+  const pricingPageItems = filteredPricing.slice(pricingStart, pricingStart + pricingPerPage);
+
+  // Helper: render pagination controls
+  function renderPaginationControls(currentPage, totalPages, totalItems, type) {
+    if (totalPages <= 1) {
+      return `<tr><td colspan="8" class="px-4 py-2 bg-white/5 border-t border-white/10 text-[10px] text-slate-500 text-center">${totalItems} items</td></tr>`;
+    }
+    let html = `<tr><td colspan="8" class="px-4 py-2 bg-white/5 border-t border-white/10">`;
+    html += `<div class="flex items-center justify-between text-[10px]">`;
+    html += `<span class="text-slate-500">Page ${currentPage} of ${totalPages} (${totalItems} items)</span>`;
+    html += `<div class="flex gap-1 items-center">`;
+    if (currentPage > 1) {
+      html += `<button onclick="window.goTo${type}Page(1)" class="px-2 py-1 rounded text-sky-400 hover:bg-sky-400/10 transition-all" title="First">«</button>`;
+      html += `<button onclick="window.goTo${type}Page(${currentPage - 1})" class="px-2 py-1 rounded text-sky-400 hover:bg-sky-400/10 transition-all">‹ Prev</button>`;
+    }
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, startPage + 4);
+    for (let p = startPage; p <= endPage; p++) {
+      const activeCls =
+        p === currentPage ? 'bg-sky-400/20 text-sky-300' : 'text-slate-500 hover:bg-white/5';
+      html += `<button onclick="window.goTo${type}Page(${p})" class="px-2 py-1 rounded ${activeCls} transition-all">${p}</button>`;
+    }
+    if (currentPage < totalPages) {
+      html += `<button onclick="window.goTo${type}Page(${currentPage + 1})" class="px-2 py-1 rounded text-sky-400 hover:bg-sky-400/10 transition-all">Next ›</button>`;
+      html += `<button onclick="window.goTo${type}Page(${totalPages})" class="px-2 py-1 rounded text-sky-400 hover:bg-sky-400/10 transition-all" title="Last">»</button>`;
+    }
+    html += `</div></div></td></tr>`;
+    return html;
   }
+
+  // Render catalog rows
+  catalogPageItems.forEach((item) => {
+    const priceUSD = item.unit_price
+      ? `$${parseFloat(item.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : '—';
+    const priceMMK = item.unit_price_mmk
+      ? `Ks ${parseInt(item.unit_price_mmk).toLocaleString()}`
+      : '—';
+    const usdColor = item.unit_price ? 'text-emerald-400' : 'text-slate-600';
+    const mmkColor = item.unit_price_mmk ? 'text-amber-400' : 'text-slate-600';
+
+    const inStock = activeBatchesList
+      .filter((b) => b.item_code === item.item_code)
+      .reduce((sum, b) => {
+        const isSerial = b.serials && b.serials.length > 0;
+        return (
+          sum +
+          (isSerial ? b.serials.filter((s) => s.status === 'Active').length : b.remaining_qty || 0)
+        );
+      }, 0);
+    const stockColor =
+      inStock > 5 ? 'text-emerald-400' : inStock > 0 ? 'text-amber-400' : 'text-rose-400';
+    const um = item.stocking_um || 'pcs';
+
+    catalogRowsHtml += `
+      <tr class="border-b border-white/5 transition-all text-[11px]"
+          style="border-left: 2px solid transparent;"
+          onmouseenter="this.style.background='rgba(99,102,241,0.03)'; this.style.borderLeftColor='rgba(99,102,241,0.3)';"
+          onmouseleave="this.style.background=''; this.style.borderLeftColor='transparent';">
+          <td class="px-4 py-2.5 font-mono text-[10px] font-bold text-sky-400">${item.item_code}</td>
+          <td class="px-4 py-2.5 text-white font-medium">${item.item_name}</td>
+          <td class="px-4 py-2.5"><span class="cat-pill">${item.category || '—'}</span></td>
+          <td class="px-4 py-2.5 text-[10px] text-slate-500">${item.sub_category_id || '—'}</td>
+          <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || '—'}</td>
+          <td class="px-4 py-2.5 font-mono text-[10px] text-violet-400">${um}</td>
+          <td class="px-4 py-2.5 text-center">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${stockColor}" style="background: ${inStock > 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'}; border: 1px solid ${inStock > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}">
+                  <span class="w-1.5 h-1.5 rounded-full inline-block" style="background: currentColor;"></span>
+                  ${inStock} ${um}
+              </span>
+          </td>
+          <td class="px-4 py-2.5 text-right whitespace-nowrap">
+              <button onclick="editInventoryItem('${window.escapeHTML(item.item_code)}')" class="px-2.5 py-1 text-[9px] font-bold text-amber-400 rounded transition-all mr-1"
+                  style="background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15);">Edit</button>
+              <button onclick="deleteInventoryItem('${item.item_code}')" class="px-2.5 py-1 text-[9px] font-bold text-rose-400 rounded transition-all"
+                  style="background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.15);">Remove</button>
+          </td>
+      </tr>`;
+  });
+
+  // Render pricing rows
+  pricingPageItems.forEach((item) => {
+    const priceUSD = item.unit_price
+      ? `$${parseFloat(item.unit_price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : '—';
+    const priceMMK = item.unit_price_mmk
+      ? `Ks ${parseInt(item.unit_price_mmk).toLocaleString()}`
+      : '—';
+    const usdColor = item.unit_price ? 'text-emerald-400' : 'text-slate-600';
+    const mmkColor = item.unit_price_mmk ? 'text-amber-400' : 'text-slate-600';
+
+    const inStock = activeBatchesList
+      .filter((b) => b.item_code === item.item_code)
+      .reduce((sum, b) => {
+        const isSerial = b.serials && b.serials.length > 0;
+        return (
+          sum +
+          (isSerial ? b.serials.filter((s) => s.status === 'Active').length : b.remaining_qty || 0)
+        );
+      }, 0);
+    const stockColor =
+      inStock > 5 ? 'text-emerald-400' : inStock > 0 ? 'text-amber-400' : 'text-rose-400';
+    const um = item.stocking_um || 'pcs';
+
+    pricingRowsHtml += `
+      <tr class="border-b border-white/5 transition-all text-[11px] cursor-default"
+          style="border-left: 2px solid transparent;"
+          onmouseenter="this.style.background='rgba(245,158,11,0.03)'; this.style.borderLeftColor='rgba(245,158,11,0.3)';"
+          onmouseleave="this.style.background=''; this.style.borderLeftColor='transparent';">
+          <td class="px-4 py-2.5 font-mono text-[10px] font-bold text-sky-400">${item.item_code}</td>
+          <td class="px-4 py-2.5 text-white font-medium">${item.item_name}</td>
+          <td class="px-4 py-2.5"><span class="cat-pill">${item.category || '—'}</span></td>
+          <td class="px-4 py-2.5 text-[10px] text-slate-400">${item.brand_id || '—'}</td>
+          <td class="px-4 py-2.5 text-center">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${stockColor}" style="background: ${inStock > 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)'}; border: 1px solid ${inStock > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'}">
+                  <span class="w-1.5 h-1.5 rounded-full inline-block" style="background: currentColor;"></span>
+                  ${inStock} ${um}
+              </span>
+          </td>
+          <td class="px-4 py-2.5 text-right font-mono font-bold text-[12px] ${usdColor}">${priceUSD}</td>
+          <td class="px-4 py-2.5 text-right font-mono font-bold text-[12px] ${mmkColor}">${priceMMK}</td>
+          <td class="px-4 py-2.5 text-center">
+              <button onclick="window.switchInvModule('update-price'); setTimeout(() => { const s = document.getElementById('price-update-item-code'); if(s){ s.value='${item.item_code}'; window.populatePriceFields('${item.item_code}'); } }, 50);"
+                  class="px-2.5 py-1 text-[9px] font-bold text-sky-400 rounded transition-all"
+                  style="background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2);"
+                  onmouseenter="this.style.background='rgba(14,165,233,0.15)'"
+                  onmouseleave="this.style.background='rgba(14,165,233,0.08)'">
+                  Edit Price
+              </button>
+          </td>
+      </tr>`;
+  });
+
+  // Add pagination controls
+  catalogRowsHtml += renderPaginationControls(
+    catalogPage,
+    catalogTotalPagesCalc,
+    catalogFilteredTotal,
+    'Catalog'
+  );
+  pricingRowsHtml += renderPaginationControls(
+    pricingPage,
+    pricingTotalPagesCalc,
+    pricingFilteredTotal,
+    'Pricing'
+  );
 
   if (batchSelect) batchSelect.innerHTML = batchSelectHtml;
   if (updateSelect) updateSelect.innerHTML = updateSelectHtml;
@@ -2297,11 +2410,26 @@ function renderSalesPricing() {
   if (batchSelect && prevBatchVal) batchSelect.value = prevBatchVal;
   if (updateSelect && prevUpdateVal) updateSelect.value = prevUpdateVal;
 
-  window.initExcelTableFilters('pricing-table');
-  window.initExcelTableFilters('catalog-table');
-  window.filterPricingTable();
-  window.filterCatalogTable();
+  // Store filtered totals for pagination
+  window._catalogFilteredTotal = catalogFilteredTotal;
+  window._pricingFilteredTotal = pricingFilteredTotal;
+  window._catalogTotalPages = catalogTotalPagesCalc;
+  window._pricingTotalPages = pricingTotalPagesCalc;
 }
+
+// Pagination navigation functions
+window.goToCatalogPage = function (page) {
+  const totalPages = window._catalogTotalPages || 1;
+  if (page < 1 || page > totalPages) return;
+  catalogPage = page;
+  renderSalesPricing();
+};
+window.goToPricingPage = function (page) {
+  const totalPages = window._pricingTotalPages || 1;
+  if (page < 1 || page > totalPages) return;
+  pricingPage = page;
+  renderSalesPricing();
+};
 
 window.filterBatchTable = function () {
   const q = (document.getElementById('batch-search-input')?.value || '').toLowerCase();
@@ -2381,7 +2509,7 @@ window.posEditBatchPrompt = async function (batchCode, currentPrice, currentSupp
 
   const newPrice = parseFloat(priceVal);
   if (isNaN(newPrice)) {
-    alert('Please enter a valid numeric value for buying price.');
+    showToast('Please enter a valid price', 'warning');
     return;
   }
 
@@ -2400,16 +2528,16 @@ window.posEditBatchPrompt = async function (batchCode, currentPrice, currentSupp
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Stock batch updated successfully.');
+      showToast('Batch updated!', 'success');
       // Reload table
       if (typeof window.loadInventoryData === 'function') {
         window.loadInventoryData();
       }
     } else {
-      alert('Failed to update batch: ' + data.error);
+      showToast('Update failed', 'error');
     }
   } catch (e) {
-    alert('Request error: ' + e.message);
+    showToast('Request failed', 'error');
   }
 };
 
@@ -2459,17 +2587,17 @@ window.submitNewBatch = async function (e) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert(data.message || 'Batch created successfully.');
+      showToast(data.message || 'Batch created!', 'success');
       e.target.reset();
       // Reset dropdown and toggles
       document.getElementById('batch-is-serial').value = 'yes';
       window.toggleBatchTrackingMode('yes');
       loadInventoryData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Request failed: ' + err.message);
+    showToast('Request failed', 'error');
   }
 };
 
@@ -2490,14 +2618,14 @@ window.submitPriceUpdate = async function (e) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert(data.message || 'Selling prices updated successfully.');
+      showToast(data.message || 'Prices updated!', 'success');
       e.target.reset();
       loadInventoryData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Request failed: ' + err.message);
+    showToast('Request failed', 'error');
   }
 };
 
@@ -2534,16 +2662,16 @@ window.submitNewCatalogItem = async function (e) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert(data.message || 'Catalog model provisioned successfully.');
+      showToast(data.message || 'Catalog added!', 'success');
       e.target.reset();
       // Re-populate dropdowns after reset
       populateMasterDropdowns();
       loadInventoryData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Request failed: ' + err.message);
+    showToast('Request failed', 'error');
   }
 };
 
@@ -2561,10 +2689,10 @@ async function deleteInventoryItem(item_code) {
       loadInventoryData();
     } else {
       const data = await res.json();
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Request failed: ' + err.message);
+    showToast('Request failed', 'error');
   }
 }
 
@@ -2629,16 +2757,16 @@ async function submitRegisterWarranty(e) {
       body: JSON.stringify(payload),
     });
     if (res.ok) {
-      alert('Customer product warranty registered!');
+      showToast('Warranty registered!', 'success');
       closeRegisterWarrantyModal();
       form.reset();
       loadRMAData();
     } else {
       const err = await res.json();
-      alert('Error registering warranty: ' + err.error);
+      showToast('Warranty error', 'error');
     }
   } catch (err) {
-    alert('Network error: ' + err.message);
+    showToast('Network error', 'error');
   }
 }
 
@@ -2665,16 +2793,16 @@ async function submitRaiseRMA(e) {
       body: JSON.stringify(payload),
     });
     if (res.ok) {
-      alert('Distributor RMA claim raised!');
+      showToast('RMA claim raised!', 'success');
       closeRaiseRMAModal();
       form.reset();
       loadRMAData();
     } else {
       const err = await res.json();
-      alert('Error raising claim: ' + err.error);
+      showToast('Claim error', 'error');
     }
   } catch (err) {
-    alert('Network error: ' + err.message);
+    showToast('Network error', 'error');
   }
 }
 
@@ -2688,6 +2816,7 @@ async function loadRMAData() {
     if (!res.ok) throw new Error();
     const warranties = await res.json();
 
+    if (warrantyBody) {
     warrantyBody.innerHTML = '';
     if (warranties.length === 0) {
       warrantyBody.innerHTML =
@@ -2721,6 +2850,7 @@ async function loadRMAData() {
       });
       warrantyBody.innerHTML = wRowsHtml;
     }
+    }
   } catch (e) {
     console.error('Warranties fetch exception', e);
   }
@@ -2730,6 +2860,7 @@ async function loadRMAData() {
     if (!res.ok) throw new Error();
     const rmaList = await res.json();
 
+    if (rmaBody) {
     rmaBody.innerHTML = '';
     if (rmaList.length === 0) {
       rmaBody.innerHTML =
@@ -2764,6 +2895,7 @@ async function loadRMAData() {
       });
       rmaBody.innerHTML = rRowsHtml;
     }
+    }
   } catch (e) {
     console.error('RMA fetch exception', e);
   }
@@ -2788,7 +2920,7 @@ async function resolveRMAClaim(serialNumber) {
       }),
     });
     if (res.ok) {
-      alert('RMA claim marked completed.');
+      showToast('RMA completed!', 'success');
       loadRMAData();
     }
   } catch (e) {}
@@ -2823,16 +2955,16 @@ async function submitAddDistributor(e) {
       body: JSON.stringify(payload),
     });
     if (res.ok) {
-      alert('Distributor added successfully!');
+      showToast('Distributor added!', 'success');
       closeAddDistributorModal();
       form.reset();
       loadDistributorsData();
     } else {
       const err = await res.json();
-      alert('Error: ' + err.error);
+      showToast(err.error || 'Error', 'error');
     }
   } catch (err) {
-    alert('Network error: ' + err.message);
+    showToast('Network error', 'error');
   }
 }
 
@@ -2882,7 +3014,7 @@ async function deleteDistributor(id) {
       method: 'DELETE',
     });
     if (res.ok) {
-      alert('Distributor deleted.');
+      showToast('Distributor deleted!', 'success');
       loadDistributorsData();
     }
   } catch (e) {}
@@ -3006,7 +3138,7 @@ async function submitCashTransaction(e) {
       }),
     });
     if (res.ok) {
-      alert('Cash safe reserve ledger transaction recorded.');
+      showToast('Transaction recorded!', 'success');
       document.getElementById('cash-amount').value = '';
       document.getElementById('cash-notes').value = '';
       document.getElementById('cash-job-id').value = '';
@@ -3101,13 +3233,13 @@ async function updateTechnicianStatus(id, active) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Technician updated successfully.');
+      showToast('Technician updated!', 'success');
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Request failed: ' + err.message);
+    showToast('Request failed', 'error');
   }
 }
 
@@ -3128,13 +3260,13 @@ async function saveTechnicianRole(id) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Technician role updated successfully.');
+      showToast('Role updated!', 'success');
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Request failed: ' + err.message);
+    showToast('Request failed', 'error');
   }
 }
 
@@ -3163,6 +3295,30 @@ window.openEditTechModal = function (
   document.getElementById('edit-tech-role').value = role || 'Technician';
 
   document.getElementById('edit-tech-modal').classList.remove('hidden');
+};
+
+// User Management Filter Functions
+window.filterUserTable = function () {
+  const searchInput = document.getElementById('user-search-input');
+  const filterRole = document.getElementById('user-filter-role');
+  const tbody = document.getElementById('tech-list-body');
+  if (!tbody) return;
+
+  const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+  const roleFilter = filterRole ? filterRole.value : 'All';
+
+  const rows = tbody.querySelectorAll('tr');
+  rows.forEach((row) => {
+    const text = row.textContent.toLowerCase();
+    const role = row.getAttribute('data-role') || '';
+    const matchesSearch = !searchTerm || text.includes(searchTerm);
+    const matchesRole = roleFilter === 'All' || role === roleFilter;
+    row.style.display = matchesSearch && matchesRole ? '' : 'none';
+  });
+};
+
+window.filterUserByRole = function (role) {
+  window.filterUserTable();
 };
 
 window.closeEditTechModal = function () {
@@ -3403,14 +3559,14 @@ window.submitEditTechnician = async function (e) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Technician updated successfully.');
+      showToast('Technician updated!', 'success');
       closeEditTechModal();
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -3433,13 +3589,13 @@ window.deleteTechnician = async function (id) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert(data.message || 'Technician deleted successfully.');
+      showToast(data.message || 'Deleted!', 'success');
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -3634,14 +3790,14 @@ async function loadJobsData() {
   try {
     const res = await fetch(`${baseUrl}/api/jobs`);
     if (res.status === 401) {
-      console.warn("loadJobsData: 401 Unauthorized.");
+      console.warn('loadJobsData: 401 Unauthorized.');
       handleLogout();
       return;
     }
-    
+
     const jobs = await res.json();
     if (!Array.isArray(jobs)) {
-      console.warn("loadJobsData: Jobs payload is not an array, skipping data render.");
+      console.warn('loadJobsData: Jobs payload is not an array, skipping data render.');
       return;
     }
 
@@ -3660,7 +3816,10 @@ async function loadJobsData() {
     // 5. Update Stats Widgets
     calculateStats(jobs);
 
-    // 6. Initialize drag-and-drop calendar scheduler
+    // 6. Update greeting
+    updateDashboardGreeting();
+
+    // 7. Initialize drag-and-drop calendar scheduler
     initFullCalendar(jobs);
   } catch (err) {
     console.error('Error pulling remote jobs data:', err);
@@ -3692,39 +3851,47 @@ function calculateStats(jobs) {
   document.getElementById('stat-total-revenue').textContent = `$${totalUSD.toLocaleString()}`;
 }
 
+function updateDashboardGreeting() {
+  const el = document.getElementById('dashboard-greeting');
+  if (!el) return;
+  const hour = new Date().getHours();
+  if (hour < 12) el.textContent = 'Good Morning';
+  else if (hour < 17) el.textContent = 'Good Afternoon';
+  else el.textContent = 'Good Evening';
+}
+
 function renderDashboardJobs(jobs) {
   const tbody = document.getElementById('dashboard-tickets-body');
+  if (!tbody) return;
   tbody.innerHTML = '';
 
   // Slice to first 5 recent jobs
   const sliced = jobs.slice(0, 5);
-  sliced.forEach((j) => {
-    const statusBadge =
-      j.status === 'Completed'
-        ? 'bg-emerald-500/10 text-emerald-400'
-        : j.status === 'In Progress'
-          ? 'bg-indigo-500/10 text-indigo-400'
-          : 'bg-amber-500/10 text-amber-500';
+  if (sliced.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-500">No recent dispatches</td></tr>';
+    return;
+  }
 
-    // Mock pricing to match screen reference
-    const fee =
-      j.service_type === 'CCTV'
-        ? '$1,380.00'
-        : j.service_type === 'Networking'
-          ? '$120.00'
-          : '900,000 MMK';
+  sliced.forEach((j) => {
+    const statusColor =
+      j.status === 'Completed'
+        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25'
+        : j.status === 'In Progress'
+          ? 'bg-blue-500/15 text-blue-400 border-blue-500/25'
+          : 'bg-amber-500/15 text-amber-400 border-amber-500/25';
+
+    const date = new Date(j.created_at || Date.now());
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
     tbody.innerHTML += `
-                    <tr class="hover:bg-white/5 transition-all align-middle text-slate-300">
-                        <td class="py-3 font-mono font-bold text-amber-500">${j.id}</td>
-                        <td class="py-3 font-medium text-white">${j.company_name || 'Anonymous Client'}</td>
-                        <td class="py-3 text-slate-400">${j.service_type}</td>
-                        <td class="py-3 font-medium">${j.tech_name || 'Unassigned'}</td>
-                        <td class="py-3"><span class="px-2 py-0.5 rounded-full font-bold text-[9px] uppercase ${statusBadge}">${j.status}</span></td>
-                        <td class="py-3 font-mono font-bold">${fee}</td>
-                        <td class="py-3 font-mono text-[10px] text-slate-500">${new Date(j.created_at || Date.now()).toLocaleDateString()}</td>
-                    </tr>
-                `;
+      <tr class="hover:bg-white/5 transition-all">
+        <td class="py-2.5 font-mono font-bold text-amber-500 text-[11px]">${j.id}</td>
+        <td class="py-2.5 font-semibold text-white text-[11px]">${j.company_name || 'Anonymous'}</td>
+        <td class="py-2.5 text-slate-400 text-[11px]">${j.service_type}</td>
+        <td class="py-2.5"><span class="px-2 py-0.5 rounded-full font-bold text-[9px] border ${statusColor}">${j.status}</span></td>
+        <td class="py-2.5 font-mono text-[10px] text-slate-500">${dateStr}</td>
+      </tr>
+    `;
   });
 }
 
@@ -3738,13 +3905,13 @@ async function aiPolishJobNotes(jobId) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('AI Polishing Completed!\n\nOriginal notes updated to:\n\n' + data.polishedText);
+      showToast('AI polishing complete!', 'success');
       loadJobsData();
     } else {
-      alert('Failed: ' + data.error);
+      showToast(data.error || 'Failed', 'error');
     }
   } catch (e) {
-    alert('AI request failed: ' + e.message);
+    showToast('AI request failed', 'error');
   }
 }
 
@@ -3884,7 +4051,7 @@ window.submitEditTicket = async function (e) {
 
       const typedName = editClientSearch.value.trim();
       if (!typedName) {
-        alert('Please select or enter a client name.');
+        showToast('Please select a client', 'warning');
         return;
       }
 
@@ -3936,14 +4103,14 @@ window.submitEditTicket = async function (e) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Service ticket updated successfully.');
+      showToast('Ticket updated!', 'success');
       closeEditTicketModal();
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -3961,13 +4128,13 @@ window.cancelJob = async function (id) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Service ticket cancelled successfully.');
+      showToast('Ticket cancelled', 'warning');
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -4321,13 +4488,13 @@ async function sendAdminRequest(endpoint, payload) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Operation executed successfully.');
+      showToast('Operation complete!', 'success');
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error with edge: ' + err.message);
+    showToast('Sync error', 'error');
   }
 }
 
@@ -4563,14 +4730,14 @@ window.submitClient = async function (e) {
     });
     const resData = await res.json();
     if (res.ok) {
-      alert(resData.message || 'Client saved successfully.');
+      showToast(resData.message || 'Client saved!', 'success');
       resetClientForm();
       refreshDashboardData();
     } else {
-      alert('Error: ' + resData.error);
+      showToast('Error: ' + resData.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -4588,13 +4755,13 @@ window.deleteClient = async function (id) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Client deleted successfully.');
+      showToast('Client deleted!', 'success');
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -4803,10 +4970,10 @@ window.openAdminPhoto = function (event, jobId, fieldName) {
                             `);
           w.document.close();
         } else {
-          alert('Popup blocked! Please allow popups for this site.');
+          showToast('Please allow popups', 'warning');
         }
       } else {
-        alert('Photo not found.');
+        showToast('Photo not found', 'warning');
       }
     });
 };
@@ -4822,7 +4989,7 @@ async function generateServiceReceiptPDF() {
   const jobId = document.getElementById('pdf-target-job-id').value.trim();
   const baseUrl = document.getElementById('api-base').value;
 
-  if (!jobId) return alert('Please specify a targeted ticket parameter entry.');
+  if (!jobId) return showToast('Please enter a ticket ID', 'warning');
 
   try {
     const res = await fetch(`${baseUrl}/api/jobs/receipt?job_id=${jobId}`);
@@ -4987,7 +5154,7 @@ async function generateServiceReceiptPDF() {
     // Export PDF
     doc.save(`receipt-service-log-${job.id}.pdf`);
   } catch (err) {
-    alert('PDF compilation engine process exception encountered: ' + err.message);
+    showToast('PDF generation failed', 'error');
   }
 }
 
@@ -5394,7 +5561,7 @@ function setCopilotTab(tab) {
 // 1. Auto-Dispatcher
 async function runAIDispatcher() {
   const rawText = document.getElementById('ai-dispatch-input').value.trim();
-  if (!rawText) return alert('Please paste a client complaint description.');
+  if (!rawText) return showToast('Please enter a description', 'warning');
 
   const elDomain = document.getElementById('ai-dispatch-domain');
   const elTech = document.getElementById('ai-dispatch-tech');
@@ -5425,10 +5592,10 @@ async function runAIDispatcher() {
       lastSuggestedTechId = data.suggested_technician_id;
       btnApply.disabled = false;
     } else {
-      alert('AI Analysis Failed: ' + data.error);
+      showToast('AI analysis failed', 'error');
     }
   } catch (e) {
-    alert('AI Connection failed: ' + e.message);
+    showToast('AI connection failed', 'error');
   }
 }
 
@@ -5444,7 +5611,7 @@ function applyAIDispatchSuggestions() {
     if (selTech) selTech.value = lastSuggestedTechId;
     if (descArea) descArea.value = document.getElementById('ai-dispatch-input').value.trim();
 
-    alert('Suggestions applied successfully! Redirecting you to Service Tickets form.');
+    showToast('Suggestions applied!', 'success');
     switchTab('tickets');
   }
 }
@@ -5720,7 +5887,7 @@ async function toggleVoiceRecording() {
       icon.textContent = '⏹️';
       text.textContent = 'Stop Recording';
     } catch (err) {
-      alert('Microphone access denied: ' + err.message);
+      showToast('Microphone access denied', 'warning');
     }
   } else {
     // Stop Recording
@@ -5813,10 +5980,10 @@ window.submitServiceFee = async function (e) {
       resetFeeForm();
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -5834,13 +6001,13 @@ window.deleteServiceFee = async function (id) {
     });
     const data = await res.json();
     if (res.ok) {
-      alert('Service rate deleted successfully.');
+      showToast('Rate deleted!', 'success');
       refreshDashboardData();
     } else {
-      alert('Error: ' + data.error);
+      showToast('Error: ' + data.error, 'error');
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -6599,7 +6766,7 @@ window.executePosCheckout = async function () {
       alert('Error checking out: ' + data.error);
     }
   } catch (err) {
-    alert('Communication error: ' + err.message);
+    showToast('Connection error', 'error');
   }
 };
 
@@ -7315,10 +7482,10 @@ window.savePdfBuilderConfig = async function () {
       alert('Receipt PDF template layout configuration saved!');
       window.pdfBuilderConfig = config;
     } else {
-      alert('Error saving: ' + (data ? data.error : 'Unknown error'));
+      showToast('Save failed', 'error');
     }
   } catch (e) {
-    alert('Failed to store builder settings: ' + e.message);
+    showToast('Settings save failed', 'error');
   }
 };
 
@@ -7588,7 +7755,7 @@ window.saveRbacPermissions = async function () {
       alert('Failed to save: ' + data.error);
     }
   } catch (e) {
-    alert('Request error: ' + e.message);
+    showToast('Request failed', 'error');
   }
 };
 
@@ -7622,7 +7789,7 @@ window.createNewRbacRole = async function () {
       window.loadRbacSettings();
     } else {
       const data = await res.json();
-      alert('Failed to create role: ' + data.error);
+      showToast('Create failed', 'error');
     }
   } catch (e) {
     alert('Request failed: ' + e.message);
@@ -7660,7 +7827,7 @@ window.deleteActiveRbacRole = async function () {
       window.loadRbacSettings();
     } else {
       const data = await res.json();
-      alert('Failed to delete role: ' + data.error);
+      showToast('Delete failed', 'error');
     }
   } catch (e) {
     alert('Request failed: ' + e.message);

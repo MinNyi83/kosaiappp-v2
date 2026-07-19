@@ -24,7 +24,7 @@ function register(router, env) {
         return error('Too many requests, try again later.', 429);
       }
 
-      const { id, pin } = (await request.json() as any);
+      const { id, pin } = (await request.json()) as any;
       if (!id) {
         return error('Missing account ID', 400);
       }
@@ -175,4 +175,3 @@ async function verifyPin(plainPin, storedHash) {
 }
 
 export default { register };
-

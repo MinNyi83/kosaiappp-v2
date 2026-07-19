@@ -50,7 +50,10 @@ class Router {
   /**
    * Match an incoming request to a route and return the handler + params.
    */
-  match(method: string, pathname: string): { handler: RouteHandler, params: Record<string, string> } | null {
+  match(
+    method: string,
+    pathname: string
+  ): { handler: RouteHandler; params: Record<string, string> } | null {
     for (const route of this.routes) {
       if (route.method !== method) continue;
       const match = pathname.match(route.regex);
@@ -67,4 +70,3 @@ class Router {
 }
 
 export { Router };
-

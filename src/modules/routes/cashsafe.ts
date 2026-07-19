@@ -72,20 +72,35 @@ function register(router, env) {
   async function getTransactions(request) {
     const url = new URL(request.url);
     const dateFrom = url.searchParams.get('date_from');
-    const dateTo   = url.searchParams.get('date_to');
-    const txType   = url.searchParams.get('type') || url.searchParams.get('transaction_type');
+    const dateTo = url.searchParams.get('date_to');
+    const txType = url.searchParams.get('type') || url.searchParams.get('transaction_type');
     const currency = url.searchParams.get('currency') || url.searchParams.get('primary_currency');
 
     let query = 'SELECT * FROM cash_transactions WHERE 1=1';
     const params: any[] = [];
 
-    if (dateFrom) { query += ' AND created_at >= ?'; params.push(dateFrom); }
-    if (dateTo)   { query += ' AND created_at <= ?'; params.push(dateTo); }
-    if (txType)   { query += ' AND transaction_type = ?'; params.push(txType); }
-    if (currency) { query += ' AND primary_currency = ?'; params.push(currency); }
+    if (dateFrom) {
+      query += ' AND created_at >= ?';
+      params.push(dateFrom);
+    }
+    if (dateTo) {
+      query += ' AND created_at <= ?';
+      params.push(dateTo);
+    }
+    if (txType) {
+      query += ' AND transaction_type = ?';
+      params.push(txType);
+    }
+    if (currency) {
+      query += ' AND primary_currency = ?';
+      params.push(currency);
+    }
 
     query += ' ORDER BY created_at DESC LIMIT 200';
-    const result = await db.prepare(query).bind(...params).all();
+    const result = await db
+      .prepare(query)
+      .bind(...params)
+      .all();
     return result.results;
   }
 
@@ -118,7 +133,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const {
         transaction_type,
         primary_currency,
@@ -133,8 +148,8 @@ function register(router, env) {
       const amt = parseFloat(amount);
       const rate = parseFloat(exchange_rate) || 1;
       if (!amt || amt <= 0) return error('Invalid amount', 400);
-      if (!transaction_type)  return error('Missing transaction_type', 400);
-      if (!primary_currency)  return error('Missing primary_currency', 400);
+      if (!transaction_type) return error('Missing transaction_type', 400);
+      if (!primary_currency) return error('Missing primary_currency', 400);
 
       const equivalent = primary_currency === 'USD' ? amt * rate : amt / rate;
 
@@ -168,7 +183,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const { amount, notes, currency } = (await request.json() as any);
+      const { amount, notes, currency } = (await request.json()) as any;
       if (!amount || amount <= 0) return error('Invalid amount', 400);
       await db
         .prepare(
@@ -188,7 +203,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const { amount, notes, currency } = (await request.json() as any);
+      const { amount, notes, currency } = (await request.json()) as any;
       if (!amount || amount <= 0) return error('Invalid amount', 400);
       await db
         .prepare(

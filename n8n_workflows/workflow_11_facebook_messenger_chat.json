@@ -32,9 +32,7 @@
       "position": [650, 300],
       "parameters": {
         "conditions": {
-          "boolean": [
-            { "value1": "={{ $json.type === 'message' }}", "value2": true }
-          ]
+          "boolean": [{ "value1": "={{ $json.type === 'message' }}", "value2": true }]
         }
       }
     },
@@ -57,7 +55,10 @@
       "parameters": {
         "conditions": {
           "boolean": [
-            { "value1": "={{ $json.autoReply !== null && $json.autoReply !== undefined }}", "value2": true }
+            {
+              "value1": "={{ $json.autoReply !== null && $json.autoReply !== undefined }}",
+              "value2": true
+            }
           ]
         }
       }
@@ -75,9 +76,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ recipient: { id: $json.senderId }, message: { text: $json.autoReply }, messaging_type: 'RESPONSE' }) }}",
         "headerParameters": {
-          "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
-          ]
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
         }
       },
       "onError": "continueRegularOutput"
@@ -115,10 +114,7 @@
       "main": [[{ "node": "Route Message Type", "type": "main", "index": 0 }]]
     },
     "Route Message Type": {
-      "main": [
-        [{ "node": "Classify Message Intent", "type": "main", "index": 0 }],
-        []
-      ]
+      "main": [[{ "node": "Classify Message Intent", "type": "main", "index": 0 }], []]
     },
     "Classify Message Intent": {
       "main": [[{ "node": "Needs Human Agent?", "type": "main", "index": 0 }]]

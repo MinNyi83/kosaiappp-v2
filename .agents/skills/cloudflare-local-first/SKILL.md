@@ -32,4 +32,3 @@ When deployment is explicitly requested, deploy the respective layers using thes
 3. **Database (Cloudflare D1)**:
    - **Target Database**: `cctv-fsm-db`
    - **Schema Migrations**: `npx wrangler d1 execute cctv-fsm-db --remote --file=db/migrations/schema.sql`
-

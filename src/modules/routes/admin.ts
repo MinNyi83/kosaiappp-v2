@@ -64,14 +64,26 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const existing = await db
         .prepare('SELECT id FROM technicians WHERE id = ?')
         .bind(params.id)
         .first();
       if (!existing) return error('Technician not found', 404);
 
-      const allowed = ['name', 'nickname', 'email', 'phone', 'role', 'active', 'specialties', 'photo', 'username', 'pin', 'telegram_username'];
+      const allowed = [
+        'name',
+        'nickname',
+        'email',
+        'phone',
+        'role',
+        'active',
+        'specialties',
+        'photo',
+        'username',
+        'pin',
+        'telegram_username',
+      ];
       const updates = [];
       const values = [];
 
@@ -168,7 +180,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { key, value, description } = (await request.json() as any);
+      const { key, value, description } = (await request.json()) as any;
       if (!key || value === undefined) return error('Missing key or value', 400);
 
       await db
@@ -209,7 +221,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { name, permissions, description } = (await request.json() as any);
+      const { name, permissions, description } = (await request.json()) as any;
       if (!name) return error('Missing role name', 400);
 
       const id = 'ROLE-' + Date.now().toString(36).toUpperCase();
@@ -253,7 +265,7 @@ function register(router, env) {
         'attendance',
         'system_config',
       ];
-const backup: any = {};
+      const backup: any = {};
 
       for (const table of tables) {
         const result = await db.prepare(`SELECT * FROM ${table}`).all();
@@ -275,7 +287,7 @@ const backup: any = {};
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       if (!body || !body._exported_at) return error('Invalid backup format', 400);
 
       const tables = [
@@ -375,21 +387,27 @@ const backup: any = {};
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const fields = Object.keys(body);
       if (fields.length === 0) return error('No fields provided', 400);
 
-      const setClause = fields.map(f => `${f} = ?`).join(', ');
-      const values = fields.map(f => body[f]);
+      const setClause = fields.map((f) => `${f} = ?`).join(', ');
+      const values = fields.map((f) => body[f]);
 
       // Upsert: try update first, then insert
       const existing = await db.prepare('SELECT id FROM landing_page WHERE id = 1').first();
       if (existing) {
-        await db.prepare(`UPDATE landing_page SET ${setClause} WHERE id = 1`).bind(...values).run();
+        await db
+          .prepare(`UPDATE landing_page SET ${setClause} WHERE id = 1`)
+          .bind(...values)
+          .run();
       } else {
         const colClause = ['id', ...fields].join(', ');
         const valClause = ['1', ...fields.map(() => '?')].join(', ');
-        await db.prepare(`INSERT INTO landing_page (${colClause}) VALUES (${valClause})`).bind(...values).run();
+        await db
+          .prepare(`INSERT INTO landing_page (${colClause}) VALUES (${valClause})`)
+          .bind(...values)
+          .run();
       }
 
       return success({ message: 'Landing page updated' });
@@ -404,7 +422,7 @@ const backup: any = {};
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const hq = (await request.json() as any);
+      const hq = (await request.json()) as any;
       if (!hq) return error('Missing configuration data', 400);
 
       const lat = parseFloat(hq.lat);
@@ -414,27 +432,36 @@ const backup: any = {};
       // 1. Update landing_page table for public website coordinates & address
       const existingLanding = await db.prepare('SELECT id FROM landing_page WHERE id = 1').first();
       if (existingLanding) {
-        await db.prepare('UPDATE landing_page SET map_lat = ?, map_lng = ?, contact_address = ? WHERE id = 1')
+        await db
+          .prepare(
+            'UPDATE landing_page SET map_lat = ?, map_lng = ?, contact_address = ? WHERE id = 1'
+          )
           .bind(lat, lng, address)
           .run();
       } else {
-        await db.prepare('INSERT INTO landing_page (id, map_lat, map_lng, contact_address) VALUES (1, ?, ?, ?)')
+        await db
+          .prepare(
+            'INSERT INTO landing_page (id, map_lat, map_lng, contact_address) VALUES (1, ?, ?, ?)'
+          )
           .bind(lat, lng, address)
           .run();
       }
 
       // 2. Update system_config key-value store for internal settings syncing
       const serialized = JSON.stringify(hq);
-      const existingConfig = await db.prepare('SELECT config_key FROM system_config WHERE config_key = ?')
+      const existingConfig = await db
+        .prepare('SELECT config_key FROM system_config WHERE config_key = ?')
         .bind('hq_config')
         .first();
 
       if (existingConfig) {
-        await db.prepare('UPDATE system_config SET config_value = ? WHERE config_key = ?')
+        await db
+          .prepare('UPDATE system_config SET config_value = ? WHERE config_key = ?')
           .bind(serialized, 'hq_config')
           .run();
       } else {
-        await db.prepare('INSERT INTO system_config (config_key, config_value) VALUES (?, ?)')
+        await db
+          .prepare('INSERT INTO system_config (config_key, config_value) VALUES (?, ?)')
           .bind('hq_config', serialized)
           .run();
       }
@@ -477,16 +504,25 @@ const backup: any = {};
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { key, value } = (await request.json() as any);
+      const { key, value } = (await request.json()) as any;
       if (!key) return error('Missing key', 400);
 
       const serialized = typeof value === 'string' ? value : JSON.stringify(value);
-      const existing = await db.prepare('SELECT config_key FROM system_config WHERE config_key = ?').bind(key).first();
+      const existing = await db
+        .prepare('SELECT config_key FROM system_config WHERE config_key = ?')
+        .bind(key)
+        .first();
 
       if (existing) {
-        await db.prepare('UPDATE system_config SET config_value = ? WHERE config_key = ?').bind(serialized, key).run();
+        await db
+          .prepare('UPDATE system_config SET config_value = ? WHERE config_key = ?')
+          .bind(serialized, key)
+          .run();
       } else {
-        await db.prepare('INSERT INTO system_config (config_key, config_value) VALUES (?, ?)').bind(key, serialized).run();
+        await db
+          .prepare('INSERT INTO system_config (config_key, config_value) VALUES (?, ?)')
+          .bind(key, serialized)
+          .run();
       }
 
       return success({ message: 'Config saved', key });
@@ -515,7 +551,7 @@ const backup: any = {};
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { text, notes, job_id } = (await request.json() as any);
+      const { text, notes, job_id } = (await request.json()) as any;
       const raw = text || notes || '';
       if (!raw) return error('Missing text or notes field', 400);
 
@@ -525,10 +561,20 @@ const backup: any = {};
       if (GEMINI_API_KEY) {
         try {
           const data = await fetchGeminiWithFallback(GEMINI_API_KEY, {
-            contents: [{ parts: [{ text: `Polish the following CCTV/IT service technician notes for clarity and professionalism. Fix grammar and spelling. Keep all technical details intact. Return only the polished text:\n\n${raw}` }] }]
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Polish the following CCTV/IT service technician notes for clarity and professionalism. Fix grammar and spelling. Keep all technical details intact. Return only the polished text:\n\n${raw}`,
+                  },
+                ],
+              },
+            ],
           });
           polished = data?.candidates?.[0]?.content?.parts?.[0]?.text || raw;
-        } catch (_) { /* use raw */ }
+        } catch (_) {
+          /* use raw */
+        }
       }
 
       return success({ original: raw, polished, job_id: job_id || null });
@@ -544,7 +590,7 @@ const backup: any = {};
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { message, query, question, history } = (await request.json() as any);
+      const { message, query, question, history } = (await request.json()) as any;
       const userMsg = message || query || question || '';
       if (!userMsg) return error('Missing message', 400);
 
@@ -553,9 +599,9 @@ const backup: any = {};
       // Gather context for SQL generation
       const schema = await getSchemaSummary(db);
       const [jobCount, clientCount, techCount] = await Promise.all([
-        db.prepare("SELECT COUNT(*) as c FROM service_records").first(),
-        db.prepare("SELECT COUNT(*) as c FROM clients").first(),
-        db.prepare("SELECT COUNT(*) as c FROM technicians WHERE active = 1").first(),
+        db.prepare('SELECT COUNT(*) as c FROM service_records').first(),
+        db.prepare('SELECT COUNT(*) as c FROM clients').first(),
+        db.prepare('SELECT COUNT(*) as c FROM technicians WHERE active = 1').first(),
       ]);
 
       const systemPrompt = `You are a SQLite SQL generator. Given a database schema and a natural language question, output ONLY a valid SQLite SELECT query. No explanation, no markdown, no semicolons. Just the raw SQL.
@@ -572,25 +618,36 @@ ${schema}`;
         const q = userMsg.toLowerCase();
 
         // Jobs queries
-        if (q.includes('job') && (q.includes('assigned') || q.includes('technician') || q.includes('tech'))) {
+        if (
+          q.includes('job') &&
+          (q.includes('assigned') || q.includes('technician') || q.includes('tech'))
+        ) {
           // Extract technician ID if mentioned
           const techMatch = q.match(/technician\s*(\d+)|tech\s*(\d+)/);
           const techId = techMatch ? techMatch[1] : null;
           if (techId) {
             sql = `SELECT id, job_description, service_type, status, created_at FROM service_records WHERE technician_id LIKE '%${techId}%' ORDER BY created_at DESC LIMIT 20`;
           } else {
-            sql = "SELECT id, job_description, service_type, status, technician_id FROM service_records WHERE status IN ('Pending', 'In Progress') ORDER BY created_at DESC LIMIT 20";
+            sql =
+              "SELECT id, job_description, service_type, status, technician_id FROM service_records WHERE status IN ('Pending', 'In Progress') ORDER BY created_at DESC LIMIT 20";
           }
         } else if (q.includes('job') && (q.includes('pending') || q.includes('new'))) {
-          sql = "SELECT id, job_description, service_type, status FROM service_records WHERE status = 'Pending' ORDER BY created_at DESC LIMIT 20";
+          sql =
+            "SELECT id, job_description, service_type, status FROM service_records WHERE status = 'Pending' ORDER BY created_at DESC LIMIT 20";
         } else if (q.includes('job') && (q.includes('progress') || q.includes('active'))) {
-          sql = "SELECT id, job_description, service_type, status FROM service_records WHERE status = 'In Progress' ORDER BY created_at DESC LIMIT 20";
-        } else if (q.includes('job') && (q.includes('completed') || q.includes('done') || q.includes('finished'))) {
-          sql = "SELECT id, job_description, service_type, completed_at FROM service_records WHERE status = 'Completed' ORDER BY completed_at DESC LIMIT 20";
+          sql =
+            "SELECT id, job_description, service_type, status FROM service_records WHERE status = 'In Progress' ORDER BY created_at DESC LIMIT 20";
+        } else if (
+          q.includes('job') &&
+          (q.includes('completed') || q.includes('done') || q.includes('finished'))
+        ) {
+          sql =
+            "SELECT id, job_description, service_type, completed_at FROM service_records WHERE status = 'Completed' ORDER BY completed_at DESC LIMIT 20";
         } else if (q.includes('job') && q.includes('count')) {
           sql = 'SELECT status, COUNT(*) as count FROM service_records GROUP BY status';
         } else if (q.includes('job') || q.includes('ticket') || q.includes('dispatch')) {
-          sql = "SELECT id, job_description, service_type, status FROM service_records ORDER BY created_at DESC LIMIT 20";
+          sql =
+            'SELECT id, job_description, service_type, status FROM service_records ORDER BY created_at DESC LIMIT 20';
         }
 
         // Technician queries
@@ -609,16 +666,23 @@ ${schema}`;
 
         // Attendance queries
         else if (q.includes('attendance') || q.includes('clock') || q.includes('check')) {
-          sql = "SELECT a.date, t.name, a.clock_in, a.clock_out FROM attendance a JOIN technicians t ON a.technician_id = t.id WHERE a.date >= date('now', '-7 days') ORDER BY a.date DESC, a.clock_in DESC LIMIT 20";
+          sql =
+            "SELECT a.date, t.name, a.clock_in, a.clock_out FROM attendance a JOIN technicians t ON a.technician_id = t.id WHERE a.date >= date('now', '-7 days') ORDER BY a.date DESC, a.clock_in DESC LIMIT 20";
         }
 
         // Inventory queries
         else if (q.includes('inventory') || q.includes('stock')) {
-          sql = 'SELECT item_code, item_name, current_stock FROM inventory_items ORDER BY item_name LIMIT 20';
+          sql =
+            'SELECT item_code, item_name, current_stock FROM inventory_items ORDER BY item_name LIMIT 20';
         }
 
         // Financial queries
-        else if (q.includes('revenue') || q.includes('income') || q.includes('cash') || q.includes('transaction')) {
+        else if (
+          q.includes('revenue') ||
+          q.includes('income') ||
+          q.includes('cash') ||
+          q.includes('transaction')
+        ) {
           sql = 'SELECT category, SUM(amount) as total FROM cash_transactions GROUP BY category';
         }
 
@@ -646,7 +710,14 @@ ${schema}`;
         try {
           const data = await fetchGeminiWithFallback(GEMINI_API_KEY, {
             contents: [
-              { role: 'user', parts: [{ text: `You are a SQL generator. Given this SQLite schema:\n${schema}\n\nConvert this question to SQL: ${userMsg}\n\nReturn ONLY the SELECT query.` }] },
+              {
+                role: 'user',
+                parts: [
+                  {
+                    text: `You are a SQL generator. Given this SQLite schema:\n${schema}\n\nConvert this question to SQL: ${userMsg}\n\nReturn ONLY the SELECT query.`,
+                  },
+                ],
+              },
             ],
           });
           const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -654,7 +725,9 @@ ${schema}`;
             const selectMatch = rawText.match(/(SELECT\s+[\s\S]+)/i);
             if (selectMatch) sql = selectMatch[1].replace(/```/g, '').replace(/;$/, '').trim();
           }
-        } catch (e) { console.error('Gemini error:', e); }
+        } catch (e) {
+          console.error('Gemini error:', e);
+        }
       }
 
       // Validate and execute SQL
@@ -688,7 +761,8 @@ ${schema}`;
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
-      const technician_id = url.searchParams.get('technician_id') || (await request.json() as any)?.technician_id;
+      const technician_id =
+        url.searchParams.get('technician_id') || ((await request.json()) as any)?.technician_id;
 
       const jobs = await db
         .prepare(
@@ -717,7 +791,7 @@ ${schema}`;
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { text, job_type, priority } = (await request.json() as any);
+      const { text, job_type, priority } = (await request.json()) as any;
 
       // Find available technicians based on workload
       const availableTechs = await db
@@ -745,11 +819,15 @@ ${schema}`;
       if (text && env.GEMINI_API_KEY) {
         try {
           const data = await fetchGeminiWithFallback(env.GEMINI_API_KEY, {
-            contents: [{
-              parts: [{
-                text: `Analyze this service complaint and suggest: 1) domain (CCTV, Networking, WiFi, NAS, General), 2) priority (urgent/high/normal/low), 3) brief explanation. Complaint: "${text}"`
-              }]
-            }]
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Analyze this service complaint and suggest: 1) domain (CCTV, Networking, WiFi, NAS, General), 2) priority (urgent/high/normal/low), 3) brief explanation. Complaint: "${text}"`,
+                  },
+                ],
+              },
+            ],
           });
           const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
           explanation = aiReply;
@@ -833,7 +911,10 @@ ${schema}`;
       }
       query += ' ORDER BY sr.created_at DESC LIMIT 50';
 
-      const result = await db.prepare(query).bind(...params).all();
+      const result = await db
+        .prepare(query)
+        .bind(...params)
+        .all();
       return success(result.results);
     } catch (err) {
       return error('Failed to fetch history: ' + err.message, 500);
@@ -848,16 +929,26 @@ ${schema}`;
 
       const url = new URL(request.url);
       const dateFrom = url.searchParams.get('date_from');
-      const dateTo   = url.searchParams.get('date_to');
+      const dateTo = url.searchParams.get('date_to');
 
-      let query = 'SELECT * FROM cash_transactions WHERE transaction_type IN (\'Deposit\',\'Income\',\'Sale\') ';
+      let query =
+        "SELECT * FROM cash_transactions WHERE transaction_type IN ('Deposit','Income','Sale') ";
       const params: any[] = [];
 
-      if (dateFrom) { query += ' AND created_at >= ?'; params.push(dateFrom); }
-      if (dateTo)   { query += ' AND created_at <= ?'; params.push(dateTo); }
+      if (dateFrom) {
+        query += ' AND created_at >= ?';
+        params.push(dateFrom);
+      }
+      if (dateTo) {
+        query += ' AND created_at <= ?';
+        params.push(dateTo);
+      }
       query += ' ORDER BY created_at DESC LIMIT 200';
 
-      const result = await db.prepare(query).bind(...params).all();
+      const result = await db
+        .prepare(query)
+        .bind(...params)
+        .all();
       return success(result.results);
     } catch (err) {
       return error('Failed to fetch POS sales: ' + err.message, 500);
@@ -873,13 +964,20 @@ ${schema}`;
       const url = new URL(request.url);
       const client_id = url.searchParams.get('client_id');
 
-      let query = 'SELECT cc.*, c.company_name FROM client_credits cc LEFT JOIN clients c ON cc.client_id = c.id WHERE 1=1';
+      let query =
+        'SELECT cc.*, c.company_name FROM client_credits cc LEFT JOIN clients c ON cc.client_id = c.id WHERE 1=1';
       const params: any[] = [];
 
-      if (client_id) { query += ' AND cc.client_id = ?'; params.push(client_id); }
+      if (client_id) {
+        query += ' AND cc.client_id = ?';
+        params.push(client_id);
+      }
       query += ' ORDER BY cc.created_at DESC LIMIT 100';
 
-      const result = await db.prepare(query).bind(...params).all();
+      const result = await db
+        .prepare(query)
+        .bind(...params)
+        .all();
       return success(result.results);
     } catch (err) {
       return error('Failed to fetch credits: ' + err.message, 500);
@@ -892,7 +990,9 @@ async function getSchemaSummary(db) {
   for (const table of ALLOWED_TABLES) {
     const info = await db.prepare(`PRAGMA table_info(${table})`).all();
     const cols = info.results
-      .map((c) => `  ${c.name} ${c.type}${c.pk ? ' PRIMARY KEY' : ''}${c.notnull ? ' NOT NULL' : ''}`)
+      .map(
+        (c) => `  ${c.name} ${c.type}${c.pk ? ' PRIMARY KEY' : ''}${c.notnull ? ' NOT NULL' : ''}`
+      )
       .join('\n');
     schemas.push(`TABLE ${table}:\n${cols}`);
   }
@@ -900,6 +1000,3 @@ async function getSchemaSummary(db) {
 }
 
 export { register };
-
-
-

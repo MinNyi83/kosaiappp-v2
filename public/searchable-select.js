@@ -1,19 +1,19 @@
 /**
  * searchable-select.js  v1.0
  * Universal progressive-enhancement library for searchable/filterable dropdowns.
- * Wraps any native <select> in-place — native select stays hidden so form
+ * Wraps any native <select> in-place ï¿½ native select stays hidden so form
  * submission and existing JS that reads .value both continue working.
  *
  * Usage:
  *   makeSearchable(document.getElementById('my-select'));
- *   makeSearchable(el, { placeholder: 'Filter…', accentColor: '#f59e0b' });
+ *   makeSearchable(el, { placeholder: 'Filterï¿½', accentColor: '#f59e0b' });
  *
  * Public API on el._ss:
- *   el._ss.open()       – open dropdown
- *   el._ss.close()      – close dropdown
- *   el._ss.sync()       – re-read native select value into text input
- *   el._ss.rebuild()    – rebuild option list from current native options
- *   el._ss.setValue(v)  – programmatically set value + sync display
+ *   el._ss.open()       ï¿½ open dropdown
+ *   el._ss.close()      ï¿½ close dropdown
+ *   el._ss.sync()       ï¿½ re-read native select value into text input
+ *   el._ss.rebuild()    ï¿½ rebuild option list from current native options
+ *   el._ss.setValue(v)  ï¿½ programmatically set value + sync display
  */
 (function () {
   'use strict';
@@ -54,7 +54,7 @@
 
     var cfg = Object.assign(
       {
-        placeholder: 'Search or select…',
+        placeholder: 'Search or selectï¿½',
         accentColor: '#6366f1',
       },
       opts || {}

@@ -8,7 +8,7 @@
 
   <div class="grid md:grid-cols-3 gap-8">
     <!-- Left Panel: Add / Update Service Fee -->
-    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-1">
+    <div class="glass-panel rounded-2xl overflow-hidden space-y-4 md:col-span-1">
       <h2
         class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
         id="fee-form-title"
@@ -98,7 +98,7 @@
     </div>
 
     <!-- Right Panel: Service Rates List -->
-    <div class="glass-panel p-6 rounded-2xl space-y-4 md:col-span-2">
+    <div class="glass-panel rounded-2xl overflow-hidden space-y-4 md:col-span-2">
       <div class="flex justify-between items-center border-b border-white/5 pb-2">
         <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
           <span>📋</span> Configured Service Rates
@@ -106,7 +106,7 @@
         <button
           type="button"
           onclick="exportTableToExcel('service-fees-table', 'Service_Rates')"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
         >
           <svg
             class="w-3 h-3"
@@ -125,14 +125,14 @@
       <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
         <table id="service-fees-table" class="w-full text-xs text-left">
           <thead>
-            <tr class="text-slate-500 border-b border-white/5 pb-2">
-              <th class="pb-2">Service Type</th>
-              <th class="pb-2">Rate Amount</th>
-              <th class="pb-2">Description</th>
+            <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
+              <th class="pb-3 pt-2 font-semibold">Service Type</th>
+              <th class="pb-3 pt-2 font-semibold">Rate Amount</th>
+              <th class="pb-3 pt-2 font-semibold">Description</th>
               <th class="pb-2 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody id="service-fees-body">
+          <tbody class="divide-y divide-white/5">
             <tr>
               <td colspan="4" class="py-4 text-center text-slate-600">Loading service rates...</td>
             </tr>

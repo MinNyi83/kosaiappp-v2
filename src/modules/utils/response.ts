@@ -10,7 +10,11 @@ export const success = (data: any, message: any = null, status: any = 200) => {
   });
 };
 
-export const error = (message: any = 'Internal Server Error', status: any = 500, details: any = null) => {
+export const error = (
+  message: any = 'Internal Server Error',
+  status: any = 500,
+  details: any = null
+) => {
   const body: any = { success: false, error: message };
   if (details) body.details = details;
   return new Response(JSON.stringify(body), {

@@ -22,4 +22,3 @@ export async function sendViberNotification(env, text) {
     console.error('Viber notification error', e);
   }
 }
-

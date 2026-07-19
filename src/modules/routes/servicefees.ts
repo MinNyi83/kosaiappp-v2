@@ -33,7 +33,10 @@ function register(router, env) {
       }
 
       query += ' ORDER BY service_type ASC';
-      const result = await db.prepare(query).bind(...params).all();
+      const result = await db
+        .prepare(query)
+        .bind(...params)
+        .all();
       return success(result.results);
     } catch (err) {
       return error('Failed to fetch service fees: ' + err.message, 500);
@@ -48,7 +51,7 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { action, id, service_type, fee_amount, currency, description } = body;
 
       if (action === 'create') {
@@ -56,24 +59,25 @@ function register(router, env) {
           return error('Missing service_type, fee_amount, or currency', 400);
         }
         await db
-          .prepare('INSERT INTO service_fees (service_type, fee_amount, currency, description) VALUES (?, ?, ?, ?)')
+          .prepare(
+            'INSERT INTO service_fees (service_type, fee_amount, currency, description) VALUES (?, ?, ?, ?)'
+          )
           .bind(service_type, parseFloat(fee_amount), currency, description || null)
           .run();
         return success({ message: 'Service rate created successfully.' });
-
       } else if (action === 'update') {
         if (!id) return error('Missing id', 400);
         await db
-          .prepare('UPDATE service_fees SET service_type = ?, fee_amount = ?, currency = ?, description = ? WHERE id = ?')
+          .prepare(
+            'UPDATE service_fees SET service_type = ?, fee_amount = ?, currency = ?, description = ? WHERE id = ?'
+          )
           .bind(service_type, parseFloat(fee_amount), currency, description || null, id)
           .run();
         return success({ message: 'Service rate updated successfully.' });
-
       } else if (action === 'delete') {
         if (!id) return error('Missing id', 400);
         await db.prepare('DELETE FROM service_fees WHERE id = ?').bind(id).run();
         return success({ message: 'Service rate deleted successfully.' });
-
       } else {
         return error('Invalid action. Use create, update, or delete.', 400);
       }
@@ -89,13 +93,15 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { service_type, fee_amount, currency, description } = body;
       if (!service_type || fee_amount === undefined || !currency) {
         return error('Missing service_type, fee_amount, or currency', 400);
       }
       await db
-        .prepare('INSERT INTO service_fees (service_type, fee_amount, currency, description) VALUES (?, ?, ?, ?)')
+        .prepare(
+          'INSERT INTO service_fees (service_type, fee_amount, currency, description) VALUES (?, ?, ?, ?)'
+        )
         .bind(service_type, parseFloat(fee_amount), currency, description || null)
         .run();
       return success({ message: 'Service rate created.' }, 201);
@@ -111,10 +117,12 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { service_type, fee_amount, currency, description } = body;
       await db
-        .prepare('UPDATE service_fees SET service_type = ?, fee_amount = ?, currency = ?, description = ? WHERE id = ?')
+        .prepare(
+          'UPDATE service_fees SET service_type = ?, fee_amount = ?, currency = ?, description = ? WHERE id = ?'
+        )
         .bind(service_type, parseFloat(fee_amount), currency, description || null, params.id)
         .run();
       return success({ message: 'Service fee updated' });

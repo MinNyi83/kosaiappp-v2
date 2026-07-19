@@ -1,0 +1,1 @@
+INSERT OR IGNORE INTO inventory_stock (item_code, item_name, category, stock_qty, unit_price, unit_price_mmk, batch_code, buying_price, sub_category_id, brand_id, stocking_um) VALUES ('CAM20101023', 'DH-SD-22204I-GC', 'Camera', 0, 0.0, 0.0, NULL, 0.0, 'Dome Camera ( Indoor)', 'DAHUA', 'PC');

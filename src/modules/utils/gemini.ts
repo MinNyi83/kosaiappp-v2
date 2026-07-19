@@ -15,7 +15,7 @@ export async function fetchGeminiWithFallback(apiKey, payloadBody, model = 'gemi
       },
       body: JSON.stringify(payloadBody),
     });
-    const data = (await res.json() as any);
+    const data = (await res.json()) as any;
     if (res.ok && !data.error) {
       return data;
     }
@@ -41,7 +41,7 @@ export async function fetchGeminiWithFallback(apiKey, payloadBody, model = 'gemi
       },
       body: JSON.stringify(payloadBody),
     });
-    const data = (await res.json() as any);
+    const data = (await res.json()) as any;
     return data;
   } catch (err) {
     throw new Error(
@@ -49,4 +49,3 @@ export async function fetchGeminiWithFallback(apiKey, payloadBody, model = 'gemi
     );
   }
 }
-

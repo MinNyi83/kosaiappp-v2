@@ -13,7 +13,7 @@ describe('Response Utilities', () => {
       const data = { id: 1, name: 'Test' };
       const response = createSuccessResponse(data);
       expect(response.status).toBe(200);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.success).toBe(true);
       expect(body.data).toEqual(data);
     });
@@ -21,7 +21,7 @@ describe('Response Utilities', () => {
     it('should include message when provided', async () => {
       const response = createSuccessResponse({ id: 1 }, 'Created successfully');
       expect(response.status).toBe(200);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.message).toBe('Created successfully');
     });
 
@@ -35,7 +35,7 @@ describe('Response Utilities', () => {
     it('should return 500 by default with error message', async () => {
       const response = createErrorResponse('Internal server error');
       expect(response.status).toBe(500);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.success).toBe(false);
       expect(body.error).toBe('Internal server error');
     });
@@ -43,7 +43,7 @@ describe('Response Utilities', () => {
     it('should use custom status code', async () => {
       const response = createErrorResponse('Bad request', 400);
       expect(response.status).toBe(400);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.error).toBe('Bad request');
     });
 
@@ -53,7 +53,7 @@ describe('Response Utilities', () => {
         issue: 'invalid format',
       });
       expect(response.status).toBe(400);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.details).toEqual({ field: 'email', issue: 'invalid format' });
     });
   });
@@ -62,7 +62,7 @@ describe('Response Utilities', () => {
     it('should return 404 with resource name', async () => {
       const response = createNotFoundResponse('Job');
       expect(response.status).toBe(404);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.error).toBe('Job not found');
     });
   });
@@ -71,14 +71,14 @@ describe('Response Utilities', () => {
     it('should return 401 with default message', async () => {
       const response = createUnauthorizedResponse();
       expect(response.status).toBe(401);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.error).toBe('Unauthorized');
     });
 
     it('should use custom message', async () => {
       const response = createUnauthorizedResponse('Token expired');
       expect(response.status).toBe(401);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.error).toBe('Token expired');
     });
   });
@@ -91,10 +91,9 @@ describe('Response Utilities', () => {
       ];
       const response = createValidationErrorResponse(errors);
       expect(response.status).toBe(400);
-      const body = (await response.json() as any);
+      const body = (await response.json()) as any;
       expect(body.error).toBe('Validation failed');
       expect(body.details).toEqual(errors);
     });
   });
 });
-

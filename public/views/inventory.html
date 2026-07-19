@@ -268,7 +268,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
               border: 1px solid rgba(16, 185, 129, 0.3);
@@ -287,8 +287,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Stock Batches</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Stock Batches</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">
               Per-batch buying price · Serial number tracking
             </p>
           </div>
@@ -311,21 +311,21 @@
               id="batch-search-input"
               onkeyup="filterBatchTable()"
               placeholder="Search batches..."
-              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all w-44"
+              class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all w-44"
             />
           </div>
           <!-- Model Filter Dropdown -->
           <select
             id="batch-filter-model"
             onchange="filterBatchByModel(this.value)"
-            class="bg-black/30 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all"
+            class="bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-[11px] text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all"
           >
             <option value="">All Models</option>
           </select>
           <!-- Export -->
           <button
             onclick="exportInventoryToExcel('batches')"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
           >
             <svg
               class="w-3 h-3"
@@ -425,7 +425,7 @@
               </th>
             </tr>
           </thead>
-          <tbody id="batches-stock-body">
+          <tbody class="divide-y divide-white/5">
             <tr>
               <td colspan="10" class="px-4 py-10 text-center">
                 <div class="flex flex-col items-center gap-2">
@@ -457,7 +457,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.1));
               border: 1px solid rgba(245, 158, 11, 0.3);
@@ -476,8 +476,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Sales Pricing Sheet</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Sales Pricing Sheet</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">
               Model-level prices · Updated daily · Independent from batches
             </p>
           </div>
@@ -500,7 +500,7 @@
               id="pricing-search-input"
               onkeyup="filterPricingTable()"
               placeholder="Search products..."
-              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 transition-all w-44"
+              class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-amber-500/50 transition-all w-44"
             />
           </div>
           <!-- Category filter -->
@@ -513,7 +513,7 @@
           </select>
           <button
             onclick="switchInvModule('update-price')"
-            class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 rounded-lg transition-all"
+            class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-sky-400 border border-sky-500/20 hover:bg-sky-500/10 rounded-xl transition-all"
           >
             <svg
               class="w-3 h-3"
@@ -529,7 +529,7 @@
           <!-- Export -->
           <button
             onclick="exportInventoryToExcel('pricing')"
-            class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+            class="flex items-center gap-1.5 px-2 py-1 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
           >
             <svg
               class="w-3 h-3"
@@ -622,7 +622,7 @@
               </th>
             </tr>
           </thead>
-          <tbody id="sales-pricing-body">
+          <tbody class="divide-y divide-white/5">
             <tr>
               <td colspan="8" class="px-4 py-10 text-center text-[11px] text-slate-600">
                 Loading pricing data...
@@ -641,7 +641,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.1));
               border: 1px solid rgba(99, 102, 241, 0.3);
@@ -662,8 +662,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Device Catalog</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Device Catalog</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">
               All registered device models · Parent of all batches
             </p>
           </div>
@@ -686,7 +686,7 @@
               id="catalog-search-input"
               onkeyup="filterCatalogTable()"
               placeholder="Search models..."
-              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all w-44"
+              class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all w-44"
             />
           </div>
           <!-- Category filter -->
@@ -699,7 +699,7 @@
           </select>
           <button
             onclick="switchInvModule('add-model')"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-amber-400 border border-amber-500/20 hover:bg-amber-500/10 rounded-lg transition-all"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-amber-400 border border-amber-500/20 hover:bg-amber-500/10 rounded-xl transition-all"
           >
             <svg
               class="w-3 h-3"
@@ -716,7 +716,7 @@
           <!-- Export -->
           <button
             onclick="exportInventoryToExcel('catalog')"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
           >
             <svg
               class="w-3 h-3"
@@ -809,7 +809,7 @@
               </th>
             </tr>
           </thead>
-          <tbody id="catalog-models-body">
+          <tbody class="divide-y divide-white/5">
             <tr>
               <td colspan="8" class="px-4 py-10 text-center text-[11px] text-slate-600">
                 Loading catalog...
@@ -828,7 +828,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(236, 72, 153, 0.1));
               border: 1px solid rgba(236, 72, 153, 0.3);
@@ -846,8 +846,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Categories</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">Top-level product groupings</p>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Categories</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Top-level product groupings</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -867,7 +867,7 @@
               id="cat-search-input"
               onkeyup="filterMasterTable('categories-body', 'cat-search-input')"
               placeholder="Search..."
-              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-pink-500/50 transition-all w-36"
+              class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-pink-500/50 transition-all w-36"
             />
           </div>
         </div>
@@ -943,7 +943,7 @@
                   </th>
                 </tr>
               </thead>
-              <tbody id="categories-body">
+              <tbody class="divide-y divide-white/5">
                 <tr>
                   <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">
                     Loading...
@@ -964,7 +964,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(251, 146, 60, 0.1));
               border: 1px solid rgba(251, 146, 60, 0.3);
@@ -981,8 +981,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Sub-Categories</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">Nested groupings under a parent category</p>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Sub-Categories</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Nested groupings under a parent category</p>
           </div>
         </div>
         <div class="relative">
@@ -1001,7 +1001,7 @@
             id="subcat-search-input"
             onkeyup="filterMasterTable('subcategories-body', 'subcat-search-input')"
             placeholder="Search..."
-            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-orange-500/50 transition-all w-36"
+            class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-orange-500/50 transition-all w-36"
           />
         </div>
       </div>
@@ -1111,7 +1111,7 @@
                   </th>
                 </tr>
               </thead>
-              <tbody id="subcategories-body">
+              <tbody class="divide-y divide-white/5">
                 <tr>
                   <td colspan="4" class="px-3 py-6 text-center text-[11px] text-slate-600">
                     Loading...
@@ -1132,7 +1132,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(34, 211, 238, 0.3), rgba(34, 211, 238, 0.1));
               border: 1px solid rgba(34, 211, 238, 0.3);
@@ -1152,8 +1152,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Brands</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">Manufacturer / vendor brand registry</p>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Brands</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Manufacturer / vendor brand registry</p>
           </div>
         </div>
         <div class="relative">
@@ -1172,7 +1172,7 @@
             id="brand-search-input"
             onkeyup="filterMasterTable('brands-body', 'brand-search-input')"
             placeholder="Search..."
-            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all w-36"
+            class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-all w-36"
           />
         </div>
       </div>
@@ -1245,7 +1245,7 @@
                   </th>
                 </tr>
               </thead>
-              <tbody id="brands-body">
+              <tbody class="divide-y divide-white/5">
                 <tr>
                   <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">
                     Loading...
@@ -1266,7 +1266,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(
                 135deg,
@@ -1287,8 +1287,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Stock Units</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Stock Units</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">
               Unit of measurement definitions (pcs, meters, boxes...)
             </p>
           </div>
@@ -1309,7 +1309,7 @@
             id="units-search-input"
             onkeyup="filterMasterTable('units-body', 'units-search-input')"
             placeholder="Search..."
-            class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-all w-36"
+            class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-violet-500/50 transition-all w-36"
           />
         </div>
       </div>
@@ -1403,7 +1403,7 @@
                   </th>
                 </tr>
               </thead>
-              <tbody id="units-body">
+              <tbody class="divide-y divide-white/5">
                 <tr>
                   <td colspan="3" class="px-3 py-6 text-center text-[11px] text-slate-600">
                     Loading...
@@ -1438,7 +1438,7 @@
         </button>
         <div class="flex items-center gap-2">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(
                 135deg,
@@ -1461,7 +1461,7 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Register New Stock Batch</h2>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Register New Stock Batch</h2>
             <p class="text-[9px] text-slate-500 mt-0.5">
               Import new devices with serial numbers to active stock batches
             </p>
@@ -1745,7 +1745,7 @@
         </button>
         <div class="flex items-center gap-2">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(
                 135deg,
@@ -1767,7 +1767,9 @@
             </svg>
           </div>
           <div>
-            <h2 id="add-model-title" class="text-sm font-bold text-white leading-none">Register Device Model</h2>
+            <h2 id="add-model-title" class="text-sm font-bold text-white leading-none uppercase tracking-wider">
+              Register Device Model
+            </h2>
             <p class="text-[9px] text-slate-500 mt-0.5">
               Add a new model to the catalog — required before creating batches
             </p>
@@ -1947,7 +1949,7 @@
         </button>
         <div class="flex items-center gap-2">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(
                 135deg,
@@ -1970,7 +1972,7 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Update Selling Prices</h2>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Update Selling Prices</h2>
             <p class="text-[9px] text-slate-500 mt-0.5">
               Set today's USD &amp; MMK retail price for any device model
             </p>

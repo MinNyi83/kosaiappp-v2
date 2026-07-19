@@ -18,12 +18,33 @@ const buf = fs.readFileSync(filePath);
 // Windows-1252 → Unicode mapping for codepoints 0x80-0x9F
 // (the rest are 1:1)
 const w1252Map = {
-  0x80: 0x20AC, 0x82: 0x201A, 0x83: 0x0192, 0x84: 0x201E, 0x85: 0x2026,
-  0x86: 0x2020, 0x87: 0x2021, 0x88: 0x02C6, 0x89: 0x2030, 0x8A: 0x0160,
-  0x8B: 0x2039, 0x8C: 0x0152, 0x8E: 0x017D, 0x91: 0x2018, 0x92: 0x2019,
-  0x93: 0x201C, 0x94: 0x201D, 0x95: 0x2022, 0x96: 0x2013, 0x97: 0x2014,
-  0x98: 0x02DC, 0x99: 0x2122, 0x9A: 0x0161, 0x9B: 0x203A, 0x9C: 0x0153,
-  0x9E: 0x017E, 0x9F: 0x0178,
+  0x80: 0x20ac,
+  0x82: 0x201a,
+  0x83: 0x0192,
+  0x84: 0x201e,
+  0x85: 0x2026,
+  0x86: 0x2020,
+  0x87: 0x2021,
+  0x88: 0x02c6,
+  0x89: 0x2030,
+  0x8a: 0x0160,
+  0x8b: 0x2039,
+  0x8c: 0x0152,
+  0x8e: 0x017d,
+  0x91: 0x2018,
+  0x92: 0x2019,
+  0x93: 0x201c,
+  0x94: 0x201d,
+  0x95: 0x2022,
+  0x96: 0x2013,
+  0x97: 0x2014,
+  0x98: 0x02dc,
+  0x99: 0x2122,
+  0x9a: 0x0161,
+  0x9b: 0x203a,
+  0x9c: 0x0153,
+  0x9e: 0x017e,
+  0x9f: 0x0178,
 };
 
 /**
@@ -40,13 +61,13 @@ function decodeW1252Byte(buf, i) {
   // Multi-byte UTF-8 sequence — decode the codepoint
   let codepoint;
   let advance;
-  if ((b & 0xE0) === 0xC0 && i + 1 < buf.length) {
-    codepoint = ((b & 0x1F) << 6) | (buf[i + 1] & 0x3F);
+  if ((b & 0xe0) === 0xc0 && i + 1 < buf.length) {
+    codepoint = ((b & 0x1f) << 6) | (buf[i + 1] & 0x3f);
     advance = 2;
-  } else if ((b & 0xF0) === 0xE0 && i + 2 < buf.length) {
-    codepoint = ((b & 0x0F) << 12) | ((buf[i + 1] & 0x3F) << 6) | (buf[i + 2] & 0x3F);
+  } else if ((b & 0xf0) === 0xe0 && i + 2 < buf.length) {
+    codepoint = ((b & 0x0f) << 12) | ((buf[i + 1] & 0x3f) << 6) | (buf[i + 2] & 0x3f);
     advance = 3;
-  } else if ((b & 0xF8) === 0xF0 && i + 3 < buf.length) {
+  } else if ((b & 0xf8) === 0xf0 && i + 3 < buf.length) {
     // This is already a real 4-byte emoji — don't touch it
     return { byte: null, advance: 4, passthrough: 4 };
   } else {
@@ -59,7 +80,7 @@ function decodeW1252Byte(buf, i) {
     if (uCode === codepoint) return { byte: parseInt(wByte), advance };
   }
   // For codepoints 0x00-0xFF that are NOT in the special map (i.e. direct 1:1)
-  if (codepoint <= 0xFF) return { byte: codepoint, advance };
+  if (codepoint <= 0xff) return { byte: codepoint, advance };
 
   // Codepoint is outside 0xFF range — not a W1252 byte, leave as-is
   return { byte: null, advance, passthrough: advance };
@@ -73,8 +94,8 @@ while (i < buf.length) {
   const b = buf[i];
 
   // Already a proper 4-byte emoji (F0 9F ...) — pass through untouched
-  if ((b & 0xF8) === 0xF0 && i + 3 < buf.length) {
-    originalBytes.push(buf[i], buf[i+1], buf[i+2], buf[i+3]);
+  if ((b & 0xf8) === 0xf0 && i + 3 < buf.length) {
+    originalBytes.push(buf[i], buf[i + 1], buf[i + 2], buf[i + 3]);
     i += 4;
     continue;
   }
@@ -100,9 +121,9 @@ const fixed = Buffer.from(originalBytes);
 try {
   const text = fixed.toString('utf8');
   // Check some expected emoji
-  const hasScroll  = text.includes('\u{1F4DC}'); // 📜
-  const hasIdCard  = text.includes('\u{1FA96}'); // 🪪
-  const hasCheck   = text.includes('\u2714') || text.includes('\u2713');
+  const hasScroll = text.includes('\u{1F4DC}'); // 📜
+  const hasIdCard = text.includes('\u{1FA96}'); // 🪪
+  const hasCheck = text.includes('\u2714') || text.includes('\u2713');
   console.log(`📜 scroll emoji present: ${hasScroll}`);
   console.log(`🪪 ID card emoji present: ${hasIdCard}`);
   console.log(`Changed byte sequences: ${changed}`);

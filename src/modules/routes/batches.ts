@@ -63,7 +63,8 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { item_id, quantity, serials, supplier, cost_price, notes } = (await request.json() as any);
+      const { item_id, quantity, serials, supplier, cost_price, notes } =
+        (await request.json()) as any;
       if (!item_id || !quantity) return error('Missing item_id or quantity', 400);
 
       const batchId = 'BATCH-' + Date.now().toString(36).toUpperCase();
@@ -106,7 +107,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const allowed = ['supplier', 'cost_price', 'notes'];
       const updates = [];
       const values = [];
@@ -175,7 +176,7 @@ function register(router, env) {
   // ── POST /api/serials/verify ──────────────────────────────────────────
   router.post('/api/serials/verify', async (request) => {
     try {
-      const { serial } = (await request.json() as any);
+      const { serial } = (await request.json()) as any;
       if (!serial) return error('Missing serial number', 400);
 
       const item = await db
@@ -201,4 +202,3 @@ function register(router, env) {
 }
 
 export { register };
-

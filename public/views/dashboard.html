@@ -1,139 +1,224 @@
-<div id="view-dashboard" class="space-y-8 tab-view">
-  <!-- Dashboard Welcome Row -->
-  <div class="flex justify-between items-center">
-    <div>
-      <h1 class="text-2xl font-black text-white uppercase tracking-tight">Dashboard</h1>
-      <p class="text-xs text-slate-400 mt-1">Store operations, job logs, and sales overview.</p>
-    </div>
-    <button
-      onclick="switchTab('tickets')"
-      class="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-wider"
-    >
-      + New Service Ticket
-    </button>
-  </div>
-
-  <!-- Stats Widgets Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-    <!-- Widget 1: Active Tickets -->
-    <div
-      class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden"
-    >
-      <div class="flex justify-between items-start">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
-          >Active Tickets</span
-        >
-        <span class="text-slate-500 text-sm">🎫</span>
-      </div>
+<div id="view-dashboard" class="space-y-6 tab-view">
+  <!-- Welcome Banner -->
+  <div class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-amber-500/10 to-transparent rounded-full -mr-32 -mt-32"></div>
+    <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
-        <span class="text-3xl font-extrabold text-white" id="stat-active-tickets">2</span>
-        <span class="block text-[10px] text-slate-400 mt-1"
-          >1 pending assignment / diagnostics</span
+        <p class="text-[10px] font-bold text-amber-500 uppercase tracking-[0.2em] mb-1" id="dashboard-greeting">Good Morning</p>
+        <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight">
+          Command Center
+        </h1>
+        <p class="text-sm text-slate-400 mt-1">Real-time overview of operations, dispatches, and revenue.</p>
+      </div>
+      <div class="flex gap-3">
+        <button
+          onclick="switchTab('tickets')"
+          class="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-sm px-6 py-3 rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-95 uppercase tracking-wider flex items-center gap-2"
         >
-      </div>
-    </div>
-    <!-- Widget 2: Total Revenue -->
-    <div
-      class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden"
-    >
-      <div class="flex justify-between items-start">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
-          >Total Revenue</span
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+          New Ticket
+        </button>
+        <button
+          onclick="refreshDashboardData()"
+          class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 font-bold text-sm px-4 py-3 rounded-xl transition-all flex items-center gap-2"
         >
-        <span class="text-slate-500 text-sm">💵</span>
-      </div>
-      <div>
-        <span class="text-3xl font-extrabold text-white" id="stat-total-revenue">$1,835.00</span>
-        <span class="block text-[10px] text-amber-500 mt-1 font-mono">9,315,000 MMK</span>
-      </div>
-    </div>
-    <!-- Widget 3: Technicians On Site -->
-    <div
-      class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden"
-    >
-      <div class="flex justify-between items-start">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
-          >Technicians On Site</span
-        >
-        <span class="text-slate-500 text-sm">👷</span>
-      </div>
-      <div>
-        <span class="text-3xl font-extrabold text-white" id="stat-techs-onsite">1</span>
-        <span class="block text-[10px] text-slate-400 mt-1">Out of 4 total engineers</span>
-      </div>
-    </div>
-    <!-- Widget 4: Upcoming AMC Checks -->
-    <div
-      class="glass-panel p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden"
-    >
-      <div class="flex justify-between items-start">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
-          >Upcoming AMC Checks</span
-        >
-        <span class="text-slate-500 text-sm">🤝</span>
-      </div>
-      <div>
-        <span class="text-3xl font-extrabold text-white" id="stat-amc-checks">1</span>
-        <span class="block text-[10px] text-slate-400 mt-1">Due in the next 30 days</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          Refresh
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Active Tickets Table -->
-  <div class="glass-panel rounded-2xl p-6 space-y-4">
-    <div class="flex justify-between items-center">
-      <h2 class="text-sm font-bold text-white uppercase tracking-wider">Recent Active Tickets</h2>
-      <button
-        onclick="switchTab('tickets')"
-        class="bg-white/5 border border-white/10 hover:bg-white/10 text-[9px] font-bold uppercase tracking-wider text-slate-300 px-3 py-1.5 rounded-lg"
-      >
-        View All Tickets
-      </button>
+  <!-- Stats Row -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Active Tickets -->
+    <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+      <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+          </div>
+          <span class="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">ACTIVE</span>
+        </div>
+        <div class="text-3xl font-black text-white" id="stat-active-tickets">0</div>
+        <div class="text-[10px] text-slate-400 mt-1">Open service tickets</div>
+      </div>
     </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-xs text-left">
-        <thead>
-          <tr
-            class="text-slate-500 border-b border-white/5 pb-2 uppercase tracking-widest text-[9px]"
-          >
-            <th class="pb-3">Ticket ID</th>
-            <th class="pb-3">Customer</th>
-            <th class="pb-3">Job Category</th>
-            <th class="pb-3">Assigned Tech</th>
-            <th class="pb-3">Status</th>
-            <th class="pb-3">Service Fee</th>
-            <th class="pb-3">Created Date</th>
-          </tr>
-        </thead>
-        <tbody id="dashboard-tickets-body" class="divide-y divide-white/5">
-          <!-- Loaded dynamically -->
-        </tbody>
-      </table>
+
+    <!-- Revenue -->
+    <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+      <div class="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </div>
+          <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">USD</span>
+        </div>
+        <div class="text-3xl font-black text-white" id="stat-total-revenue">$0</div>
+        <div class="text-[10px] text-amber-500 mt-1 font-mono" id="stat-total-mmk">0 MMK</div>
+      </div>
+    </div>
+
+    <!-- Technicians -->
+    <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+      <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </div>
+          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">FIELD</span>
+        </div>
+        <div class="text-3xl font-black text-white" id="stat-techs-onsite">0</div>
+        <div class="text-[10px] text-slate-400 mt-1">of <span id="stat-techs-total" class="font-bold text-white">0</span> engineers active</div>
+      </div>
+    </div>
+
+    <!-- AMC -->
+    <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+      <div class="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="relative">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center">
+            <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          </div>
+          <span class="text-[10px] font-bold text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full">30D</span>
+        </div>
+        <div class="text-3xl font-black text-white" id="stat-amc-checks">0</div>
+        <div class="text-[10px] text-slate-400 mt-1">AMC checks due soon</div>
+      </div>
     </div>
   </div>
 
-  <!-- Calendar Scheduler Full-Width Row -->
-  <div class="glass-panel p-6 rounded-2xl space-y-4">
-    <h2 class="text-sm font-bold text-white uppercase tracking-wider">
-      📅 Monthly Dispatch Calendar Schedule
-    </h2>
-    <div
-      id="calendar"
-      class="p-2 bg-black/40 rounded-xl border border-white/5 text-xs text-slate-300"
-    ></div>
+  <!-- Main Content Grid -->
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Recent Tickets (2 cols) -->
+    <div class="lg:col-span-2 glass-panel rounded-2xl overflow-hidden">
+      <div class="p-5 pb-0">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">Recent Dispatches</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Latest active service orders</p>
+          </div>
+          <button onclick="switchTab('tickets')" class="text-[10px] font-bold text-amber-500 hover:text-amber-400 px-3 py-1.5 rounded-lg hover:bg-amber-500/10 transition-all">
+            View All →
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto px-5 pb-5">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
+              <th class="pb-2 pt-1 text-left font-semibold">ID</th>
+              <th class="pb-2 pt-1 text-left font-semibold">Client</th>
+              <th class="pb-2 pt-1 text-left font-semibold">Service</th>
+              <th class="pb-2 pt-1 text-left font-semibold">Status</th>
+              <th class="pb-2 pt-1 text-left font-semibold">Date</th>
+            </tr>
+          </thead>
+          <tbody id="dashboard-tickets-body" class="divide-y divide-white/5">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quick Actions & Status (1 col) -->
+    <div class="space-y-6">
+      <!-- Quick Actions -->
+      <div class="glass-panel rounded-2xl p-5">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">Quick Actions</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="switchTab('tickets')" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+            <span class="text-[10px] font-bold text-blue-400 uppercase">New Ticket</span>
+          </button>
+          <button onclick="switchTab('amc')" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 1H4a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-5a2 2 0 00-2-2h-3a4 4 0 01-4-4z" /></svg>
+            <span class="text-[10px] font-bold text-emerald-400 uppercase">Add Client</span>
+          </button>
+          <button onclick="switchTab('inventory')" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all">
+            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+            <span class="text-[10px] font-bold text-amber-400 uppercase">Inventory</span>
+          </button>
+          <button onclick="switchTab('currency')" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-violet-500/10 border border-violet-500/20 hover:bg-violet-500/20 transition-all">
+            <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 10v1" /></svg>
+            <span class="text-[10px] font-bold text-violet-400 uppercase">Cash Safe</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- System Status -->
+      <div class="glass-panel rounded-2xl p-5">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">System Status</h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+              <span class="text-xs text-slate-300">API Gateway</span>
+            </div>
+            <span class="text-[10px] font-bold text-emerald-400">Operational</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+              <span class="text-xs text-slate-300">Database</span>
+            </div>
+            <span class="text-[10px] font-bold text-emerald-400">Connected</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+              <span class="text-xs text-slate-300">Map Services</span>
+            </div>
+            <span class="text-[10px] font-bold text-emerald-400">Active</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+              <span class="text-xs text-slate-300">AI Copilot</span>
+            </div>
+            <span class="text-[10px] font-bold text-amber-400">Standby</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Analytics Charts Row -->
-  <div class="grid md:grid-cols-2 gap-8">
-    <div class="glass-panel p-6 rounded-2xl space-y-4">
-      <h2 class="text-sm font-bold text-white uppercase tracking-wider">
-        Job Allocation by Status
-      </h2>
-      <canvas id="chart-status" class="max-h-64"></canvas>
+  <!-- Calendar & Charts Row -->
+  <div class="grid lg:grid-cols-2 gap-6">
+    <!-- Calendar -->
+    <div class="glass-panel rounded-2xl overflow-hidden">
+      <div class="p-5 pb-0">
+        <h2 class="text-sm font-bold text-white uppercase tracking-wider">Dispatch Calendar</h2>
+        <p class="text-[10px] text-slate-500 mt-0.5">Scheduled field operations</p>
+      </div>
+      <div class="p-5">
+        <div id="calendar" class="rounded-xl text-xs text-slate-300"></div>
+      </div>
     </div>
-    <div class="glass-panel p-6 rounded-2xl space-y-4">
-      <h2 class="text-sm font-bold text-white uppercase tracking-wider">System Category Metrics</h2>
-      <canvas id="chart-category" class="max-h-64"></canvas>
+
+    <!-- Charts -->
+    <div class="space-y-6">
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <div class="p-5 pb-0">
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider">Job Status Distribution</h2>
+          <p class="text-[10px] text-slate-500 mt-0.5">Current ticket state breakdown</p>
+        </div>
+        <div class="p-5">
+          <canvas id="chart-status" class="max-h-48"></canvas>
+        </div>
+      </div>
+      <div class="glass-panel rounded-2xl overflow-hidden">
+        <div class="p-5 pb-0">
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider">Service Categories</h2>
+          <p class="text-[10px] text-slate-500 mt-0.5">Workload by service type</p>
+        </div>
+        <div class="p-5">
+          <canvas id="chart-category" class="max-h-48"></canvas>
+        </div>
+      </div>
     </div>
   </div>
 </div>

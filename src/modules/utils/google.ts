@@ -3,18 +3,20 @@
  */
 
 export async function getGoogleAccessToken(env) {
-  // Use OAuth refresh token (Option B - User Consent)
   const clientId = env.GOOGLE_CLIENT_ID;
   const clientSecret = env.GOOGLE_CLIENT_SECRET;
   const refreshToken = env.GOOGLE_REFRESH_TOKEN;
 
-  if (
-    !clientId ||
-    !clientSecret ||
-    !refreshToken ||
-    clientSecret.includes('PASTE_YOUR_') ||
-    refreshToken.includes('PASTE_YOUR_')
-  ) {
+  if (!clientId || !clientSecret || !refreshToken) {
+    console.error('Google OAuth missing credentials:', {
+      clientId: !!clientId,
+      clientSecret: !!clientSecret,
+      refreshToken: !!refreshToken,
+    });
+    return null;
+  }
+  if (clientSecret.includes('PASTE_YOUR_') || refreshToken.includes('PASTE_YOUR_')) {
+    console.error('Google OAuth credentials are placeholder values');
     return null;
   }
 
@@ -29,8 +31,12 @@ export async function getGoogleAccessToken(env) {
         grant_type: 'refresh_token',
       }),
     });
-    const data = (await res.json() as any);
-    return data.access_token || null;
+    const data = (await res.json()) as any;
+    if (!data.access_token) {
+      console.error('Google OAuth token response error:', data);
+      return null;
+    }
+    return data.access_token;
   } catch (e) {
     console.error('Failed to get Google access token:', e.message);
     return null;
@@ -47,7 +53,11 @@ export async function getOrCreateDriveFolder(token: any, folderName: any, parent
     `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`,
     { headers: { Authorization: `Bearer ${token}` } }
   );
-  const searchData = (await searchRes.json() as any);
+  const searchData = (await searchRes.json()) as any;
+  if (searchData.error) {
+    console.error(`Drive folder search error for "${folderName}":`, searchData.error);
+    return null;
+  }
   if (searchData.files && searchData.files.length > 0) {
     return searchData.files[0].id;
   }
@@ -65,7 +75,11 @@ export async function getOrCreateDriveFolder(token: any, folderName: any, parent
       parents: parentFolderId ? [parentFolderId] : [],
     }),
   });
-  const createData = (await createRes.json() as any);
+  const createData = (await createRes.json()) as any;
+  if (createData.error) {
+    console.error(`Drive folder create error for "${folderName}":`, createData.error);
+    return null;
+  }
   return createData.id || null;
 }
 
@@ -106,31 +120,44 @@ export async function uploadFileToGoogleDrive(env, fileBlob, filename, clientNam
       ].join(''),
     }
   );
-  const uploadData = (await uploadRes.json() as any);
+  const uploadData = (await uploadRes.json()) as any;
+  if (uploadData.error) {
+    console.error('uploadFileToGoogleDrive: Upload failed:', uploadData.error);
+    return null;
+  }
   return uploadData.id || null;
 }
 
 export async function uploadBackupToGoogleDrive(env, backupJsonString: string, filename: string) {
   const token = await getGoogleAccessToken(env);
-  if (!token) return null;
+  if (!token) {
+    console.error('uploadBackupToGoogleDrive: No access token');
+    return null;
+  }
 
   const mainFolderId = await getOrCreateDriveFolder(token, 'Awesome Myanmar - Service Records');
-  if (!mainFolderId) return null;
+  if (!mainFolderId) {
+    console.error('uploadBackupToGoogleDrive: Failed to get/create main folder');
+    return null;
+  }
 
   const backupsFolderId = await getOrCreateDriveFolder(token, 'Database Backups', mainFolderId);
-  if (!backupsFolderId) return null;
+  if (!backupsFolderId) {
+    console.error('uploadBackupToGoogleDrive: Failed to get/create backups folder');
+    return null;
+  }
 
   const metadata = JSON.stringify({
     name: filename,
     parents: [backupsFolderId],
-    mimeType: 'application/json'
+    mimeType: 'application/json',
   });
 
   const boundary = 'boundary_backup_123';
   const delimiter = `\r\n--${boundary}\r\n`;
   const closeDelimiter = `\r\n--${boundary}--`;
 
-  const multipartRequestBody = 
+  const multipartRequestBody =
     delimiter +
     'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
     metadata +
@@ -151,6 +178,10 @@ export async function uploadBackupToGoogleDrive(env, backupJsonString: string, f
     }
   );
 
-  const uploadData = (await uploadRes.json() as any);
+  const uploadData = (await uploadRes.json()) as any;
+  if (uploadData.error) {
+    console.error('uploadBackupToGoogleDrive: Upload failed:', uploadData.error);
+    return null;
+  }
   return uploadData.id || null;
 }

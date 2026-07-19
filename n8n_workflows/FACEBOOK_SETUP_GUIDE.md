@@ -7,6 +7,7 @@ Step-by-step guide with exact clicks for setting up Facebook integration with n8
 ## Overview
 
 You'll create:
+
 1. A Facebook App (the "container" for your integrations)
 2. A Facebook Page (your business page — you may already have one)
 3. Messenger integration (for WF11 — client chat)
@@ -83,6 +84,7 @@ If you already have a Facebook Page for Awesome Myanmar, skip to Part 3.
 ### Step 2.2 — Complete Your Page
 
 Add these to make it look professional:
+
 1. **Profile Photo**: your logo (`logo.png`)
 2. **Cover Photo**: a project photo or branded banner
 3. **Contact Info**: phone, email, website
@@ -122,11 +124,13 @@ Add these to make it look professional:
 ### Step 3.3 — Verify Your Token Works
 
 Test in terminal:
+
 ```bash
 curl "https://graph.facebook.com/v18.0/me?access_token=YOUR_TOKEN_HERE"
 ```
 
 Should return:
+
 ```json
 {
   "name": "Awesome Myanmar CCTV & Infrastructure",
@@ -159,7 +163,7 @@ Example: `KosaiFBVerify2024!Secure`
      - This must be HTTPS and publicly accessible
      - If using Cloudflare Tunnel: `https://abc-xyz.trycloudflare.com/webhook/kosai/facebook/messenger`
      - If using DDNS: `http://kosai.synology.me:5678/webhook/kosai/facebook/messenger`
-   
+
    - **Verify Token**: `KosaiFBVerify2024!Secure`
      - Must match exactly what you set in n8n environment
 
@@ -169,13 +173,13 @@ Example: `KosaiFBVerify2024!Secure`
 
 After verification, you'll see a list of events to subscribe to:
 
-| Event | Check | Purpose |
-|---|---|---|
-| `messages` | YES | Receive messages from clients |
-| `messaging_postbacks` | YES | Handle "Get Started" button |
-| `messaging_optins` | Optional | Track opt-ins |
-| `message_deliveries` | Optional | Track delivery status |
-| `message_reads` | Optional | Track read receipts |
+| Event                 | Check    | Purpose                       |
+| --------------------- | -------- | ----------------------------- |
+| `messages`            | YES      | Receive messages from clients |
+| `messaging_postbacks` | YES      | Handle "Get Started" button   |
+| `messaging_optins`    | Optional | Track opt-ins                 |
+| `message_deliveries`  | Optional | Track delivery status         |
+| `message_reads`       | Optional | Track read receipts           |
 
 1. Check **messages** and **messaging_postbacks**
 2. Click **Save**
@@ -199,11 +203,13 @@ FB_VERIFY_TOKEN=KosaiFBVerify2024!Secure
 In n8n, the webhook URL must match what you gave Facebook.
 
 For WF11 (Messenger), the webhook path is:
+
 ```
 /webhook/kosai/facebook/messenger
 ```
 
 Full URL examples:
+
 - Local: `http://192.168.1.100:5678/webhook/kosai/facebook/messenger`
 - Cloudflare Tunnel: `https://abc-xyz.trycloudflare.com/webhook/kosai/facebook/messenger`
 - DDNS: `http://kosai.synology.me:5678/webhook/kosai/facebook/messenger`
@@ -240,16 +246,18 @@ Full URL examples:
 ### Step 6.3 — Check Facebook for Auto-Reply
 
 Go back to your Facebook Page messenger:
+
 - You should receive an auto-reply like:
   ```
-  Hello! Welcome to Awesome Myanmar. We provide CCTV, 
-  Networking, WiFi, and NAS solutions. How can we help 
+  Hello! Welcome to Awesome Myanmar. We provide CCTV,
+  Networking, WiFi, and NAS solutions. How can we help
   you today?
   ```
 
 ### Step 6.4 — Check Telegram for Agent Alert
 
 Open Telegram:
+
 - You should receive a notification about the Facebook message
 
 ---
@@ -372,6 +380,7 @@ Your app works in Development Mode for testing. For production (public users), y
 ### Step 9.3 — While Waiting for Review
 
 Your app still works for:
+
 - You and your team (as admins/moderators of the page)
 - People who message your page for the first time (24-hour window)
 
@@ -380,32 +389,38 @@ Your app still works for:
 ## Troubleshooting
 
 ### "Invalid OAuth Redirect URI" error
+
 - Go to **Facebook Login** → **Settings**
 - Add your n8n URL to **Valid OAuth Redirect URIs**
 
 ### Webhook verification fails
+
 - Ensure HTTPS (Facebook requires it)
 - Verify token matches exactly in both places
 - Check n8n is publicly accessible
 - Check n8n logs for errors
 
 ### Messages not sending
+
 1. Check token has `pages_messaging` permission
 2. Verify Page ID is correct
 3. Check token hasn't expired (tokens expire after 60 days)
 4. Test with Graph API Explorer
 
 ### Lead Ads not triggering
+
 1. Verify `leads` event is subscribed
 2. Check the Lead Ad form is published
 3. Test with the form preview feature
 
 ### Posts not appearing
+
 1. Check token has `pages_manage_posts` permission
 2. Verify Page ID is correct
 3. Check if your app is in Live mode (required for public posts)
 
 ### Token expired
+
 1. Go to Graph API Explorer
 2. Generate a new token
 3. Update `FB_PAGE_ACCESS_TOKEN` in n8n
@@ -443,10 +458,10 @@ FB_VERIFY_TOKEN=KosaiFBVerify2024!Secure
 
 ## Webhook URLs
 
-| Purpose | URL Path |
-|---|---|
+| Purpose   | URL Path                            |
+| --------- | ----------------------------------- |
 | Messenger | `/webhook/kosai/facebook/messenger` |
-| Lead Ads | `/webhook/kosai/facebook/leads` |
-| Job Posts | `/webhook/kosai/facebook/job-post` |
+| Lead Ads  | `/webhook/kosai/facebook/leads`     |
+| Job Posts | `/webhook/kosai/facebook/job-post`  |
 
 Full URL: `https://your-public-url` + path

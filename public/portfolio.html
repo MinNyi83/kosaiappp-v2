@@ -10,27 +10,153 @@
       rel="stylesheet"
     />
     <style>
+      /* Theme Variables */
+      :root, [data-theme="dark"] {
+        --bg-body: radial-gradient(ellipse at top right, rgba(245, 158, 11, 0.06), transparent 50%),
+          radial-gradient(ellipse at bottom left, rgba(99, 102, 241, 0.06), transparent 45%), #09090b;
+        --bg-surface: #0c0c10;
+        --bg-card: linear-gradient(145deg, rgba(20, 20, 28, 0.75) 0%, rgba(12, 12, 18, 0.85) 100%);
+        --bg-input: rgba(0, 0, 0, 0.45);
+        --border-subtle: rgba(255, 255, 255, 0.06);
+        --border-medium: rgba(255, 255, 255, 0.1);
+        --border-strong: rgba(255, 255, 255, 0.15);
+        --text-primary: #ffffff;
+        --text-secondary: #e2e8f0;
+        --text-muted: #94a3b8;
+        --text-dim: #64748b;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+      [data-theme="light"] {
+        --bg-body: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+        --bg-surface: #ffffff;
+        --bg-card: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+        --bg-input: rgba(241, 245, 249, 0.9);
+        --border-subtle: rgba(0, 0, 0, 0.06);
+        --border-medium: rgba(0, 0, 0, 0.1);
+        --border-strong: rgba(0, 0, 0, 0.15);
+        --text-primary: #0f172a;
+        --text-secondary: #1e293b;
+        --text-muted: #475569;
+        --text-dim: #94a3b8;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+      /* Light mode overrides for hardcoded Tailwind classes */
+      [data-theme="light"] .text-white { color: var(--text-primary) !important; }
+      [data-theme="light"] .text-slate-200 { color: var(--text-secondary) !important; }
+      [data-theme="light"] .text-slate-300 { color: var(--text-secondary) !important; }
+      [data-theme="light"] .text-slate-400 { color: var(--text-muted) !important; }
+      [data-theme="light"] .text-slate-500 { color: var(--text-dim) !important; }
+      [data-theme="light"] .hover\:text-white:hover { color: var(--text-primary) !important; }
+      [data-theme="light"] .bg-black\/30 { background: rgba(255, 255, 255, 0.8) !important; }
+      [data-theme="light"] .bg-black\/40 { background: var(--bg-input) !important; }
+      [data-theme="light"] .bg-black\/50 { background: rgba(241, 245, 249, 0.9) !important; }
+      [data-theme="light"] .bg-black\/90 { background: rgba(0, 0, 0, 0.4) !important; }
+      [data-theme="light"] .bg-white\/5 { background: rgba(0, 0, 0, 0.03) !important; }
+      [data-theme="light"] .border-white\/5 { border-color: var(--border-subtle) !important; }
+      [data-theme="light"] .border-white\/10 { border-color: var(--border-medium) !important; }
+      [data-theme="light"] header { background: rgba(255, 255, 255, 0.85) !important; border-color: var(--border-subtle) !important; backdrop-filter: blur(20px) !important; }
+      [data-theme="light"] footer { background: rgba(248, 250, 252, 0.9) !important; border-color: var(--border-subtle) !important; }
+      [data-theme="light"] #mobile-menu { background: rgba(255, 255, 255, 0.98) !important; border-color: var(--border-subtle) !important; }
+      [data-theme="light"] .modal { background: rgba(0, 0, 0, 0.4) !important; }
+
       * {
+        scroll-behavior: smooth;
+      }
+
+      html {
+        scroll-padding-top: 80px;
         scroll-behavior: smooth;
       }
 
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        background:
-          radial-gradient(circle at top right, rgba(245, 158, 11, 0.05), transparent 45%),
-          radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 40%), #09090b;
+        background: var(--bg-body);
+        background-attachment: fixed;
+        color: var(--text-secondary);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.3); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.5); }
+
       .glass-panel {
-        background: rgba(18, 18, 24, 0.7);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border-subtle);
+        box-shadow: var(--shadow-md);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .glass-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.3), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
       }
 
       .glass-panel:hover {
-        border-color: rgba(255, 255, 255, 0.1);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border-color: rgba(245, 158, 11, 0.25);
+        box-shadow: var(--shadow-lg), 0 0 30px rgba(245, 158, 11, 0.1);
+        transform: translateY(-4px) scale(1.01);
+      }
+
+      .glass-panel:hover::before {
+        opacity: 1;
+      }
+
+      /* Theme-aware inputs */
+      input[type='text'], input[type='password'], input[type='number'], select, textarea {
+        background: var(--bg-input) !important;
+        border: 1px solid var(--border-medium) !important;
+        color: var(--text-primary) !important;
+      }
+      input::placeholder, textarea::placeholder {
+        color: var(--text-dim) !important;
+      }
+
+      /* Scroll Reveal Animations */
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .reveal-delay-1 { transition-delay: 0.1s; }
+      .reveal-delay-2 { transition-delay: 0.2s; }
+      .reveal-delay-3 { transition-delay: 0.3s; }
+      .reveal-delay-4 { transition-delay: 0.4s; }
+      .reveal-title {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .reveal-title.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Smooth theme transition */
+      body, .glass-panel, header, footer, nav, main, section, .portfolio-card, .filter-btn, .modal {
+        transition: background-color 0.4s ease, background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
       }
 
       .portfolio-card {
@@ -202,6 +328,11 @@
           <a href="/portfolio.html" class="text-amber-500">Portfolio</a>
           <a href="/portal.html" class="text-slate-400 hover:text-white transition">Portal</a>
           <a href="/contact.html" class="text-slate-400 hover:text-white transition">Contact</a>
+          <button id="theme-toggle" onclick="toggleTheme()" class="flex items-center gap-2 px-3 py-2 rounded-xl transition-all bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+            <svg id="theme-icon-dark" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            <svg id="theme-icon-light" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <span class="text-[10px] font-bold uppercase tracking-wider">Theme</span>
+          </button>
           <a
             href="/admin.html"
             class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-1.5 rounded-lg transition"
@@ -210,32 +341,30 @@
         </nav>
         <button
           id="hamburger-btn"
-          class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5"
+          class="md:hidden flex flex-col justify-center items-center w-11 h-11 gap-1.5 rounded-xl hover:bg-white/10 transition-all"
           aria-label="Toggle menu"
         >
-          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+          <span class="hamburger-line w-5 h-0.5 bg-current transition-all duration-300 rounded-full"></span>
+          <span class="hamburger-line w-5 h-0.5 bg-current transition-all duration-300 rounded-full"></span>
+          <span class="hamburger-line w-5 h-0.5 bg-current transition-all duration-300 rounded-full"></span>
         </button>
       </div>
       <div
         id="mobile-menu"
-        class="md:hidden hidden border-t border-white/5 bg-black/50 backdrop-blur-md"
+        class="md:hidden hidden border-t border-white/10 bg-white/95 dark:bg-black/95 backdrop-blur-xl"
       >
         <nav
-          class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 text-xs font-bold uppercase tracking-wider"
+          class="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-1"
         >
-          <a href="/" class="text-slate-400 hover:text-white transition py-2">Home</a>
-          <a href="/portfolio.html" class="text-amber-500 py-2">Portfolio</a>
-          <a href="/portal.html" class="text-slate-400 hover:text-white transition py-2">Portal</a>
-          <a href="/contact.html" class="text-slate-400 hover:text-white transition py-2"
-            >Contact</a
-          >
+          <a href="/" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Home</a>
+          <a href="/portfolio.html" class="text-amber-600 bg-amber-500/10 py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Portfolio</a>
+          <a href="/portal.html" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Portal</a>
+          <a href="/contact.html" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Contact</a>
+          <div class="border-t border-slate-200 my-2"></div>
           <a
             href="/admin.html"
-            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-2 rounded-lg transition text-center mt-2"
-            >Staff Console</a
-          >
+            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-600 px-4 py-3 rounded-xl transition-all text-center text-sm font-bold uppercase tracking-wider mt-1"
+          >Staff Console</a>
         </nav>
       </div>
     </header>
@@ -392,15 +521,30 @@
     </div>
 
     <!-- Footer -->
-    <footer class="border-t border-white/5 bg-black/50 py-8 mt-auto">
-      <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 space-y-4">
-        <div class="flex items-center justify-center gap-2">
-          <span class="text-amber-500">⚙️</span>
-          <span class="font-bold text-white tracking-wider uppercase">Awesome Myanmar</span>
+    <footer class="border-t border-white/10 bg-gradient-to-b from-transparent to-black/20 py-12 md:py-8 mt-auto">
+      <div class="max-w-6xl mx-auto px-6 md:px-4 text-center space-y-6">
+        <div class="flex items-center justify-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+            <span class="text-amber-500 text-lg">⚙️</span>
+          </div>
+          <span class="font-extrabold text-white tracking-wider uppercase text-sm">Awesome Myanmar</span>
         </div>
-        <p>
-          &copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.
-        </p>
+        <div class="flex flex-wrap items-center justify-center gap-4 text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
+          <a href="/" class="hover:text-amber-400 transition-colors">Home</a>
+          <span class="text-slate-600">·</span>
+          <a href="/portfolio.html" class="hover:text-amber-400 transition-colors">Portfolio</a>
+          <span class="text-slate-600">·</span>
+          <a href="/portal.html" class="hover:text-amber-400 transition-colors">Portal</a>
+          <span class="text-slate-600">·</span>
+          <a href="/contact.html" class="hover:text-amber-400 transition-colors">Contact</a>
+          <span class="text-slate-600">·</span>
+          <a href="/admin.html" class="hover:text-amber-400 transition-colors">Admin</a>
+        </div>
+        <div class="border-t border-white/5 pt-6">
+          <p class="text-[11px] text-slate-500">
+            &copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
 
@@ -703,6 +847,50 @@
 
       // Load on start
       loadProjects();
+
+      // Scroll Reveal Animation
+      function initScrollReveal() {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+              }
+            });
+          },
+          { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+        );
+
+        document.querySelectorAll('.glass-panel, section').forEach((el) => {
+          el.classList.add('reveal');
+          observer.observe(el);
+        });
+      }
+      initScrollReveal();
+    </script>
+
+    <!-- Theme Toggle Script -->
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('am-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcons(savedTheme);
+        function updateThemeIcons(theme) {
+          const darkIcon = document.getElementById('theme-icon-dark');
+          const lightIcon = document.getElementById('theme-icon-light');
+          if (darkIcon && lightIcon) {
+            if (theme === 'light') { darkIcon.classList.add('hidden'); lightIcon.classList.remove('hidden'); }
+            else { darkIcon.classList.remove('hidden'); lightIcon.classList.add('hidden'); }
+          }
+        }
+        window.toggleTheme = function() {
+          const current = document.documentElement.getAttribute('data-theme');
+          const next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('am-theme', next);
+          updateThemeIcons(next);
+        };
+      })();
     </script>
   </body>
 </html>

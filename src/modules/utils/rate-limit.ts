@@ -24,4 +24,3 @@ export async function checkRateLimit(request) {
   }
   return { blocked: false };
 }
-

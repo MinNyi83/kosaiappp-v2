@@ -24,9 +24,7 @@
         "url": "={{ $env.KOSAI_BASE_URL }}/api/attendance",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }]
         }
       },
       "onError": "continueRegularOutput"
@@ -42,9 +40,7 @@
         "url": "={{ $env.KOSAI_BASE_URL }}/api/technicians",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }]
         }
       },
       "onError": "continueRegularOutput"

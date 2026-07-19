@@ -49,7 +49,8 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { client_id, serial_number, item_id, issue_description, notes } = (await request.json() as any);
+      const { client_id, serial_number, item_id, issue_description, notes } =
+        (await request.json()) as any;
       if (!client_id || !issue_description) {
         return error('Missing required fields: client_id, issue_description', 400);
       }
@@ -91,7 +92,7 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
-      const { status, resolution_notes } = (await request.json() as any);
+      const { status, resolution_notes } = (await request.json()) as any;
       const validStatuses = [
         'pending',
         'approved',
@@ -167,4 +168,3 @@ function register(router, env) {
 }
 
 export { register };
-

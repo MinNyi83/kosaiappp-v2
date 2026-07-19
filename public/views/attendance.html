@@ -1,65 +1,128 @@
-<div id="view-attendance" class="space-y-6 tab-view">
+<div id="view-attendance" class="space-y-8 tab-view">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
     <div>
-      <h2 class="text-xl font-bold text-white">Attendance</h2>
-      <p class="text-slate-400 text-sm">Track technician clock-in/out records</p>
+      <h1 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Attendance</h1>
+      <p class="text-sm text-slate-400 mt-1">Track technician clock-in/out records</p>
     </div>
     <div class="flex gap-2">
-      <input type="date" id="att-date-from" class="bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" />
-      <input type="date" id="att-date-to" class="bg-zinc-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white" />
-      <button onclick="loadAttendance()" class="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-4 py-2 rounded-lg text-sm transition">Filter</button>
+      <input
+        type="date"
+        id="att-date-from"
+        class="bg-zinc-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-all"
+      />
+      <input
+        type="date"
+        id="att-date-to"
+        class="bg-zinc-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-all"
+      />
+      <button
+        onclick="loadAttendance()"
+        class="bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-5 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/20 uppercase tracking-wider"
+      >
+        Filter
+      </button>
     </div>
   </div>
 
   <!-- Stats Cards -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div class="bg-zinc-900 border border-white/5 rounded-xl p-4">
-      <p class="text-slate-400 text-xs font-semibold uppercase">Currently Clocked In</p>
-      <p id="att-online-count" class="text-2xl font-bold text-emerald-400 mt-1">0</p>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <!-- Currently Clocked In -->
+    <div class="glass-panel rounded-2xl overflow-hidden relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-l-2xl"></div>
+      <div class="flex justify-between items-start mb-4">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Currently Online</span>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+          <span class="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></span>
+        </div>
+      </div>
+      <div>
+        <span class="text-4xl font-black text-emerald-400" id="att-online-count">0</span>
+        <span class="block text-[10px] text-slate-400 mt-1">technicians active now</span>
+      </div>
     </div>
-    <div class="bg-zinc-900 border border-white/5 rounded-xl p-4">
-      <p class="text-slate-400 text-xs font-semibold uppercase">Total Records</p>
-      <p id="att-total-count" class="text-2xl font-bold text-white mt-1">0</p>
+
+    <!-- Total Records -->
+    <div class="glass-panel rounded-2xl overflow-hidden relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600 rounded-l-2xl"></div>
+      <div class="flex justify-between items-start mb-4">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Records</span>
+        <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+        </div>
+      </div>
+      <div>
+        <span class="text-4xl font-black text-white" id="att-total-count">0</span>
+        <span class="block text-[10px] text-slate-400 mt-1">total check-in records</span>
+      </div>
     </div>
-    <div class="bg-zinc-900 border border-white/5 rounded-xl p-4">
-      <p class="text-slate-400 text-xs font-semibold uppercase">Today's Check-ins</p>
-      <p id="att-today-count" class="text-2xl font-bold text-blue-400 mt-1">0</p>
+
+    <!-- Today's Check-ins -->
+    <div class="glass-panel rounded-2xl overflow-hidden relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400 to-amber-600 rounded-l-2xl"></div>
+      <div class="flex justify-between items-start mb-4">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Today's Check-ins</span>
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+      </div>
+      <div>
+        <span class="text-4xl font-black text-white" id="att-today-count">0</span>
+        <span class="block text-[10px] text-slate-400 mt-1">active today</span>
+      </div>
     </div>
-    <div class="bg-zinc-900 border border-white/5 rounded-xl p-4">
-      <p class="text-slate-400 text-xs font-semibold uppercase">Avg Duration</p>
-      <p id="att-avg-duration" class="text-2xl font-bold text-purple-400 mt-1">--</p>
+
+    <!-- Avg Duration -->
+    <div class="glass-panel rounded-2xl overflow-hidden relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-violet-400 to-violet-600 rounded-l-2xl"></div>
+      <div class="flex justify-between items-start mb-4">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avg Duration</span>
+        <div class="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+          <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        </div>
+      </div>
+      <div>
+        <span class="text-4xl font-black text-white" id="att-avg-duration">--</span>
+        <span class="block text-[10px] text-slate-400 mt-1">average shift length</span>
+      </div>
     </div>
   </div>
 
   <!-- Currently Online -->
-  <div class="bg-zinc-900 border border-white/5 rounded-xl p-5">
-    <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-      <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
-      Currently Online
-    </h3>
-    <div id="att-online-list" class="space-y-2">
-      <p class="text-slate-500 text-sm">No one is currently clocked in.</p>
+  <div class="glass-panel rounded-2xl overflow-hidden">
+    <div class="p-6 pb-0">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></span>
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider">Currently Online</h3>
+      </div>
+      <p class="text-[10px] text-slate-500 mt-1">Technicians currently clocked in</p>
+    </div>
+    <div id="att-online-list" class="p-4 space-y-2">
+      <div class="text-center py-8 text-slate-500 text-sm">No one is currently clocked in.</div>
     </div>
   </div>
 
   <!-- Attendance Table -->
-  <div class="bg-zinc-900 border border-white/5 rounded-xl overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
+  <div class="glass-panel rounded-2xl overflow-hidden">
+    <div class="p-6 pb-0">
+      <h3 class="text-sm font-bold text-white uppercase tracking-wider">Attendance Records</h3>
+      <p class="text-[10px] text-slate-500 mt-1">Complete check-in/out history</p>
+    </div>
+    <div class="overflow-x-auto p-4">
+      <table class="w-full text-xs text-left">
         <thead>
-          <tr class="border-b border-white/5 text-slate-400 text-xs uppercase">
-            <th class="text-left px-4 py-3 font-semibold">Technician</th>
-            <th class="text-left px-4 py-3 font-semibold">Date</th>
-            <th class="text-left px-4 py-3 font-semibold">Clock In</th>
-            <th class="text-left px-4 py-3 font-semibold">Clock Out</th>
-            <th class="text-left px-4 py-3 font-semibold">Duration</th>
-            <th class="text-left px-4 py-3 font-semibold">Status</th>
+          <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
+            <th class="pb-3 pt-2 font-semibold">Technician</th>
+            <th class="pb-3 pt-2 font-semibold">Date</th>
+            <th class="pb-3 pt-2 font-semibold">Clock In</th>
+            <th class="pb-3 pt-2 font-semibold">Clock Out</th>
+            <th class="pb-3 pt-2 font-semibold">Duration</th>
+            <th class="pb-3 pt-2 font-semibold">Status</th>
           </tr>
         </thead>
         <tbody id="att-table-body" class="divide-y divide-white/5">
           <tr>
-            <td colspan="6" class="px-4 py-8 text-center text-slate-500">Loading...</td>
+            <td colspan="6" class="py-12 text-center text-slate-500">Loading...</td>
           </tr>
         </tbody>
       </table>
@@ -84,11 +147,16 @@
       const data = await res.json();
       const records = data.data || data || [];
 
+      if (!Array.isArray(records)) {
+        console.error('Expected array, got:', records);
+        return;
+      }
+
       // Stats
       const today = new Date().toISOString().slice(0, 10);
-      const online = records.filter(r => r.date === today && r.clock_in && !r.clock_out);
-      const todayCheckins = records.filter(r => r.date === today);
-      const completed = records.filter(r => r.clock_in && r.clock_out);
+      const online = records.filter((r) => r.date === today && r.clock_in && !r.clock_out);
+      const todayCheckins = records.filter((r) => r.date === today);
+      const completed = records.filter((r) => r.clock_in && r.clock_out);
 
       document.getElementById('att-online-count').textContent = online.length;
       document.getElementById('att-total-count').textContent = records.length;
@@ -99,53 +167,84 @@
           return sum + (new Date(r.clock_out).getTime() - new Date(r.clock_in).getTime()) / 60000;
         }, 0);
         const avg = Math.round(totalMins / completed.length);
-        document.getElementById('att-avg-duration').textContent = `${Math.floor(avg / 60)}h ${avg % 60}m`;
+        document.getElementById('att-avg-duration').textContent =
+          `${Math.floor(avg / 60)}h ${avg % 60}m`;
       }
 
       // Online list
       const onlineList = document.getElementById('att-online-list');
       if (online.length === 0) {
-        onlineList.innerHTML = '<p class="text-slate-500 text-sm">No one is currently clocked in.</p>';
+        onlineList.innerHTML =
+          '<div class="text-center py-8 text-slate-500 text-sm">No one is currently clocked in.</div>';
       } else {
-        onlineList.innerHTML = online.map(r => {
-          const ci = new Date(r.clock_in).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-          return `<div class="flex items-center justify-between bg-emerald-500/10 rounded-lg px-3 py-2">
-            <span class="text-white text-sm font-medium">${r.technician_name || r.technician_id}</span>
-            <span class="text-emerald-400 text-xs">since ${ci}</span>
-          </div>`;
-        }).join('');
+        onlineList.innerHTML = online
+          .map((r) => {
+            const ci = new Date(r.clock_in).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+            return `<div class="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold">${(r.technician_name || r.technician_id || '?')[0]}</span>
+                <div>
+                  <span class="text-white text-sm font-semibold block">${r.technician_name || r.technician_id}</span>
+                  <span class="text-[10px] text-emerald-400 font-mono">since ${ci}</span>
+                </div>
+              </div>
+              <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+            </div>`;
+          })
+          .join('');
       }
 
       // Table
       const tbody = document.getElementById('att-table-body');
       if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No records found</td></tr>';
+        tbody.innerHTML =
+          '<tr><td colspan="6" class="py-12 text-center text-slate-500">No records found</td></tr>';
         return;
       }
 
-      tbody.innerHTML = records.map(r => {
-        const ci = r.clock_in ? new Date(r.clock_in).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '--';
-        const co = r.clock_out ? new Date(r.clock_out).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--';
-        let dur = '--';
-        if (r.clock_in && r.clock_out) {
-          const mins = Math.round((new Date(r.clock_out).getTime() - new Date(r.clock_in).getTime()) / 60000);
-          dur = `${Math.floor(mins / 60)}h ${mins % 60}m`;
-        }
-        const status = r.clock_in && !r.clock_out
-          ? '<span class="text-emerald-400 font-semibold">Online</span>'
-          : r.clock_in && r.clock_out
-            ? '<span class="text-slate-400">Completed</span>'
-            : '<span class="text-slate-500">--</span>';
+      tbody.innerHTML = records
+        .map((r) => {
+          const ci = r.clock_in
+            ? new Date(r.clock_in).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '--';
+          const co = r.clock_out
+            ? new Date(r.clock_out).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '--';
+          let dur = '--';
+          if (r.clock_in && r.clock_out) {
+            const mins = Math.round(
+              (new Date(r.clock_out).getTime() - new Date(r.clock_in).getTime()) / 60000
+            );
+            dur = `${Math.floor(mins / 60)}h ${mins % 60}m`;
+          }
+          const status =
+            r.clock_in && !r.clock_out
+              ? '<span class="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"><span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>Online</span>'
+              : r.clock_in && r.clock_out
+                ? '<span class="inline-flex items-center gap-1.5 bg-slate-500/10 text-slate-400 border border-slate-500/20 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase">Completed</span>'
+                : '<span class="text-slate-500">--</span>';
 
-        return `<tr class="hover:bg-white/5 transition">
-          <td class="px-4 py-3 text-white font-medium">${r.technician_name || r.technician_id}</td>
-          <td class="px-4 py-3 text-slate-300">${r.date}</td>
-          <td class="px-4 py-3 text-slate-300">${ci}</td>
-          <td class="px-4 py-3 text-slate-300">${co}</td>
-          <td class="px-4 py-3 text-slate-300">${dur}</td>
-          <td class="px-4 py-3">${status}</td>
+          return `<tr class="hover:bg-white/5 transition-all">
+          <td class="px-4 py-3.5 text-white font-semibold">${r.technician_name || r.technician_id}</td>
+          <td class="px-4 py-3.5 text-slate-300">${r.date}</td>
+          <td class="px-4 py-3.5 text-slate-300">${ci}</td>
+          <td class="px-4 py-3.5 text-slate-300">${co}</td>
+          <td class="px-4 py-3.5 text-slate-300 font-mono">${dur}</td>
+          <td class="px-4 py-3.5">${status}</td>
         </tr>`;
-      }).join('');
+        })
+        .join('');
     } catch (err) {
       console.error('Failed to load attendance:', err);
     }

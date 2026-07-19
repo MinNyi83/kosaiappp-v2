@@ -84,6 +84,7 @@ sudo chown -R 1000:1000 /volume1/docker/n8n
 ### Step 1.4 — Note Your Synology IP
 
 Find your NAS IP:
+
 - **Control Panel** → **Network** → **Network Interface**
 - Or check your router's device list
 - Example: `192.168.1.100`
@@ -105,7 +106,7 @@ services:
     container_name: kosai-n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"
+      - '5678:5678'
     environment:
       # ── n8n Config ────────────────────────────────────
       - N8N_HOST=0.0.0.0
@@ -150,6 +151,7 @@ networks:
 ```
 
 **Replace these values before deploying:**
+
 - `192.168.1.100` → your Synology IP
 - `KosaiN8n2024!` → your chosen password
 - `your-worker.workers.dev` → your Kosai API URL
@@ -160,12 +162,14 @@ networks:
 ### Step 2.2 — Deploy the Container
 
 **Option A: SSH (Fastest)**
+
 ```bash
 cd /volume1/docker/n8n
 sudo docker-compose up -d
 ```
 
 **Option B: Portainer (GUI)**
+
 1. Install Portainer from Package Center
 2. Open at `http://YOUR_IP:9000`
 3. Stacks → Add Stack
@@ -174,6 +178,7 @@ sudo docker-compose up -d
 6. Deploy
 
 **Option C: Container Manager (DSM 7.2+)**
+
 1. Open Container Manager
 2. Project → Create
 3. Name: `n8n`
@@ -214,6 +219,7 @@ You should see the n8n login page.
 5. Copy the token BotFather gives you
 
 Now in n8n:
+
 1. Go to **Credentials** → **Add Credential**
 2. Search **Telegram**
 3. Name: `Kosai Telegram Bot`
@@ -227,6 +233,7 @@ Now in n8n:
 3. Copy the user ID it returns (e.g., `5556922076`)
 
 Update n8n environment:
+
 1. In n8n, go to **Settings** → **Environment Variables**
 2. Set `TELEGRAM_CHAT_ID` to your ID
 3. Set `TELEGRAM_DEFAULT_CHAT_ID` to your ID
@@ -236,6 +243,7 @@ Update n8n environment:
 From your `.dev.vars` file, copy the `JWT_SECRET` value.
 
 Update n8n environment:
+
 1. Set `KOSAI_API_KEY` to your JWT secret
 2. Set `KOSAI_BASE_URL` to your Cloudflare Worker URL
 
@@ -246,6 +254,7 @@ Update n8n environment:
 ### Step 4.1 — Download Workflow Files
 
 All 13 JSON files are in `n8n_workflows/`:
+
 ```
 workflow_01_new_job_auto_assign.json
 workflow_02_inventory_low_stock_alert.json
@@ -265,6 +274,7 @@ workflow_13_facebook_page_job_post.json
 ### Step 4.2 — Import Each Workflow
 
 For each file:
+
 1. In n8n, click **Add Workflow** (top right)
 2. Click **⋮** (three dots) → **Import from File**
 3. Select the JSON file
@@ -273,6 +283,7 @@ For each file:
 ### Step 4.3 — Configure Telegram Nodes
 
 In every workflow that has Telegram nodes:
+
 1. Click on each Telegram node
 2. Under **Credential to connect with**, select `Kosai Telegram Bot`
 3. Repeat for all Telegram nodes in all workflows
@@ -288,11 +299,13 @@ This is the simplest to test:
 1. Open workflow `WF06 Multi-Channel Notification Hub`
 2. Click **Test Workflow**
 3. In another terminal, send a test POST:
+
 ```bash
 curl -X POST http://YOUR_IP:5678/webhook/kosai/notify \
   -H "Content-Type: application/json" \
   -d '{"type":"system_alert","message":"Test from deployment guide"}'
 ```
+
 4. Check your Telegram — you should receive a message
 
 ### Step 5.2 — Test WF02 (Low Stock Alert)
@@ -344,11 +357,13 @@ Once tested successfully, toggle each workflow to **Active** (top right toggle).
 ### Step 6.1 — Add N8N_WEBHOOK_URL to Cloudflare
 
 In your `.dev.vars`:
+
 ```
 N8N_WEBHOOK_URL=http://YOUR_SYNOLOGY_IP:5678
 ```
 
 If your NAS is not accessible from the internet, use one of these:
+
 - **Cloudflare Tunnel** (recommended)
 - **QuickConnect**
 - **Port forwarding** on your router
@@ -358,16 +373,18 @@ If your NAS is not accessible from the internet, use one of these:
 Edit your Cloudflare Worker to call n8n webhooks.
 
 **In `src/modules/routes/jobs.ts`**, after creating a job:
+
 ```typescript
 // Fire-and-forget webhook to n8n
 fetch(`${env.N8N_WEBHOOK_URL}/webhook/kosai/job-created`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ jobId: result.id })
+  body: JSON.stringify({ jobId: result.id }),
 }).catch(() => {});
 ```
 
 **In `src/modules/routes/jobs.ts`**, after status change:
+
 ```typescript
 fetch(`${env.N8N_WEBHOOK_URL}/webhook/kosai/job-status-change`, {
   method: 'POST',
@@ -376,26 +393,28 @@ fetch(`${env.N8N_WEBHOOK_URL}/webhook/kosai/job-status-change`, {
     jobId: params.id,
     oldStatus: previousStatus,
     newStatus: newStatus,
-    clientTelegramId: client?.telegram_id
-  })
+    clientTelegramId: client?.telegram_id,
+  }),
 }).catch(() => {});
 ```
 
 **In `src/modules/routes/clients.ts`**, after creating a client:
+
 ```typescript
 fetch(`${env.N8N_WEBHOOK_URL}/webhook/kosai/client-created`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ clientId: newClient.id })
+  body: JSON.stringify({ clientId: newClient.id }),
 }).catch(() => {});
 ```
 
 **In `src/modules/routes/expenses.ts`**, after submitting an expense:
+
 ```typescript
 fetch(`${env.N8N_WEBHOOK_URL}/webhook/kosai/expense-submitted`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ expenseId: expense.id })
+  body: JSON.stringify({ expenseId: expense.id }),
 }).catch(() => {});
 ```
 
@@ -434,6 +453,7 @@ wrangler deploy
 4. Copy the token
 
 Update n8n:
+
 ```
 FB_PAGE_ACCESS_TOKEN=paste_token_here
 ```
@@ -455,6 +475,7 @@ FB_PAGE_ACCESS_TOKEN=paste_token_here
 3. Copy **Page ID**
 
 Update n8n:
+
 ```
 FB_PAGE_ID=123456789012345
 ```
@@ -472,6 +493,7 @@ FB_PAGE_ID=123456789012345
 ## Phase 8: External Access (Webhooks)
 
 Your n8n must be reachable from the internet for:
+
 - Facebook webhooks
 - Cloudflare Worker callbacks
 
@@ -493,6 +515,7 @@ chmod +x /volume1/docker/cloudflared
 This gives you a public URL like: `https://abc-xyz.trycloudflare.com`
 
 Update your Cloudflare Worker:
+
 ```
 N8N_WEBHOOK_URL=https://abc-xyz.trycloudflare.com
 ```
@@ -520,6 +543,7 @@ N8N_WEBHOOK_URL=https://abc-xyz.trycloudflare.com
 Run this complete checklist:
 
 ### n8n
+
 - [ ] n8n accessible at `http://YOUR_IP:5678`
 - [ ] Can login with admin credentials
 - [ ] All 13 workflows imported
@@ -527,6 +551,7 @@ Run this complete checklist:
 - [ ] All Telegram nodes use `Kosai Telegram Bot` credential
 
 ### Workflows
+
 - [ ] WF01 — Webhook responds to job-created
 - [ ] WF02 — Cron triggers daily at 8AM
 - [ ] WF03 — Webhook responds to client-created
@@ -542,12 +567,14 @@ Run this complete checklist:
 - [ ] WF13 — Job completion posts to Facebook Page
 
 ### Kosai API
+
 - [ ] `N8N_WEBHOOK_URL` set in `.dev.vars`
 - [ ] Webhook calls added to jobs.ts, clients.ts, expenses.ts
 - [ ] API deployed with `wrangler deploy`
 - [ ] API can reach n8n (test with curl from Cloudflare logs)
 
 ### Facebook (if configured)
+
 - [ ] Facebook App created
 - [ ] Messenger product added
 - [ ] Webhook subscribed to messages
@@ -559,6 +586,7 @@ Run this complete checklist:
 ## Troubleshooting
 
 ### n8n won't start
+
 ```bash
 cd /volume1/docker/n8n
 sudo docker-compose logs n8n
@@ -568,21 +596,25 @@ sudo docker-compose up -d
 ```
 
 ### Telegram messages not sending
+
 1. Send `/start` to your bot in Telegram
 2. Verify token in n8n credentials
 3. Verify chat ID is correct
 
 ### Webhooks return 404
+
 1. Check workflow is **activated** (toggle on)
 2. Verify webhook URL matches exactly
 3. Check n8n is accessible from the internet
 
 ### Facebook webhook verification fails
+
 1. Ensure HTTPS (Facebook requires it)
 2. Verify verify token matches in both places
 3. Check n8n is publicly accessible
 
 ### Kosai API can't reach n8n
+
 1. Test from Cloudflare Worker logs
 2. Check `N8N_WEBHOOK_URL` is correct
 3. Ensure n8n is accessible from internet
@@ -591,15 +623,15 @@ sudo docker-compose up -d
 
 ## Quick Reference
 
-| Resource | URL/Location |
-|---|---|
-| n8n UI | `http://YOUR_SYNOLOGY_IP:5678` |
-| n8n Data | `/volume1/docker/n8n/data` |
-| docker-compose | `/volume1/docker/n8n/docker-compose.yml` |
-| n8n Logs | `sudo docker-compose logs -f n8n` |
-| Restart n8n | `sudo docker-compose restart` |
-| Stop n8n | `sudo docker-compose down` |
-| Update n8n | `sudo docker-compose pull && sudo docker-compose up -d` |
+| Resource       | URL/Location                                            |
+| -------------- | ------------------------------------------------------- |
+| n8n UI         | `http://YOUR_SYNOLOGY_IP:5678`                          |
+| n8n Data       | `/volume1/docker/n8n/data`                              |
+| docker-compose | `/volume1/docker/n8n/docker-compose.yml`                |
+| n8n Logs       | `sudo docker-compose logs -f n8n`                       |
+| Restart n8n    | `sudo docker-compose restart`                           |
+| Stop n8n       | `sudo docker-compose down`                              |
+| Update n8n     | `sudo docker-compose pull && sudo docker-compose up -d` |
 
 ---
 

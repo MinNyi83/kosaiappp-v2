@@ -207,57 +207,10 @@
 
       <!-- Navigation Menu Links -->
       <nav class="flex-1 p-4 space-y-6 overflow-y-auto">
-        <!-- ACCOUNTING & HR Section -->
+        <!-- OPERATIONS Section -->
         <div class="space-y-1.5">
           <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
-            Accounting & HR
-          </p>
-          <a
-            href="#"
-            onclick="
-              switchTab('currency');
-              closeSidebar();
-            "
-            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-          >
-            <span>💵</span> Currency & Rates
-          </a>
-          <a
-            href="#"
-            onclick="
-              switchTab('reports');
-              closeSidebar();
-            "
-            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-          >
-            <span>📄</span> Reports
-          </a>
-          <a
-            href="#"
-            onclick="
-              switchTab('distributors');
-              closeSidebar();
-            "
-            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-          >
-            <span>🏢</span> Distributors
-          </a>
-          <a
-            href="#"
-            onclick="
-              switchTab('system-settings');
-              closeSidebar();
-            "
-            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-          >
-            <span>⚙️</span> System Settings
-          </a>
-        </div>
-
-        <!-- MAINTENANCE OPS Section -->
-        <div class="space-y-1.5">
-          <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
-            Maintenance Ops
+            Operations
           </p>
           <a
             href="#"
@@ -268,7 +221,7 @@
             "
             class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-500 transition-all"
           >
-            <span>📊</span> Operations Dashboard
+            <span>📊</span> Dashboard
           </a>
           <a
             href="#"
@@ -290,6 +243,23 @@
           >
             <span>🤝</span> Maintenance (AMC)
           </a>
+        </div>
+
+        <!-- CLIENTS & PARTNERS Section -->
+        <div class="space-y-1.5">
+          <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
+            Clients & Partners
+          </p>
+          <a
+            href="#"
+            onclick="
+              switchTab('distributors');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>🏢</span> Distributors
+          </a>
           <a
             href="#"
             onclick="
@@ -300,16 +270,13 @@
           >
             <span>🛡️</span> Warranty & RMA
           </a>
-          <a
-            href="#"
-            onclick="
-              switchTab('system-settings');
-              closeSidebar();
-            "
-            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-          >
-            <span>👷</span> User Management
-          </a>
+        </div>
+
+        <!-- INVENTORY Section -->
+        <div class="space-y-1.5">
+          <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
+            Inventory
+          </p>
           <a
             href="#"
             onclick="
@@ -318,7 +285,34 @@
             "
             class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
           >
-            <span>📦</span> Inventory Items
+            <span>📦</span> Stock & Items
+          </a>
+        </div>
+
+        <!-- FINANCE Section -->
+        <div class="space-y-1.5">
+          <p class="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest px-3 mb-2">
+            Finance
+          </p>
+          <a
+            href="#"
+            onclick="
+              switchTab('currency');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>💵</span> Cash Ledger
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('reports');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>📄</span> Reports
           </a>
         </div>
 
@@ -335,7 +329,17 @@
             "
             class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
           >
-            <span>⚙️</span> Deployment / Mounts
+            <span>⚙️</span> Settings
+          </a>
+          <a
+            href="#"
+            onclick="
+              switchTab('system-settings');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-all"
+          >
+            <span>👷</span> User Management
           </a>
         </div>
       </nav>

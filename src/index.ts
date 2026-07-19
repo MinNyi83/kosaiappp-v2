@@ -75,6 +75,12 @@ export default {
       return new Response(null, { headers: getCorsHeaders(origin) });
     }
 
+    // ── Temporary: manual backup trigger for testing ─────────────────────
+    if (url.pathname === '/api/test-backup') {
+      await handleAutoBackup(env);
+      return new Response('Backup triggered — check Telegram', { status: 200 });
+    }
+
     // ── Build router and register all modules ───────────────────────────
     const router = new Router();
     for (const mod of routeModules) {
@@ -109,6 +115,7 @@ export default {
 };
 
 async function handleAutoBackup(env) {
+  const dateStr = new Date().toISOString().split('T')[0];
   try {
     const db = env.DB;
     const tables = [
@@ -122,7 +129,7 @@ async function handleAutoBackup(env) {
       'cash_transactions',
       'service_fees',
       'system_config',
-      'landing_page'
+      'landing_page',
     ];
 
     const backup: any = {};
@@ -139,20 +146,24 @@ async function handleAutoBackup(env) {
     backup._exported_by = 'system_cron';
 
     const backupJsonString = JSON.stringify(backup);
-    const dateStr = new Date().toISOString().split('T')[0];
     const filename = `backup_${dateStr}_autobackup.json`;
 
-    // 1. Upload to Google Drive
-    const driveFileId = await uploadBackupToGoogleDrive(env, backupJsonString, filename);
+    // 1. Upload to Google Drive (non-blocking — Telegram fires regardless)
+    let driveFileId: string | null = null;
+    try {
+      driveFileId = await uploadBackupToGoogleDrive(env, backupJsonString, filename);
+    } catch (driveErr) {
+      console.error('Auto-backup Google Drive upload failed:', driveErr);
+    }
 
     // 2. Notify Telegram
-    let logMessage = `📊 *Database Auto-Backup Report*\n\n` +
+    let logMessage =
+      `📊 *Database Auto-Backup Report*\n\n` +
       `📅 *Date:* ${dateStr}\n` +
       `📂 *Backup File:* \`${filename}\`\n`;
 
     if (driveFileId) {
-      logMessage += `✅ *Google Drive Upload:* Successful\n` +
-        `🔑 *File ID:* \`${driveFileId}\`\n`;
+      logMessage += `✅ *Google Drive Upload:* Successful\n` + `🔑 *File ID:* \`${driveFileId}\`\n`;
     } else {
       logMessage += `⚠️ *Google Drive Upload:* Failed (Token/Permissions Issue)\n`;
     }
@@ -169,7 +180,10 @@ async function handleAutoBackup(env) {
   } catch (err) {
     console.error('Auto-backup cron failed:', err);
     try {
-      await sendTelegramNotification(env, `🚨 *Database Auto-Backup Failed!*\n\n❌ *Error:* ${err.message}`);
+      await sendTelegramNotification(
+        env,
+        `🚨 *Database Auto-Backup Failed!*\n\n📅 *Date:* ${dateStr}\n❌ *Error:* ${err.message}`
+      );
     } catch (e) {
       console.error('Failed to notify Telegram about backup failure:', e);
     }
@@ -203,4 +217,3 @@ function wrapResponse(data, origin?: string) {
     },
   });
 }
-

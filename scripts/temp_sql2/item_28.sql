@@ -1,0 +1,1 @@
+INSERT OR IGNORE INTO inventory_stock (item_code, item_name, category, stock_qty, unit_price, unit_price_mmk, batch_code, buying_price, sub_category_id, brand_id, stocking_um) VALUES ('CAM20101027', 'DH-HAC-HDW1200EMP-A (Dahua 2MP HDCVI Dome Camera- Build In Mic)', 'Camera', 0, 0.0, 0.0, NULL, 0.0, 'Dome Camera ( Indoor)', 'DAHUA', 'PC');

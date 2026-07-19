@@ -11,7 +11,7 @@ function register(router, env) {
   // ── POST /api/public/contact ──────────────────────────────────────────
   router.post('/api/public/contact', async (request) => {
     try {
-      const { name, email, phone, message } = (await request.json() as any);
+      const { name, email, phone, message } = (await request.json()) as any;
       if (!name || !email || !message) {
         return error('Missing required fields: name, email, message', 400);
       }
@@ -52,7 +52,7 @@ function register(router, env) {
       // Fetch from external API (example: exchangerate-api.com)
       try {
         const resp = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
-        const data = (await resp.json() as any);
+        const data = (await resp.json()) as any;
         const rate = data.rates[target];
         if (rate) {
           // Cache it
@@ -148,4 +148,3 @@ function register(router, env) {
 }
 
 export { register };
-

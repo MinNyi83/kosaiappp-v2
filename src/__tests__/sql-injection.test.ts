@@ -8,11 +8,15 @@ describe('SQL Injection Protection', () => {
     });
 
     it('blocks INSERT as first word', () => {
-      expect(validateSql('INSERT INTO technicians VALUES (1)')).toBe('Only SELECT queries are allowed');
+      expect(validateSql('INSERT INTO technicians VALUES (1)')).toBe(
+        'Only SELECT queries are allowed'
+      );
     });
 
     it('blocks UPDATE as first word', () => {
-      expect(validateSql('UPDATE clients SET name = "hacked"')).toBe('Only SELECT queries are allowed');
+      expect(validateSql('UPDATE clients SET name = "hacked"')).toBe(
+        'Only SELECT queries are allowed'
+      );
     });
 
     it('blocks DELETE as first word', () => {
@@ -20,7 +24,9 @@ describe('SQL Injection Protection', () => {
     });
 
     it('blocks ALTER as first word', () => {
-      expect(validateSql('ALTER TABLE technicians ADD COLUMN hacked TEXT')).toBe('Only SELECT queries are allowed');
+      expect(validateSql('ALTER TABLE technicians ADD COLUMN hacked TEXT')).toBe(
+        'Only SELECT queries are allowed'
+      );
     });
 
     it('blocks CREATE as first word', () => {
@@ -42,40 +48,56 @@ describe('SQL Injection Protection', () => {
 
   describe('validateSql - Dangerous Keywords in SELECT', () => {
     it('blocks DROP inside SELECT', () => {
-      expect(validateSql("SELECT * FROM clients WHERE name = 'DROP TABLE x'")).toBe('Blocked keyword: DROP');
+      expect(validateSql("SELECT * FROM clients WHERE name = 'DROP TABLE x'")).toBe(
+        'Blocked keyword: DROP'
+      );
     });
 
     it('blocks INSERT inside SELECT', () => {
-      expect(validateSql("SELECT * FROM clients WHERE name = 'INSERT INTO x'")).toBe('Blocked keyword: INSERT');
+      expect(validateSql("SELECT * FROM clients WHERE name = 'INSERT INTO x'")).toBe(
+        'Blocked keyword: INSERT'
+      );
     });
 
     it('blocks UPDATE inside SELECT', () => {
-      expect(validateSql("SELECT * FROM clients WHERE name = 'UPDATE x'")).toBe('Blocked keyword: UPDATE');
+      expect(validateSql("SELECT * FROM clients WHERE name = 'UPDATE x'")).toBe(
+        'Blocked keyword: UPDATE'
+      );
     });
 
     it('blocks DELETE inside SELECT', () => {
-      expect(validateSql("SELECT * FROM clients WHERE name = 'DELETE FROM x'")).toBe('Blocked keyword: DELETE');
+      expect(validateSql("SELECT * FROM clients WHERE name = 'DELETE FROM x'")).toBe(
+        'Blocked keyword: DELETE'
+      );
     });
   });
 
   describe('validateSql - UNION Attacks', () => {
     it('blocks UNION SELECT', () => {
-      expect(validateSql('SELECT * FROM technicians UNION SELECT * FROM clients')).toBe('Blocked keyword: UNION');
+      expect(validateSql('SELECT * FROM technicians UNION SELECT * FROM clients')).toBe(
+        'Blocked keyword: UNION'
+      );
     });
 
     it('blocks UNION with string concat', () => {
-      expect(validateSql("SELECT id FROM technicians UNION SELECT password FROM users")).toBe('Blocked keyword: UNION');
+      expect(validateSql('SELECT id FROM technicians UNION SELECT password FROM users')).toBe(
+        'Blocked keyword: UNION'
+      );
     });
   });
 
   describe('validateSql - Multiple Statements', () => {
     it('blocks semicolons with DROP', () => {
       // DROP is caught first because it's in the blocked keywords list
-      expect(validateSql('SELECT * FROM clients; DROP TABLE technicians')).toBe('Blocked keyword: DROP');
+      expect(validateSql('SELECT * FROM clients; DROP TABLE technicians')).toBe(
+        'Blocked keyword: DROP'
+      );
     });
 
     it('blocks semicolons with non-keyword', () => {
-      expect(validateSql('SELECT * FROM clients; SELECT * FROM technicians')).toBe('Multiple statements not allowed');
+      expect(validateSql('SELECT * FROM clients; SELECT * FROM technicians')).toBe(
+        'Multiple statements not allowed'
+      );
     });
   });
 
@@ -102,7 +124,9 @@ describe('SQL Injection Protection', () => {
     });
 
     it('blocks access to sqlite_master', () => {
-      expect(validateSql('SELECT * FROM sqlite_master')).toBe("Table 'SQLITE_MASTER' is not accessible");
+      expect(validateSql('SELECT * FROM sqlite_master')).toBe(
+        "Table 'SQLITE_MASTER' is not accessible"
+      );
     });
 
     it('blocks access to internal tables', () => {
@@ -118,11 +142,15 @@ describe('SQL Injection Protection', () => {
     });
 
     it('blocks JOIN on disallowed table', () => {
-      expect(validateSql('SELECT * FROM clients JOIN passwords ON 1=1')).toBe("Table 'PASSWORDS' is not accessible");
+      expect(validateSql('SELECT * FROM clients JOIN passwords ON 1=1')).toBe(
+        "Table 'PASSWORDS' is not accessible"
+      );
     });
 
     it('allows JOIN on allowed tables', () => {
-      expect(validateSql('SELECT * FROM clients c JOIN service_records s ON c.id = s.client_id')).toBeNull();
+      expect(
+        validateSql('SELECT * FROM clients c JOIN service_records s ON c.id = s.client_id')
+      ).toBeNull();
     });
   });
 
@@ -134,12 +162,16 @@ describe('SQL Injection Protection', () => {
 
     it('blocks stacked queries with multiple attacks', () => {
       // DROP is caught first
-      expect(validateSql('SELECT * FROM clients; DROP TABLE technicians')).toBe('Blocked keyword: DROP');
+      expect(validateSql('SELECT * FROM clients; DROP TABLE technicians')).toBe(
+        'Blocked keyword: DROP'
+      );
     });
 
     it('blocks comment bypass attempt', () => {
       // UNION is caught before comments
-      expect(validateSql('SELECT * FROM clients/**/UNION SELECT * FROM technicians')).toBe('Blocked keyword: UNION');
+      expect(validateSql('SELECT * FROM clients/**/UNION SELECT * FROM technicians')).toBe(
+        'Blocked keyword: UNION'
+      );
     });
   });
 
@@ -153,11 +185,17 @@ describe('SQL Injection Protection', () => {
     });
 
     it('allows SELECT with JOIN', () => {
-      expect(validateSql('SELECT t.name, c.company_name FROM technicians t JOIN clients c ON t.id = c.technician_id')).toBeNull();
+      expect(
+        validateSql(
+          'SELECT t.name, c.company_name FROM technicians t JOIN clients c ON t.id = c.technician_id'
+        )
+      ).toBeNull();
     });
 
     it('allows SELECT with GROUP BY', () => {
-      expect(validateSql('SELECT status, COUNT(*) as count FROM service_records GROUP BY status')).toBeNull();
+      expect(
+        validateSql('SELECT status, COUNT(*) as count FROM service_records GROUP BY status')
+      ).toBeNull();
     });
 
     it('allows SELECT with ORDER BY', () => {
@@ -169,7 +207,11 @@ describe('SQL Injection Protection', () => {
     });
 
     it('allows SELECT with subquery on allowed tables', () => {
-      expect(validateSql('SELECT * FROM technicians WHERE id IN (SELECT technician_id FROM service_records)')).toBeNull();
+      expect(
+        validateSql(
+          'SELECT * FROM technicians WHERE id IN (SELECT technician_id FROM service_records)'
+        )
+      ).toBeNull();
     });
   });
 

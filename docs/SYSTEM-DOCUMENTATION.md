@@ -18,163 +18,301 @@
 
 ## System Overview
 
-| Item         | Details                                          |
-| ------------ | ------------------------------------------------ |
-| **Project**  | Awesome Myanmar CCTV & Infrastructure FSM        |
-| **Version**  | 2.0.0                                            |
-| **Database** | Turso (SQLite edge DB)                           |
-| **Backend**  | Cloudflare Workers / Netlify Functions / Node.js |
+| Item         | Details                                         |
+| ------------ | ----------------------------------------------- |
+| **Project**  | Awesome Myanmar CCTV & Infrastructure FSM       |
+| **Version**  | 2.0.0                                           |
+| **Database** | Cloudflare D1 (SQLite edge DB)                  |
+| **Backend**  | Cloudflare Workers (TypeScript, modular routes) |
+| **Frontend** | Vanilla JS + Tailwind CSS (served via Pages)    |
 
 ---
 
 ## Pages
 
-### Main Pages (7)
+### Main Pages
 
-| Page            | URL               | Purpose                                                     |
-| --------------- | ----------------- | ----------------------------------------------------------- |
-| Landing Page    | `/`               | Marketing hero, services, stats, price list, quotation form |
-| Admin Dashboard | `/admin.html`     | HQ Dispatch Console with 13 sub-views                       |
-| Technician App  | `/app.html`       | Field operations portal for technicians                     |
-| Client Portal   | `/portal.html`    | Customer service history & warranty lookup                  |
-| Jobs Dashboard  | `/jobs.html`      | View all jobs with filters and search                       |
-| Portfolio       | `/portfolio.html` | Showcase completed projects                                 |
-| Contact         | `/contact.html`   | Contact form with interactive map                           |
+| Page            | File                    | Purpose                                                     |
+| --------------- | ----------------------- | ----------------------------------------------------------- |
+| Landing Page    | `public/index.html`     | Marketing hero, services, stats, price list, quotation form |
+| Admin Dashboard | `public/admin.html`     | HQ Dispatch Console with modular sub-views                  |
+| Technician App  | `public/app.html`       | Field operations portal for technicians                     |
+| Client Portal   | `public/portal.html`    | Customer service history & warranty lookup                  |
+| Jobs Dashboard  | `public/jobs.html`      | View all jobs with filters and search                       |
+| Portfolio       | `public/portfolio.html` | Showcase completed projects                                 |
+| Contact         | `public/contact.html`   | Contact form with interactive map                           |
 
-### Admin Sub-Views (13)
+### Admin Sub-Views (in `public/views/`)
 
-| View                | Purpose                                   |
-| ------------------- | ----------------------------------------- |
-| Dashboard           | Stats widgets, charts, revenue overview   |
-| Service Tickets     | Job dispatch, edit, cancel with PDF print |
-| Customer Management | Client CRUD, AMC contract tracking        |
-| Inventory           | Stock batches, pricing, device catalog    |
-| Cash Safe Ledger    | USD/MMK balances, transaction log         |
-| Dispatch Map        | Live field map with Leaflet.js            |
-| Reports             | Operational & financial analytics         |
-| AI Copilot          | Auto-dispatch, route optimization, chat   |
-| Warranty & RMA      | Customer warranties, distributor RMA      |
-| Distributors        | Procurement channels directory            |
-| Service Fees        | Rate card management                      |
-| User Management     | Technician account administration         |
-| System Settings     | Backup/restore, exchange rate config      |
+| View                | File                         | Purpose                                   |
+| ------------------- | ---------------------------- | ----------------------------------------- |
+| Dashboard           | `views/dashboard.html`       | Stats widgets, charts, revenue overview   |
+| Service Tickets     | `views/tickets.html`         | Job dispatch, edit, cancel with PDF print |
+| Customer Management | `views/amc.html`             | Client CRUD, AMC contract tracking        |
+| Inventory           | `views/inventory.html`       | Stock batches, pricing, device catalog    |
+| Cash Safe Ledger    | `views/currency.html`        | USD/MMK balances, transaction log         |
+| Dispatch Map        | `views/dispatch-map.html`    | Live field map with Leaflet.js            |
+| Reports             | `views/reports.html`         | Operational & financial analytics         |
+| AI Copilot          | `views/ai-copilot.html`      | Auto-dispatch, route optimization, chat   |
+| Warranty & RMA      | `views/warranty.html`        | Customer warranties, distributor RMA      |
+| Distributors        | `views/distributors.html`    | Procurement channels directory            |
+| Service Fees        | `views/service-fees.html`    | Rate card management                      |
+| User Management     | `views/user-management.html` | Technician account administration         |
+| System Settings     | `views/system-settings.html` | Backup/restore, exchange rate config      |
 
 ---
 
 ## API Endpoints
 
+All endpoints are served from Cloudflare Worker at `/api/...`
+
 ### Authentication
 
-| Method | Route                      | Description             |
-| ------ | -------------------------- | ----------------------- |
-| POST   | `/api/auth/login`          | Technician PIN login    |
-| POST   | `/api/auth/google`         | Google OAuth sign-in    |
-| POST   | `/api/auth/login-password` | Username/password login |
-| POST   | `/api/portal/change-pin`   | Change security PIN     |
+| Method | Route                      | Description              |
+| ------ | -------------------------- | ------------------------ |
+| POST   | `/api/auth/login`          | Technician PIN login     |
+| POST   | `/api/auth/google`         | Google OAuth sign-in     |
+| POST   | `/api/auth/login-password` | Username/password login  |
+| POST   | `/api/auth/logout`         | Logout                   |
+| GET    | `/api/auth/profile`        | Get current user profile |
+| POST   | `/api/auth/verify`         | Verify JWT token         |
+| PUT    | `/api/technicians/:id/pin` | Change security PIN      |
 
 ### Jobs Management
 
-| Method | Route                    | Description              |
-| ------ | ------------------------ | ------------------------ |
-| GET    | `/api/jobs`              | Fetch all jobs           |
-| POST   | `/api/jobs`              | Create new job           |
-| POST   | `/api/jobs/update`       | Field tech status update |
-| POST   | `/api/admin/jobs`        | Admin dispatch job       |
-| POST   | `/api/admin/jobs/edit`   | Edit job details         |
-| POST   | `/api/admin/jobs/cancel` | Cancel job               |
-| GET    | `/api/jobs/receipt`      | Job receipt data         |
+| Method | Route                  | Description              |
+| ------ | ---------------------- | ------------------------ |
+| GET    | `/api/jobs`            | Fetch all jobs (filters) |
+| GET    | `/api/jobs/active`     | Get active jobs          |
+| GET    | `/api/jobs/calendar`   | Jobs for calendar view   |
+| GET    | `/api/jobs/receipt`    | Job receipt data         |
+| GET    | `/api/jobs/:id`        | Get job details          |
+| POST   | `/api/jobs`            | Create new job           |
+| PUT    | `/api/jobs/:id`        | Update job               |
+| DELETE | `/api/jobs/:id`        | Delete job               |
+| POST   | `/api/jobs/:id/status` | Update job status        |
 
-### Inventory
+### Inventory Management
 
-| Method | Route                                 | Description       |
-| ------ | ------------------------------------- | ----------------- |
-| GET    | `/api/admin/inventory/list`           | List stock items  |
-| POST   | `/api/admin/inventory/add`            | Add new model     |
-| POST   | `/api/admin/inventory/restock`        | Adjust quantities |
-| POST   | `/api/admin/inventory/delete`         | Remove item       |
-| POST   | `/api/admin/inventory/catalog/price`  | Update prices     |
-| GET    | `/api/admin/inventory/batches`        | List batches      |
-| POST   | `/api/admin/inventory/batches/create` | Create batch      |
+| Method | Route                       | Description        |
+| ------ | --------------------------- | ------------------ |
+| GET    | `/api/inventory`            | List inventory     |
+| GET    | `/api/inventory/:id`        | Get inventory item |
+| POST   | `/api/inventory`            | Add inventory      |
+| PUT    | `/api/inventory/:id`        | Update inventory   |
+| DELETE | `/api/inventory/:id`        | Delete inventory   |
+| POST   | `/api/inventory/:id/adjust` | Adjust stock       |
+| GET    | `/api/inventory/low-stock`  | Low stock items    |
+| GET    | `/api/inventory/categories` | Categories         |
 
-### Client Management
+### Admin Inventory
 
-| Method | Route                       | Description   |
-| ------ | --------------------------- | ------------- |
-| GET    | `/api/admin/clients/list`   | List clients  |
-| POST   | `/api/admin/clients`        | Create client |
-| POST   | `/api/admin/clients/edit`   | Edit client   |
-| POST   | `/api/admin/clients/delete` | Delete client |
+| Method | Route                                 | Description      |
+| ------ | ------------------------------------- | ---------------- |
+| GET    | `/api/admin/inventory/list`           | Admin inventory  |
+| GET    | `/api/admin/inventory/batches`        | List batches     |
+| GET    | `/api/admin/inventory/categories`     | Admin categories |
+| GET    | `/api/admin/inventory/sub-categories` | Admin sub-cats   |
+| GET    | `/api/admin/inventory/brands`         | Admin brands     |
+| GET    | `/api/admin/inventory/units`          | Admin units      |
+| GET    | `/api/admin/warranty/list`            | Warranty list    |
+| GET    | `/api/admin/rma/list`                 | RMA list         |
+| POST   | `/api/admin/inventory/catalog/price`  | Update prices    |
+| POST   | `/api/admin/inventory/batches/create` | Create batch     |
+| POST   | `/api/admin/inventory/batches/edit`   | Edit batch       |
+| POST   | `/api/admin/inventory/add`            | Add inventory    |
+| POST   | `/api/admin/inventory/delete`         | Delete inventory |
 
-### Technician Management
+### Batches & Serials
 
-| Method | Route                           | Description       |
-| ------ | ------------------------------- | ----------------- |
-| GET    | `/api/admin/technicians`        | List technicians  |
-| POST   | `/api/admin/technicians/create` | Create technician |
-| POST   | `/api/admin/technicians/update` | Update technician |
-| POST   | `/api/admin/technicians/delete` | Delete technician |
+| Method | Route                 | Description   |
+| ------ | --------------------- | ------------- |
+| GET    | `/api/batches`        | List batches  |
+| POST   | `/api/batches`        | Create batch  |
+| PUT    | `/api/batches/:id`    | Update batch  |
+| GET    | `/api/serials`        | List serials  |
+| POST   | `/api/serials/verify` | Verify serial |
 
-### Finance
+### Invoices & POS
 
-| Method | Route                            | Description        |
-| ------ | -------------------------------- | ------------------ |
-| GET    | `/api/admin/cash/safe`           | Get balances       |
-| GET    | `/api/admin/cash/transactions`   | List transactions  |
-| POST   | `/api/admin/cash/transact`       | Deposit/withdrawal |
-| GET    | `/api/service-fees`              | List service fees  |
-| POST   | `/api/admin/service-fees/manage` | Manage fees        |
+| Method | Route                          | Description    |
+| ------ | ------------------------------ | -------------- |
+| GET    | `/api/invoices`                | List invoices  |
+| POST   | `/api/invoices`                | Create invoice |
+| PUT    | `/api/invoices/:id/pay`        | Mark as paid   |
+| POST   | `/api/invoices/:id/save-drive` | Save to Drive  |
+| POST   | `/api/pos/checkout`            | POS checkout   |
+| GET    | `/api/pos/sales`               | POS sales list |
+| GET    | `/api/pos/credits`             | POS credits    |
 
-### Warranty & RMA
+### Service Fees
 
-| Method | Route                          | Description       |
-| ------ | ------------------------------ | ----------------- |
-| GET    | `/api/admin/warranty/list`     | List warranties   |
-| POST   | `/api/admin/warranty/register` | Register warranty |
-| GET    | `/api/admin/rma/list`          | List RMA items    |
-| POST   | `/api/admin/rma/update`        | Update RMA        |
-| POST   | `/api/admin/rma/raise`         | Raise RMA claim   |
+| Method | Route                            | Description       |
+| ------ | -------------------------------- | ----------------- |
+| GET    | `/api/service-fees`              | List service fees |
+| POST   | `/api/service-fees`              | Create fee        |
+| PUT    | `/api/service-fees/:id`          | Update fee        |
+| DELETE | `/api/service-fees/:id`          | Delete fee        |
+| POST   | `/api/admin/service-fees/manage` | Admin manage      |
+
+### Cash Safe
+
+| Method | Route                          | Description        |
+| ------ | ------------------------------ | ------------------ |
+| GET    | `/api/cash-safe/balance`       | Get balances       |
+| GET    | `/api/cash-safe/transactions`  | List transactions  |
+| POST   | `/api/cash-safe/deposit`       | Deposit            |
+| POST   | `/api/cash-safe/withdraw`      | Withdraw           |
+| GET    | `/api/admin/cash/safe`         | Admin cash safe    |
+| GET    | `/api/admin/cash/transactions` | Admin transactions |
+| POST   | `/api/admin/cash/transact`     | Admin transact     |
+
+### Attendance
+
+| Method | Route                       | Description       |
+| ------ | --------------------------- | ----------------- |
+| POST   | `/api/attendance/clock-in`  | Clock in          |
+| POST   | `/api/attendance/clock-out` | Clock out         |
+| GET    | `/api/attendance`           | List attendance   |
+| GET    | `/api/attendance/status`    | Attendance status |
+
+### Distributors
+
+| Method | Route                   | Description        |
+| ------ | ----------------------- | ------------------ |
+| GET    | `/api/distributors`     | List distributors  |
+| POST   | `/api/distributors`     | Create distributor |
+| PUT    | `/api/distributors/:id` | Update distributor |
+| DELETE | `/api/distributors/:id` | Delete distributor |
+
+### Expenses
+
+| Method | Route                       | Description     |
+| ------ | --------------------------- | --------------- |
+| GET    | `/api/expenses`             | List expenses   |
+| POST   | `/api/expenses`             | Create expense  |
+| PUT    | `/api/expenses/:id/approve` | Approve expense |
+| PUT    | `/api/expenses/:id/reject`  | Reject expense  |
+
+### RMA & Warranty
+
+| Method | Route                 | Description       |
+| ------ | --------------------- | ----------------- |
+| GET    | `/api/rma`            | List RMA          |
+| POST   | `/api/rma`            | Create RMA        |
+| PUT    | `/api/rma/:id/status` | Update RMA status |
+| GET    | `/api/warranty/check` | Check warranty    |
+
+### Reports
+
+| Method | Route                    | Description      |
+| ------ | ------------------------ | ---------------- |
+| GET    | `/api/reports/dashboard` | Dashboard report |
+| GET    | `/api/reports/jobs`      | Jobs report      |
+| GET    | `/api/reports/revenue`   | Revenue report   |
+| GET    | `/api/reports/export`    | Export report    |
 
 ### AI Features
 
-| Method | Route                          | Description           |
-| ------ | ------------------------------ | --------------------- |
-| POST   | `/api/admin/jobs/ai-polish`    | AI polish notes       |
-| POST   | `/api/admin/ai/auto-dispatch`  | AI auto-dispatch      |
-| POST   | `/api/admin/ai/route-optimize` | AI route optimization |
-| POST   | `/api/admin/ai/chat-data`      | AI chat with database |
-| POST   | `/api/admin/ai/transcribe`     | Voice transcription   |
+| Method | Route                    | Description           |
+| ------ | ------------------------ | --------------------- |
+| POST   | `/api/ai/polish-notes`   | Polish notes with AI  |
+| POST   | `/api/ai/auto-dispatch`  | AI auto-dispatch      |
+| POST   | `/api/ai/route-optimize` | AI route optimization |
+| POST   | `/api/ai/copilot`        | AI copilot chat       |
+| POST   | `/api/ai/transcribe`     | Transcribe audio      |
 
-### Other
+### Admin
 
-| Method | Route                 | Description      |
-| ------ | --------------------- | ---------------- |
-| GET    | `/api/exchange-rate`  | Exchange rate    |
-| POST   | `/api/contact`        | Contact form     |
-| GET    | `/api/admin/lookups`  | Lookup data      |
-| GET    | `/api/admin/backup`   | Database backup  |
-| POST   | `/api/admin/restore`  | Database restore |
-| GET    | `/api/portal/history` | Client history   |
+| Method | Route                          | Description         |
+| ------ | ------------------------------ | ------------------- |
+| GET    | `/api/admin/lookups`           | Admin lookups       |
+| GET    | `/api/admin/technicians`       | Admin tech list     |
+| PUT    | `/api/admin/technicians/:id`   | Admin update tech   |
+| DELETE | `/api/admin/technicians/:id`   | Admin delete tech   |
+| GET    | `/api/admin/clients`           | Admin client list   |
+| GET    | `/api/admin/config/:key`       | Get config          |
+| POST   | `/api/admin/config`            | Set config          |
+| GET    | `/api/admin/roles`             | List roles          |
+| POST   | `/api/admin/roles`             | Create role         |
+| DELETE | `/api/admin/roles/:id`         | Delete role         |
+| POST   | `/api/admin/backup`            | Trigger backup      |
+| POST   | `/api/admin/restore`           | Restore backup      |
+| GET    | `/api/admin/stats`             | Admin stats         |
+| GET    | `/api/landing-page`            | Get landing page    |
+| POST   | `/api/landing-page`            | Update landing page |
+| POST   | `/api/admin/hq-config`         | HQ config           |
+| POST   | `/api/admin/jobs/ai-polish`    | AI polish job notes |
+| POST   | `/api/admin/ai/chat-data`      | AI chat data        |
+| POST   | `/api/admin/ai/route-optimize` | AI route optimize   |
+| POST   | `/api/admin/ai/auto-dispatch`  | AI auto dispatch    |
+| POST   | `/api/admin/ai/transcribe`     | AI transcribe       |
+| GET    | `/api/jobs/receipt`            | Job receipt         |
+| GET    | `/api/portal/history`          | Portal history      |
+
+### Public
+
+| Method | Route                        | Description    |
+| ------ | ---------------------------- | -------------- |
+| POST   | `/api/public/contact`        | Contact form   |
+| GET    | `/api/public/exchange-rate`  | Exchange rate  |
+| GET    | `/api/public/serials`        | Public serials |
+| GET    | `/api/public/technician/:id` | Public tech    |
+| GET    | `/api/public/landing`        | Public landing |
+| GET    | `/api/public/service-fees`   | Public fees    |
+
+### Google & Maps
+
+| Method | Route                             | Description      |
+| ------ | --------------------------------- | ---------------- |
+| POST   | `/api/auth/google`                | Google auth      |
+| POST   | `/api/auth/login-password`        | Password login   |
+| GET    | `/api/auth/google/drive-url`      | Drive URL        |
+| GET    | `/api/auth/google/drive-callback` | Drive callback   |
+| GET    | `/api/admin/resolve-coords`       | Resolve coords   |
+| POST   | `/api/resolve-maps-url`           | Resolve Maps URL |
+
+### Telegram
+
+| Method | Route                   | Description      |
+| ------ | ----------------------- | ---------------- |
+| POST   | `/api/telegram/webhook` | Telegram webhook |
+| POST   | `/api/telegram/send`    | Send message     |
+
+### Landing Page Admin
+
+| Method | Route                    | Description        |
+| ------ | ------------------------ | ------------------ |
+| GET    | `/api/admin/landing`     | Admin landing list |
+| POST   | `/api/admin/landing`     | Create landing     |
+| PUT    | `/api/admin/landing/:id` | Update landing     |
+| DELETE | `/api/admin/landing/:id` | Delete landing     |
 
 ---
 
 ## Database Schema
 
-### Tables (10)
+### Tables (14)
+
+Defined in `db/migrations/schema.sql`
 
 #### technicians
 
-| Column   | Type    | Description            |
-| -------- | ------- | ---------------------- |
-| id       | TEXT    | Primary key            |
-| name     | TEXT    | Full name              |
-| nickname | TEXT    | Display name           |
-| role     | TEXT    | Sales/Technician/Admin |
-| phone    | TEXT    | Phone number           |
-| active   | INTEGER | 1=active, 0=inactive   |
-| email    | TEXT    | Email address          |
-| username | TEXT    | Login username         |
-| password | TEXT    | Login password         |
-| pin      | TEXT    | Security PIN           |
+| Column      | Type    | Description                 |
+| ----------- | ------- | --------------------------- |
+| id          | TEXT    | Primary key                 |
+| name        | TEXT    | Full name                   |
+| nickname    | TEXT    | Display name                |
+| role        | TEXT    | Sales/Technician/Admin      |
+| phone       | TEXT    | Phone number                |
+| active      | INTEGER | 1=active, 0=inactive        |
+| email       | TEXT    | Email address               |
+| username    | TEXT    | Login username              |
+| password    | TEXT    | Login password              |
+| pin         | TEXT    | Security PIN (default 1234) |
+| photo       | TEXT    | Profile photo (base64)      |
+| last_login  | TEXT    | Last login timestamp        |
+| permissions | TEXT    | read / read_write           |
 
 #### clients
 
@@ -217,16 +355,16 @@
 
 #### inventory_stock
 
-| Column         | Type    | Description                                                      |
-| -------------- | ------- | ---------------------------------------------------------------- |
-| item_code      | TEXT    | Primary key                                                      |
-| item_name      | TEXT    | Product name                                                     |
-| category       | TEXT    | Hard Drives/Network Cables/Security IP Cams/Spare Hardware Parts |
-| stock_qty      | INTEGER | Stock quantity                                                   |
-| unit_price     | REAL    | USD price                                                        |
-| unit_price_mmk | REAL    | MMK price                                                        |
-| batch_code     | TEXT    | Batch code                                                       |
-| buying_price   | REAL    | Cost price                                                       |
+| Column         | Type    | Description    |
+| -------------- | ------- | -------------- |
+| item_code      | TEXT    | Primary key    |
+| item_name      | TEXT    | Product name   |
+| category       | TEXT    | Category       |
+| stock_qty      | INTEGER | Stock quantity |
+| unit_price     | REAL    | USD price      |
+| unit_price_mmk | REAL    | MMK price      |
+| batch_code     | TEXT    | Batch code     |
+| buying_price   | REAL    | Cost price     |
 
 #### inventory_batches
 
@@ -252,6 +390,13 @@
 | rma_tracking_id | TEXT    | RMA tracking ID                                  |
 | job_id          | TEXT    | FK to service_records                            |
 | batch_code      | TEXT    | FK to inventory_batches                          |
+
+#### stock_code_map
+
+| Column         | Type | Description         |
+| -------------- | ---- | ------------------- |
+| new_stock_code | TEXT | New stock code      |
+| old_stock_code | TEXT | Old stock code (PK) |
 
 #### cash_safes
 
@@ -300,15 +445,16 @@
 
 ### Colors
 
-| Color        | Hex     | Usage              |
-| ------------ | ------- | ------------------ |
-| Brand Dark   | #09090b | Primary background |
-| Brand Panel  | #121218 | Card backgrounds   |
-| Brand Orange | #f59e0b | Accent color       |
-| Indigo       | #6366f1 | Secondary accent   |
-| Emerald      | #10b981 | Success states     |
-| Sky          | #0ea5e9 | Info states        |
-| Rose         | #f43f5e | Error states       |
+| Color            | Value     | Usage              |
+| ---------------- | --------- | ------------------ |
+| Background       | Slate 950 | Primary background |
+| Surface Low      | White/2%  | Table rows, cards  |
+| Surface Mid      | White/4%  | Active tabs, forms |
+| Border Soft      | White/6%  | Standard borders   |
+| Border Active    | White/15% | Focus/Active       |
+| Accent Primary   | Amber 500 | Primary buttons    |
+| Accent Secondary | Sky 500   | Secondary actions  |
+| Error            | Rose 500  | Delete/Cancel      |
 
 ### Typography
 
@@ -379,8 +525,8 @@ Note the database ID from the output.
 
 ```toml
 name = "cctv-service-system"
-main = "src/index.js"
-compatibility_date = "2024-01-01"
+main = "src/index.ts"
+compatibility_date = "2026-07-04"
 compatibility_flags = ["nodejs_compat"]
 
 [[d1_databases]]
@@ -391,15 +537,23 @@ database_id = "YOUR_DATABASE_ID"
 [vars]
 GOOGLE_CLIENT_ID = "your-google-client-id"
 ADMIN_EMAIL = "your-email@gmail.com"
+JWT_SECRET = "your-jwt-secret"
 
 [triggers]
 crons = ["0 0 * * *"]
+
+[ai]
+binding = "AI"
+
+[assets]
+directory = "./public"
 ```
 
-#### Step 5: Initialize Database
+#### Step 5: Initialize Database (Local)
 
 ```bash
-wrangler d1 execute cctv-fsm-db --file=schema.sql
+npx wrangler d1 execute cctv-fsm-db --local --file=db/migrations/schema.sql
+npx wrangler d1 execute cctv-fsm-db --local --file=db/migrations/mock_data.sql
 ```
 
 #### Step 6: Set Secrets
@@ -410,6 +564,8 @@ wrangler secret put TELEGRAM_BOT_TOKEN
 wrangler secret put TELEGRAM_CHAT_ID
 wrangler secret put GEMINI_API_KEY
 wrangler secret put GOOGLE_CLIENT_SECRET
+wrangler secret put GOOGLE_REFRESH_TOKEN
+wrangler secret put GOOGLE_DRIVE_FOLDER_ID
 ```
 
 #### Step 7: Deploy
@@ -418,168 +574,31 @@ wrangler secret put GOOGLE_CLIENT_SECRET
 wrangler deploy
 ```
 
-#### Step 8: Configure Custom Domain (Optional)
+#### Step 8: Deploy Frontend (Cloudflare Pages)
+
+```bash
+npx wrangler pages deploy public --project-name=awesomemyanmar
+```
+
+#### Step 9: Configure Custom Domain (Optional)
 
 1. Go to Cloudflare Dashboard > Workers & Pages
 2. Select your worker
 3. Go to Settings > Triggers > Custom Domains
 4. Add your domain
 
-#### Step 9: Set Up Telegram Webhook
+#### Step 10: Set Up Telegram Webhook
 
 ```bash
 curl -X POST "https://api.telegram.org/botYOUR_TOKEN/setWebhook" \
-  -d "url=https://your-worker.your-subdomain.workers.dev/api/telegram-webhook"
+  -d "url=https://cctv-service-system.nyinyimin2007.workers.dev/api/telegram/webhook"
 ```
 
 ---
 
-### 2. Netlify Functions (Backup)
+### 2. Local Development Only
 
-#### Prerequisites
-
-- Netlify account
-- Node.js 18+
-- Netlify CLI
-
-#### Step 1: Install Netlify CLI
-
-```bash
-npm install -g netlify-cli
-```
-
-#### Step 2: Login to Netlify
-
-```bash
-netlify login
-```
-
-#### Step 3: Link Project
-
-```bash
-netlify init
-```
-
-#### Step 4: Set Environment Variables
-
-```bash
-netlify env:set TURSO_DATABASE_URL "libsql://your-db.turso.io"
-netlify env:set TURSO_AUTH_TOKEN "your-token"
-netlify env:set ADMIN_EMAIL "your-email@gmail.com"
-netlify env:set JWT_SECRET "your-secret"
-```
-
-#### Step 5: Deploy
-
-```bash
-netlify deploy --dir=public --functions=netlify/functions --prod
-```
-
----
-
-### 3. Local Node.js Server
-
-#### Prerequisites
-
-- Node.js 18+
-
-#### Step 1: Install Dependencies
-
-```bash
-npm install
-```
-
-#### Step 2: Start Server
-
-```bash
-npm start
-```
-
-#### Step 3: Access
-
-Open http://localhost:3000
-
----
-
-### 4. Synology NAS (Docker)
-
-#### Step 1: Copy Project to NAS
-
-Upload the project folder to `/volume1/docker/awesome-myanmar`
-
-#### Step 2: Create docker-compose.yml
-
-```yaml
-version: '3'
-services:
-  web:
-    image: node:18-alpine
-    container_name: awesome-myanmar
-    ports:
-      - '3000:3000'
-    volumes:
-      - .:/app
-    working_dir: /app
-    command: sh -c "npm install && npm start"
-    restart: unless-stopped
-```
-
-#### Step 3: Deploy
-
-```bash
-ssh admin@your-nas-ip
-cd /volume1/docker/awesome-myanmar
-docker-compose up -d
-```
-
-#### Step 4: Access
-
-Open http://your-nas-ip:3000
-
----
-
-### 5. Synology Web Station
-
-#### Step 1: Copy Files
-
-Copy `public` folder to `/volume1/web/awesome-myanmar`
-
-#### Step 2: Configure Web Station
-
-1. Open Web Station in DSM
-2. Create new service portal
-3. Point to `awesome-myanmar` folder
-
-#### Step 3: Access
-
-Open http://your-nas-ip/awesome-myanmar
-
----
-
-### 6. Electron Desktop App
-
-#### Step 1: Install Electron
-
-```bash
-npm install electron --save-dev
-```
-
-#### Step 2: Update package.json
-
-```json
-{
-  "main": "electron-main.js",
-  "scripts": {
-    "electron": "electron ."
-  }
-}
-```
-
-#### Step 3: Run
-
-```bash
-npm run electron
-```
+This project follows a **local-first development** approach. See [Local-First Development](#local-first-development) below.
 
 ---
 
@@ -587,23 +606,34 @@ npm run electron
 
 ### Environment Variables
 
-| Variable             | Description                | Required |
-| -------------------- | -------------------------- | -------- |
-| TURSO_DATABASE_URL   | Turso database URL         | Yes      |
-| TURSO_AUTH_TOKEN     | Turso auth token           | Yes      |
-| JWT_SECRET           | JWT signing secret         | Yes      |
-| ADMIN_EMAIL          | Admin email address        | Yes      |
-| GOOGLE_CLIENT_ID     | Google OAuth client ID     | No       |
-| GOOGLE_CLIENT_SECRET | Google OAuth client secret | No       |
-| TELEGRAM_BOT_TOKEN   | Telegram bot token         | No       |
-| TELEGRAM_CHAT_ID     | Telegram chat ID           | No       |
-| GEMINI_API_KEY       | Gemini AI API key          | No       |
-| VIBER_BOT_TOKEN      | Viber bot token            | No       |
-| VIBER_RECEIVER_ID    | Viber receiver ID          | No       |
+| Variable               | Description                 | Required | Location             |
+| ---------------------- | --------------------------- | -------- | -------------------- |
+| TELEGRAM_BOT_TOKEN     | Telegram bot token          | Yes      | `.dev.vars` / Secret |
+| TELEGRAM_CHAT_ID       | Telegram chat ID            | Yes      | `.dev.vars` / Secret |
+| GEMINI_API_KEY         | Gemini AI API key           | Yes      | `.dev.vars` / Secret |
+| GOOGLE_CLIENT_ID       | Google OAuth client ID      | Yes      | `wrangler.toml`      |
+| GOOGLE_CLIENT_SECRET   | Google OAuth client secret  | Yes      | Secret               |
+| GOOGLE_REFRESH_TOKEN   | Google OAuth refresh token  | Yes      | Secret               |
+| GOOGLE_DRIVE_FOLDER_ID | Google Drive folder ID      | Yes      | Secret               |
+| ADMIN_EMAIL            | Admin email for Google auth | Yes      | `wrangler.toml`      |
+| JWT_SECRET             | JWT signing secret          | Yes      | Secret               |
 
-### Default Credentials
+### Local Development (`.dev.vars`)
 
-| Type                | Username     | Password      |
+Create `.dev.vars` in project root:
+
+```env
+TELEGRAM_BOT_TOKEN="your-telegram-bot-token"
+TELEGRAM_CHAT_ID="your-telegram-chat-id"
+GEMINI_API_KEY="your-gemini-api-key"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GOOGLE_REFRESH_TOKEN="your-google-refresh-token"
+GOOGLE_DRIVE_FOLDER_ID="your-drive-folder-id"
+```
+
+### Default Credentials (Seeded in mock_data.sql)
+
+| Type                | Username     | Password/PIN  |
 | ------------------- | ------------ | ------------- |
 | Admin               | admin        | AdminPass123! |
 | Test Technician     | tech1        | tech123!      |
@@ -611,53 +641,148 @@ npm run electron
 
 ---
 
-## File Structure
+## Local-First Development
 
+This project enforces **local-only development**. Do NOT deploy to Cloudflare until explicitly requested.
+
+### Rules
+
+1. **Always run locally** using `npm run dev` (Wrangler dev server)
+2. **Never run** `wrangler deploy` or `npm run deploy` unless user says "deploy cloudflare"
+3. **Test locally** with local D1 database and `.dev.vars`
+4. **Verify changes** locally before any deployment consideration
+
+### Local Dev Commands
+
+```bash
+# Start dev server (local D1, local assets)
+npm run dev
+
+# Build CSS
+npm run build:css
+
+# Watch CSS
+npm run watch:css
+
+# Run tests
+npm run test
+
+# Format code
+npm run format
 ```
-Claude/
-├── public/                    # Static files
-│   ├── index.html            # Landing page
-│   ├── admin.html            # Admin dashboard
-│   ├── app.html              # Technician app
-│   ├── portal.html           # Client portal
-│   ├── jobs.html             # Jobs dashboard
-│   ├── portfolio.html        # Portfolio page
-│   ├── contact.html          # Contact page
-│   ├── admin.js              # Admin JavaScript
-│   ├── app.js                # Technician JavaScript
-│   ├── views/                # Admin sub-views
-│   │   ├── dashboard.html
-│   │   ├── tickets.html
-│   │   ├── amc.html
-│   │   ├── inventory.html
-│   │   ├── currency.html
-│   │   ├── dispatch-map.html
-│   │   ├── reports.html
-│   │   ├── ai-copilot.html
-│   │   ├── warranty.html
-│   │   ├── distributors.html
-│   │   ├── service-fees.html
-│   │   ├── user-management.html
-│   │   └── system-settings.html
-│   └── logo.png              # Logo
-├── src/
-│   └── index.js              # Cloudflare Worker (primary API)
-├── netlify/
-│   └── functions/
-│       ├── api.js            # Netlify Functions API
-│       └── lib/
-│           ├── db.js         # Turso database driver
-│           ├── auth.js       # JWT authentication
-│           └── notifications.js # Telegram/Viber
-├── android/                  # Android app (Kotlin)
-├── schema.sql                # Database schema
-├── server.js                 # Local Node.js server
-├── wrangler.toml             # Cloudflare config
-├── netlify.toml              # Netlify config
-├── package.json              # npm config
-└── .env                      # Environment variables
+
+### Local Database
+
+```bash
+# Apply schema
+npx wrangler d1 execute cctv-fsm-db --local --file=db/migrations/schema.sql
+
+# Seed mock data
+npx wrangler d1 execute cctv-fsm-db --local --file=db/migrations/mock_data.sql
 ```
 
 ---
 
-_Documentation generated on 2026-07-11_
+## D1 Database Sync & Migrations (Critical)
+
+When syncing database schema and data between local and remote Cloudflare D1 databases:
+
+### 1. SQLITE_TOOBIG Limit (100KB)
+
+Cloudflare D1 restricts single SQL statements to 100KB.
+
+- Large tables (like `technicians` with base64 profiles) must have base64 image strings replaced with `NULL` during data migration/sync scripts.
+- Bulk inserts must be split into individual `INSERT OR IGNORE` statement lines.
+
+### 2. Foreign Key Dependencies
+
+- Disable or drop remote tables in iterative dependency order (e.g., drop child tables like `inventory_items` and `service_records` before parent tables like `clients` and `technicians` to avoid `SQLITE_CONSTRAINT` failures).
+- Rebuild schema from `db/migrations/schema.sql` (and subsequent migrations like `create_roles_table.sql`, etc.) first, then perform the data import in exact parent-to-child order:
+  `roles` → `clients` → `technicians` → `cash_safes` → `inventory_stock` → `inventory_batches` → `distributors` → `service_fees` → `system_config` → `landing_page` → `service_records` → `inventory_items` → `cash_transactions`
+
+### 3. Missing Column Alignments
+
+Always cross-reference table column structures between local SQLite and remote D1 schemas (e.g., check for `telegram_username` in `technicians`, `sub_category_id` in `inventory_stock`, and `quantity` in `inventory_batches`) and run `ALTER TABLE` to align them if missing.
+
+---
+
+## Frontend Inline JavaScript Security
+
+- **Quotes and Newline Safety**: Never pass descriptive model names, descriptions, or addresses containing random characters, quotes, or newlines directly as string parameters in inline HTML event handlers (e.g., `onclick="editItem('${item.name}')"`). This causes `SyntaxError: Invalid or unexpected token`.
+- **Lookup Pattern**: Pass only clean, alphanumeric identifier codes (e.g., `item_code` SKU) and perform the object lookup within the JavaScript function block from an in-memory data array (e.g., `activeCatalogList.find()`).
+
+---
+
+## Authentication & Security Quirks
+
+1. **Content Security Policy (CSP)**:
+   - Cloudflare Pages enforces a strict CSP in `public/_headers`.
+   - If UI components (like `fonts.gstatic.com` or third-party scripts) fail to load, check the `connect-src` or `script-src` directives in `_headers`.
+
+2. **Technician PIN Hashing**:
+   - The local database (`local_dump.sql` / seed data) stores technician PINs in plain text (e.g., `'1234'`).
+   - The `/api/auth/login` endpoint's `verifyPin` function in `src/modules/routes/auth.ts` must support plain-text string matching fallback (`plainPin === storedHash`) before attempting bcrypt/SHA-256 checks, otherwise valid local logins will be rejected.
+
+3. **QR Code Dependencies**:
+   - Do NOT use `cdn.jsdelivr.net` for `qrcode.min.js`, as their build paths often break. Use `cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js`.
+
+4. **Google Identity Services (GSI)**:
+   - If the Google Sign-In button fails with a `403 Forbidden` (`[GSI_LOGGER]`), the current testing origin (e.g., `http://127.0.0.1:8787`) must be manually added to the **Authorized JavaScript origins** in the Google Cloud Console. This cannot be bypassed through code.
+
+---
+
+## File Structure
+
+```
+cctv-service-system/
+├── .dev.vars                # Local environment variables (secrets)
+├── wrangler.toml            # Cloudflare Worker configuration
+├── src/
+│   ├── index.ts             # Main Worker entry point
+│   ├── modules/
+│   │   ├── routes/          # Route modules (auth, technicians, clients, jobs, etc.)
+│   │   └── utils/           # Utilities (router, cors, jwt, telegram, google, etc.)
+│   └── types/
+│       └── schema.ts        # TypeScript types for database schema
+├── public/
+│   ├── app.html             # Technician UI
+│   ├── app.js               # Technician UI logic
+│   ├── admin.html           # Admin dashboard
+│   ├── admin.js             # Admin dashboard logic
+│   ├── tailwind.css         # Compiled Tailwind CSS
+│   ├── input.css            # Tailwind input CSS
+│   ├── manifest.json        # PWA manifest
+│   ├── sw.js                # Service worker
+│   ├── _headers             # Cloudflare headers config
+│   └── views/               # Admin sub-views (dashboard, tickets, inventory, etc.)
+├── db/
+│   ├── migrations/          # SQL migrations (schema.sql, mock_data.sql, etc.)
+│   └── seeds/               # Seed data files
+├── functions/
+│   └── api/
+│       └── [[path]].js      # Cloudflare Pages API proxy
+├── schema.sql               # Legacy schema (use db/migrations/schema.sql)
+├── AGENTS.md                # AI agent configuration
+├── .agents/
+│   ├── AGENTS.md            # Project rules
+│   └── skills/
+│       ├── telegram-bot/
+│       │   └── SKILL.md     # Telegram bot integration
+│       ├── cloudflare-polling-limits/
+│       │   └── SKILL.md     # Cloudflare usage limits
+│       ├── cloudflare-local-first/
+│       │   └── SKILL.md     # Local-first development
+│       ├── cms-assistant/
+│       │   └── SKILL.md     # Client management assistant
+│       └── ui-layout-guidance/
+│           └── SKILL.md     # UI layout guidelines
+├── exchange_token.js        # Google OAuth callback helper
+├── package.json             # Project dependencies
+├── design.md                # Design system documentation
+├── docs/                    # Additional documentation
+└── src-tauri/               # Tauri desktop app config
+```
+
+---
+
+_Documentation updated: 2026-07-19_

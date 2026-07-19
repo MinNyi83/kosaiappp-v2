@@ -98,7 +98,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { amount, category, description, expense_date, receipt_url } = body;
 
       if (!amount || !category) {
@@ -160,7 +160,7 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
-      const { reason } = (await request.json() as any);
+      const { reason } = (await request.json()) as any;
       const existing = await db
         .prepare('SELECT id FROM expenses WHERE id = ?')
         .bind(params.id)
@@ -182,4 +182,3 @@ function register(router, env) {
 }
 
 export { register };
-

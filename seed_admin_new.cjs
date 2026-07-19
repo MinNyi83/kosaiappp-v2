@@ -2,7 +2,10 @@ const fs = require('fs');
 const crypto = require('crypto');
 const salt = '1234567890abcdef';
 const password = 'AdminPass123!';
-const hash = crypto.createHash('sha256').update(password + salt).digest('hex');
+const hash = crypto
+  .createHash('sha256')
+  .update(password + salt)
+  .digest('hex');
 const pin = `$sha256$${salt}$${hash}`;
 const sql = `UPDATE technicians SET email = 'admin', pin = '${pin}' WHERE id = 'ADMIN-001';
 INSERT OR IGNORE INTO technicians (id, name, role, email, active, pin, permissions) VALUES ('admin', 'Admin', 'Admin', 'admin', 1, '${pin}', 'read_write');

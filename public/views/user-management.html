@@ -138,44 +138,21 @@
         style="background: rgba(0, 0, 0, 0.15)"
       >
         <div class="flex items-center gap-3">
-          <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
-            style="
-              background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
-              border: 1px solid rgba(16, 185, 129, 0.3);
-            "
-          >
-            <svg
-              class="w-4 h-4 text-emerald-400"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Registered Accounts</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
-              Active team members · Access role authorization
-            </p>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Registered Accounts</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Active team members and role authorization</p>
           </div>
         </div>
         <!-- Controls -->
         <div class="flex items-center gap-2 flex-wrap">
-          <!-- Search -->
           <div class="relative">
-            <svg
-              class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
+            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <circle cx="11" cy="11" r="8" />
               <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
             </svg>
@@ -185,35 +162,26 @@
               id="user-search-input"
               onkeyup="filterUserTable()"
               placeholder="Search username or name..."
-              class="bg-black/30 border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all w-52"
-              style="backdrop-filter: blur(8px)"
+              class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all w-52"
             />
           </div>
-          <!-- Role -->
           <select
             name="user-filter-role"
             onchange="filterUserByRole(this.value)"
             id="user-filter-role"
-            class="bg-black/30 border border-white/10 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all"
+            class="bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-[11px] text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all"
           >
             <option value="All">All Roles</option>
             <option value="Admin">Admin</option>
             <option value="Technician">Technician</option>
             <option value="Sales">Sales</option>
           </select>
-          <!-- Export -->
           <button
             type="button"
             onclick="exportTableToExcel('users-table', 'Registered_Accounts')"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+            class="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
           >
-            <svg
-              class="w-3 h-3"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
@@ -225,25 +193,23 @@
 
       <!-- Table View -->
       <div class="flex-1 overflow-y-auto p-5">
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
-          <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+        <div class="glass-panel rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto p-4">
             <table id="users-table" class="w-full text-xs text-left text-slate-300 align-middle">
               <thead>
-                <tr class="text-slate-500 border-b border-white/5 pb-2">
-                  <th class="pb-2.5">ID</th>
-                  <th class="pb-2.5">Name</th>
-                  <th class="pb-2.5">Nickname</th>
-                  <th class="pb-2.5">Email / Username</th>
-                  <th class="pb-2.5">Role</th>
-                  <th class="pb-2.5">Status</th>
-                  <th class="pb-2.5 text-right">Actions</th>
+                <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
+                  <th class="pb-3 pt-2 font-semibold">ID</th>
+                  <th class="pb-3 pt-2 font-semibold">Name</th>
+                  <th class="pb-3 pt-2 font-semibold">Nickname</th>
+                  <th class="pb-3 pt-2 font-semibold">Email / Username</th>
+                  <th class="pb-3 pt-2 font-semibold">Role</th>
+                  <th class="pb-3 pt-2 font-semibold">Status</th>
+                  <th class="pb-3 pt-2 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody id="tech-list-body">
+              <tbody id="tech-list-body" class="divide-y divide-white/5">
                 <tr>
-                  <td colspan="7" class="py-4 text-center text-slate-600">
-                    Loading user accounts list...
-                  </td>
+                  <td colspan="7" class="py-12 text-center text-slate-600">Loading user accounts...</td>
                 </tr>
               </tbody>
             </table>
@@ -260,22 +226,8 @@
         style="background: rgba(0, 0, 0, 0.15)"
       >
         <div class="flex items-center gap-3">
-          <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
-            style="
-              background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.1));
-              border: 1px solid rgba(245, 158, 11, 0.3);
-            "
-          >
-            <svg
-              class="w-4 h-4 text-amber-500"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <line x1="19" y1="8" x2="19" y2="14" />
@@ -283,149 +235,59 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Add User / Technician</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
-              Register new team member local credentials profile
-            </p>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Add User / Technician</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Register new team member credentials</p>
           </div>
         </div>
       </div>
 
       <!-- Form View -->
       <div class="flex-1 overflow-y-auto p-5 max-w-xl">
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
+        <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
           <form method="POST" onsubmit="submitNewUser(event)" class="space-y-3">
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Technician ID (Optional)</label
-              >
-              <input
-                name="new-user-id"
-                type="text"
-                id="new-user-id"
-                placeholder="e.g. TECH-101 (Leave blank to auto-generate)"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Technician ID (Optional)</label>
+              <input name="new-user-id" type="text" id="new-user-id" placeholder="e.g. TECH-101 (Leave blank to auto-generate)" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Username</label
-              >
-              <input
-                name="new-user-username"
-                type="text"
-                id="new-user-username"
-                required
-                placeholder="e.g. jdoe"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Username</label>
+              <input name="new-user-username" type="text" id="new-user-username" required placeholder="e.g. jdoe" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Password</label
-              >
-              <input
-                name="new-user-password"
-                type="password"
-                id="new-user-password"
-                required
-                placeholder="••••••••"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Password</label>
+              <input name="new-user-password" type="password" id="new-user-password" required placeholder="••••••••" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Full Name</label
-              >
-              <input
-                name="new-user-name"
-                type="text"
-                id="new-user-name"
-                required
-                placeholder="e.g. John Doe"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Full Name</label>
+              <input name="new-user-name" type="text" id="new-user-name" required placeholder="e.g. John Doe" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Nickname (for AI Dispatch)</label
-              >
-              <input
-                name="new-user-nickname"
-                type="text"
-                id="new-user-nickname"
-                placeholder="e.g. Nyi Nyi"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Nickname (for AI Dispatch)</label>
+              <input name="new-user-nickname" type="text" id="new-user-nickname" placeholder="e.g. Nyi Nyi" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Role</label
-              >
-              <select
-                name="new-user-role"
-                id="new-user-role"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-semibold"
-              >
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Role</label>
+              <select name="new-user-role" id="new-user-role" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white font-semibold focus:outline-none focus:border-amber-500 transition-all">
                 <!-- Populated dynamically -->
               </select>
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Phone (Optional)</label
-              >
-              <input
-                name="new-user-phone"
-                type="text"
-                id="new-user-phone"
-                placeholder="e.g. +9591234567"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Phone (Optional)</label>
+              <input name="new-user-phone" type="text" id="new-user-phone" placeholder="e.g. +9591234567" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-amber-500 transition-all" />
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Email (Optional)</label
-              >
-              <input
-                name="new-user-email"
-                type="email"
-                id="new-user-email"
-                placeholder="e.g. jdoe@example.com"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Email (Optional)</label>
+              <input name="new-user-email" type="email" id="new-user-email" placeholder="e.g. jdoe@example.com" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Telegram Username (Optional)</label
-              >
-              <input
-                name="new-user-telegram-username"
-                type="text"
-                id="new-user-telegram-username"
-                placeholder="e.g. nyinyi_tech"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Telegram Username (Optional)</label>
+              <input name="new-user-telegram-username" type="text" id="new-user-telegram-username" placeholder="e.g. nyinyi_tech" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-amber-500 transition-all" />
             </div>
             <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Login PIN (4-6 digits)</label
-              >
-              <input
-                name="new-user-pin"
-                type="text"
-                id="new-user-pin"
-                required
-                pattern="[0-9]*"
-                inputmode="numeric"
-                maxlength="6"
-                placeholder="e.g. 1234"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-              />
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Login PIN (4-6 digits)</label>
+              <input name="new-user-pin" type="text" id="new-user-pin" required pattern="[0-9]*" inputmode="numeric" maxlength="6" placeholder="e.g. 1234" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
             </div>
-            <button
-              type="submit"
-              class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/10"
-            >
+            <button type="submit" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3.5 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/20 mt-2">
               Create Account
             </button>
           </form>
@@ -441,113 +303,88 @@
         style="background: rgba(0, 0, 0, 0.15)"
       >
         <div class="flex items-center gap-3">
-          <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
-            style="
-              background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
-              border: 1px solid rgba(16, 185, 129, 0.3);
-            "
-          >
-            <svg
-              class="w-4 h-4 text-emerald-400"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+          <div class="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">
-              Role Permission Configurations
-            </h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
-              Manage global user roles and configure dynamic module access controls
-            </p>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Role Permissions</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Manage user roles and access controls</p>
           </div>
         </div>
+        <button
+          onclick="saveRbacPermissions()"
+          class="bg-emerald-600 hover:bg-emerald-500 text-xs font-bold px-5 py-2.5 rounded-xl text-white transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+          Save Permissions
+        </button>
       </div>
 
       <!-- Double-Split Workspace -->
       <div class="flex-1 flex overflow-hidden">
-        <!-- Left Sidebar: Active Roles list and Quick Add Role Form -->
+        <!-- Left Sidebar: Roles list and Add Role -->
         <div
           class="w-56 shrink-0 border-r border-white/5 p-4 flex flex-col gap-4 overflow-y-auto"
           style="background: rgba(0, 0, 0, 0.1)"
         >
           <div class="space-y-2">
-            <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest px-1">
-              Global Roles
-            </p>
+            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-1">Global Roles</p>
             <div id="rbac-roles-list" class="space-y-1">
               <!-- Populated dynamically -->
             </div>
           </div>
 
           <!-- Add Role Card -->
-          <div class="glass-panel p-3.5 rounded-xl border border-white/5 space-y-3 mt-2">
-            <p class="text-[8px] font-black text-amber-500 uppercase tracking-widest">
-              Create Custom Role
+          <div class="glass-panel p-4 rounded-xl border border-white/5 space-y-3 mt-2">
+            <p class="text-[10px] font-bold text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+              Create Role
             </p>
             <div class="space-y-1">
-              <label class="block text-[8px] text-slate-400 uppercase tracking-widest"
-                >Role Name</label
-              >
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest">Role Name</label>
               <input
                 type="text"
                 id="new-role-name"
                 placeholder="e.g. Manager"
-                class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                class="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
               />
             </div>
             <button
               onclick="createNewRbacRole()"
-              class="w-full bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold py-1.5 rounded-lg text-white uppercase tracking-wider transition"
+              class="w-full bg-amber-600 hover:bg-amber-500 text-[10px] font-bold py-2 rounded-lg text-white uppercase tracking-wider transition-all"
             >
               Add Role
             </button>
           </div>
         </div>
 
-        <!-- Right Workspace: Permissions Config Matrix -->
+        <!-- Right Workspace: Permissions Matrix -->
         <div class="flex-1 p-5 overflow-y-auto space-y-4">
           <div class="flex justify-between items-center">
             <div>
-              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Active Configuration Target
-              </h3>
-              <h2
-                id="rbac-active-role-title"
-                class="text-base font-black text-white uppercase mt-0.5"
-              >
-                Select a Role
-              </h2>
+              <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Active Configuration</h3>
+              <h2 id="rbac-active-role-title" class="text-xl font-black text-white uppercase mt-0.5">Select a Role</h2>
             </div>
-            <button
-              onclick="saveRbacPermissions()"
-              class="bg-emerald-600 hover:bg-emerald-500 text-xs font-bold px-4 py-2 rounded-xl text-white transition-all shadow-md"
-            >
-              💾 Save Role Access Policy
-            </button>
           </div>
 
-          <div class="glass-panel p-5 rounded-2xl">
-            <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-2">
+          <div class="glass-panel rounded-2xl overflow-hidden">
+            <div class="p-4 pb-0">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider">Permission Matrix</h3>
+              <p class="text-[10px] text-slate-500 mt-1">Configure read/write access per module</p>
+            </div>
+            <div class="overflow-x-auto p-4">
               <table class="w-full text-xs text-left text-slate-300 align-middle">
                 <thead>
-                  <tr
-                    class="text-slate-500 border-b border-white/5 font-semibold uppercase tracking-wider"
-                  >
-                    <th class="py-2.5 px-3">System Module / Area</th>
-                    <th class="py-2.5 px-3 text-center">🟢 Read/Write</th>
-                    <th class="py-2.5 px-3 text-center">🟡 Read-Only</th>
-                    <th class="py-2.5 px-3 text-center">🔴 No Access</th>
+                  <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
+                    <th class="pb-3 pt-2 font-semibold">System Module</th>
+                    <th class="pb-3 pt-2 font-semibold text-center">Read/Write</th>
+                    <th class="pb-3 pt-2 font-semibold text-center">Read-Only</th>
+                    <th class="pb-3 pt-2 font-semibold text-center">No Access</th>
                   </tr>
                 </thead>
-                <tbody id="rbac-matrix-body">
+                <tbody id="rbac-matrix-body" class="divide-y divide-white/5">
                   <!-- Modules generated in JS -->
                 </tbody>
               </table>
@@ -555,15 +392,13 @@
           </div>
 
           <div class="flex justify-between items-center pt-2">
-            <p class="text-[9px] text-slate-500">
-              Note: Default "Admin" role permissions cannot be deleted or downgraded.
-            </p>
+            <p class="text-[10px] text-slate-500">Default "Admin" role cannot be deleted or downgraded.</p>
             <button
               id="btn-delete-active-role"
               onclick="deleteActiveRbacRole()"
-              class="bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-400 text-[10px] font-bold px-3 py-1.5 rounded-lg transition hidden"
+              class="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-[10px] font-bold px-3 py-1.5 rounded-lg transition hidden"
             >
-              🗑 Delete Selected Role
+              Delete Role
             </button>
           </div>
         </div>
@@ -576,7 +411,7 @@
     id="edit-tech-modal"
     class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
   >
-    <div class="glass-panel p-6 rounded-2xl max-w-sm w-full space-y-4">
+    <div class="glass-panel rounded-2xl overflow-hidden max-w-sm w-full space-y-4">
       <h2 class="text-sm font-bold text-white uppercase tracking-wider">Edit Technician Account</h2>
       <form
         method="POST"

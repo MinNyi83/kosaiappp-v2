@@ -12,7 +12,7 @@ function register(router, env) {
   // ── POST /api/telegram/webhook ────────────────────────────────────────
   router.post('/api/telegram/webhook', async (request) => {
     try {
-      const update = (await request.json() as any);
+      const update = (await request.json()) as any;
 
       // Handle callback queries (button presses)
       if (update.callback_query) {
@@ -40,6 +40,24 @@ function register(router, env) {
         return success({ ok: true });
       }
 
+      // Handle voice messages
+      if (update.message && update.message.voice) {
+        const chatId = update.message.chat.id;
+        const from = update.message.from;
+        const voice = update.message.voice;
+        await handleVoiceMessage(chatId, voice, from, db, env);
+        return success({ ok: true });
+      }
+
+      // Handle photo messages
+      if (update.message && update.message.photo) {
+        const chatId = update.message.chat.id;
+        const from = update.message.from;
+        const photo = update.message.photo[update.message.photo.length - 1];
+        await handlePhotoMessage(chatId, photo, from, db, env);
+        return success({ ok: true });
+      }
+
       return success({ ok: true });
     } catch (err) {
       console.error('Telegram webhook error:', err);
@@ -55,7 +73,7 @@ function register(router, env) {
       const user = await verifyToken(authHeader.slice(7));
       if (!user) return error('Unauthorized', 401);
 
-      const { chat_id, text, parse_mode } = (await request.json() as any);
+      const { chat_id, text, parse_mode } = (await request.json()) as any;
       if (!chat_id || !text) return error('Missing chat_id or text', 400);
 
       const result = await sendTelegramMessage(env, chat_id, text);
@@ -75,7 +93,9 @@ async function resolveTech(from, db) {
 
   const username = (from.username || '').replace(/^@/, '');
   const techByName = await db
-    .prepare("SELECT id, name FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)")
+    .prepare(
+      "SELECT id, name FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)"
+    )
     .bind(username)
     .first();
   return techByName || null;
@@ -89,7 +109,20 @@ function fmtTime(iso: string | null | undefined): string {
 function fmtDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
@@ -119,7 +152,9 @@ async function handleCommand(chatId, command, from, db, env) {
       } else if (record && record.clock_in && record.clock_out) {
         const ci = fmtTime(record.clock_in);
         const co = fmtTime(record.clock_out);
-        const mins = Math.round((new Date(record.clock_out).getTime() - new Date(record.clock_in).getTime()) / 60000);
+        const mins = Math.round(
+          (new Date(record.clock_out).getTime() - new Date(record.clock_in).getTime()) / 60000
+        );
         const h = Math.floor(mins / 60);
         const m = mins % 60;
         msg += `Status: Clocked Out\n`;
@@ -145,7 +180,9 @@ async function handleCommand(chatId, command, from, db, env) {
       if (jobs.results.length === 0) return 'No active jobs assigned to you.';
       return (
         '*Your Active Jobs:*\n\n' +
-        jobs.results.map((j) => `• #${j.id}: ${j.job_description?.substring(0, 50)} [${j.status}]`).join('\n')
+        jobs.results
+          .map((j) => `• #${j.id}: ${j.job_description?.substring(0, 50)} [${j.status}]`)
+          .join('\n')
       );
     },
     '/completed': async () => {
@@ -160,7 +197,11 @@ async function handleCommand(chatId, command, from, db, env) {
       if (jobs.results.length === 0) return 'No completed jobs found.';
       return (
         '*Your Completed Jobs:*\n\n' +
-        jobs.results.map((j) => `• #${j.id}: ${j.job_description?.substring(0, 50)} (${j.completed_at || 'N/A'})`).join('\n')
+        jobs.results
+          .map(
+            (j) => `• #${j.id}: ${j.job_description?.substring(0, 50)} (${j.completed_at || 'N/A'})`
+          )
+          .join('\n')
       );
     },
     '/today': async () => {
@@ -194,8 +235,11 @@ async function handleCommand(chatId, command, from, db, env) {
       if (jobs.results.length === 0) {
         msg += 'Jobs: None today';
       } else {
-        msg += `Jobs (${jobs.results.length}):\n` +
-          jobs.results.map((j) => `• #${j.id}: ${j.job_description?.substring(0, 40)} [${j.status}]`).join('\n');
+        msg +=
+          `Jobs (${jobs.results.length}):\n` +
+          jobs.results
+            .map((j) => `• #${j.id}: ${j.job_description?.substring(0, 40)} [${j.status}]`)
+            .join('\n');
       }
       return msg;
     },
@@ -209,7 +253,9 @@ async function handleCommand(chatId, command, from, db, env) {
         .bind(tech.id)
         .first();
       const clockStatus = attendance
-        ? (attendance.clock_out ? `Clocked out at ${attendance.clock_out}` : `Clocked in at ${attendance.clock_in}`)
+        ? attendance.clock_out
+          ? `Clocked out at ${attendance.clock_out}`
+          : `Clocked in at ${attendance.clock_in}`
         : 'Not clocked in today';
       const activeJobs = await db
         .prepare(
@@ -218,9 +264,7 @@ async function handleCommand(chatId, command, from, db, env) {
         .bind(tech.id)
         .first();
       return (
-        `*${tech.name}*\n\n` +
-        `Clock: ${clockStatus}\n` +
-        `Active jobs: ${activeJobs?.cnt || 0}`
+        `*${tech.name}*\n\n` + `Clock: ${clockStatus}\n` + `Active jobs: ${activeJobs?.cnt || 0}`
       );
     },
     '/checkin': async () => {
@@ -268,14 +312,17 @@ async function handleCommand(chatId, command, from, db, env) {
       if (!jobId) return 'Usage: /ticket JOB-xxx';
       const record = await db
         .prepare(
-          "SELECT id, job_description, service_type, status, technician_id, company_name, client_name, client_phone, address, checklist_data, created_at FROM service_records WHERE id = ?"
+          'SELECT id, job_description, service_type, status, technician_id, company_name, client_name, client_phone, address, checklist_data, created_at FROM service_records WHERE id = ?'
         )
         .bind(jobId)
         .first();
       if (!record) return 'Job not found.';
       let techName = 'Unassigned';
       if (record.technician_id) {
-        const t = await db.prepare('SELECT name FROM technicians WHERE id = ?').bind(record.technician_id).first();
+        const t = await db
+          .prepare('SELECT name FROM technicians WHERE id = ?')
+          .bind(record.technician_id)
+          .first();
         if (t) techName = t.name;
       }
       let checklist = '';
@@ -294,7 +341,8 @@ async function handleCommand(chatId, command, from, db, env) {
         `Company: ${record.company_name || 'N/A'}\n` +
         `Client: ${record.client_name || 'N/A'} ${record.client_phone || ''}\n` +
         `Address: ${record.address || 'N/A'}` +
-        checklist + '\n' +
+        checklist +
+        '\n' +
         `Created: ${record.created_at || 'N/A'}\n\n` +
         `Description:\n${(record.job_description || 'N/A').substring(0, 200)}`
       );
@@ -306,14 +354,16 @@ async function handleCommand(chatId, command, from, db, env) {
       const tech = await resolveTech(from, db);
       if (!tech) return 'You are not registered as a technician. Contact your admin.';
       const job = await db
-        .prepare("SELECT id, status, technician_id FROM service_records WHERE id = ?")
+        .prepare('SELECT id, status, technician_id FROM service_records WHERE id = ?')
         .bind(jobId)
         .first();
       if (!job) return 'Job not found.';
       if (job.status === 'Completed') return 'Job is already completed.';
       if (job.status === 'Cancelled') return 'Job is already cancelled.';
       await db
-        .prepare("UPDATE service_records SET status = 'In Progress', technician_id = ?, updated_at = datetime('now') WHERE id = ?")
+        .prepare(
+          "UPDATE service_records SET status = 'In Progress', technician_id = ?, updated_at = datetime('now') WHERE id = ?"
+        )
         .bind(tech.id, jobId)
         .run();
       return `Job #${jobId} accepted! You are now assigned to this job.`;
@@ -324,19 +374,21 @@ async function handleCommand(chatId, command, from, db, env) {
       const jobId = args[0];
       const techQuery = args.slice(1).join(' ');
       const job = await db
-        .prepare("SELECT id, status FROM service_records WHERE id = ?")
+        .prepare('SELECT id, status FROM service_records WHERE id = ?')
         .bind(jobId)
         .first();
       if (!job) return 'Job not found.';
       const targetTech = await db
         .prepare(
-          "SELECT id, name FROM technicians WHERE id = ? OR LOWER(name) = LOWER(?) OR LOWER(nickname) = LOWER(?)"
+          'SELECT id, name FROM technicians WHERE id = ? OR LOWER(name) = LOWER(?) OR LOWER(nickname) = LOWER(?)'
         )
         .bind(techQuery, techQuery, techQuery)
         .first();
       if (!targetTech) return 'Technician not found.';
       await db
-        .prepare("UPDATE service_records SET technician_id = ?, status = CASE WHEN status = 'Pending' THEN 'In Progress' ELSE status END WHERE id = ?")
+        .prepare(
+          "UPDATE service_records SET technician_id = ?, status = CASE WHEN status = 'Pending' THEN 'In Progress' ELSE status END WHERE id = ?"
+        )
         .bind(targetTech.id, jobId)
         .run();
       return `Job #${jobId} assigned to ${targetTech.name}.`;
@@ -346,7 +398,7 @@ async function handleCommand(chatId, command, from, db, env) {
       const jobId = args[0];
       if (!jobId) return 'Usage: /cancel JOB-xxx';
       const job = await db
-        .prepare("SELECT id, status FROM service_records WHERE id = ?")
+        .prepare('SELECT id, status FROM service_records WHERE id = ?')
         .bind(jobId)
         .first();
       if (!job) return 'Job not found.';
@@ -415,13 +467,19 @@ async function handleCommand(chatId, command, from, db, env) {
         )
         .all();
       if (records.results.length === 0) return 'No attendance records for the past 7 days.';
-      const techMap: Record<string, { name: string; nickname: string | null; totalMins: number; days: number }> = {};
+      const techMap: Record<
+        string,
+        { name: string; nickname: string | null; totalMins: number; days: number }
+      > = {};
       for (const r of records.results as any[]) {
         const key = r.name;
-        if (!techMap[key]) techMap[key] = { name: r.name, nickname: r.nickname, totalMins: 0, days: 0 };
+        if (!techMap[key])
+          techMap[key] = { name: r.name, nickname: r.nickname, totalMins: 0, days: 0 };
         if (r.clock_in && r.clock_out) {
-          const inMin = parseInt(r.clock_in.slice(11, 13)) * 60 + parseInt(r.clock_in.slice(14, 16));
-          const outMin = parseInt(r.clock_out.slice(11, 13)) * 60 + parseInt(r.clock_out.slice(14, 16));
+          const inMin =
+            parseInt(r.clock_in.slice(11, 13)) * 60 + parseInt(r.clock_in.slice(14, 16));
+          const outMin =
+            parseInt(r.clock_out.slice(11, 13)) * 60 + parseInt(r.clock_out.slice(14, 16));
           if (outMin >= inMin) {
             techMap[key].totalMins += outMin - inMin;
             techMap[key].days++;
@@ -456,7 +514,9 @@ async function handleCommand(chatId, command, from, db, env) {
         const co = fmtTime(r.clock_out);
         let dur = '';
         if (r.clock_in && r.clock_out) {
-          const mins = Math.round((new Date(r.clock_out).getTime() - new Date(r.clock_in).getTime()) / 60000);
+          const mins = Math.round(
+            (new Date(r.clock_out).getTime() - new Date(r.clock_in).getTime()) / 60000
+          );
           dur = ` (${Math.floor(mins / 60)}h ${mins % 60}m)`;
         }
         return `${day}: ${ci} -> ${co}${dur}`;
@@ -494,7 +554,9 @@ async function handleCallbackQuery(chatId, data, from, db, env) {
       const tech = await resolveTech(from, db);
       if (tech) {
         await db
-          .prepare("UPDATE service_records SET status = 'In Progress', technician_id = ? WHERE id = ?")
+          .prepare(
+            "UPDATE service_records SET status = 'In Progress', technician_id = ? WHERE id = ?"
+          )
           .bind(tech.id, jobId)
           .run();
         reply = `Job #${jobId} accepted!`;
@@ -504,7 +566,10 @@ async function handleCallbackQuery(chatId, data, from, db, env) {
       break;
     }
     case 'complete_job':
-      await db.prepare("UPDATE service_records SET status = 'Completed' WHERE id = ?").bind(jobId).run();
+      await db
+        .prepare("UPDATE service_records SET status = 'Completed' WHERE id = ?")
+        .bind(jobId)
+        .run();
       reply = `Job #${jobId} marked as completed.`;
       break;
     default:
@@ -525,7 +590,9 @@ async function handleJobCreation(chatId, text, from, db, env) {
   } else {
     const username = (from.username || '').replace(/^@/, '');
     const techByName = await db
-      .prepare("SELECT id FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)")
+      .prepare(
+        "SELECT id FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)"
+      )
       .bind(username)
       .first();
     if (!techByName) {
@@ -553,6 +620,134 @@ async function handleJobCreation(chatId, text, from, db, env) {
   );
 }
 
+async function handleVoiceMessage(chatId, voice, from, db, env) {
+  if (!env.GEMINI_API_KEY) {
+    await sendTelegramMessage(env, chatId, '❌ Voice transcription not configured. Contact admin.');
+    return;
+  }
+
+  try {
+    // Step 1: Get file info from Telegram
+    const fileRes = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${voice.file_id}`);
+    const fileData = (await fileRes.json()) as { ok: boolean; result?: { file_path: string } };
+    if (!fileData.ok || !fileData.result) throw new Error('Failed to get voice file info');
+
+    const filePath = fileData.result.file_path;
+    const fileUrl = `https://api.telegram.org/file/bot${env.TELEGRAM_BOT_TOKEN}/${filePath}`;
+
+    // Step 2: Download the voice file
+    const audioRes = await fetch(fileUrl);
+    if (!audioRes.ok) throw new Error('Failed to download voice file');
+    const audioBuffer = await audioRes.arrayBuffer();
+
+    // Step 3: Transcribe using Gemini
+    // Use chunked base64 encoding to avoid stack overflow on large files
+    const audioBytes = new Uint8Array(audioBuffer);
+    let base64Audio = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < audioBytes.length; i += chunkSize) {
+      base64Audio += String.fromCharCode(...audioBytes.subarray(i, i + chunkSize));
+    }
+    base64Audio = btoa(base64Audio);
+    
+    const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: 'Transcribe this spoken technical issue or service complaint into plain English text. Do not summarize, output only the transcribed text.' },
+            { inline_data: { mime_type: 'audio/ogg', data: base64Audio } }
+          ]
+        }]
+      })
+    });
+
+    const geminiData = (await geminiRes.json()) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+    const transcription = geminiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+    if (!transcription) {
+      await sendTelegramMessage(env, chatId, '❌ Could not transcribe voice message. Please try again or send text.');
+      return;
+    }
+
+    // Step 4: Send transcription confirmation
+    await sendTelegramMessage(env, chatId, `🎤 *Voice Transcribed:*\n\n${transcription}\n\n⏳ Creating job ticket...`);
+
+    // Step 5: AI auto-dispatch - find best technician
+    await handleJobCreation(chatId, transcription, from, db, env);
+
+  } catch (err) {
+    console.error('Voice message handling error:', err);
+    await sendTelegramMessage(env, chatId, `❌ Voice processing failed: ${err.message}`);
+  }
+}
+
+async function handlePhotoMessage(chatId, photo, from, db, env) {
+  try {
+    // Get file info
+    const fileRes = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${photo.file_id}`);
+    const fileData = (await fileRes.json()) as { ok: boolean; result?: { file_path: string } };
+    if (!fileData.ok || !fileData.result) throw new Error('Failed to get photo file info');
+
+    const filePath = fileData.result.file_path;
+    const fileUrl = `https://api.telegram.org/file/bot${env.TELEGRAM_BOT_TOKEN}/${filePath}`;
+
+    // Download photo
+    const photoRes = await fetch(fileUrl);
+    if (!photoRes.ok) throw new Error('Failed to download photo');
+    const photoBuffer = await photoRes.arrayBuffer();
+
+    // Generate job ID first
+    const id = 'JOB-TG-' + Date.now().toString(36).toUpperCase();
+
+    // Upload to Google Drive (using existing utility)
+    const { uploadFileToGoogleDrive } = await import('../utils/google.js');
+    const driveFileId = await uploadFileToGoogleDrive(env, new Blob([photoBuffer], { type: 'image/jpeg' }), `telegram_photo_${Date.now()}.jpg`, 'Telegram Client', id);
+    const driveResult = driveFileId ? { webViewLink: `https://drive.google.com/file/d/${driveFileId}/view` } : null;
+
+    // Create job with photo reference
+    let techId = null;
+    const tech = await db
+      .prepare('SELECT id FROM technicians WHERE id = ?')
+      .bind(from.id.toString())
+      .first();
+    if (tech) {
+      techId = tech.id;
+    } else {
+      const username = (from.username || '').replace(/^@/, '');
+      const techByName = await db
+        .prepare(
+          "SELECT id FROM technicians WHERE LOWER(REPLACE(telegram_username, '@', '')) = LOWER(?)"
+        )
+        .bind(username)
+        .first();
+      if (!techByName) {
+        await sendTelegramMessage(env, chatId, 'You are not registered as a technician. Contact your admin.');
+        return;
+      }
+      techId = techByName.id;
+    }
+
+    await db
+      .prepare(
+        "INSERT INTO service_records (id, technician_id, service_type, status, job_description, before_photo) VALUES (?, ?, 'General Maintenance', 'Pending', ?, ?)"
+      )
+      .bind(id, techId, 'Photo uploaded via Telegram', driveResult.webViewLink || fileUrl)
+      .run();
+
+    await sendTelegramMessage(
+      env,
+      chatId,
+      `📸 *Photo Received & Job Created*\n\n#${id}\nPhoto saved to Google Drive.\n\nDescription: Photo uploaded via Telegram`
+    );
+
+  } catch (err) {
+    console.error('Photo message handling error:', err);
+    await sendTelegramMessage(env, chatId, `❌ Photo processing failed: ${err.message}`);
+  }
+}
+
 function getHelpText() {
   return (
     '🤖 *Awesome Myanmar Bot*\n\n' +
@@ -571,7 +766,7 @@ function getHelpText() {
     '*Jobs*\n' +
     '/jobs - List your active jobs\n' +
     '/completed - List your completed jobs\n' +
-    '/today - Show today\'s jobs & attendance\n' +
+    "/today - Show today's jobs & attendance\n" +
     '/ticket JOB-xxx - View job details\n\n' +
     '*Actions*\n' +
     '/accept JOB-xxx - Accept a job assignment\n' +
@@ -582,4 +777,3 @@ function getHelpText() {
 }
 
 export { register };
-

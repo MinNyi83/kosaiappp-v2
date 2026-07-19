@@ -15,7 +15,7 @@ let activeSessionToken = null;
 let activeCanvases = {};
 
 function authHeaders() {
-  return activeSessionToken ? { 'Authorization': 'Bearer ' + activeSessionToken } : {};
+  return activeSessionToken ? { Authorization: 'Bearer ' + activeSessionToken } : {};
 }
 
 // Restore session from localStorage on page load
@@ -25,7 +25,12 @@ function authHeaders() {
     activeSessionToken = saved;
     try {
       const payload = JSON.parse(atob(saved.split('.')[1]));
-      activeSessionUser = { id: payload.id, name: payload.name, role: payload.role, email: payload.email };
+      activeSessionUser = {
+        id: payload.id,
+        name: payload.name,
+        role: payload.role,
+        email: payload.email,
+      };
     } catch (e) {
       localStorage.removeItem('gate_pass_token');
       activeSessionToken = null;
@@ -112,7 +117,9 @@ async function fetchJobs() {
     const jobs = result.data.jobs || result.data || [];
     localStorage.setItem('cached_jobs', JSON.stringify(jobs));
     try {
-      const invRes = await fetch(`${API_BASE_URL}/api/admin/inventory/list`, { headers: authHeaders() });
+      const invRes = await fetch(`${API_BASE_URL}/api/admin/inventory/list`, {
+        headers: authHeaders(),
+      });
       if (invRes.ok) {
         const invResult = await invRes.json();
         const invList = invResult.data || [];

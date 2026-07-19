@@ -42,15 +42,15 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
-      const status    = url.searchParams.get('status');
-      const techId    = url.searchParams.get('technician_id');
-      const clientId  = url.searchParams.get('client_id');
-      const dateFrom  = url.searchParams.get('date_from');
-      const dateTo    = url.searchParams.get('date_to');
-      const search    = url.searchParams.get('search');
-      const page      = parseInt(url.searchParams.get('page') || '1');
-      const limit     = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
-      const offset    = (page - 1) * limit;
+      const status = url.searchParams.get('status');
+      const techId = url.searchParams.get('technician_id');
+      const clientId = url.searchParams.get('client_id');
+      const dateFrom = url.searchParams.get('date_from');
+      const dateTo = url.searchParams.get('date_to');
+      const search = url.searchParams.get('search');
+      const page = parseInt(url.searchParams.get('page') || '1');
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+      const offset = (page - 1) * limit;
 
       let where = 'WHERE 1=1';
       const params: any[] = [];
@@ -58,37 +58,51 @@ function register(router, env) {
       const countParams: any[] = [];
 
       if (status) {
-        where += ' AND j.status = ?';       params.push(status);
-        countWhere += ' AND j.status = ?';  countParams.push(status);
+        where += ' AND j.status = ?';
+        params.push(status);
+        countWhere += ' AND j.status = ?';
+        countParams.push(status);
       }
       if (techId) {
-        where += ' AND j.technician_id = ?';      params.push(techId);
-        countWhere += ' AND j.technician_id = ?'; countParams.push(techId);
+        where += ' AND j.technician_id = ?';
+        params.push(techId);
+        countWhere += ' AND j.technician_id = ?';
+        countParams.push(techId);
       }
       if (clientId) {
-        where += ' AND j.client_id = ?';      params.push(clientId);
-        countWhere += ' AND j.client_id = ?'; countParams.push(clientId);
+        where += ' AND j.client_id = ?';
+        params.push(clientId);
+        countWhere += ' AND j.client_id = ?';
+        countParams.push(clientId);
       }
       if (dateFrom) {
-        where += ' AND j.created_at >= ?';      params.push(dateFrom);
-        countWhere += ' AND j.created_at >= ?'; countParams.push(dateFrom);
+        where += ' AND j.created_at >= ?';
+        params.push(dateFrom);
+        countWhere += ' AND j.created_at >= ?';
+        countParams.push(dateFrom);
       }
       if (dateTo) {
-        where += ' AND j.created_at <= ?';      params.push(dateTo);
-        countWhere += ' AND j.created_at <= ?'; countParams.push(dateTo);
+        where += ' AND j.created_at <= ?';
+        params.push(dateTo);
+        countWhere += ' AND j.created_at <= ?';
+        countParams.push(dateTo);
       }
       if (search) {
         const like = `%${search}%`;
-        where += ' AND (j.id LIKE ? OR j.service_type LIKE ? OR j.job_description LIKE ? OR c.company_name LIKE ?)';
+        where +=
+          ' AND (j.id LIKE ? OR j.service_type LIKE ? OR j.job_description LIKE ? OR c.company_name LIKE ?)';
         params.push(like, like, like, like);
-        countWhere += ' AND (j.id LIKE ? OR j.service_type LIKE ? OR j.job_description LIKE ? OR c.company_name LIKE ?)';
+        countWhere +=
+          ' AND (j.id LIKE ? OR j.service_type LIKE ? OR j.job_description LIKE ? OR c.company_name LIKE ?)';
         countParams.push(like, like, like, like);
       }
 
       // Non-admin see only their own jobs
       if (user.role?.toLowerCase() !== 'admin') {
-        where += ' AND j.technician_id = ?';      params.push(user.id);
-        countWhere += ' AND j.technician_id = ?'; countParams.push(user.id);
+        where += ' AND j.technician_id = ?';
+        params.push(user.id);
+        countWhere += ' AND j.technician_id = ?';
+        countParams.push(user.id);
       }
 
       const query = BASE_SELECT + where + ' ORDER BY j.created_at DESC LIMIT ? OFFSET ?';
@@ -97,8 +111,14 @@ function register(router, env) {
       const countQuery = `SELECT COUNT(*) as total FROM service_records j LEFT JOIN clients c ON j.client_id = c.id ${countWhere}`;
 
       const [jobsResult, countResult] = await Promise.all([
-        db.prepare(query).bind(...params).all(),
-        db.prepare(countQuery).bind(...countParams).first(),
+        db
+          .prepare(query)
+          .bind(...params)
+          .all(),
+        db
+          .prepare(countQuery)
+          .bind(...countParams)
+          .first(),
       ]);
 
       return success({
@@ -146,13 +166,19 @@ function register(router, env) {
 
       const url = new URL(request.url);
       const dateFrom = url.searchParams.get('date_from') || new Date().toISOString().split('T')[0];
-      const dateTo   = url.searchParams.get('date_to');
+      const dateTo = url.searchParams.get('date_to');
 
       let where = 'WHERE j.created_at >= ?';
       const params: any[] = [dateFrom];
 
-      if (dateTo)  { where += ' AND j.created_at <= ?'; params.push(dateTo); }
-      if (user.role?.toLowerCase() !== 'admin') { where += ' AND j.technician_id = ?'; params.push(user.id); }
+      if (dateTo) {
+        where += ' AND j.created_at <= ?';
+        params.push(dateTo);
+      }
+      if (user.role?.toLowerCase() !== 'admin') {
+        where += ' AND j.technician_id = ?';
+        params.push(user.id);
+      }
 
       const result = await db
         .prepare(BASE_SELECT + where + ' ORDER BY j.created_at ASC')
@@ -222,7 +248,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { service_type, job_description, client_id, technician_id } = body;
 
       if (!service_type || !client_id || !job_description) {
@@ -250,8 +276,11 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
-      const existing = await db.prepare('SELECT * FROM service_records WHERE id = ?').bind(params.id).first();
+      const body = (await request.json()) as any;
+      const existing = await db
+        .prepare('SELECT * FROM service_records WHERE id = ?')
+        .bind(params.id)
+        .first();
       if (!existing) return error('Job not found', 404);
 
       if (user.role?.toLowerCase() !== 'admin' && existing.technician_id !== user.id) {
@@ -259,9 +288,15 @@ function register(router, env) {
       }
 
       const allowed = [
-        'service_type', 'job_description', 'client_id', 'technician_id',
-        'status', 'technician_notes', 'equipment_used',
-        'arrival_time', 'completion_time',
+        'service_type',
+        'job_description',
+        'client_id',
+        'technician_id',
+        'status',
+        'technician_notes',
+        'equipment_used',
+        'arrival_time',
+        'completion_time',
       ];
       const updates: string[] = [];
       const values: any[] = [];
@@ -275,7 +310,7 @@ function register(router, env) {
 
       if (updates.length === 0) return error('No fields to update', 400);
 
-      updates.push("updated_at = CURRENT_TIMESTAMP");
+      updates.push('updated_at = CURRENT_TIMESTAMP');
       values.push(params.id);
 
       await db
@@ -296,7 +331,10 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
-      const existing = await db.prepare('SELECT id FROM service_records WHERE id = ?').bind(params.id).first();
+      const existing = await db
+        .prepare('SELECT id FROM service_records WHERE id = ?')
+        .bind(params.id)
+        .first();
       if (!existing) return error('Job not found', 404);
 
       await db.prepare('DELETE FROM service_records WHERE id = ?').bind(params.id).run();
@@ -312,7 +350,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { status, notes } = (await request.json() as any);
+      const { status, notes } = (await request.json()) as any;
       if (!status) return error('Missing status', 400);
 
       const validStatuses = ['Pending', 'In Progress', 'Completed', 'Cancelled'];
@@ -320,7 +358,10 @@ function register(router, env) {
         return error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`, 400);
       }
 
-      const existing = await db.prepare('SELECT * FROM service_records WHERE id = ?').bind(params.id).first();
+      const existing = await db
+        .prepare('SELECT * FROM service_records WHERE id = ?')
+        .bind(params.id)
+        .first();
       if (!existing) return error('Job not found', 404);
 
       if (user.role?.toLowerCase() !== 'admin' && existing.technician_id !== user.id) {
@@ -330,7 +371,10 @@ function register(router, env) {
       const updateFields: string[] = ['status = ?', 'updated_at = CURRENT_TIMESTAMP'];
       const updateValues: any[] = [status];
 
-      if (notes) { updateFields.push('technician_notes = ?'); updateValues.push(notes); }
+      if (notes) {
+        updateFields.push('technician_notes = ?');
+        updateValues.push(notes);
+      }
       if (status === 'In Progress' && !existing.arrival_time) {
         updateFields.push('arrival_time = CURRENT_TIMESTAMP');
       }

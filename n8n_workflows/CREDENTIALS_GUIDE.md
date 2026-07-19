@@ -6,16 +6,16 @@ Complete reference for every API key, token, and credential needed across all 13
 
 ## Quick Reference Table
 
-| Credential | Type | Used By | Priority |
-|---|---|---|---|
-| Kosai API Key | HTTP Header | All workflows | REQUIRED |
-| Telegram Bot Token | n8n Credential | All workflows | REQUIRED |
-| Telegram Chat ID | Environment Variable | All workflows | REQUIRED |
+| Credential                 | Type                 | Used By          | Priority |
+| -------------------------- | -------------------- | ---------------- | -------- |
+| Kosai API Key              | HTTP Header          | All workflows    | REQUIRED |
+| Telegram Bot Token         | n8n Credential       | All workflows    | REQUIRED |
+| Telegram Chat ID           | Environment Variable | All workflows    | REQUIRED |
 | Facebook Page Access Token | Environment Variable | WF11, WF12, WF13 | OPTIONAL |
-| Facebook Page ID | Environment Variable | WF13 | OPTIONAL |
-| Facebook Verify Token | Environment Variable | WF11, WF12 | OPTIONAL |
-| Google Sheets OAuth2 | n8n Credential | WF10 | OPTIONAL |
-| SMTP Credentials | Environment Variable | WF05 | OPTIONAL |
+| Facebook Page ID           | Environment Variable | WF13             | OPTIONAL |
+| Facebook Verify Token      | Environment Variable | WF11, WF12       | OPTIONAL |
+| Google Sheets OAuth2       | n8n Credential       | WF10             | OPTIONAL |
+| SMTP Credentials           | Environment Variable | WF05             | OPTIONAL |
 
 ---
 
@@ -24,31 +24,41 @@ Complete reference for every API key, token, and credential needed across all 13
 **Used by:** All 13 workflows
 
 ### What It Is
+
 The JWT secret or API key that authenticates requests to your Kosai Cloudflare Worker API.
 
 ### Where to Find It
+
 In your `.dev.vars` file:
+
 ```
 JWT_SECRET=your_secret_here
 ```
+
 Or if you're using the `ADMIN_SECRET`:
+
 ```
 ADMIN_SECRET=SuperSecureAdminPass123!
 ```
 
 ### How to Configure in n8n
+
 **Option A: Environment Variable (Recommended)**
 Add to n8n environment:
+
 ```
 KOSAI_API_KEY=your_jwt_secret_here
 KOSAI_BASE_URL=https://your-worker.your-subdomain.workers.dev
 ```
+
 Then in each HTTP Request node, the header is already set to:
+
 ```
 Authorization: Bearer {{ $env.KOSAI_API_KEY }}
 ```
 
 **Option B: n8n HTTP Header Auth Credential**
+
 1. Go to **Credentials** → **Add Credential**
 2. Search for **Header Auth**
 3. Name: `Kosai API`
@@ -57,6 +67,7 @@ Authorization: Bearer {{ $env.KOSAI_API_KEY }}
 6. Save
 
 ### Which Workflows Use It
+
 Every workflow with HTTP Request nodes that call your Kosai API.
 
 ---
@@ -66,9 +77,11 @@ Every workflow with HTTP Request nodes that call your Kosai API.
 **Used by:** All 13 workflows
 
 ### What It Is
+
 The API token for your Telegram bot, obtained from @BotFather.
 
 ### How to Get It
+
 1. Open Telegram
 2. Search for `@BotFather`
 3. Send `/newbot`
@@ -78,6 +91,7 @@ The API token for your Telegram bot, obtained from @BotFather.
 7. Copy this token
 
 ### How to Configure in n8n
+
 1. Go to **Credentials** → **Add Credential**
 2. Search for **Telegram**
 3. Name: `Kosai Telegram Bot`
@@ -85,6 +99,7 @@ The API token for your Telegram bot, obtained from @BotFather.
 5. Click **Save**
 
 ### Which Workflows Use It
+
 All 13 workflows — every Telegram node should use this credential.
 
 ---
@@ -94,9 +109,11 @@ All 13 workflows — every Telegram node should use this credential.
 **Used by:** All 13 workflows
 
 ### What It Is
+
 Your personal Telegram chat ID where admin notifications are sent.
 
 ### How to Get It
+
 1. Open Telegram
 2. Search for `@userinfobot`
 3. Send any message (e.g., "hi")
@@ -104,13 +121,16 @@ Your personal Telegram chat ID where admin notifications are sent.
 5. Copy that number
 
 ### How to Configure in n8n
+
 Add to environment variables:
+
 ```
 TELEGRAM_CHAT_ID=5556922076
 TELEGRAM_DEFAULT_CHAT_ID=5556922076
 ```
 
 ### Which Workflows Use It
+
 All 13 workflows — used as the target chat for admin notifications.
 
 ---
@@ -120,9 +140,11 @@ All 13 workflows — used as the target chat for admin notifications.
 **Used by:** WF11, WF12, WF13
 
 ### What It Is
+
 A token that allows n8n to send messages and post to your Facebook Page.
 
 ### How to Get It
+
 1. Go to [Meta for Developers](https://developers.facebook.com)
 2. Create an App → Type: **Business**
 3. In your App, go to **Add Products** → Add **Messenger**
@@ -132,18 +154,23 @@ A token that allows n8n to send messages and post to your Facebook Page.
 7. Copy the token (long string like `EAAI...`)
 
 ### Permissions Required
+
 When generating the token, make sure these permissions are included:
+
 - `pages_messaging` — send/receive messages
 - `pages_manage_posts` — post to page
 - `pages_read_engagement` — read comments/likes
 
 ### How to Configure in n8n
+
 Add to environment variables:
+
 ```
 FB_PAGE_ACCESS_TOKEN=EAAIxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ### Which Workflows Use It
+
 - **WF11** — Send auto-replies to Messenger messages
 - **WF12** — Send welcome messages to new leads
 - **WF13** — Post job completions to your Page
@@ -155,9 +182,11 @@ FB_PAGE_ACCESS_TOKEN=EAAIxxxxxxxxxxxxxxxxxxxxxxx
 **Used by:** WF13
 
 ### What It Is
+
 The unique ID of your Facebook Page.
 
 ### How to Get It
+
 1. Go to your Facebook Page
 2. Click **About**
 3. Scroll to the bottom
@@ -165,12 +194,15 @@ The unique ID of your Facebook Page.
 5. Copy it
 
 ### How to Configure in n8n
+
 Add to environment variables:
+
 ```
 FB_PAGE_ID=123456789012345
 ```
 
 ### Which Workflows Use It
+
 - **WF13** — Posts to this specific Facebook Page
 
 ---
@@ -180,19 +212,24 @@ FB_PAGE_ID=123456789012345
 **Used by:** WF11, WF12
 
 ### What It Is
+
 A custom string you create to verify that webhook requests are really from Facebook.
 
 ### How to Create It
+
 1. Make up any secret string, e.g., `KosaiFB2024!Secure`
 2. Use the same string in both Meta for Developers and n8n
 
 ### How to Configure in n8n
+
 Add to environment variables:
+
 ```
 FB_VERIFY_TOKEN=KosaiFB2024!Secure
 ```
 
 ### How to Configure in Meta for Developers
+
 1. Go to your App → **Messenger** → **Settings**
 2. Under **Webhooks**, click **Subscribe to Events**
 3. Callback URL: `https://your-n8n-url/webhook/kosai/facebook/messenger`
@@ -200,6 +237,7 @@ FB_VERIFY_TOKEN=KosaiFB2024!Secure
 5. Click **Verify and Save**
 
 ### Which Workflows Use It
+
 - **WF11** — Facebook Messenger webhook verification
 - **WF12** — Facebook Lead Ads webhook verification
 
@@ -210,9 +248,11 @@ FB_VERIFY_TOKEN=KosaiFB2024!Secure
 **Used by:** WF10
 
 ### What It Is
+
 OAuth2 credentials that allow n8n to read/write your Google Sheets.
 
 ### How to Get It
+
 1. Go to [Google Cloud Console](https://console.cloud.google.com)
 2. Create a new project (or select existing)
 3. Go to **APIs & Services** → **Library**
@@ -224,6 +264,7 @@ OAuth2 credentials that allow n8n to read/write your Google Sheets.
 9. Copy the **Client ID** and **Client Secret**
 
 ### How to Configure in n8n
+
 1. Go to **Credentials** → **Add Credential**
 2. Search for **Google Sheets OAuth2**
 3. Name: `Google Sheets`
@@ -234,6 +275,7 @@ OAuth2 credentials that allow n8n to read/write your Google Sheets.
 8. Save
 
 ### Which Workflows Use It
+
 - **WF10** — Writes backup data to Google Sheets
 
 ---
@@ -243,39 +285,48 @@ OAuth2 credentials that allow n8n to read/write your Google Sheets.
 **Used by:** WF05 (optional)
 
 ### What It Is
+
 Email server credentials for sending reports via email.
 
 ### How to Get It
+
 Use your email provider's SMTP settings:
 
 **Gmail:**
+
 ```
 Host: smtp.gmail.com
 Port: 587
 User: your-email@gmail.com
 Password: your-app-password (not your regular password)
 ```
+
 To get a Gmail App Password:
+
 1. Go to [Google Account Security](https://myaccount.google.com/security)
 2. Enable 2-Factor Authentication
 3. Go to **App passwords**
 4. Generate one for "Mail"
 
 **Other providers:**
-| Provider | Host | Port |
-|---|---|---|
-| Outlook | smtp.office365.com | 587 |
-| Yahoo | smtp.mail.yahoo.com | 587 |
-| Custom | check with your provider | 587/465 |
+
+| Provider | Host                     | Port    |
+| -------- | ------------------------ | ------- |
+| Outlook  | smtp.office365.com       | 587     |
+| Yahoo    | smtp.mail.yahoo.com      | 587     |
+| Custom   | check with your provider | 587/465 |
 
 ### How to Configure in n8n
+
 Add to environment variables:
+
 ```
 SMTP_FROM=noreply@awesomemyanmar.com
 ADMIN_EMAIL=nyinyimin2007@gmail.com
 ```
 
 ### Which Workflows Use It
+
 - **WF05** — Sends weekly attendance CSV report via email
 
 ---
@@ -308,31 +359,31 @@ ADMIN_EMAIL=nyinyimin2007@gmail.com
 
 ## All n8n Credentials Summary
 
-| Credential Name | Type | Where to Create |
-|---|---|---|
-| Kosai API | Header Auth | n8n → Credentials → Add |
-| Kosai Telegram Bot | Telegram | n8n → Credentials → Add |
-| Google Sheets | OAuth2 | n8n → Credentials → Add |
+| Credential Name    | Type        | Where to Create         |
+| ------------------ | ----------- | ----------------------- |
+| Kosai API          | Header Auth | n8n → Credentials → Add |
+| Kosai Telegram Bot | Telegram    | n8n → Credentials → Add |
+| Google Sheets      | OAuth2      | n8n → Credentials → Add |
 
 ---
 
 ## Workflow → Credential Mapping
 
-| Workflow | Kosai API | Telegram | Facebook | Google Sheets | SMTP |
-|---|---|---|---|---|---|
-| WF01 Job Auto-Assign | YES | YES | - | - | - |
-| WF02 Low Stock Alert | YES | YES | - | - | - |
-| WF03 Client Onboarding | YES | YES | - | - | - |
-| WF04 Invoice Reconciliation | YES | YES | - | - | - |
-| WF05 Attendance Report | YES | YES | - | - | YES |
-| WF06 Notification Hub | - | YES | - | - | - |
-| WF07 Job Status Alert | YES | YES | - | - | - |
-| WF08 Daily Digest | YES | YES | - | - | - |
-| WF09 Expense Approval | YES | YES | - | - | - |
-| WF10 Data Backup | YES | YES | - | YES | - |
-| WF11 FB Messenger | - | YES | YES | - | - |
-| WF12 FB Lead Ads | YES | YES | YES | - | - |
-| WF13 FB Page Post | YES | YES | YES | - | - |
+| Workflow                    | Kosai API | Telegram | Facebook | Google Sheets | SMTP |
+| --------------------------- | --------- | -------- | -------- | ------------- | ---- |
+| WF01 Job Auto-Assign        | YES       | YES      | -        | -             | -    |
+| WF02 Low Stock Alert        | YES       | YES      | -        | -             | -    |
+| WF03 Client Onboarding      | YES       | YES      | -        | -             | -    |
+| WF04 Invoice Reconciliation | YES       | YES      | -        | -             | -    |
+| WF05 Attendance Report      | YES       | YES      | -        | -             | YES  |
+| WF06 Notification Hub       | -         | YES      | -        | -             | -    |
+| WF07 Job Status Alert       | YES       | YES      | -        | -             | -    |
+| WF08 Daily Digest           | YES       | YES      | -        | -             | -    |
+| WF09 Expense Approval       | YES       | YES      | -        | -             | -    |
+| WF10 Data Backup            | YES       | YES      | -        | YES           | -    |
+| WF11 FB Messenger           | -         | YES      | YES      | -             | -    |
+| WF12 FB Lead Ads            | YES       | YES      | YES      | -             | -    |
+| WF13 FB Page Post           | YES       | YES      | YES      | -             | -    |
 
 ---
 
@@ -366,27 +417,35 @@ For all 13 workflows:
 ## Testing Each Credential
 
 ### Test Kosai API
+
 ```bash
 curl -H "Authorization: Bearer YOUR_KEY" https://your-worker.workers.dev/api/technicians
 ```
+
 Should return a JSON array of technicians.
 
 ### Test Telegram Bot
+
 ```bash
 curl -X POST "https://api.telegram.org/botYOUR_TOKEN/sendMessage" \
   -d chat_id=YOUR_CHAT_ID \
   -d text="Test from n8n"
 ```
+
 Should return `"ok": true`.
 
 ### Test Facebook Token
+
 ```bash
 curl "https://graph.facebook.com/v18.0/me?access_token=YOUR_TOKEN"
 ```
+
 Should return your Page info.
 
 ### Test Google Sheets
+
 In n8n, create a test workflow:
+
 1. Manual Trigger → Google Sheets → Read spreadsheet
 2. Select your credential
 3. Enter a spreadsheet ID

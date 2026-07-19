@@ -49,7 +49,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { name, contact_person, phone, email, address, notes } = (await request.json() as any);
+      const { name, contact_person, phone, email, address, notes } = (await request.json()) as any;
       if (!name) return error('Missing distributor name', 400);
 
       const id = 'DIST-' + Date.now().toString(36).toUpperCase();
@@ -80,7 +80,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const allowed = ['name', 'contact_person', 'phone', 'email', 'address', 'notes'];
       const updates = [];
       const values = [];
@@ -121,4 +121,3 @@ function register(router, env) {
 }
 
 export { register };
-

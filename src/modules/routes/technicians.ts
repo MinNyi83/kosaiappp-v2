@@ -87,7 +87,7 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { name, email, phone, pin, role, specialties } = body;
 
       if (!name || !email || !pin) {
@@ -139,7 +139,7 @@ function register(router, env) {
         return error('Forbidden', 403);
       }
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { name, email, phone, role, specialties, active } = body;
 
       const existing = await db
@@ -221,7 +221,7 @@ function register(router, env) {
         return error('Forbidden', 403);
       }
 
-      const { currentPin, newPin } = (await request.json() as any);
+      const { currentPin, newPin } = (await request.json()) as any;
       if (!currentPin || !newPin) {
         return error('Missing currentPin or newPin', 400);
       }
@@ -272,4 +272,3 @@ function register(router, env) {
 }
 
 export default { register };
-

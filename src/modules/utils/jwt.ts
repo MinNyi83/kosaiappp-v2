@@ -80,8 +80,10 @@ export const verifyToken = (token) => {
   }
 
   try {
-    const header = (JSON.parse(atob(encodedHeader.replace(/-/g, '+') as any).replace(/_/g, '/')));
-    const payload = (JSON.parse(atob(encodedPayload.replace(/-/g, '+') as any).replace(/_/g, '/')));
+    // Add base64 padding if needed (JWT uses base64url without padding)
+    const pad = (str) => str + '='.repeat((4 - str.length % 4) % 4);
+    const header = JSON.parse(atob(pad(encodedHeader.replace(/-/g, '+').replace(/_/g, '/'))));
+    const payload = JSON.parse(atob(pad(encodedPayload.replace(/-/g, '+').replace(/_/g, '/'))));
 
     // Check expiration
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
@@ -93,4 +95,3 @@ export const verifyToken = (token) => {
     return null;
   }
 };
-

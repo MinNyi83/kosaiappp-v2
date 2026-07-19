@@ -39,7 +39,7 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       const { section_key, title, subtitle, content, image_url, sort_order, active } =
-        (await request.json() as any);
+        (await request.json()) as any;
       if (!section_key || !title) return error('Missing section_key or title', 400);
 
       const id = 'LND-' + Date.now().toString(36).toUpperCase();
@@ -71,7 +71,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const allowed = [
         'section_key',
         'title',
@@ -120,4 +120,3 @@ function register(router, env) {
 }
 
 export { register };
-

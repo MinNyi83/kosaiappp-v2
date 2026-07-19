@@ -20,7 +20,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { latitude, longitude, notes } = (await request.json() as any);
+      const { latitude, longitude, notes } = (await request.json()) as any;
 
       // Check if already clocked in today
       const existing = await db
@@ -51,7 +51,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { latitude, longitude, notes } = (await request.json() as any);
+      const { latitude, longitude, notes } = (await request.json()) as any;
 
       const record = await db
         .prepare(
@@ -142,4 +142,3 @@ function register(router, env) {
 }
 
 export { register };
-

@@ -25,7 +25,7 @@
 
   <div class="grid md:grid-cols-2 gap-8">
     <!-- Left: Customer Product Warranties Table -->
-    <div class="glass-panel p-6 rounded-2xl space-y-4">
+    <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
       <div class="flex justify-between items-center border-b border-white/5 pb-2">
         <h2 class="text-sm font-bold text-white uppercase tracking-wider">
           Customer Product Warranties
@@ -33,7 +33,7 @@
         <button
           type="button"
           onclick="exportTableToExcel('warranties-table', 'Customer_Warranties')"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
         >
           <svg
             class="w-3 h-3"
@@ -52,15 +52,15 @@
       <div class="table-scroll-container overflow-x-auto bg-black/30 p-4">
         <table id="warranties-table" class="w-full text-xs text-left">
           <thead>
-            <tr class="text-slate-500 border-b border-white/5 pb-2">
-              <th class="pb-2">SERIAL NO.</th>
-              <th class="pb-2">PRODUCT</th>
-              <th class="pb-2">CUSTOMER</th>
-              <th class="pb-2">EXPIRY</th>
-              <th class="pb-2">STATUS</th>
+            <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
+              <th class="pb-3 pt-2 font-semibold">SERIAL NO.</th>
+              <th class="pb-3 pt-2 font-semibold">PRODUCT</th>
+              <th class="pb-3 pt-2 font-semibold">CUSTOMER</th>
+              <th class="pb-3 pt-2 font-semibold">EXPIRY</th>
+              <th class="pb-3 pt-2 font-semibold">STATUS</th>
             </tr>
           </thead>
-          <tbody id="warranty-list-body">
+          <tbody class="divide-y divide-white/5">
             <tr>
               <td colspan="5" class="py-4 text-center text-slate-600">Loading warranties...</td>
             </tr>
@@ -70,7 +70,7 @@
     </div>
 
     <!-- Right: Active Distributor RMA Claims Table -->
-    <div class="glass-panel p-6 rounded-2xl space-y-4">
+    <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
       <div class="flex justify-between items-center border-b border-white/5 pb-2">
         <h2 class="text-sm font-bold text-white uppercase tracking-wider">
           Active Distributor RMA / Claims
@@ -78,7 +78,7 @@
         <button
           type="button"
           onclick="exportTableToExcel('rma-table', 'RMA_Claims')"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
         >
           <svg
             class="w-3 h-3"
@@ -97,16 +97,16 @@
       <div class="table-scroll-container overflow-x-auto bg-black/30 p-4">
         <table id="rma-table" class="w-full text-xs text-left">
           <thead>
-            <tr class="text-slate-500 border-b border-white/5 pb-2">
-              <th class="pb-2">RMA ID</th>
-              <th class="pb-2">SERIAL / PRODUCT</th>
-              <th class="pb-2">DISTRIBUTOR</th>
-              <th class="pb-2">SENT DATE</th>
-              <th class="pb-2">STATUS</th>
+            <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
+              <th class="pb-3 pt-2 font-semibold">RMA ID</th>
+              <th class="pb-3 pt-2 font-semibold">SERIAL / PRODUCT</th>
+              <th class="pb-3 pt-2 font-semibold">DISTRIBUTOR</th>
+              <th class="pb-3 pt-2 font-semibold">SENT DATE</th>
+              <th class="pb-3 pt-2 font-semibold">STATUS</th>
               <th class="pb-2 text-right">ACTIONS</th>
             </tr>
           </thead>
-          <tbody id="rma-list-body">
+          <tbody class="divide-y divide-white/5">
             <tr>
               <td colspan="6" class="py-4 text-center text-slate-600">Loading RMA dispatches...</td>
             </tr>
@@ -122,7 +122,7 @@
   id="modal-register-warranty"
   class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden"
 >
-  <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
+  <div class="glass-panel rounded-2xl overflow-hidden max-w-md w-full space-y-4 border border-white/10">
     <div class="flex justify-between items-center">
       <h3 class="text-sm font-bold text-white uppercase tracking-wider">
         Register Customer Warranty
@@ -207,7 +207,7 @@
   id="modal-raise-rma"
   class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden"
 >
-  <div class="glass-panel p-6 rounded-2xl max-w-md w-full space-y-4 border border-white/10">
+  <div class="glass-panel rounded-2xl overflow-hidden max-w-md w-full space-y-4 border border-white/10">
     <div class="flex justify-between items-center">
       <h3 class="text-sm font-bold text-white uppercase tracking-wider">
         Raise Distributor RMA Claim

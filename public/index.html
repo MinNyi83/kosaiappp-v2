@@ -10,31 +10,148 @@
       rel="stylesheet"
     />
     <style>
+      /* Theme Variables */
+      :root, [data-theme="dark"] {
+        --bg-body: radial-gradient(ellipse at top right, rgba(245, 158, 11, 0.06), transparent 50%),
+          radial-gradient(ellipse at bottom left, rgba(99, 102, 241, 0.06), transparent 45%), #09090b;
+        --bg-surface: #0c0c10;
+        --bg-surface-alt: #09090b;
+        --bg-card: linear-gradient(145deg, rgba(20, 20, 28, 0.75) 0%, rgba(12, 12, 18, 0.85) 100%);
+        --bg-input: rgba(0, 0, 0, 0.45);
+        --bg-overlay: rgba(0, 0, 0, 0.65);
+        --border-subtle: rgba(255, 255, 255, 0.06);
+        --border-medium: rgba(255, 255, 255, 0.1);
+        --border-strong: rgba(255, 255, 255, 0.15);
+        --text-primary: #ffffff;
+        --text-secondary: #e2e8f0;
+        --text-muted: #94a3b8;
+        --text-dim: #64748b;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+        --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+        --shadow-glow: 0 0 40px rgba(245, 158, 11, 0.1);
+        --scrollbar-track: rgba(0, 0, 0, 0.3);
+        --scrollbar-thumb: rgba(245, 158, 11, 0.3);
+        --scrollbar-thumb-hover: rgba(245, 158, 11, 0.5);
+      }
+      [data-theme="light"] {
+        --bg-body: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+        --bg-surface: #ffffff;
+        --bg-surface-alt: #f8fafc;
+        --bg-card: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%);
+        --bg-input: rgba(241, 245, 249, 0.9);
+        --bg-overlay: rgba(0, 0, 0, 0.4);
+        --border-subtle: rgba(0, 0, 0, 0.06);
+        --border-medium: rgba(0, 0, 0, 0.1);
+        --border-strong: rgba(0, 0, 0, 0.15);
+        --text-primary: #0f172a;
+        --text-secondary: #1e293b;
+        --text-muted: #475569;
+        --text-dim: #94a3b8;
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+        --shadow-glow: 0 0 40px rgba(245, 158, 11, 0.15);
+        --scrollbar-track: rgba(0, 0, 0, 0.04);
+        --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+        --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+      }
+      /* Light mode overrides for hardcoded Tailwind classes */
+      [data-theme="light"] .text-white { color: var(--text-primary) !important; }
+      [data-theme="light"] .text-slate-200 { color: var(--text-secondary) !important; }
+      [data-theme="light"] .text-slate-300 { color: var(--text-secondary) !important; }
+      [data-theme="light"] .text-slate-400 { color: var(--text-muted) !important; }
+      [data-theme="light"] .text-slate-500 { color: var(--text-dim) !important; }
+      [data-theme="light"] .hover\:text-white:hover { color: var(--text-primary) !important; }
+      [data-theme="light"] .bg-black\/30 { background: rgba(255, 255, 255, 0.8) !important; }
+      [data-theme="light"] .bg-black\/40 { background: var(--bg-input) !important; }
+      [data-theme="light"] .bg-black\/50 { background: rgba(241, 245, 249, 0.9) !important; }
+      [data-theme="light"] .border-white\/5 { border-color: var(--border-subtle) !important; }
+      [data-theme="light"] .border-white\/10 { border-color: var(--border-medium) !important; }
+      [data-theme="light"] header { background: rgba(255, 255, 255, 0.85) !important; border-color: var(--border-subtle) !important; backdrop-filter: blur(20px) !important; }
+      [data-theme="light"] footer { background: rgba(248, 250, 252, 0.9) !important; border-color: var(--border-subtle) !important; }
+      [data-theme="light"] #mobile-menu { background: rgba(255, 255, 255, 0.98) !important; border-color: var(--border-subtle) !important; }
+      [data-theme="light"] .hero-grid { opacity: 0.3; }
+      [data-theme="light"] tbody tr:hover { background: rgba(241, 245, 249, 0.8) !important; }
+
+      /* Smooth theme transition */
+      body, .glass-panel, .contact-card, header, footer, nav, .form-input, .btn-secondary,
+      .stat-item, .icon-container, .filter-btn, main, section, .reveal, table, tbody tr, th, td {
+        transition: background-color 0.4s ease, background 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+      }
+
       * {
         scroll-behavior: smooth;
       }
 
       html {
         scroll-padding-top: 80px;
+        scroll-behavior: smooth;
+      }
+
+      /* Enhanced smooth scroll for anchor links */
+      html.smooth-scroll {
+        scroll-behavior: smooth;
       }
 
       body {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        background:
-          radial-gradient(circle at top right, rgba(245, 158, 11, 0.05), transparent 45%),
-          radial-gradient(circle at bottom left, rgba(99, 102, 241, 0.05), transparent 40%), #09090b;
+        background: var(--bg-body);
+        background-attachment: fixed;
+        color: var(--text-secondary);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--scrollbar-track);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--scrollbar-thumb-hover);
       }
 
       .glass-panel {
-        background: rgba(18, 18, 24, 0.7);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border-subtle);
+        box-shadow: var(--shadow-md);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .glass-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.3), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
       }
 
       .glass-panel:hover {
-        border-color: rgba(255, 255, 255, 0.1);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border-color: rgba(245, 158, 11, 0.25);
+        box-shadow: var(--shadow-lg), 0 0 30px rgba(245, 158, 11, 0.1);
+        transform: translateY(-4px) scale(1.01);
+      }
+
+      .glass-panel:hover::before {
+        opacity: 1;
       }
 
       .hero-grid {
@@ -48,29 +165,29 @@
         position: absolute;
         border-radius: 50%;
         filter: blur(80px);
-        opacity: 0.15;
+        opacity: 0.2;
         animation: float 8s ease-in-out infinite;
+        will-change: transform;
+      }
+
+      .parallax-particle {
+        will-change: transform;
+        animation: particle-float 6s ease-in-out infinite;
+      }
+
+      @keyframes particle-float {
+        0%, 100% { transform: translateY(0) translateX(0); opacity: 0.6; }
+        50% { transform: translateY(-20px) translateX(10px); opacity: 1; }
       }
 
       @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0) scale(1);
-        }
-        50% {
-          transform: translateY(-20px) scale(1.05);
-        }
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-20px) scale(1.05); }
       }
 
       @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       .animate-fade-in-up {
@@ -78,44 +195,40 @@
         opacity: 0;
       }
 
-      .delay-100 {
-        animation-delay: 0.1s;
-      }
-      .delay-200 {
-        animation-delay: 0.2s;
-      }
-      .delay-300 {
-        animation-delay: 0.3s;
-      }
+      .delay-100 { animation-delay: 0.1s; }
+      .delay-200 { animation-delay: 0.2s; }
+      .delay-300 { animation-delay: 0.3s; }
 
       .icon-container {
-        width: 48px;
-        height: 48px;
+        width: 52px;
+        height: 52px;
         background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
-        border: 1px solid rgba(245, 158, 11, 0.2);
-        border-radius: 12px;
+        border: 1px solid rgba(245, 158, 11, 0.25);
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.3s ease;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       .glass-panel:hover .icon-container {
         background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.1));
-        border-color: rgba(245, 158, 11, 0.4);
-        transform: scale(1.05);
+        border-color: rgba(245, 158, 11, 0.5);
+        transform: scale(1.08) rotate(3deg);
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
       }
 
       .icon-container svg {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
         color: #f59e0b;
       }
 
       .btn-primary {
         position: relative;
         overflow: hidden;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
       }
 
       .btn-primary::before {
@@ -125,8 +238,8 @@
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s ease;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.6s ease;
       }
 
       .btn-primary:hover::before {
@@ -134,27 +247,75 @@
       }
 
       .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 32px rgba(245, 158, 11, 0.4);
+      }
+
+      .btn-primary:active {
+        transform: translateY(-1px) scale(0.98);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
       }
 
       .btn-secondary {
-        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .btn-secondary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        transition: left 0.6s ease;
+      }
+
+      .btn-secondary:hover::before {
+        left: 100%;
       }
 
       .btn-secondary:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
-        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-secondary:active {
+        transform: translateY(-1px) scale(0.98);
       }
 
       .form-input {
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       .form-input:focus {
         border-color: #f59e0b;
-        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15), var(--shadow-sm);
+      }
+
+      /* Theme-aware inputs */
+      input[type='text'], input[type='password'], input[type='number'], input[type='email'], input[type='tel'], select, textarea {
+        background: var(--bg-input) !important;
+        border: 1px solid var(--border-medium) !important;
+        color: var(--text-primary) !important;
+        border-radius: 10px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+      input::placeholder, textarea::placeholder {
+        color: var(--text-dim) !important;
+      }
+      input:focus, select:focus, textarea:focus {
+        border-color: rgba(245, 158, 11, 0.6) !important;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12), var(--shadow-sm) !important;
+        outline: none !important;
+      }
+      select option {
+        background: var(--bg-surface);
+        color: var(--text-primary);
       }
 
       .stat-item {
@@ -191,13 +352,67 @@
         }
       }
 
+      /* Scroll Reveal Animations */
       .reveal {
         opacity: 0;
         transform: translateY(30px);
-        transition: all 0.8s ease;
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
       }
-
       .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      /* Staggered delays for grid items */
+      .reveal-delay-1 { transition-delay: 0.1s; }
+      .reveal-delay-2 { transition-delay: 0.2s; }
+      .reveal-delay-3 { transition-delay: 0.3s; }
+      .reveal-delay-4 { transition-delay: 0.4s; }
+      .reveal-delay-5 { transition-delay: 0.5s; }
+      /* Slide from left */
+      .reveal-left {
+        opacity: 0;
+        transform: translateX(-30px);
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .reveal-left.active {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      /* Slide from right */
+      .reveal-right {
+        opacity: 0;
+        transform: translateX(30px);
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .reveal-right.active {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      /* Scale up */
+      .reveal-scale {
+        opacity: 0;
+        transform: scale(0.92);
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .reveal-scale.active {
+        opacity: 1;
+        transform: scale(1);
+      }
+      /* Fade in only */
+      .reveal-fade {
+        opacity: 0;
+        transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .reveal-fade.active {
+        opacity: 1;
+      }
+      /* Section headers */
+      .reveal-title {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .reveal-title.active {
         opacity: 1;
         transform: translateY(0);
       }
@@ -280,6 +495,11 @@
             >Client Portal</a
           >
           <a href="/contact.html" class="text-slate-400 hover:text-white transition">Contact</a>
+          <button id="theme-toggle" onclick="toggleTheme()" class="flex items-center gap-2 px-3 py-2 rounded-xl transition-all bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+            <svg id="theme-icon-dark" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            <svg id="theme-icon-light" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <span class="text-[10px] font-bold uppercase tracking-wider hidden md:inline">Theme</span>
+          </button>
           <a
             href="/admin.html"
             class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-1.5 rounded-lg transition"
@@ -289,52 +509,55 @@
         <!-- Hamburger Button -->
         <button
           id="hamburger-btn"
-          class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5"
+          class="md:hidden flex flex-col justify-center items-center w-11 h-11 gap-1.5 rounded-xl hover:bg-white/10 transition-all"
           aria-label="Toggle menu"
         >
-          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
-          <span class="hamburger-line w-6 h-0.5 bg-white transition-all duration-300"></span>
+          <span class="hamburger-line w-5 h-0.5 bg-current transition-all duration-300 rounded-full"></span>
+          <span class="hamburger-line w-5 h-0.5 bg-current transition-all duration-300 rounded-full"></span>
+          <span class="hamburger-line w-5 h-0.5 bg-current transition-all duration-300 rounded-full"></span>
         </button>
       </div>
       <!-- Mobile Menu -->
       <div
         id="mobile-menu"
-        class="md:hidden hidden border-t border-white/5 bg-black/50 backdrop-blur-md"
+        class="md:hidden hidden border-t border-white/10 bg-white/95 dark:bg-black/95 backdrop-blur-xl"
       >
         <nav
-          class="max-w-6xl mx-auto px-4 py-4 flex flex-col gap-3 text-xs font-bold uppercase tracking-wider"
+          class="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-1"
         >
-          <a href="#services" class="text-slate-400 hover:text-white transition py-2">Services</a>
-          <a href="#stats" class="text-slate-400 hover:text-white transition py-2">About</a>
-          <a href="/portfolio.html" class="text-slate-400 hover:text-white transition py-2"
-            >Portfolio</a
-          >
-          <a href="#prices" class="text-slate-400 hover:text-white transition py-2">Price List</a>
-          <a href="#quotation" class="text-slate-400 hover:text-white transition py-2">Quotation</a>
-          <a href="/portal.html" class="text-slate-400 hover:text-white transition py-2"
-            >Client Portal</a
-          >
-          <a href="/contact.html" class="text-slate-400 hover:text-white transition py-2"
-            >Contact</a
-          >
+          <a href="#services" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Services</a>
+          <a href="#stats" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">About</a>
+          <a href="/portfolio.html" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Portfolio</a>
+          <a href="#prices" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Price List</a>
+          <a href="#quotation" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Quotation</a>
+          <a href="/portal.html" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Client Portal</a>
+          <a href="/contact.html" class="text-slate-600 hover:text-amber-500 hover:bg-amber-500/5 transition-all py-3 px-4 rounded-xl text-sm font-semibold uppercase tracking-wider">Contact</a>
+          <div class="border-t border-slate-200 my-2"></div>
           <a
             href="/admin.html"
-            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 px-3 py-2 rounded-lg transition text-center mt-2"
-            >Staff Console</a
-          >
+            class="bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-600 px-4 py-3 rounded-xl transition-all text-center text-sm font-bold uppercase tracking-wider mt-1"
+          >Staff Console</a>
         </nav>
       </div>
     </header>
 
     <!-- Hero Section -->
-    <section class="relative overflow-hidden">
-      <div class="hero-grid absolute inset-0 opacity-50"></div>
-      <div class="gradient-orb bg-amber-500 w-96 h-96 -top-48 -right-48"></div>
+    <section class="relative overflow-hidden" id="hero-section">
+      <div class="hero-grid absolute inset-0 opacity-50 parallax-bg" data-speed="0.3"></div>
+      <div class="gradient-orb bg-amber-500 w-96 h-96 -top-48 -right-48 parallax-bg" data-speed="0.5"></div>
       <div
-        class="gradient-orb bg-indigo-500 w-80 h-80 -bottom-40 -left-40"
+        class="gradient-orb bg-indigo-500 w-80 h-80 -bottom-40 -left-40 parallax-bg"
+        data-speed="0.4"
         style="animation-delay: 4s"
       ></div>
+      <!-- Floating particles -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div class="parallax-particle absolute w-2 h-2 bg-amber-400/20 rounded-full top-[20%] left-[10%]" data-speed="0.6"></div>
+        <div class="parallax-particle absolute w-3 h-3 bg-indigo-400/20 rounded-full top-[40%] right-[15%]" data-speed="0.3"></div>
+        <div class="parallax-particle absolute w-2 h-2 bg-amber-400/15 rounded-full top-[60%] left-[20%]" data-speed="0.5"></div>
+        <div class="parallax-particle absolute w-4 h-4 bg-indigo-400/10 rounded-full top-[30%] right-[25%]" data-speed="0.2"></div>
+        <div class="parallax-particle absolute w-2 h-2 bg-amber-400/25 rounded-full top-[70%] left-[80%]" data-speed="0.4"></div>
+      </div>
 
       <div class="relative max-w-6xl mx-auto px-4 py-20 md:py-28 text-center space-y-6">
         <p
@@ -347,10 +570,7 @@
           id="lp-headline"
           class="animate-fade-in-up delay-100 text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white uppercase leading-[0.95]"
         >
-          Next-Gen CCTV & <br class="hidden md:inline" /><span
-            class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent"
-            >Infrastructure Systems</span
-          >
+          <span id="typing-text"></span><span id="typing-cursor" class="inline-block w-[3px] h-[0.85em] bg-amber-400 ml-1 animate-pulse align-middle"></span>
         </h1>
         <p
           id="lp-description"
@@ -363,14 +583,14 @@
           <a
             href="#quotation"
             id="lp-btn-primary"
-            class="btn-primary bg-amber-500 hover:bg-amber-400 text-black text-xs font-extrabold uppercase tracking-wider px-8 py-4 rounded-xl shadow-lg shadow-amber-500/20"
+            class="btn-primary bg-amber-500 hover:bg-amber-400 text-black text-sm md:text-xs font-extrabold uppercase tracking-wider px-10 md:px-8 py-5 md:py-4 rounded-xl shadow-lg shadow-amber-500/20"
           >
             Request a Free Quotation
           </a>
           <a
             href="/portal.html"
             id="lp-btn-secondary"
-            class="btn-secondary bg-white/5 border border-white/10 text-white text-xs font-bold uppercase tracking-wider px-8 py-4 rounded-xl"
+            class="btn-secondary bg-white/5 border border-white/10 text-white text-sm md:text-xs font-bold uppercase tracking-wider px-10 md:px-8 py-5 md:py-4 rounded-xl"
           >
             Access Client Portal
           </a>
@@ -391,8 +611,8 @@
           Our Services
         </h2>
       </div>
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
+      <div class="grid md:grid-cols-3 gap-6 md:gap-8">
+        <div class="glass-panel p-8 md:p-8 rounded-2xl space-y-5 group cursor-default">
           <div class="icon-container">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -415,16 +635,16 @@
           </div>
           <h3
             id="lp-service1-title"
-            class="text-base font-bold text-white uppercase tracking-wider"
+            class="text-lg font-bold text-white uppercase tracking-wider"
           >
             CCTV & Surveillance
           </h3>
-          <p id="lp-service1-desc" class="text-xs text-slate-400 leading-relaxed">
+          <p id="lp-service1-desc" class="text-sm text-slate-400 leading-relaxed">
             High-definition IP cameras, multi-channel NVR arrays, AI intelligent human tracking and
             vehicle detection capabilities.
           </p>
         </div>
-        <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
+        <div class="glass-panel p-8 md:p-8 rounded-2xl space-y-5 group cursor-default">
           <div class="icon-container">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -442,16 +662,16 @@
           </div>
           <h3
             id="lp-service2-title"
-            class="text-base font-bold text-white uppercase tracking-wider"
+            class="text-lg font-bold text-white uppercase tracking-wider"
           >
             Mesh Networking
           </h3>
-          <p id="lp-service2-desc" class="text-xs text-slate-400 leading-relaxed">
+          <p id="lp-service2-desc" class="text-sm text-slate-400 leading-relaxed">
             Enterprise wireless bridging, multi-gigabit switches, optical fiber deployment, and
             robust firewalls.
           </p>
         </div>
-        <div class="glass-panel p-6 rounded-2xl space-y-4 group cursor-default">
+        <div class="glass-panel p-8 md:p-8 rounded-2xl space-y-5 group cursor-default">
           <div class="icon-container">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -469,11 +689,11 @@
           </div>
           <h3
             id="lp-service3-title"
-            class="text-base font-bold text-white uppercase tracking-wider"
+            class="text-lg font-bold text-white uppercase tracking-wider"
           >
             NAS Storage Arrays
           </h3>
-          <p id="lp-service3-desc" class="text-xs text-slate-400 leading-relaxed">
+          <p id="lp-service3-desc" class="text-sm text-slate-400 leading-relaxed">
             High-reliability network-attached storage nodes for continuous recordings and automated
             disaster backups.
           </p>
@@ -483,7 +703,7 @@
 
     <!-- Stats Section -->
     <section id="stats" class="border-y border-white/5 bg-black/20">
-      <div class="max-w-6xl mx-auto px-4 py-12">
+      <div class="max-w-6xl mx-auto px-4 py-16">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div class="stat-item text-center space-y-2">
             <p id="lp-stat1-value" class="text-3xl md:text-4xl font-black text-white">500+</p>
@@ -527,22 +747,22 @@
         </p>
       </div>
 
-      <div class="glass-panel p-6 rounded-2xl">
+      <div class="glass-panel p-8 rounded-2xl">
         <div class="overflow-x-auto">
-          <table class="w-full text-xs text-left">
+          <table class="w-full text-sm text-left">
             <thead>
               <tr
                 class="text-slate-500 border-b border-white/5 pb-2 font-bold uppercase tracking-wider"
               >
-                <th class="pb-3">Component Name</th>
-                <th class="pb-3">Category</th>
-                <th class="pb-3 text-right">USD Unit Price</th>
-                <th class="pb-3 text-right">MMK Equivalent</th>
+                <th class="pb-4">Component Name</th>
+                <th class="pb-4">Category</th>
+                <th class="pb-4 text-right">USD Unit Price</th>
+                <th class="pb-4 text-right">MMK Equivalent</th>
               </tr>
             </thead>
             <tbody id="catalog-price-body" class="divide-y divide-white/5">
               <tr>
-                <td colspan="4" class="py-4 text-center text-slate-500">
+                <td colspan="4" class="py-6 text-center text-slate-500">
                   Loading catalog prices...
                 </td>
               </tr>
@@ -568,7 +788,7 @@
         method="POST"
         id="quotation-form"
         onsubmit="submitQuotationRequest(event)"
-        class="glass-panel p-6 md:p-8 rounded-3xl space-y-5"
+        class="glass-panel p-8 md:p-10 rounded-3xl space-y-6"
       >
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-2">
@@ -581,7 +801,7 @@
               id="quote-name"
               required
               placeholder="e.g. Oak Palace Hotel"
-              class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none"
+              class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white placeholder:text-slate-600 focus:outline-none"
             />
           </div>
           <div class="space-y-2">
@@ -594,7 +814,7 @@
               id="quote-phone"
               required
               placeholder="e.g. 09-443882991"
-              class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none"
+              class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white placeholder:text-slate-600 focus:outline-none"
             />
           </div>
         </div>
@@ -608,7 +828,7 @@
             id="quote-address"
             required
             placeholder="Physical address of proposed installation"
-            class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none"
+            class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white placeholder:text-slate-600 focus:outline-none"
           />
         </div>
         <div class="space-y-2">
@@ -621,13 +841,13 @@
             required
             rows="4"
             placeholder="How many cameras do you require? Is networking infrastructure needed?..."
-            class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-600 focus:outline-none resize-none"
+            class="form-input w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-sm text-white placeholder:text-slate-600 focus:outline-none resize-none"
           ></textarea>
         </div>
         <button
           type="submit"
           id="submit-btn"
-          class="btn-primary w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-4 rounded-xl text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+          class="btn-primary w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-5 rounded-xl text-sm uppercase tracking-widest flex items-center justify-center gap-2"
         >
           <span id="btn-text">Submit Quotation Request</span>
           <div id="btn-spinner" class="spinner hidden"></div>
@@ -636,15 +856,30 @@
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-white/5 bg-black/50 py-8">
-      <div class="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 space-y-4">
-        <div class="flex items-center justify-center gap-2">
-          <span class="text-amber-500">⚙️</span>
-          <span class="font-bold text-white tracking-wider uppercase">Awesome Myanmar</span>
+    <footer class="border-t border-white/10 bg-gradient-to-b from-transparent to-black/20 py-12 md:py-8">
+      <div class="max-w-6xl mx-auto px-6 md:px-4 text-center space-y-6">
+        <div class="flex items-center justify-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+            <span class="text-amber-500 text-lg">⚙️</span>
+          </div>
+          <span class="font-extrabold text-white tracking-wider uppercase text-sm">Awesome Myanmar</span>
         </div>
-        <p id="lp-copyright">
-          &copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.
-        </p>
+        <div class="flex flex-wrap items-center justify-center gap-4 text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
+          <a href="#services" class="hover:text-amber-400 transition-colors">Services</a>
+          <span class="text-slate-600">·</span>
+          <a href="/portfolio.html" class="hover:text-amber-400 transition-colors">Portfolio</a>
+          <span class="text-slate-600">·</span>
+          <a href="/portal.html" class="hover:text-amber-400 transition-colors">Client Portal</a>
+          <span class="text-slate-600">·</span>
+          <a href="/contact.html" class="hover:text-amber-400 transition-colors">Contact</a>
+          <span class="text-slate-600">·</span>
+          <a href="/admin.html" class="hover:text-amber-400 transition-colors">Admin</a>
+        </div>
+        <div class="border-t border-white/5 pt-6">
+          <p id="lp-copyright" class="text-[11px] text-slate-500">
+            &copy; 2026 Awesome Myanmar CCTV & Network Infrastructure Solutions. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
 
@@ -678,7 +913,103 @@
         initStickyHeader();
         initMobileMenu();
         initBackToTop();
+        initTypingEffect();
+        initParallax();
       });
+
+      // Typing Effect for Hero Headline
+      function initTypingEffect() {
+        const typingElement = document.getElementById('typing-text');
+        const cursorElement = document.getElementById('typing-cursor');
+        const headlines = [
+          { text: 'Next-Gen CCTV & ', highlight: 'Infrastructure Systems' },
+          { text: 'Smart Surveillance ', highlight: 'Solutions' },
+          { text: 'Enterprise Security ', highlight: 'Systems' },
+          { text: 'Digital Infrastructure ', highlight: 'Experts' }
+        ];
+        let headlineIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let isPaused = false;
+
+        function type() {
+          const current = headlines[headlineIndex];
+          const fullText = current.text + current.highlight;
+
+          if (isPaused) {
+            setTimeout(type, 2000);
+            isPaused = false;
+            isDeleting = true;
+            return;
+          }
+
+          if (isDeleting) {
+            charIndex--;
+            if (charIndex < 0) {
+              isDeleting = false;
+              headlineIndex = (headlineIndex + 1) % headlines.length;
+              setTimeout(type, 500);
+              return;
+            }
+          } else {
+            charIndex++;
+            if (charIndex > fullText.length) {
+              isPaused = true;
+              setTimeout(type, 100);
+              return;
+            }
+          }
+
+          const typedText = fullText.substring(0, charIndex);
+          const highlightStart = current.text.length;
+
+          if (charIndex <= highlightStart) {
+            typingElement.innerHTML = typedText;
+          } else {
+            typingElement.innerHTML = current.text + '<span class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">' + current.highlight.substring(0, charIndex - highlightStart) + '</span>';
+          }
+
+          const speed = isDeleting ? 30 : 60;
+          setTimeout(type, speed);
+        }
+
+        setTimeout(type, 800);
+      }
+
+      // Parallax Scrolling Effect
+      function initParallax() {
+        const heroSection = document.getElementById('hero-section');
+        if (!heroSection) return;
+
+        const parallaxElements = document.querySelectorAll('.parallax-bg, .parallax-particle');
+        let ticking = false;
+
+        function updateParallax() {
+          const scrollY = window.scrollY;
+          const heroHeight = heroSection.offsetHeight;
+
+          // Only apply parallax when hero is in view
+          if (scrollY < heroHeight) {
+            parallaxElements.forEach((el) => {
+              const speed = parseFloat(el.dataset.speed) || 0.5;
+              const yPos = scrollY * speed;
+              el.style.transform = `translate3d(0, ${yPos}px, 0)`;
+            });
+          }
+
+          ticking = false;
+        }
+
+        window.addEventListener('scroll', () => {
+          if (!ticking) {
+            requestAnimationFrame(updateParallax);
+            ticking = true;
+          }
+        }, { passive: true });
+
+        // Initial call
+        updateParallax();
+      }
 
       async function fetchLandingPageContent() {
         try {
@@ -690,8 +1021,7 @@
               // Hero
               if (content.eyebrow)
                 document.getElementById('lp-eyebrow').textContent = content.eyebrow;
-              if (content.headline)
-                document.getElementById('lp-headline').innerHTML = content.headline;
+              // Note: headline uses typing effect, not loaded from CMS
               if (content.description)
                 document.getElementById('lp-description').textContent = content.description;
               if (content.btn_primary)
@@ -765,10 +1095,24 @@
         });
 
         mobileMenu.querySelectorAll('a').forEach((link) => {
-          link.addEventListener('click', () => {
+          link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+
+            // Close menu first
             hamburgerBtn.classList.remove('active');
             mobileMenu.classList.remove('open');
             setTimeout(() => mobileMenu.classList.add('hidden'), 300);
+
+            // Smooth scroll for anchor links
+            if (href && href.startsWith('#')) {
+              e.preventDefault();
+              const target = document.querySelector(href);
+              if (target) {
+                setTimeout(() => {
+                  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+              }
+            }
           });
         });
       }
@@ -798,11 +1142,67 @@
               }
             });
           },
-          { threshold: 0.1 }
+          { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
         );
 
-        document.querySelectorAll('.glass-panel').forEach((el) => {
+        // Section titles
+        document.querySelectorAll('h2, h3').forEach((el) => {
+          if (el.closest('section') && !el.classList.contains('reveal')) {
+            el.classList.add('reveal-title');
+            observer.observe(el);
+          }
+        });
+
+        // Glass panels with stagger
+        document.querySelectorAll('.glass-panel').forEach((el, i) => {
           el.classList.add('reveal');
+          // Add stagger based on position in parent
+          const parent = el.parentElement;
+          if (parent) {
+            const siblings = Array.from(parent.children).filter(c => c.classList.contains('glass-panel'));
+            const index = siblings.indexOf(el);
+            if (index > 0 && index < 5) {
+              el.classList.add(`reveal-delay-${index}`);
+            }
+          }
+          observer.observe(el);
+        });
+
+        // Stat items with stagger
+        document.querySelectorAll('.stat-item').forEach((el, i) => {
+          el.classList.add('reveal');
+          el.classList.add(`reveal-delay-${Math.min(i + 1, 5)}`);
+          observer.observe(el);
+        });
+
+        // Icon containers
+        document.querySelectorAll('.icon-container').forEach((el) => {
+          el.classList.add('reveal-scale');
+          observer.observe(el);
+        });
+
+        // Hero buttons
+        document.querySelectorAll('.btn-primary, .btn-secondary').forEach((el) => {
+          el.classList.add('reveal');
+          observer.observe(el);
+        });
+
+        // Tables
+        document.querySelectorAll('table').forEach((el) => {
+          el.classList.add('reveal-fade');
+          observer.observe(el);
+        });
+
+        // Sections
+        document.querySelectorAll('section').forEach((el) => {
+          el.classList.add('reveal');
+          observer.observe(el);
+        });
+
+        // Contact cards
+        document.querySelectorAll('.contact-card').forEach((el, i) => {
+          el.classList.add('reveal');
+          el.classList.add(`reveal-delay-${Math.min(i + 1, 4)}`);
           observer.observe(el);
         });
       }
@@ -923,6 +1323,30 @@
           }, 2000);
         }
       }
+    </script>
+
+    <!-- Theme Toggle Script -->
+    <script>
+      (function() {
+        const savedTheme = localStorage.getItem('am-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcons(savedTheme);
+        function updateThemeIcons(theme) {
+          const darkIcon = document.getElementById('theme-icon-dark');
+          const lightIcon = document.getElementById('theme-icon-light');
+          if (darkIcon && lightIcon) {
+            if (theme === 'light') { darkIcon.classList.add('hidden'); lightIcon.classList.remove('hidden'); }
+            else { darkIcon.classList.remove('hidden'); lightIcon.classList.add('hidden'); }
+          }
+        }
+        window.toggleTheme = function() {
+          const current = document.documentElement.getAttribute('data-theme');
+          const next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('am-theme', next);
+          updateThemeIcons(next);
+        };
+      })();
     </script>
   </body>
 </html>

@@ -244,4 +244,3 @@ function register(router, env) {
 }
 
 export { register };
-

@@ -5,7 +5,7 @@ const ASSETS_TO_CACHE = [
   './tailwind.css',
   './logo.png',
   './logo.svg',
-  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap'
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap',
 ];
 
 self.addEventListener('install', (event) => {
@@ -40,11 +40,13 @@ self.addEventListener('fetch', (event) => {
   const isCode = event.request.url.match(/\.(js|html)(\?|$)/);
   event.respondWith(
     isCode
-      ? fetch(event.request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          return response;
-        }).catch(() => caches.match(event.request))
+      ? fetch(event.request)
+          .then((response) => {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            return response;
+          })
+          .catch(() => caches.match(event.request))
       : caches.match(event.request).then((response) => {
           return response || fetch(event.request);
         })

@@ -10,7 +10,7 @@ export async function sendTelegramNotification(env, text) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text, parse_mode: 'Markdown' }),
     });
-    const data = (await res.json() as any);
+    const data = (await res.json()) as any;
     if (!data.ok) {
       console.error('Telegram sendTelegramNotification failed:', data.description);
     }
@@ -26,7 +26,7 @@ export async function sendTelegramMessage(env, chatId, text) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
     });
-    const data = (await res.json() as any);
+    const data = (await res.json()) as any;
     if (!data.ok) {
       console.error('Telegram sendTelegramMessage failed:', data.description);
     }
@@ -95,7 +95,7 @@ export async function sendTelegramPhotoNotification(env, photoSource, caption) {
       method: 'POST',
       body: formData,
     });
-    const resData = (await res.json() as any);
+    const resData = (await res.json()) as any;
 
     // If photo processing fails (e.g., HEIC, unsupported format, or too large), fallback to sendDocument
     if (!resData.ok) {
@@ -118,7 +118,7 @@ export async function sendTelegramPhotoNotification(env, photoSource, caption) {
           body: docFormData,
         }
       );
-      const docResData = (await docRes.json() as any);
+      const docResData = (await docRes.json()) as any;
       if (!docResData.ok) {
         console.error('Telegram sendDocument fallback also failed:', docResData.description);
       }
@@ -140,4 +140,3 @@ export function arrayBufferToBase64(buffer) {
   }
   return btoa(binary);
 }
-

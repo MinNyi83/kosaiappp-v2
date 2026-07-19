@@ -6,12 +6,12 @@ Complete step-by-step guide for deploying all 13 Kosai n8n workflows.
 
 ## Prerequisites
 
-| Requirement | Version | Notes |
-|---|---|---|
-| n8n | v1.19+ | Self-hosted or cloud |
-| Kosai API | Running | Cloudflare Worker at your domain |
-| Telegram Bot | @BotFather | For notifications |
-| Facebook App | Meta Developers | For workflows 11-13 |
+| Requirement  | Version         | Notes                            |
+| ------------ | --------------- | -------------------------------- |
+| n8n          | v1.19+          | Self-hosted or cloud             |
+| Kosai API    | Running         | Cloudflare Worker at your domain |
+| Telegram Bot | @BotFather      | For notifications                |
+| Facebook App | Meta Developers | For workflows 11-13              |
 
 ---
 
@@ -87,14 +87,15 @@ Then in each Telegram node, select this credential.
 
 ### WF01: New Job Auto-Assignment
 
-| Field | Value |
-|---|---|
-| File | `workflow_01_new_job_auto_assign.json` |
-| Trigger | Webhook |
+| Field       | Value                                   |
+| ----------- | --------------------------------------- |
+| File        | `workflow_01_new_job_auto_assign.json`  |
+| Trigger     | Webhook                                 |
 | Webhook URL | `{{n8n_url}}/webhook/kosai/job-created` |
-| Requires | Kosai API, Telegram |
+| Requires    | Kosai API, Telegram                     |
 
 **Setup:**
+
 1. Import the JSON
 2. In the "Webhook - Job Created" node, copy the webhook URL
 3. In your Kosai API (`src/index.ts`), add a webhook call when a job is created:
@@ -104,7 +105,7 @@ Then in each Telegram node, select this credential.
 await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/job-created`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ jobId: newJob.id })
+  body: JSON.stringify({ jobId: newJob.id }),
 });
 ```
 
@@ -116,13 +117,14 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/job-created`, {
 
 ### WF02: Inventory Low Stock Alert
 
-| Field | Value |
-|---|---|
-| File | `workflow_02_inventory_low_stock_alert.json` |
-| Trigger | Cron (Daily 8AM) |
-| Requires | Kosai API, Telegram |
+| Field    | Value                                        |
+| -------- | -------------------------------------------- |
+| File     | `workflow_02_inventory_low_stock_alert.json` |
+| Trigger  | Cron (Daily 8AM)                             |
+| Requires | Kosai API, Telegram                          |
 
 **Setup:**
+
 1. Import the JSON
 2. Select Telegram credential
 3. The cron schedule is already set (daily 8AM)
@@ -133,14 +135,15 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/job-created`, {
 
 ### WF03: Client Onboarding Sequence
 
-| Field | Value |
-|---|---|
-| File | `workflow_03_client_onboarding.json` |
-| Trigger | Webhook |
+| Field       | Value                                      |
+| ----------- | ------------------------------------------ |
+| File        | `workflow_03_client_onboarding.json`       |
+| Trigger     | Webhook                                    |
 | Webhook URL | `{{n8n_url}}/webhook/kosai/client-created` |
-| Requires | Kosai API, Telegram |
+| Requires    | Kosai API, Telegram                        |
 
 **Setup:**
+
 1. Import the JSON
 2. Copy the webhook URL
 3. Add webhook call in your client creation endpoint:
@@ -150,7 +153,7 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/job-created`, {
 await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/client-created`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ clientId: newClient.id })
+  body: JSON.stringify({ clientId: newClient.id }),
 });
 ```
 
@@ -161,13 +164,14 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/client-created`, {
 
 ### WF04: Invoice Payment Reconciliation
 
-| Field | Value |
-|---|---|
-| File | `workflow_04_invoice_reconciliation.json` |
-| Trigger | Cron (Daily 6AM) |
-| Requires | Kosai API, Telegram |
+| Field    | Value                                     |
+| -------- | ----------------------------------------- |
+| File     | `workflow_04_invoice_reconciliation.json` |
+| Trigger  | Cron (Daily 6AM)                          |
+| Requires | Kosai API, Telegram                       |
 
 **Setup:**
+
 1. Import the JSON
 2. Select Telegram credential
 3. Test manually
@@ -177,13 +181,14 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/client-created`, {
 
 ### WF05: Worker Attendance Report
 
-| Field | Value |
-|---|---|
-| File | `workflow_05_worker_attendance_report.json` |
-| Trigger | Cron (Monday 9AM) |
-| Requires | Kosai API, Telegram |
+| Field    | Value                                       |
+| -------- | ------------------------------------------- |
+| File     | `workflow_05_worker_attendance_report.json` |
+| Trigger  | Cron (Monday 9AM)                           |
+| Requires | Kosai API, Telegram                         |
 
 **Setup:**
+
 1. Import the JSON
 2. Select Telegram credential
 3. Test manually
@@ -193,14 +198,15 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/client-created`, {
 
 ### WF06: Multi-Channel Notification Hub
 
-| Field | Value |
-|---|---|
-| File | `workflow_06_multi_channel_notification_hub.json` |
-| Trigger | Webhook |
-| Webhook URL | `{{n8n_url}}/webhook/kosai/notify` |
-| Requires | Telegram |
+| Field       | Value                                             |
+| ----------- | ------------------------------------------------- |
+| File        | `workflow_06_multi_channel_notification_hub.json` |
+| Trigger     | Webhook                                           |
+| Webhook URL | `{{n8n_url}}/webhook/kosai/notify`                |
+| Requires    | Telegram                                          |
 
 **Setup:**
+
 1. Import the JSON
 2. Copy the webhook URL
 3. Use this webhook from any other workflow or your API to send notifications:
@@ -211,11 +217,11 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/notify`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    type: 'job_completed',  // or any event type
+    type: 'job_completed', // or any event type
     job_id: 'JOB-123',
     client_name: 'Acme Corp',
-    description: 'CCTV installation completed'
-  })
+    description: 'CCTV installation completed',
+  }),
 });
 ```
 
@@ -226,14 +232,15 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/notify`, {
 
 ### WF07: Job Status Client Alert
 
-| Field | Value |
-|---|---|
-| File | `workflow_07_job_status_client_alert.json` |
-| Trigger | Webhook |
+| Field       | Value                                         |
+| ----------- | --------------------------------------------- |
+| File        | `workflow_07_job_status_client_alert.json`    |
+| Trigger     | Webhook                                       |
 | Webhook URL | `{{n8n_url}}/webhook/kosai/job-status-change` |
-| Requires | Kosai API, Telegram |
+| Requires    | Kosai API, Telegram                           |
 
 **Setup:**
+
 1. Import the JSON
 2. Copy the webhook URL
 3. Add webhook call in your job status update endpoint:
@@ -247,8 +254,8 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/job-status-change`, {
     jobId: job.id,
     oldStatus: oldStatus,
     newStatus: newStatus,
-    clientTelegramId: client.telegram_id
-  })
+    clientTelegramId: client.telegram_id,
+  }),
 });
 ```
 
@@ -259,13 +266,14 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/job-status-change`, {
 
 ### WF08: Daily Operations Digest
 
-| Field | Value |
-|---|---|
-| File | `workflow_08_daily_operations_digest.json` |
-| Trigger | Cron (Daily 7AM) |
-| Requires | Kosai API, Telegram |
+| Field    | Value                                      |
+| -------- | ------------------------------------------ |
+| File     | `workflow_08_daily_operations_digest.json` |
+| Trigger  | Cron (Daily 7AM)                           |
+| Requires | Kosai API, Telegram                        |
 
 **Setup:**
+
 1. Import the JSON
 2. Select Telegram credential
 3. Test manually
@@ -275,14 +283,15 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/job-status-change`, {
 
 ### WF09: Expense Approval Workflow
 
-| Field | Value |
-|---|---|
-| File | `workflow_09_expense_approval.json` |
-| Trigger | Webhook |
+| Field       | Value                                         |
+| ----------- | --------------------------------------------- |
+| File        | `workflow_09_expense_approval.json`           |
+| Trigger     | Webhook                                       |
 | Webhook URL | `{{n8n_url}}/webhook/kosai/expense-submitted` |
-| Requires | Kosai API, Telegram |
+| Requires    | Kosai API, Telegram                           |
 
 **Setup:**
+
 1. Import the JSON
 2. Copy the webhook URL
 3. Add webhook call when an expense is submitted:
@@ -292,7 +301,7 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/job-status-change`, {
 await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/expense-submitted`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ expenseId: expense.id })
+  body: JSON.stringify({ expenseId: expense.id }),
 });
 ```
 
@@ -303,13 +312,14 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/expense-submitted`, {
 
 ### WF10: Data Backup to Google Sheets
 
-| Field | Value |
-|---|---|
-| File | `workflow_10_data_backup_google_sheets.json` |
-| Trigger | Cron (Daily 2AM) |
-| Requires | Kosai API, Google account, Telegram |
+| Field    | Value                                        |
+| -------- | -------------------------------------------- |
+| File     | `workflow_10_data_backup_google_sheets.json` |
+| Trigger  | Cron (Daily 2AM)                             |
+| Requires | Kosai API, Google account, Telegram          |
 
 **Setup:**
+
 1. Import the JSON
 2. In n8n, add Google Sheets OAuth2 credential:
    - Go to **Credentials** → **Add** → **Google Sheets**
@@ -330,14 +340,15 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/expense-submitted`, {
 
 ### WF11: Facebook Messenger Chat
 
-| Field | Value |
-|---|---|
-| File | `workflow_11_facebook_messenger_chat.json` |
-| Trigger | Webhook |
+| Field       | Value                                          |
+| ----------- | ---------------------------------------------- |
+| File        | `workflow_11_facebook_messenger_chat.json`     |
+| Trigger     | Webhook                                        |
 | Webhook URL | `{{n8n_url}}/webhook/kosai/facebook/messenger` |
-| Requires | Facebook App, Telegram |
+| Requires    | Facebook App, Telegram                         |
 
 **Setup:**
+
 1. Import the JSON
 2. Copy the webhook URL
 3. In Meta for Developers:
@@ -354,14 +365,15 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/expense-submitted`, {
 
 ### WF12: Facebook Lead Ads
 
-| Field | Value |
-|---|---|
-| File | `workflow_12_facebook_lead_ads.json` |
-| Trigger | Webhook |
+| Field       | Value                                      |
+| ----------- | ------------------------------------------ |
+| File        | `workflow_12_facebook_lead_ads.json`       |
+| Trigger     | Webhook                                    |
 | Webhook URL | `{{n8n_url}}/webhook/kosai/facebook/leads` |
-| Requires | Facebook App, Kosai API, Telegram |
+| Requires    | Facebook App, Kosai API, Telegram          |
 
 **Setup:**
+
 1. Import the JSON
 2. Copy the webhook URL
 3. In Meta for Developers:
@@ -383,14 +395,15 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/expense-submitted`, {
 
 ### WF13: Facebook Page Job Post
 
-| Field | Value |
-|---|---|
-| File | `workflow_13_facebook_page_job_post.json` |
-| Trigger | Webhook |
+| Field       | Value                                         |
+| ----------- | --------------------------------------------- |
+| File        | `workflow_13_facebook_page_job_post.json`     |
+| Trigger     | Webhook                                       |
 | Webhook URL | `{{n8n_url}}/webhook/kosai/facebook/job-post` |
-| Requires | Facebook App, Kosai API, Telegram |
+| Requires    | Facebook App, Kosai API, Telegram             |
 
 **Setup:**
+
 1. Import the JSON
 2. Copy the webhook URL
 3. Add webhook call when a job is completed:
@@ -400,7 +413,7 @@ await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/expense-submitted`, {
 await fetch(`${N8N_WEBHOOK_URL}/webhook/kosai/facebook/job-post`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ jobId: job.id })
+  body: JSON.stringify({ jobId: job.id }),
 });
 ```
 
@@ -426,14 +439,14 @@ N8N_WEBHOOK_URL=https://your-n8n-instance.com
 
 Then add webhook calls in your API routes. Here's where each webhook should be called:
 
-| Workflow | Trigger Point | File |
-|---|---|---|
-| WF01 | After creating a job | `src/modules/routes/jobs.ts` — POST /api/jobs |
-| WF03 | After creating a client | `src/modules/routes/clients.ts` — POST /api/clients |
-| WF06 | Any event | Used by other workflows or API |
-| WF07 | After updating job status | `src/modules/routes/jobs.ts` — POST /api/jobs/:id/status |
-| WF09 | After submitting an expense | `src/modules/routes/expenses.ts` — POST /api/expenses |
-| WF13 | After completing a job | `src/modules/routes/jobs.ts` — POST /api/jobs/:id/status |
+| Workflow | Trigger Point               | File                                                     |
+| -------- | --------------------------- | -------------------------------------------------------- |
+| WF01     | After creating a job        | `src/modules/routes/jobs.ts` — POST /api/jobs            |
+| WF03     | After creating a client     | `src/modules/routes/clients.ts` — POST /api/clients      |
+| WF06     | Any event                   | Used by other workflows or API                           |
+| WF07     | After updating job status   | `src/modules/routes/jobs.ts` — POST /api/jobs/:id/status |
+| WF09     | After submitting an expense | `src/modules/routes/expenses.ts` — POST /api/expenses    |
+| WF13     | After completing a job      | `src/modules/routes/jobs.ts` — POST /api/jobs/:id/status |
 
 ### Example: Add to jobs.ts
 
@@ -443,7 +456,7 @@ try {
   await fetch(`${env.N8N_WEBHOOK_URL}/webhook/kosai/job-created`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jobId: newJob.id })
+    body: JSON.stringify({ jobId: newJob.id }),
   });
 } catch (e) {
   console.warn('n8n webhook failed:', e);
@@ -469,25 +482,30 @@ Run this checklist for each workflow:
 ## Troubleshooting
 
 ### "Unauthorized" errors
+
 - Check `KOSAI_API_KEY` matches your JWT secret
 - Ensure Bearer prefix: `Bearer {{ $env.KOSAI_API_KEY }}`
 
 ### Telegram messages not sending
+
 - Verify bot token in credentials
 - Check `TELEGRAM_CHAT_ID` is correct
 - Send `/start` to your bot in Telegram first
 
 ### Facebook webhook verification fails
+
 - Ensure `FB_VERIFY_TOKEN` matches in both Meta and n8n
 - Webhook URL must be HTTPS
 - Check n8n is publicly accessible
 
 ### Workflows not triggering
+
 - Check webhook URLs are correct
 - Verify n8n is accessible from your API
 - Check Cloudflare Worker logs for webhook errors
 
 ### Cron workflows not running
+
 - Ensure workflow is **activated** (toggle switch)
 - Check n8n server timezone settings
 - Verify cron expression is valid
@@ -496,16 +514,16 @@ Run this checklist for each workflow:
 
 ## Webhook URL Reference
 
-| Workflow | Webhook Path |
-|---|---|
-| WF01 | `/webhook/kosai/job-created` |
-| WF03 | `/webhook/kosai/client-created` |
-| WF06 | `/webhook/kosai/notify` |
-| WF07 | `/webhook/kosai/job-status-change` |
-| WF09 | `/webhook/kosai/expense-submitted` |
-| WF11 | `/webhook/kosai/facebook/messenger` |
-| WF12 | `/webhook/kosai/facebook/leads` |
-| WF13 | `/webhook/kosai/facebook/job-post` |
+| Workflow | Webhook Path                        |
+| -------- | ----------------------------------- |
+| WF01     | `/webhook/kosai/job-created`        |
+| WF03     | `/webhook/kosai/client-created`     |
+| WF06     | `/webhook/kosai/notify`             |
+| WF07     | `/webhook/kosai/job-status-change`  |
+| WF09     | `/webhook/kosai/expense-submitted`  |
+| WF11     | `/webhook/kosai/facebook/messenger` |
+| WF12     | `/webhook/kosai/facebook/leads`     |
+| WF13     | `/webhook/kosai/facebook/job-post`  |
 
 Full URL format: `https://your-n8n-domain.com/webhook/kosai/...`
 

@@ -25,9 +25,7 @@
         "url": "={{ $env.KOSAI_BASE_URL }}/api/expenses/{{ $json.body.expenseId || $json.body.expense_id || $json.body.id }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }]
         }
       },
       "onError": "continueRegularOutput"
@@ -51,9 +49,48 @@
       "parameters": {
         "rules": {
           "values": [
-            { "outputKey": "auto_approve", "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.decision }}", "rightValue": "auto_approve", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "manager_approve", "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.decision }}", "rightValue": "manager_approve", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "flag_review", "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "conditions": [{ "leftValue": "={{ $json.decision }}", "rightValue": "flag_review", "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } }
+            {
+              "outputKey": "auto_approve",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "auto_approve",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "manager_approve",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "manager_approve",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "flag_review",
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "flag_review",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
           ]
         },
         "options": {}

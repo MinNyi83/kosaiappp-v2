@@ -22,7 +22,10 @@ export function getCorsHeaders(origin?: string) {
 
   let allowed = ALLOWED_ORIGINS[0];
   if (origin) {
-    if (ALLOWED_ORIGINS.includes(origin) || (origin.endsWith('.pages.dev') && origin.includes('awesomemyanmar'))) {
+    if (
+      ALLOWED_ORIGINS.includes(origin) ||
+      (origin.endsWith('.pages.dev') && origin.includes('awesomemyanmar'))
+    ) {
       allowed = origin;
     }
   }
@@ -54,4 +57,3 @@ export function handleCorsRequest(request, env) {
     headers: corsHeaders,
   });
 }
-

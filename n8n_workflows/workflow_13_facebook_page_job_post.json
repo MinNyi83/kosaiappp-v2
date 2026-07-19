@@ -25,9 +25,7 @@
         "url": "={{ $env.KOSAI_BASE_URL }}/api/jobs/{{ $json.body.jobId || $json.body.job_id || $json.body.id }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }
-          ]
+          "parameters": [{ "name": "Authorization", "value": "=Bearer {{ $env.KOSAI_API_KEY }}" }]
         }
       },
       "onError": "continueRegularOutput"
@@ -50,9 +48,7 @@
       "position": [850, 300],
       "parameters": {
         "conditions": {
-          "boolean": [
-            { "value1": "={{ $json.hasPhoto }}", "value2": true }
-          ]
+          "boolean": [{ "value1": "={{ $json.hasPhoto }}", "value2": true }]
         }
       }
     },
@@ -69,9 +65,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ message: $json.postText }) }}",
         "headerParameters": {
-          "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
-          ]
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
         }
       },
       "onError": "continueRegularOutput"
@@ -89,9 +83,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ url: $json.photoData, caption: $json.postText }) }}",
         "headerParameters": {
-          "parameters": [
-            { "name": "Content-Type", "value": "application/json" }
-          ]
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
         }
       },
       "onError": "continueRegularOutput"

@@ -23,35 +23,45 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
-      const search  = url.searchParams.get('search');
-      const status  = url.searchParams.get('amc_status');
-      const page    = parseInt(url.searchParams.get('page') || '1');
-      const limit   = Math.min(parseInt(url.searchParams.get('limit') || '200'), 500);
-      const offset  = (page - 1) * limit;
+      const search = url.searchParams.get('search');
+      const status = url.searchParams.get('amc_status');
+      const page = parseInt(url.searchParams.get('page') || '1');
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '200'), 500);
+      const offset = (page - 1) * limit;
 
-      let query      = 'SELECT * FROM clients WHERE 1=1';
+      let query = 'SELECT * FROM clients WHERE 1=1';
       const params: any[] = [];
       let countQuery = 'SELECT COUNT(*) as total FROM clients WHERE 1=1';
       const countParams: any[] = [];
 
       if (search) {
         const like = `%${search}%`;
-        query      += ' AND (company_name LIKE ? OR phone LIKE ? OR contact_person LIKE ? OR address LIKE ?)';
+        query +=
+          ' AND (company_name LIKE ? OR phone LIKE ? OR contact_person LIKE ? OR address LIKE ?)';
         params.push(like, like, like, like);
-        countQuery += ' AND (company_name LIKE ? OR phone LIKE ? OR contact_person LIKE ? OR address LIKE ?)';
+        countQuery +=
+          ' AND (company_name LIKE ? OR phone LIKE ? OR contact_person LIKE ? OR address LIKE ?)';
         countParams.push(like, like, like, like);
       }
       if (status) {
-        query      += ' AND amc_status = ?'; params.push(status);
-        countQuery += ' AND amc_status = ?'; countParams.push(status);
+        query += ' AND amc_status = ?';
+        params.push(status);
+        countQuery += ' AND amc_status = ?';
+        countParams.push(status);
       }
 
       query += ' ORDER BY company_name ASC LIMIT ? OFFSET ?';
       params.push(limit, offset);
 
       const [clientsResult, countResult] = await Promise.all([
-        db.prepare(query).bind(...params).all(),
-        db.prepare(countQuery).bind(...countParams).first(),
+        db
+          .prepare(query)
+          .bind(...params)
+          .all(),
+        db
+          .prepare(countQuery)
+          .bind(...countParams)
+          .first(),
       ]);
 
       return success({
@@ -86,7 +96,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { company_name, contact_person, address, phone, amc_status, amc_start, amc_end } = body;
 
       if (!company_name || !address) {
@@ -123,11 +133,22 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
-      const existing = await db.prepare('SELECT id FROM clients WHERE id = ?').bind(params.id).first();
+      const body = (await request.json()) as any;
+      const existing = await db
+        .prepare('SELECT id FROM clients WHERE id = ?')
+        .bind(params.id)
+        .first();
       if (!existing) return error('Client not found', 404);
 
-      const allowed = ['company_name', 'contact_person', 'address', 'phone', 'amc_status', 'amc_start', 'amc_end'];
+      const allowed = [
+        'company_name',
+        'contact_person',
+        'address',
+        'phone',
+        'amc_status',
+        'amc_start',
+        'amc_end',
+      ];
       const updates: string[] = [];
       const values: any[] = [];
 
@@ -141,7 +162,10 @@ function register(router, env) {
       if (updates.length === 0) return error('No fields to update', 400);
       values.push(params.id);
 
-      await db.prepare(`UPDATE clients SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
+      await db
+        .prepare(`UPDATE clients SET ${updates.join(', ')} WHERE id = ?`)
+        .bind(...values)
+        .run();
       return success({ message: 'Client updated' });
     } catch (err) {
       return error('Failed to update client: ' + err.message, 500);
@@ -154,7 +178,10 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const existing = await db.prepare('SELECT id FROM clients WHERE id = ?').bind(params.id).first();
+      const existing = await db
+        .prepare('SELECT id FROM clients WHERE id = ?')
+        .bind(params.id)
+        .first();
       if (!existing) return error('Client not found', 404);
 
       await db.prepare('DELETE FROM clients WHERE id = ?').bind(params.id).run();

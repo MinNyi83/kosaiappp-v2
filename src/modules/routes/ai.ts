@@ -42,7 +42,7 @@ function register(router, env) {
         return error('Rate limit exceeded. Try again in a minute.', 429);
       }
 
-      const { text } = (await request.json() as any);
+      const { text } = (await request.json()) as any;
       if (!text) return error('Missing text', 400);
 
       const polished = await polishWithAI(text, env);
@@ -62,7 +62,7 @@ function register(router, env) {
         return error('Rate limit exceeded. Try again in a minute.', 429);
       }
 
-      const { job_id, client_location, job_type, priority } = (await request.json() as any);
+      const { job_id, client_location, job_type, priority } = (await request.json()) as any;
 
       // Find available technicians based on location, skills, and workload
       const availableTechs = await db
@@ -78,8 +78,11 @@ function register(router, env) {
         let score = 100;
         score -= tech.active_jobs * 20; // Penalize busy techs
         if (tech.specialties) {
-          const specs = (JSON.parse(tech.specialties) as any);
-          if (job_type && specs.some((s: string) => s.toLowerCase().includes(job_type.toLowerCase()))) {
+          const specs = JSON.parse(tech.specialties) as any;
+          if (
+            job_type &&
+            specs.some((s: string) => s.toLowerCase().includes(job_type.toLowerCase()))
+          ) {
             score += 30; // Bonus for matching specialty
           }
         }
@@ -113,7 +116,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { technician_id, date } = (await request.json() as any);
+      const { technician_id, date } = (await request.json()) as any;
       if (!technician_id || !date) return error('Missing technician_id or date', 400);
 
       const jobs = await db
@@ -144,7 +147,7 @@ function register(router, env) {
         return error('Rate limit exceeded. Try again in a minute.', 429);
       }
 
-      const { query } = (await request.json() as any);
+      const { query } = (await request.json()) as any;
       if (!query) return error('Missing query', 400);
 
       // Natural language to SQL — use AI model to generate SQL
@@ -196,12 +199,16 @@ function register(router, env) {
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
       const result = await fetchGeminiWithFallback(GEMINI_API_KEY, {
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: audio.type || 'audio/ogg', data: base64 } },
-            { text: 'Transcribe this audio accurately. Return only the transcribed text, no commentary.' }
-          ]
-        }]
+        contents: [
+          {
+            parts: [
+              { inline_data: { mime_type: audio.type || 'audio/ogg', data: base64 } },
+              {
+                text: 'Transcribe this audio accurately. Return only the transcribed text, no commentary.',
+              },
+            ],
+          },
+        ],
       });
 
       const transcription = result?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -231,11 +238,15 @@ async function polishWithAI(text, env) {
 
   try {
     const data = await fetchGeminiWithFallback(GEMINI_API_KEY, {
-      contents: [{
-        parts: [{
-          text: `Polish the following service technician notes for clarity and professionalism. Fix grammar and spelling, but keep the technical details intact:\n\n${text}`
-        }]
-      }]
+      contents: [
+        {
+          parts: [
+            {
+              text: `Polish the following service technician notes for clarity and professionalism. Fix grammar and spelling, but keep the technical details intact:\n\n${text}`,
+            },
+          ],
+        },
+      ],
     });
     return data?.candidates?.[0]?.content?.parts?.[0]?.text || text;
   } catch {
@@ -263,11 +274,15 @@ async function nlToSql(query, env) {
   try {
     const schema = await getSchemaSummary(env.DB);
     const data = await fetchGeminiWithFallback(GEMINI_API_KEY, {
-      contents: [{
-        parts: [{
-          text: `Given this SQLite schema:\n${schema}\n\nConvert this natural language query to SQL. Return ONLY the SQL, no explanation. Only use SELECT statements on these tables: ${ALLOWED_TABLES.join(', ')}:\n"${query}"`
-        }]
-      }]
+      contents: [
+        {
+          parts: [
+            {
+              text: `Given this SQLite schema:\n${schema}\n\nConvert this natural language query to SQL. Return ONLY the SQL, no explanation. Only use SELECT statements on these tables: ${ALLOWED_TABLES.join(', ')}:\n"${query}"`,
+            },
+          ],
+        },
+      ],
     });
     let sql = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     sql = sql.replace(/```sql|```/gi, '').trim();

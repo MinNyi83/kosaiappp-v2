@@ -21,35 +21,43 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
-      const search   = url.searchParams.get('search');
+      const search = url.searchParams.get('search');
       const category = url.searchParams.get('category');
-      const page     = parseInt(url.searchParams.get('page') || '1');
-      const limit    = Math.min(parseInt(url.searchParams.get('limit') || '200'), 500);
-      const offset   = (page - 1) * limit;
+      const page = parseInt(url.searchParams.get('page') || '1');
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '200'), 500);
+      const offset = (page - 1) * limit;
 
-      let query      = 'SELECT * FROM inventory_stock WHERE 1=1';
-      const params: any[]  = [];
+      let query = 'SELECT * FROM inventory_stock WHERE 1=1';
+      const params: any[] = [];
       let countQuery = 'SELECT COUNT(*) as total FROM inventory_stock WHERE 1=1';
       const countParams: any[] = [];
 
       if (search) {
         const like = `%${search}%`;
-        query      += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
+        query += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
         params.push(like, like, like);
         countQuery += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
         countParams.push(like, like, like);
       }
       if (category) {
-        query      += ' AND category = ?'; params.push(category);
-        countQuery += ' AND category = ?'; countParams.push(category);
+        query += ' AND category = ?';
+        params.push(category);
+        countQuery += ' AND category = ?';
+        countParams.push(category);
       }
 
       query += ' ORDER BY item_name ASC LIMIT ? OFFSET ?';
       params.push(limit, offset);
 
       const [itemsResult, countResult] = await Promise.all([
-        db.prepare(query).bind(...params).all(),
-        db.prepare(countQuery).bind(...countParams).first(),
+        db
+          .prepare(query)
+          .bind(...params)
+          .all(),
+        db
+          .prepare(countQuery)
+          .bind(...countParams)
+          .first(),
       ]);
 
       return success({
@@ -63,8 +71,6 @@ function register(router, env) {
       return error('Failed to fetch inventory: ' + err.message, 500);
     }
   });
-
-
 
   // ── GET /api/inventory/:id ────────────────────────────────────────────
   router.get('/api/inventory/:id', async (request, params) => {
@@ -87,7 +93,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const item_code = (body.item_code || body.sku || '').toUpperCase();
       const item_name = body.item_name || body.name || '';
       const category = body.category || '';
@@ -168,7 +174,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const existing = await db
         .prepare('SELECT item_code FROM inventory_stock WHERE item_code = ?')
         .bind(params.id)
@@ -230,7 +236,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { item_code } = (await request.json() as any);
+      const { item_code } = (await request.json()) as any;
       if (!item_code) return error('Missing item_code', 400);
 
       await db.prepare('DELETE FROM inventory_stock WHERE item_code = ?').bind(item_code).run();
@@ -240,26 +246,28 @@ function register(router, env) {
     }
   });
 
-
   // ── POST /api/inventory/:id/adjust ────────────────────────────────────
   router.post('/api/inventory/:id/adjust', async (request, params) => {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { quantity_change, reason } = (await request.json() as any);
+      const { quantity_change, reason } = (await request.json()) as any;
       if (quantity_change === undefined) {
         return error('Missing quantity_change', 400);
       }
 
-      const item = await db.prepare('SELECT * FROM inventory_stock WHERE item_code = ?').bind(params.id).first();
+      const item = await db
+        .prepare('SELECT * FROM inventory_stock WHERE item_code = ?')
+        .bind(params.id)
+        .first();
       if (!item) return error('Inventory item not found', 404);
 
       const newQuantity = (item.stock_qty || 0) + quantity_change;
       if (newQuantity < 0) return error('Insufficient stock', 400);
 
       await db
-        .prepare("UPDATE inventory_stock SET stock_qty = ? WHERE item_code = ?")
+        .prepare('UPDATE inventory_stock SET stock_qty = ? WHERE item_code = ?')
         .bind(newQuantity, params.id)
         .run();
 
@@ -298,9 +306,7 @@ function register(router, env) {
 
       // inventory_stock doesn't have reorder_level, we filter by stock_qty <= 5
       const items = await db
-        .prepare(
-          'SELECT * FROM inventory_stock WHERE stock_qty <= 5 ORDER BY stock_qty ASC'
-        )
+        .prepare('SELECT * FROM inventory_stock WHERE stock_qty <= 5 ORDER BY stock_qty ASC')
         .all();
 
       return success(items.results);
@@ -321,20 +327,64 @@ function register(router, env) {
         )
         .all();
 
-
       return success(result.results.map((r) => r.category));
     } catch (err) {
       return error('Failed to fetch categories: ' + err.message, 500);
     }
   });
 
-  // ── GET /api/admin/inventory/list (alias) ─────────────────────────────
+  // ── GET /api/admin/inventory/list (paginated) ────────────────────────
   router.get('/api/admin/inventory/list', async (request) => {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db.prepare('SELECT * FROM inventory_stock ORDER BY item_name ASC').all();
-      return success(result.results);
+
+      const url = new URL(request.url);
+      const search = url.searchParams.get('search') || '';
+      const category = url.searchParams.get('category') || '';
+      const page = parseInt(url.searchParams.get('page') || '1');
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 500);
+      const offset = (page - 1) * limit;
+
+      let query = 'SELECT * FROM inventory_stock WHERE 1=1';
+      let countQuery = 'SELECT COUNT(*) as total FROM inventory_stock WHERE 1=1';
+      const params: any[] = [];
+      const countParams: any[] = [];
+
+      if (search) {
+        const like = `%${search}%`;
+        query += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
+        params.push(like, like, like);
+        countQuery += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
+        countParams.push(like, like, like);
+      }
+      if (category) {
+        query += ' AND category = ?';
+        params.push(category);
+        countQuery += ' AND category = ?';
+        countParams.push(category);
+      }
+
+      const totalResult = await db
+        .prepare(countQuery)
+        .bind(...countParams)
+        .first();
+      const total = totalResult?.total || 0;
+
+      query += ' ORDER BY item_name ASC LIMIT ? OFFSET ?';
+      params.push(limit, offset);
+
+      const result = await db
+        .prepare(query)
+        .bind(...params)
+        .all();
+      return success({
+        items: result.results,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      });
     } catch (err) {
       return error('Failed to fetch inventory list: ' + err.message, 500);
     }
@@ -345,12 +395,14 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db.prepare(
-        `SELECT ib.*, is2.item_name, is2.category
+      const result = await db
+        .prepare(
+          `SELECT ib.*, is2.item_name, is2.category
          FROM inventory_batches ib
          LEFT JOIN inventory_stock is2 ON ib.item_code = is2.item_code
          ORDER BY ib.created_at DESC LIMIT 200`
-      ).all();
+        )
+        .all();
       return success(result.results);
     } catch (err) {
       return error('Failed to fetch batches: ' + err.message, 500);
@@ -374,7 +426,16 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db.prepare('SELECT * FROM inv_sub_categories ORDER BY name ASC').all();
+      const result = await db
+        .prepare(
+          `
+        SELECT s.*, c.name as category_name
+        FROM inv_sub_categories s
+        LEFT JOIN inv_categories c ON s.category_id = c.id
+        ORDER BY s.name ASC
+      `
+        )
+        .all();
       return success(result.results);
     } catch (err) {
       return error('Failed to fetch sub-categories: ' + err.message, 500);
@@ -413,7 +474,9 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
       // Try querying; if table doesn't exist, return empty
       try {
-        const result = await db.prepare('SELECT * FROM warranty_records ORDER BY created_at DESC LIMIT 100').all();
+        const result = await db
+          .prepare('SELECT * FROM warranty_records ORDER BY created_at DESC LIMIT 100')
+          .all();
         return success(result.results);
       } catch (_) {
         return success([]);
@@ -430,7 +493,9 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
       try {
-        const result = await db.prepare('SELECT * FROM rma_records ORDER BY created_at DESC LIMIT 100').all();
+        const result = await db
+          .prepare('SELECT * FROM rma_records ORDER BY created_at DESC LIMIT 100')
+          .all();
         return success(result.results);
       } catch (_) {
         return success([]);
@@ -446,7 +511,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { item_code, unit_price, unit_price_mmk } = body;
       if (!item_code) return error('Missing item_code', 400);
 
@@ -469,7 +534,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { batch_code, item_code, quantity, buying_price, supplier, serials } = body;
 
       if (!batch_code || !item_code || !quantity) {
@@ -532,7 +597,9 @@ function register(router, env) {
 
       // Recalculate inventory stock level
       const totalQty = await db
-        .prepare('SELECT COALESCE(SUM(remaining_qty), 0) as total FROM inventory_batches WHERE item_code = ?')
+        .prepare(
+          'SELECT COALESCE(SUM(remaining_qty), 0) as total FROM inventory_batches WHERE item_code = ?'
+        )
         .bind(item_code)
         .first();
       const newStockQty = totalQty ? totalQty.total : 0;
@@ -554,7 +621,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const body = (await request.json() as any);
+      const body = (await request.json()) as any;
       const { batch_code, buying_price, supplier, quantity } = body;
       if (!batch_code) return error('Missing batch_code', 400);
 

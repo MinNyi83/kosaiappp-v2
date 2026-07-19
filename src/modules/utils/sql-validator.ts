@@ -28,8 +28,20 @@ export function validateSql(sql: string): string | null {
 
   // Block dangerous keywords
   const blocked = [
-    'INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'CREATE', 'TRUNCATE',
-    'EXEC', 'EXECUTE', 'PRAGMA', 'ATTACH', 'DETACH', 'REPLACE', 'UNION',
+    'INSERT',
+    'UPDATE',
+    'DELETE',
+    'DROP',
+    'ALTER',
+    'CREATE',
+    'TRUNCATE',
+    'EXEC',
+    'EXECUTE',
+    'PRAGMA',
+    'ATTACH',
+    'DETACH',
+    'REPLACE',
+    'UNION',
   ];
   for (const keyword of blocked) {
     if (normalized.includes(keyword)) {

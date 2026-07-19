@@ -134,7 +134,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
               border: 1px solid rgba(16, 185, 129, 0.3);
@@ -153,8 +153,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Vault Transaction Ledger</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Vault Transaction Ledger</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">
               Audit safe cash balances, safe withdrawals, and rate conversions
             </p>
           </div>
@@ -163,7 +163,7 @@
           <button
             type="button"
             onclick="exportTableToExcel('cash-ledger-table', 'Vault_Transaction_Ledger')"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
           >
             <svg
               class="w-3 h-3"
@@ -207,7 +207,7 @@
 
       <!-- Table View -->
       <div class="flex-1 overflow-y-auto p-5">
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
+        <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
           <div class="table-scroll-container overflow-x-auto bg-black/30 p-4">
             <table
               id="cash-ledger-table"
@@ -217,15 +217,15 @@
                 <tr
                   class="text-slate-500 border-b border-white/5 pb-2 font-semibold uppercase tracking-wider"
                 >
-                  <th class="pb-2">Date</th>
-                  <th class="pb-2">Type</th>
-                  <th class="pb-2">Amount</th>
-                  <th class="pb-2">Rate</th>
-                  <th class="pb-2">Local Value (MMK)</th>
-                  <th class="pb-2">Memo</th>
+                  <th class="pb-3 pt-2 font-semibold">Date</th>
+                  <th class="pb-3 pt-2 font-semibold">Type</th>
+                  <th class="pb-3 pt-2 font-semibold">Amount</th>
+                  <th class="pb-3 pt-2 font-semibold">Rate</th>
+                  <th class="pb-3 pt-2 font-semibold">Local Value (MMK)</th>
+                  <th class="pb-3 pt-2 font-semibold">Memo</th>
                 </tr>
               </thead>
-              <tbody id="cash-ledger-body">
+              <tbody class="divide-y divide-white/5">
                 <!-- Loaded dynamically -->
               </tbody>
             </table>
@@ -262,7 +262,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.1));
               border: 1px solid rgba(245, 158, 11, 0.3);
@@ -282,15 +282,15 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Log Safe Transaction</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">Commit vault inflow/outflow transactions</p>
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Log Safe Transaction</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">Commit vault inflow/outflow transactions</p>
           </div>
         </div>
       </div>
 
       <!-- Form View -->
       <div class="flex-1 overflow-y-auto p-5 max-w-xl">
-        <div class="glass-panel p-6 rounded-2xl space-y-4">
+        <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
           <form method="POST" onsubmit="submitCashTransaction(event)" class="space-y-3">
             <div class="space-y-1">
               <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
@@ -412,7 +412,7 @@
       >
         <div class="flex items-center gap-3">
           <div
-            class="w-7 h-7 rounded-lg flex items-center justify-center"
+            class="w-10 h-10 rounded-xl flex items-center justify-center"
             style="
               background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(99, 102, 241, 0.1));
               border: 1px solid rgba(99, 102, 241, 0.3);
@@ -432,8 +432,8 @@
             </svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none">Sales Transaction Ledger</h2>
-            <p class="text-[9px] text-slate-600 mt-0.5">
+            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Sales Transaction Ledger</h2>
+            <p class="text-[10px] text-slate-500 mt-0.5">
               Audit all POS checkout transactions and payment records
             </p>
           </div>
@@ -449,7 +449,7 @@
           <button
             type="button"
             onclick="exportTableToExcel('pos-sales-table', 'Sales_Transaction_Ledger')"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-lg transition-all"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
           >
             <svg
               class="w-3 h-3"
@@ -469,7 +469,7 @@
 
       <!-- Table View -->
       <div class="flex-1 overflow-y-auto p-5">
-        <div class="glass-panel p-6 rounded-2xl">
+        <div class="glass-panel rounded-2xl overflow-hidden">
           <div class="table-scroll-container overflow-x-auto bg-black/30 p-4">
             <table
               id="pos-sales-table"
@@ -486,10 +486,10 @@
                   <th class="pb-2 pr-3">Currency</th>
                   <th class="pb-2 pr-3">Total Amount</th>
                   <th class="pb-2 pr-3">Status</th>
-                  <th class="pb-2">Actions</th>
+                  <th class="pb-3 pt-2 font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody id="pos-sales-body">
+              <tbody class="divide-y divide-white/5">
                 <tr>
                   <td colspan="8" class="py-8 text-center text-slate-500 text-[10px]">
                     Loading sales history...

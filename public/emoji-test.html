@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emoji Rendering Test - AwesomeMyanmar</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #09090b; color: #e2e8f0; padding: 24px; }
+    h1 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .subtitle { font-size: 12px; color: #94a3b8; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+    .card:hover { background: rgba(255,255,255,0.06); }
+    .emoji { font-size: 22px; min-width: 30px; text-align: center; line-height: 1; }
+    .info { flex: 1; }
+    .name { font-size: 11px; color: #cbd5e1; }
+    .source { font-size: 9px; color: #64748b; margin-top: 2px; }
+    .status { font-size: 10px; font-weight: 600; width: 20px; text-align: center; }
+    .pass { color: #34d399; }
+    .fail { color: #f87171; }
+    .section { font-size: 11px; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.1em; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .summary { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 16px; margin-top: 20px; }
+    .summary-title { font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; }
+    .summary-label { color: #94a3b8; }
+    .summary-value { font-weight: 600; }
+    .all-pass { color: #34d399; }
+    .has-fail { color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>Emoji Rendering Test</h1>
+  <p class="subtitle">Tests all emojis used across the AwesomeMyanmar application</p>
+
+  <div class="section">Admin Panel Sidebar (SVG icons - no emojis)</div>
+  <div class="grid" id="admin-sidebar"></div>
+
+  <div class="section">Admin Panel Header & Actions</div>
+  <div class="grid" id="admin-header"></div>
+
+  <div class="section">Dashboard View</div>
+  <div class="grid" id="dashboard"></div>
+
+  <div class="section">Tickets View</div>
+  <div class="grid" id="tickets"></div>
+
+  <div class="section">AMC / Customers View</div>
+  <div class="grid" id="amc"></div>
+
+  <div class="section">System Settings</div>
+  <div class="grid" id="settings"></div>
+
+  <div class="section">Reports</div>
+  <div class="grid" id="reports"></div>
+
+  <div class="section">Landing Page Editor</div>
+  <div class="grid" id="landing"></div>
+
+  <div class="section">AI Copilot</div>
+  <div class="grid" id="ai"></div>
+
+  <div class="section">Dispatch Map</div>
+  <div class="grid" id="map"></div>
+
+  <div class="section">Jobs View</div>
+  <div class="grid" id="jobs"></div>
+
+  <div class="section">Technician Portal (app.html)</div>
+  <div class="grid" id="portal"></div>
+
+  <div class="section">Public Pages (index, contact, portfolio)</div>
+  <div class="grid" id="public"></div>
+
+  <div class="summary" id="summary"></div>
+
+  <script>
+    const tests = {
+      'admin-sidebar': [
+        { emoji: '📊', name: 'Dashboard', source: 'SVG icon (blue)' },
+        { emoji: '🗺️', name: 'Dispatch Map', source: 'SVG icon (emerald)' },
+        { emoji: '🎫', name: 'Service Tickets', source: 'SVG icon (yellow)' },
+        { emoji: '📋', name: 'Jobs', source: 'SVG icon (cyan)' },
+        { emoji: '⏰', name: 'Attendance', source: 'SVG icon (green)' },
+        { emoji: '👥', name: 'Customers', source: 'SVG icon (indigo)' },
+        { emoji: '🛡️', name: 'Warranty & RMA', source: 'SVG icon (rose)' },
+        { emoji: '🏢', name: 'Distributors', source: 'SVG icon (violet)' },
+        { emoji: '📦', name: 'Stock & Items', source: 'SVG icon (orange)' },
+        { emoji: '💰', name: 'Cash Ledger', source: 'SVG icon (emerald)' },
+        { emoji: '💲', name: 'Service Fees', source: 'SVG icon (amber)' },
+        { emoji: '📄', name: 'Reports', source: 'SVG icon (sky)' },
+        { emoji: '🛒', name: 'POS Terminal', source: 'SVG icon (emerald)' },
+        { emoji: '✨', name: 'AI Copilot', source: 'SVG icon (fuchsia)' },
+        { emoji: '👤', name: 'User Management', source: 'SVG icon (fuchsia)' },
+        { emoji: '⚙️', name: 'Settings', source: 'SVG icon (amber)' },
+        { emoji: '🌐', name: 'Landing Page', source: 'SVG icon (sky)' },
+        { emoji: '🖼️', name: 'Portfolio', source: 'SVG icon (violet)' },
+      ],
+      'admin-header': [
+        { emoji: '✕', name: 'Close Sidebar', source: 'admin.html:412' },
+        { emoji: '🚀', name: 'Technician Portal', source: 'admin.html:998' },
+        { emoji: '⏻', name: 'Sign Out (power)', source: 'admin.html:1005' },
+      ],
+      'dashboard': [
+        { emoji: '🎫', name: 'Active Tickets', source: 'dashboard.html:26' },
+        { emoji: '💵', name: 'Total Revenue', source: 'dashboard.html:43' },
+        { emoji: '🤝', name: 'AMC Checks', source: 'dashboard.html:73' },
+        { emoji: '📅', name: 'Calendar', source: 'dashboard.html:118' },
+      ],
+      'tickets': [
+        { emoji: '📄', name: 'PDF Receipts', source: 'tickets.html:486' },
+      ],
+      'amc': [
+        { emoji: '🏢', name: 'Corporate AMC', source: 'amc.html:226,274' },
+        { emoji: '⚠️', name: 'Warning', source: 'amc.html:262' },
+        { emoji: '🎫', name: 'New Customer', source: 'amc.html:539' },
+      ],
+      'settings': [
+        { emoji: '💵', name: 'Exchange Rate', source: 'system-settings.html:45' },
+        { emoji: '🏢', name: 'Head Office', source: 'system-settings.html:71' },
+      ],
+      'reports': [
+        { emoji: '🖨️', name: 'Print Report', source: 'reports.html:16' },
+        { emoji: '⚙️', name: 'Report Builder', source: 'reports.html:51' },
+      ],
+      'landing': [
+        { emoji: '📊', name: 'Stats Section', source: 'landing-page.html:89' },
+        { emoji: '📍', name: 'Contact Info', source: 'landing-page.html:269' },
+        { emoji: '📄', name: 'Footer', source: 'landing-page.html:352' },
+      ],
+      'ai': [
+        { emoji: '🗺️', name: 'Route Optimizer', source: 'ai-copilot.html:23' },
+        { emoji: '📊', name: 'Chat with Data', source: 'ai-copilot.html:30' },
+        { emoji: '🎙️', name: 'Voice Record', source: 'ai-copilot.html:47' },
+        { emoji: '💵', name: 'Revenue Query', source: 'ai-copilot.html:174' },
+      ],
+      'map': [
+        { emoji: '📍', name: 'Center to HQ', source: 'dispatch-map.html:15' },
+        { emoji: '🗺️', name: 'Street Map', source: 'dispatch-map.html:40' },
+      ],
+      'jobs': [
+        { emoji: '⚠️', name: 'Warning', source: 'jobs.html:106,222' },
+        { emoji: '📍', name: 'Location', source: 'jobs.html:195' },
+      ],
+      'portal': [
+        { emoji: '🖨️', name: 'Print', source: 'app.html:291' },
+        { emoji: '✔️', name: 'Completed', source: 'app.html:683' },
+        { emoji: '⚙️', name: 'Settings', source: 'app.html:691' },
+        { emoji: '⏱️', name: 'Arrival/Completion', source: 'portal.html:330,334' },
+      ],
+      'public': [
+        { emoji: '⚙️', name: 'Settings', source: 'index.html, contact.html, portfolio.html' },
+        { emoji: '📍', name: 'Location', source: 'contact.html:338' },
+        { emoji: '✉️', name: 'Email', source: 'contact.html:350' },
+        { emoji: '🗑️', name: 'Delete', source: 'user-management.html:566' },
+      ],
+    };
+
+    let totalPass = 0;
+    let totalFail = 0;
+    const allEmojis = [];
+
+    Object.entries(tests).forEach(([sectionId, items]) => {
+      const container = document.getElementById(sectionId);
+      if (!container) return;
+
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <span class="emoji">${item.emoji}</span>
+          <div class="info">
+            <div class="name">${item.name}</div>
+            <div class="source">${item.source}</div>
+          </div>
+          <span class="status" data-emoji="${item.emoji}">…</span>
+        `;
+        container.appendChild(div);
+        allEmojis.push({ emoji: item.emoji, name: item.name, source: item.source, section: sectionId });
+      });
+    });
+
+    // Test rendering
+    requestAnimationFrame(() => {
+      document.querySelectorAll('[data-emoji]').forEach(el => {
+        const parent = el.closest('.card');
+        const emojiSpan = parent.querySelector('.emoji');
+        const rect = emojiSpan.getBoundingClientRect();
+        const status = el;
+
+        if (rect.width > 8 && rect.height > 8) {
+          status.textContent = '✓';
+          status.className = 'status pass';
+          totalPass++;
+        } else {
+          status.textContent = '✗';
+          status.className = 'status fail';
+          totalFail++;
+          parent.style.borderColor = 'rgba(248, 113, 133, 0.3)';
+        }
+      });
+
+      // Summary
+      const summary = document.getElementById('summary');
+      const uniqueEmojis = [...new Set(allEmojis.map(e => e.emoji))];
+      summary.innerHTML = `
+        <div class="summary-title">Test Results</div>
+        <div class="summary-row">
+          <span class="summary-label">Total emoji instances tested</span>
+          <span class="summary-value">${totalPass + totalFail}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Unique emojis</span>
+          <span class="summary-value">${uniqueEmojis.length}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Passed</span>
+          <span class="summary-value all-pass">${totalPass}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Failed</span>
+          <span class="summary-value ${totalFail > 0 ? 'has-fail' : 'all-pass'}">${totalFail}</span>
+        </div>
+        <div class="summary-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06);">
+          <span class="summary-label">Status</span>
+          <span class="summary-value ${totalFail === 0 ? 'all-pass' : 'has-fail'}">
+            ${totalFail === 0 ? '✓ ALL EMOJIS RENDER CORRECTLY' : '⚠ SOME EMOJIS FAILED - CHECK BROWSER FONT SUPPORT'}
+          </span>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>
