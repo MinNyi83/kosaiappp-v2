@@ -104,12 +104,12 @@ GOOGLE_DRIVE_FOLDER_ID="your_google_drive_folder_id"
 ### Google Drive Setup & Auth (One-Time Setup)
 
 1. Configure credentials under Google Cloud Console OAuth Client ID.
-2. Add Authorized Redirect URI: `http://127.0.0.1:8787/api/setup/google-drive/callback`.
+2. Add Authorized Redirect URI: `https://cctv-service-system.nyinyimin2007.workers.dev/api/auth/google/drive-callback` (production) or `http://127.0.0.1:8787/api/auth/google/drive-callback` (local).
 3. Publish App on the OAuth Consent Screen (or add test user `nyinyimin2007@gmail.com`).
-4. Add Client ID and Client Secret to `.dev.vars`.
-5. Visit `http://127.0.0.1:8787/api/setup/google-drive` to authorize.
-6. Copy the generated **Refresh Token** and paste it into `.dev.vars` under `GOOGLE_REFRESH_TOKEN`.
-7. Restart wrangler dev.
+4. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to Cloudflare secrets (or `.dev.vars` for local).
+5. Visit `/api/auth/google/drive-url` to get the OAuth authorization URL.
+6. Complete the OAuth consent in your browser — the refresh token is automatically stored in the `system_config` database table.
+7. No need to manually copy refresh tokens to environment variables.
 
 ### Database Setup
 
@@ -181,8 +181,9 @@ cctv-service-system/
 
 ### Google Drive Setup Flow
 
-- `GET /api/auth/google/drive-url`: Starts OAuth authorization redirect
-- `GET /api/auth/google/drive-callback`: Exposes success screen showing generated Refresh Token
+- `GET /api/auth/google/drive-url`: Returns OAuth authorization URL
+- `GET /api/auth/google/drive-callback`: Handles OAuth callback, stores refresh token in `system_config` table
+- `GET /api/debug-gdrive`: Debug endpoint to verify Drive connection and token validity
 
 ### Authentication
 
@@ -475,7 +476,7 @@ CREATE TABLE service_records (
 
 - **Inventory**: `inventory_stock`, `inventory_batches`, `inventory_items`, `stock_code_map`
 - **Cash Management**: `cash_safes`, `cash_transactions`
-- **Configuration**: `service_fees`, `system_config`
+- **Configuration**: `service_fees`, `system_config` (columns: `config_key`, `config_value`, `description`, `updated_by`, `updated_at`)
 
 ## 🤖 Telegram Bot System
 

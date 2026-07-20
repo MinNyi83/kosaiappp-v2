@@ -16,7 +16,7 @@
 import { Router } from './modules/utils/router.js';
 import { getCorsHeaders } from './modules/utils/cors.js';
 import { error } from './modules/utils/response.js';
-import { uploadBackupToGoogleDrive } from './modules/utils/google.js';
+import { uploadBackupToGoogleDrive, getGoogleAccessToken } from './modules/utils/google.js';
 import { sendTelegramNotification } from './modules/utils/telegram.js';
 
 // ── Route module registry ────────────────────────────────────────────────
@@ -79,6 +79,31 @@ export default {
     if (url.pathname === '/api/test-backup') {
       await handleAutoBackup(env);
       return new Response('Backup triggered — check Telegram', { status: 200 });
+    }
+
+    // ── Debug: test Google Drive connection ──────────────────────────────
+    if (url.pathname === '/api/debug-gdrive') {
+      try {
+        const token = await getGoogleAccessToken(env);
+        if (!token) {
+          return new Response(JSON.stringify({ success: false, error: 'Failed to get access token' }), {
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        // Test: list files to verify token works
+        const res = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=1&fields=files(id,name)', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        return new Response(JSON.stringify({ success: true, tokenPreview: token.substring(0, 10) + '...', files: data }, null, 2), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ success: false, error: e.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // ── Build router and register all modules ───────────────────────────

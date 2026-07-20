@@ -65,6 +65,18 @@ $body = @{ question = "list all technicians" } | ConvertTo-Json
 Invoke-WebRequest -Uri "$baseUrl/api/admin/ai/chat-data" -Method POST -Body $body -ContentType "application/json" -Headers @{ Authorization = "Bearer $token" } -UseBasicParsing
 ```
 
+**Test Google Drive connection:**
+
+```powershell
+Invoke-WebRequest -Uri "$baseUrl/api/debug-gdrive" -UseBasicParsing
+```
+
+**Test backup upload:**
+
+```powershell
+Invoke-WebRequest -Uri "$baseUrl/api/test-backup" -UseBasicParsing
+```
+
 ## Environment
 
 - Worker: `https://cctv-service-system.nyinyimin2007.workers.dev`
@@ -77,3 +89,4 @@ Invoke-WebRequest -Uri "$baseUrl/api/admin/ai/chat-data" -Method POST -Body $bod
 - Always deploy BOTH worker and pages (user explicitly requested this)
 - Always run TypeScript check before deploy
 - Test all modified endpoints after deploy
+- Test Google Drive connection after any OAuth-related changes

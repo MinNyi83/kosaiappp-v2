@@ -61,6 +61,11 @@ npx wrangler d1 execute cctv-fsm-db --remote --command "SELECT * FROM tablename 
 
 - id, technician_id, date, clock_in, clock_out, clock_in_lat, clock_in_lng, clock_out_lat, clock_out_lng, notes
 
+### system_config
+
+- config_key (TEXT, PRIMARY KEY), config_value (TEXT), description (TEXT), updated_by (TEXT), updated_at (TEXT)
+- Stores Google Drive refresh token, landing page config, and other key-value settings
+
 ## Migration Checklist
 
 1. Check if table/column exists: `PRAGMA table_info(tablename)`

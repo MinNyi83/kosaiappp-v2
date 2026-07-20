@@ -117,12 +117,12 @@ function register(router, env) {
         .all();
 
       const config = await db
-        .prepare("SELECT key, value FROM system_config WHERE key LIKE 'landing.%'")
+        .prepare("SELECT config_key, config_value FROM system_config WHERE config_key LIKE 'landing.%'")
         .all();
 
       const configMap = {};
       for (const c of config.results) {
-        configMap[c.key.replace('landing.', '')] = c.value;
+        configMap[c.config_key.replace('landing.', '')] = c.config_value;
       }
 
       return success({

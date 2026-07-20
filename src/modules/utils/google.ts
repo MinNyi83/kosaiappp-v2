@@ -5,7 +5,21 @@
 export async function getGoogleAccessToken(env) {
   const clientId = env.GOOGLE_CLIENT_ID;
   const clientSecret = env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = env.GOOGLE_REFRESH_TOKEN;
+
+  // Prefer refresh token from database (set via OAuth callback), fall back to env var
+  let refreshToken = null;
+  try {
+    const db = env.DB;
+    if (db) {
+      const row = await db
+        .prepare("SELECT config_value FROM system_config WHERE config_key = 'google_drive_refresh_token'")
+        .first();
+      if (row?.config_value) refreshToken = row.config_value;
+    }
+  } catch (e) {
+    console.warn('Failed to read refresh token from DB, falling back to env:', e.message);
+  }
+  if (!refreshToken) refreshToken = env.GOOGLE_REFRESH_TOKEN;
 
   if (!clientId || !clientSecret || !refreshToken) {
     console.error('Google OAuth missing credentials:', {

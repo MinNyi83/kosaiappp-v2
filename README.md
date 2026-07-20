@@ -171,8 +171,9 @@ Configure in `.dev.vars` (local) or Cloudflare dashboard (production):
 | `TELEGRAM_CHAT_ID`            | Telegram chat/channel ID    | Yes      |
 | `GEMINI_API_KEY`              | Gemini AI API key           | Yes      |
 | `GOOGLE_CLIENT_SECRET`        | Google OAuth client secret  | Yes      |
-| `GOOGLE_REFRESH_TOKEN`        | Google OAuth refresh token  | Yes      |
 | `GOOGLE_DRIVE_FOLDER_ID`      | Google Drive folder ID      | Yes      |
+
+> **Note:** `GOOGLE_REFRESH_TOKEN` is no longer required as an environment variable. The refresh token is now stored in the `system_config` database table via the OAuth callback flow. To authorize Google Drive, visit `/api/auth/google/drive-url` and complete the OAuth consent.
 
 ### Database Setup & Data Sync
 
@@ -313,6 +314,9 @@ All endpoints served from Cloudflare Worker at `/api/...`:
 ### Google & Maps
 
 - `GET /api/auth/google/drive-url` — Drive auth URL
+- `GET /api/auth/google/drive-callback` — Drive OAuth callback (stores refresh token in DB)
+- `GET /api/debug-gdrive` — Debug Drive connection
+- `GET /api/test-backup` — Trigger full backup upload to Drive
 - `GET /api/admin/resolve-coords` — Resolve coordinates
 - `POST /api/resolve-maps-url` — Resolve Maps URL
 

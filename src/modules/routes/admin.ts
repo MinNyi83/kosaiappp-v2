@@ -163,7 +163,7 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       const config = await db
-        .prepare('SELECT * FROM system_config WHERE key = ?')
+        .prepare('SELECT * FROM system_config WHERE config_key = ?')
         .bind(params.key)
         .first();
 
@@ -185,7 +185,7 @@ function register(router, env) {
 
       await db
         .prepare(
-          "INSERT INTO system_config (key, value, description, updated_by) VALUES (?, ?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, description = COALESCE(excluded.description, description), updated_by = excluded.updated_by, updated_at = datetime('now')"
+          "INSERT INTO system_config (config_key, config_value, description, updated_by) VALUES (?, ?, ?, ?) ON CONFLICT(config_key) DO UPDATE SET config_value = excluded.config_value, description = COALESCE(excluded.description, description), updated_by = excluded.updated_by, updated_at = datetime('now')"
         )
         .bind(
           key,

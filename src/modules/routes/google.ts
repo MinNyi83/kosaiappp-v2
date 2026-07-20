@@ -159,7 +159,7 @@ function register(router, env) {
       if (tokens.refresh_token) {
         await db
           .prepare(
-            "INSERT INTO system_config (key, value) VALUES ('google_drive_refresh_token', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+            "INSERT INTO system_config (config_key, config_value) VALUES ('google_drive_refresh_token', ?) ON CONFLICT(config_key) DO UPDATE SET config_value = excluded.config_value"
           )
           .bind(tokens.refresh_token)
           .run();

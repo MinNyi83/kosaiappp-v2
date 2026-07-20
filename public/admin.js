@@ -85,11 +85,11 @@ const stockPerPage = 10;
 let catalogPage = 1;
 let catalogTotalPages = 1;
 let catalogTotal = 0;
-const catalogPerPage = 50;
+const catalogPerPage = 100;
 let pricingPage = 1;
 let pricingTotalPages = 1;
 let pricingTotal = 0;
-const pricingPerPage = 50;
+const pricingPerPage = 100;
 let clientsList = [];
 
 // Mobile sidebar controls
@@ -469,6 +469,30 @@ function switchTab(tabId) {
         searchInput.select();
       }
     }, 150);
+  }
+
+  if (tabId === 'inventory') {
+    window.loadInventoryData();
+  }
+
+  if (tabId === 'currency') {
+    window.loadCashSafeData();
+  }
+
+  if (tabId === 'amc') {
+    window.loadClientsData();
+  }
+
+  if (tabId === 'distributors') {
+    window.loadDistributorsData();
+  }
+
+  if (tabId === 'warranty') {
+    window.loadRMAData();
+  }
+
+  if (tabId === 'service-fees') {
+    window.loadServiceFeesData();
   }
 
   if (tabId === 'system-settings') {
@@ -1089,21 +1113,34 @@ let masterUnits = [];
 window.loadInventoryData = async function () {
   const baseUrl = document.getElementById('api-base').value;
   const token = localStorage.getItem('admin_token');
+  console.log('loadInventoryData called, baseUrl:', baseUrl, 'token exists:', !!token);
   try {
-    // 1. Fetch catalog (first page to get total count)
-    const catRes = await fetch(
-      `${baseUrl}/api/admin/inventory/list?page=1&limit=${catalogPerPage}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
+    // 1. Fetch ALL catalog items (paginate through server pages of up to 500)
+    activeCatalogList = [];
+    let catPage = 1;
+    const catLimit = 500;
+    while (true) {
+      const catRes = await fetch(
+        `${baseUrl}/api/admin/inventory/list?page=${catPage}&limit=${catLimit}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log('Catalog API response status:', catRes.status, 'page:', catPage);
+      if (!catRes.ok) {
+        console.error('Catalog API failed:', catRes.status);
+        break;
       }
-    );
-    if (catRes.ok) {
       const catResData = await catRes.json();
       const catData = catResData.data || catResData;
-      activeCatalogList = catData.items || [];
-      catalogTotal = catData.total || 0;
-      catalogTotalPages = catData.totalPages || 1;
+      const items = Array.isArray(catData) ? catData : (catData.items || []);
+      activeCatalogList.push(...items);
+      console.log('Page', catPage, 'fetched', items.length, 'items, total so far:', activeCatalogList.length);
+      // Stop when we get fewer items than the limit (last page)
+      if (items.length < catLimit) break;
+      catPage++;
     }
+    console.log('activeCatalogList populated with', activeCatalogList.length, 'items');
+    catalogTotal = activeCatalogList.length;
+    catalogTotalPages = 1;
 
     // 2. Fetch batches
     const batRes = await fetch(`${baseUrl}/api/admin/inventory/batches`, {
@@ -1359,6 +1396,11 @@ window.switchInvModule = function (module) {
       }
     }
   });
+
+  // Render data when switching to pricing or catalog tabs
+  if (module === 'pricing' || module === 'catalog') {
+    renderSalesPricing();
+  }
 };
 
 // Keep old alias for backward compat
@@ -1821,6 +1863,68 @@ window.importBatchExcel = function (input) {
   });
 };
 
+// ── Import: Master Data (Categories, Sub-Categories, Brands) ──
+window.importMasterExcel = function (type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  loadXLSX(async () => {
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data);
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    const baseUrl = document.getElementById('api-base').value;
+    const token = localStorage.getItem('admin_token');
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+    let ok = 0, fail = 0;
+
+    for (const r of rows) {
+      try {
+        let endpoint = '';
+        let body = {};
+
+        if (type === 'categories') {
+          endpoint = '/api/admin/inventory/categories/add';
+          body = {
+            id: r['ID'] || r['id'] || null,
+            name: r['Category'] || r['name'] || r['Name'] || '',
+            code: r['Code'] || r['code'] || '',
+          };
+        } else if (type === 'sub-categories') {
+          endpoint = '/api/admin/inventory/sub-categories/add';
+          body = {
+            id: r['ID'] || r['id'] || null,
+            name: r['Sub-Cat'] || r['Sub-Category'] || r['name'] || r['Name'] || '',
+            category_id: r['Category ID'] || r['category_id'] || null,
+            code: r['Code'] || r['code'] || '',
+          };
+        } else if (type === 'brands') {
+          endpoint = '/api/admin/inventory/brands/add';
+          body = {
+            id: r['ID'] || r['id'] || null,
+            name: r['Brand'] || r['name'] || r['Name'] || '',
+            code: r['Code'] || r['code'] || '',
+          };
+        }
+
+        if (endpoint && body.name) {
+          const res = await fetch(`${baseUrl}${endpoint}`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(body),
+          });
+          res.ok ? ok++ : fail++;
+        } else {
+          fail++;
+        }
+      } catch {
+        fail++;
+      }
+    }
+    showToast(`${type} import complete: ${ok} added, ${fail} failed.`, ok > 0 ? 'success' : 'warning');
+    input.value = '';
+    loadMasterData().then(() => renderMasterLists());
+  });
+};
+
 window.switchUserModule = function (module) {
   const panels = ['accounts', 'create', 'roles'];
   panels.forEach((p) => {
@@ -2184,6 +2288,10 @@ function renderSalesPricing() {
   const batchSelect = document.getElementById('batch-item-code');
   const updateSelect = document.getElementById('price-update-item-code');
   const filterSelect = document.getElementById('batch-filter-model');
+
+  console.log('renderSalesPricing called');
+  console.log('pricingBody:', !!pricingBody, 'catalogBody:', !!catalogBody);
+  console.log('activeCatalogList length:', activeCatalogList.length);
 
   const prevBatchVal = batchSelect ? batchSelect.value : '';
   const prevUpdateVal = updateSelect ? updateSelect.value : '';
