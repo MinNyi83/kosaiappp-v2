@@ -73,8 +73,47 @@ npx wrangler d1 execute cctv-fsm-db --remote --command "SELECT * FROM tablename 
 3. Verify the change: `SELECT * FROM tablename LIMIT 1`
 4. Test the feature that depends on the schema
 
+## Local ↔ Remote Schema Sync
+
+Local `wrangler dev` uses a separate D1 database file. Production uses `--remote`. Schemas can drift apart.
+
+### Detect drift
+
+Compare local vs remote schemas:
+
+```bash
+# Local (no --remote flag)
+npx wrangler d1 execute cctv-fsm-db --command "PRAGMA table_info(technicians)"
+
+# Remote (production)
+npx wrangler d1 execute cctv-fsm-db --remote --command "PRAGMA table_info(technicians)"
+```
+
+If columns differ, ALTER the one that's behind:
+
+```bash
+# Add missing column to local
+npx wrangler d1 execute cctv-fsm-db --command "ALTER TABLE technicians ADD COLUMN telegram_username TEXT"
+
+# Add missing column to remote
+npx wrangler d1 execute cctv-fsm-db --remote --command "ALTER TABLE technicians ADD COLUMN telegram_username TEXT"
+```
+
+### Restart wrangler dev after schema changes
+
+`wrangler dev` caches the DB schema on startup. After any `ALTER TABLE` or `CREATE TABLE`, you must **fully stop and restart** the dev server:
+
+```powershell
+Stop-Process -Name "node" -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 2
+npx wrangler dev --port 8787
+```
+
+Browser refresh alone is NOT sufficient.
+
 ## Rules
 
 - Always use `--remote` flag for production database
 - Always check existing schema before adding columns (avoids duplicates)
 - Never drop tables without explicit user confirmation
+- **D1 rejects non-constant defaults in ALTER TABLE**: `ALTER TABLE ... ADD COLUMN updated_at TEXT DEFAULT (datetime('now'))` fails. Add column without DEFAULT, let application code set values on INSERT.
