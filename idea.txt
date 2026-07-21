@@ -1,0 +1,102 @@
+cd D:\kosai-project\v2\
+
+npx @mimo-ai/cli
+
+**Toast Notifications** - Replaced 80+ browser alerts with non-blocking toast messages " make show in center"
+
+Warranty & RMA Claims change the function and style as you like 
+Ai-copilot change the function and style as you like
+pos change the function and style as you like
+reports change the function and style as you like
+
+Dashboard change the function and style as you like
+user authentication and role-based access control
+Inventory, Sales Pricing Sheet, import excel also add Device Catalog, Categories, Sub-Categories and Brands 
+
+Can you add import Excel buttons for Device Catalog, Categories, Sub-Categories and Brands in the UI like Inventory a...
+Sales Pricing Sheet and Device Catalog only show 100 items and how to view another?
+
+ Features
+Feature
+	Description
+	Asset management
+	Track equipment inventory, location, status and service history in one place.
+	Preventive maintenance scheduler
+	Automated daily checks with multi-stage reminders (3 days, 1 day, same day) and recurring due-date calculations.
+	Work orders & tasks
+	Create, assign and track work orders through configurable approval and completion workflows.
+	Document management
+	Centralised storage for manuals, service records and compliance documents with version control, tagging and expiry tracking (ISO 9001, OSHA, FDA 	and more).
+	Vendor & supplier management
+	Manage vendor contracts, SLAs and performance metrics alongside supplier and customer relationships.
+	Team & user management
+	Role-based access control powered by Laravel Jetstream Teams.
+	Notifications & reports
+	Email and in-app alerts, customisable reports and dashboards.
+	Custom forms
+	Build and attach custom data-capture forms to any work order or schedule.
+	IoT sensor integration
+	Connect condition-monitoring sensors to trigger maintenance events automatically.
+	Modular architecture
+	Clean separation of concerns makes adding new modules or third-party integrations straightforward.
+
+
+can you add a page to see all the jobs and their status
+ can you add the jobs page with status tracking now
+  
+ Navigation Sections:
+- Operations: Dashboard, Service Tickets, Dispatch Map, AI Copilot
+- Management: Customers, Technicians, Inventory, Warranty & RMA
+- Finance: Cash Safe, Service Fees, Distributors
+- System: Reports, Settings
+ 
+ Original Design Features Applied:
+- Dark gradient background (radial gradients)
+- Glass panels with blur effects
+- Amber (#f59e0b) accent color
+- Plus Jakarta Sans font
+- Floating gradient orbs in hero
+- Grid pattern background
+- Amber-tinted shadows and glows
+- Custom scrollbars
+- Smooth animations
+All pages now have a consistent design language.
+
+Suggested Next Steps
+High Priority:
+1. Portfolio page - Showcase completed projects with before/after photos
+2. Services detail pages - Dedicated pages for CCTV, Networking, NAS
+3. About page - Company story, team, certifications
+Medium Priority:
+4. Search functionality - Global search across jobs, clients, inventory
+5. Dark/Light mode toggle - User preference
+Low Priority:
+7. Blog/News - Industry tips, company updates
+8. FAQ section - Common questions
+10. Appointment booking - Schedule consultations 
+
+add the portfolio page
+Features:
+Portfolio Grid:
+- 6 sample projects (CCTV, Networking, NAS, WiFi)
+- Card layout with hover effects
+- Service type badges with colors
+- Client and location info
+Filtering:
+- Filter by All, CCTV, Networking, NAS Storage, WiFi
+- Animated filter transitions
+Stats Section:
+- Total projects count
+- Breakdown by service type
+Project Modal:
+- Click any project to view details
+- Before/After comparison slider (drag to compare)
+- Project details (client, location, date, technician)
+- Image gallery
+Sample Projects:
+1. Hotel Security Overhaul (CCTV)
+2. Office Network Infrastructure (Networking)
+3. Warehouse NAS Deployment (NAS)
+4. Campus WiFi Coverage (WiFi)
+5. Shopping Mall Surveillance (CCTV)
+6. Factory Network Upgrade (Networking)
