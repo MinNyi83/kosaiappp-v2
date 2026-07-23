@@ -293,10 +293,11 @@ function switchTab(tabId) {
   if (selectedView) selectedView.classList.remove('hidden');
 
   // Update path display
-  const pathName =
-    tabId === 'system-settings'
-      ? 'System Settings'
-      : tabId.charAt(0).toUpperCase() + tabId.slice(1);
+  const pathNames = {
+    'system-settings': 'System Settings',
+    'pos': 'POS Terminal',
+  };
+  const pathName = pathNames[tabId] || (tabId.charAt(0).toUpperCase() + tabId.slice(1));
   document.getElementById('current-path-display').textContent =
     pathName === 'Dashboard' ? 'Dashboard' : `Dashboard / ${pathName}`;
 
@@ -523,6 +524,355 @@ async function refreshDashboardData() {
   await loadCashSafeData();
   await loadTechniciansData();
   await populateReports();
+  await refreshDashboard();
+}
+
+async function refreshDashboard() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    const [jobsRes, lookupsRes, safeRes] = await Promise.all([
+      fetch(`${baseUrl}/api/jobs`),
+      fetch(`${baseUrl}/api/admin/lookups`),
+      fetch(`${baseUrl}/api/admin/cash/safe`),
+    ]);
+
+    const jobs = await jobsRes.json();
+    const lookups = await lookupsRes.json();
+    const safe = await safeRes.json();
+
+    const totalTickets = jobs.length;
+    const completedJobs = jobs.filter(j => j.status === 'Completed').length;
+    const pendingJobs = jobs.filter(j => j.status === 'Pending').length;
+    const inProgressJobs = jobs.filter(j => j.status === 'In Progress').length;
+    const completionRate = totalTickets > 0 ? Math.round((completedJobs / totalTickets) * 100) : 0;
+
+    const totalClients = (lookups.clients || []).length;
+    const totalTechs = (lookups.technicians || []).length;
+    const activeTechs = new Set(jobs.filter(j => j.status !== 'Completed' && j.technician_id).map(j => j.technician_id)).size;
+
+    const inventoryStock = lookups.inventory_stock || [];
+    const lowStock = inventoryStock.filter(i => (i.stock_qty || 0) > 0 && (i.stock_qty || 0) <= 5).length;
+
+    // Today's stats
+    const today = new Date().toISOString().split('T')[0];
+    const todayJobs = jobs.filter(j => j.created_at && j.created_at.startsWith(today));
+    const todayCompleted = todayJobs.filter(j => j.status === 'Completed').length;
+    const todayInProgress = todayJobs.filter(j => j.status === 'In Progress').length;
+
+    // Update Today's Quick Stats
+    const todayDateEl = document.getElementById('stat-today-date');
+    if (todayDateEl) {
+      todayDateEl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    }
+    document.getElementById('stat-today-jobs').textContent = todayJobs.length;
+    document.getElementById('stat-today-completed').textContent = todayCompleted;
+    document.getElementById('stat-today-inprogress').textContent = todayInProgress;
+
+    // Update KPI Cards
+    const statElements = {
+      'stat-active-tickets': totalTickets,
+      'stat-completion-rate': `${completionRate}%`,
+      'stat-completed-label': `${completedJobs} completed`,
+      'stat-pending-label': `${pendingJobs} pending, ${inProgressJobs} in progress`,
+      'stat-total-revenue': `$${(safe.usd_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
+      'stat-mmk-revenue': `${(safe.mmk_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })} Ks`,
+      'stat-techs-onsite': activeTechs,
+      'stat-techs-total': `${activeTechs} of ${totalTechs} total`,
+      'stat-low-stock': lowStock,
+      'stat-cash-usd': `$${(safe.usd_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
+      'stat-cash-mmk': `${(safe.mmk_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
+      'stat-clients': totalClients,
+      'stat-inventory': inventoryStock.length,
+    };
+
+    Object.entries(statElements).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    });
+
+    // Populate Recent Tickets Table
+    const ticketsBody = document.getElementById('dashboard-tickets-body');
+    if (ticketsBody) {
+      const recentJobs = jobs.slice(0, 8);
+      if (recentJobs.length === 0) {
+        ticketsBody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">No tickets yet</td></tr>';
+      } else {
+        ticketsBody.innerHTML = recentJobs.map(j => {
+          const client = (lookups.clients || []).find(c => c.id === j.client_id);
+          const tech = (lookups.technicians || []).find(t => t.id === j.technician_id);
+          let statusClass = 'bg-slate-500/20 text-slate-400';
+          if (j.status === 'Completed') statusClass = 'bg-emerald-500/20 text-emerald-400';
+          else if (j.status === 'Pending') statusClass = 'bg-amber-500/20 text-amber-400';
+          else if (j.status === 'In Progress') statusClass = 'bg-blue-500/20 text-blue-400';
+
+          return `
+            <tr class="hover:bg-white/5 transition-all">
+              <td class="p-3 font-mono text-amber-400">${j.id || 'N/A'}</td>
+              <td class="p-3 text-white truncate max-w-[120px]">${client?.company_name || 'Unknown'}</td>
+              <td class="p-3 text-slate-300">${j.service_type || 'N/A'}</td>
+              <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">${j.status}</span></td>
+              <td class="p-3 text-slate-300">${tech?.name || 'Unassigned'}</td>
+              <td class="p-3 text-right text-slate-400 text-[10px]">${j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // Populate Activity Feed
+    const activityFeed = document.getElementById('dashboard-activity-feed');
+    if (activityFeed) {
+      const activities = [];
+      jobs.slice(0, 5).forEach(j => {
+        const client = (lookups.clients || []).find(c => c.id === j.client_id);
+        activities.push({
+          type: j.status === 'Completed' ? 'success' : j.status === 'Pending' ? 'warning' : 'info',
+          icon: j.status === 'Completed' ? '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' : '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+          text: `Job ${j.id} ${j.status.toLowerCase()}`,
+          detail: client?.company_name || 'Unknown client',
+          time: j.created_at ? new Date(j.created_at).toLocaleTimeString() : '',
+        });
+      });
+
+      activityFeed.innerHTML = activities.length > 0 ? activities.map(a => `
+        <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition">
+          <div class="w-8 h-8 rounded-lg ${a.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' : a.type === 'warning' ? 'bg-amber-500/10 text-amber-400' : 'bg-blue-500/10 text-blue-400'} flex items-center justify-center flex-shrink-0">
+            ${a.icon}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[11px] font-semibold text-white">${a.text}</div>
+            <div class="text-[10px] text-slate-400 truncate">${a.detail}</div>
+          </div>
+          <span class="text-[9px] text-slate-500 flex-shrink-0">${a.time}</span>
+        </div>
+      `).join('') : '<div class="text-center text-slate-500 text-xs py-8">No recent activity</div>';
+    }
+
+    // Render Charts
+    renderDashboardCharts(jobs, lookups);
+
+  } catch (e) {
+    console.error('Failed to refresh dashboard:', e);
+  }
+}
+
+function renderDashboardCharts(jobs, lookups) {
+  if (typeof Chart === 'undefined') return;
+
+  // Job Status Chart (Doughnut)
+  const statusCanvas = document.getElementById('chart-status');
+  if (statusCanvas) {
+    const existing = Chart.getChart(statusCanvas);
+    if (existing) existing.destroy();
+
+    new Chart(statusCanvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Completed', 'Pending', 'In Progress', 'Cancelled'],
+        datasets: [{
+          data: [
+            jobs.filter(j => j.status === 'Completed').length,
+            jobs.filter(j => j.status === 'Pending').length,
+            jobs.filter(j => j.status === 'In Progress').length,
+            jobs.filter(j => j.status === 'Cancelled').length,
+          ],
+          backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
+          borderWidth: 0,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 }, padding: 8 } } },
+        cutout: '65%',
+      },
+    });
+  }
+
+  // Service Type Chart (Bar)
+  const categoryCanvas = document.getElementById('chart-category');
+  if (categoryCanvas) {
+    const existing = Chart.getChart(categoryCanvas);
+    if (existing) existing.destroy();
+
+    const typeCounts = {};
+    jobs.forEach(j => { typeCounts[j.service_type || 'Other'] = (typeCounts[j.service_type || 'Other'] || 0) + 1; });
+
+    new Chart(categoryCanvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(typeCounts),
+        datasets: [{
+          data: Object.values(typeCounts),
+          backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'],
+          borderWidth: 0,
+          borderRadius: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
+          y: { ticks: { color: '#64748b', font: { size: 9 }, stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        },
+      },
+    });
+  }
+
+  // Revenue Trend Chart (Line)
+  const revenueCanvas = document.getElementById('chart-revenue');
+  if (revenueCanvas) {
+    const existing = Chart.getChart(revenueCanvas);
+    if (existing) existing.destroy();
+
+    const monthlyData = {};
+    jobs.forEach(j => {
+      if (j.created_at) {
+        const month = new Date(j.created_at).toLocaleDateString('en-US', { month: 'short' });
+        monthlyData[month] = (monthlyData[month] || 0) + 1;
+      }
+    });
+
+    new Chart(revenueCanvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: Object.keys(monthlyData).slice(-6),
+        datasets: [{
+          label: 'Jobs',
+          data: Object.values(monthlyData).slice(-6),
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#f59e0b',
+          pointBorderColor: '#f59e0b',
+          pointRadius: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { color: '#64748b', font: { size: 9 }, stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        },
+      },
+    });
+  }
+
+  // Technician Performance Chart (Horizontal Bar)
+  const techPerfCanvas = document.getElementById('chart-tech-performance');
+  if (techPerfCanvas) {
+    const existing = Chart.getChart(techPerfCanvas);
+    if (existing) existing.destroy();
+
+    const techData = {};
+    (lookups.technicians || []).forEach(t => {
+      techData[t.name] = { total: 0, completed: 0 };
+    });
+    jobs.forEach(j => {
+      const tech = (lookups.technicians || []).find(t => t.id === j.technician_id);
+      if (tech && techData[tech.name]) {
+        techData[tech.name].total++;
+        if (j.status === 'Completed') techData[tech.name].completed++;
+      }
+    });
+
+    const sortedTechs = Object.entries(techData)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 6);
+
+    new Chart(techPerfCanvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: sortedTechs.map(([name]) => name),
+        datasets: [
+          {
+            label: 'Completed',
+            data: sortedTechs.map(([, data]) => data.completed),
+            backgroundColor: '#10b981',
+            borderRadius: 4,
+          },
+          {
+            label: 'Pending',
+            data: sortedTechs.map(([, data]) => data.total - data.completed),
+            backgroundColor: '#f59e0b',
+            borderRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 } } },
+        scales: {
+          x: { stacked: true, ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { stacked: true, ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+        },
+      },
+    });
+  }
+
+  // Monthly Jobs Trend (Area Chart)
+  const monthlyJobsCanvas = document.getElementById('chart-monthly-jobs');
+  if (monthlyJobsCanvas) {
+    const existing = Chart.getChart(monthlyJobsCanvas);
+    if (existing) existing.destroy();
+
+    const monthlyJobs = {};
+    jobs.forEach(j => {
+      if (j.created_at) {
+        const month = new Date(j.created_at).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        if (!monthlyJobs[month]) monthlyJobs[month] = { total: 0, completed: 0 };
+        monthlyJobs[month].total++;
+        if (j.status === 'Completed') monthlyJobs[month].completed++;
+      }
+    });
+
+    const sortedMonths = Object.entries(monthlyJobs).slice(-8);
+
+    new Chart(monthlyJobsCanvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: sortedMonths.map(([month]) => month),
+        datasets: [
+          {
+            label: 'Total Jobs',
+            data: sortedMonths.map(([, data]) => data.total),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#3b82f6',
+            pointRadius: 4,
+          },
+          {
+            label: 'Completed',
+            data: sortedMonths.map(([, data]) => data.completed),
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#10b981',
+            pointRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 12 } } },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { color: '#64748b', font: { size: 9 }, stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        },
+      },
+    });
+  }
 }
 
 async function populateReports() {
@@ -534,22 +884,35 @@ async function populateReports() {
     const lookupsRes = await fetch(`${baseUrl}/api/admin/lookups`);
     const lookups = await lookupsRes.json();
 
+    const safeRes = await fetch(`${baseUrl}/api/admin/cash/safe`);
+    const safe = await safeRes.json();
+
+    // ── KPI Cards ──
     const totalTickets = jobs.length;
     const completedJobs = jobs.filter((j) => j.status === 'Completed').length;
+    const pendingJobs = jobs.filter((j) => j.status === 'Pending').length;
+    const inProgressJobs = jobs.filter((j) => j.status === 'In Progress').length;
     const completionRate = totalTickets > 0 ? Math.round((completedJobs / totalTickets) * 100) : 0;
+
+    const totalClients = (lookups.clients || []).length;
+    const activeAMC = (lookups.clients || []).filter((c) => c.amc_status === 'Active').length;
+    const activeTechs = new Set(jobs.filter((j) => j.status !== 'Completed' && j.technician_id).map((j) => j.technician_id)).size;
+
+    const inventoryStock = lookups.inventory_stock || [];
+    const inventoryValue = inventoryStock.reduce((sum, item) => sum + (item.stock_qty || 0) * (item.unit_price || 0), 0);
 
     document.getElementById('report-total-tickets').textContent = totalTickets;
     document.getElementById('report-completion-rate').textContent = `${completionRate}%`;
+    document.getElementById('report-total-clients').textContent = totalClients;
+    document.getElementById('report-active-amc').textContent = `${activeAMC} active AMC`;
+    document.getElementById('report-active-techs').textContent = activeTechs;
+    document.getElementById('report-usd-safe').textContent = `$${safe.usd_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('report-mmk-safe').textContent = `${safe.mmk_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ks`;
+    document.getElementById('report-inventory-value').textContent = `$${inventoryValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-    const safeRes = await fetch(`${baseUrl}/api/admin/cash/safe`);
-    const safe = await safeRes.json();
-    document.getElementById('report-usd-safe').textContent =
-      `$${safe.usd_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('report-mmk-safe').textContent =
-      `${safe.mmk_balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Ks`;
-
+    // ── AMC Status Table ──
     const amcCounts = { Active: 0, Inactive: 0, Expired: 0, 'No AMC': 0, Individual: 0 };
-    lookups.clients.forEach((c) => {
+    (lookups.clients || []).forEach((c) => {
       const status = c.amc_status || 'Inactive';
       if (amcCounts[status] !== undefined) {
         amcCounts[status]++;
@@ -557,51 +920,2464 @@ async function populateReports() {
     });
 
     const amcBody = document.getElementById('report-amc-body');
-    amcBody.innerHTML = '';
-    Object.entries(amcCounts).forEach(([status, count]) => {
-      let badgeClass = 'text-slate-400';
-      if (status === 'Active') badgeClass = 'text-emerald-400 font-bold';
-      else if (status === 'Expired') badgeClass = 'text-rose-400';
-      else if (status === 'No AMC') badgeClass = 'text-amber-500';
-      else if (status === 'Individual') badgeClass = 'text-indigo-400';
+    if (amcBody) {
+      amcBody.innerHTML = '';
+      const totalClientCount = Object.values(amcCounts).reduce((a, b) => a + b, 0);
+      Object.entries(amcCounts).forEach(([status, count]) => {
+        const pct = totalClientCount > 0 ? Math.round((count / totalClientCount) * 100) : 0;
+        let statusColor = 'text-slate-400';
+        let barColor = 'bg-slate-500';
+        if (status === 'Active') { statusColor = 'text-emerald-400'; barColor = 'bg-emerald-500'; }
+        else if (status === 'Expired') { statusColor = 'text-rose-400'; barColor = 'bg-rose-500'; }
+        else if (status === 'No AMC') { statusColor = 'text-amber-400'; barColor = 'bg-amber-500'; }
+        else if (status === 'Individual') { statusColor = 'text-indigo-400'; barColor = 'bg-indigo-500'; }
 
-      amcBody.innerHTML += `
-                        <tr class="border-b border-white/5 hover:bg-white/5 transition-all text-slate-300">
-                            <td class="py-2.5 font-semibold ${badgeClass}">${status}</td>
-                            <td class="py-2.5 text-right font-mono font-bold">${count} clients</td>
-                        </tr>
-                    `;
-    });
+        amcBody.innerHTML += `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
+            <td class="py-2.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full ${barColor}"></div>
+                <span class="font-semibold ${statusColor}">${status}</span>
+              </div>
+            </td>
+            <td class="py-2.5 text-right font-mono font-bold text-white">${count}</td>
+            <td class="py-2.5 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <div class="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div class="${barColor} h-full rounded-full" style="width: ${pct}%"></div>
+                </div>
+                <span class="text-[10px] text-slate-400 font-mono w-8">${pct}%</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+    }
 
+    // ── Engineer Performance Table ──
     const techLoad = {};
-    lookups.technicians.forEach((t) => {
-      techLoad[t.id] = { name: t.name, assigned: 0, completed: 0 };
+    (lookups.technicians || []).forEach((t) => {
+      techLoad[t.id] = { name: t.name, role: t.role, assigned: 0, completed: 0, pending: 0, in_progress: 0 };
     });
 
     jobs.forEach((j) => {
       if (techLoad[j.technician_id]) {
         techLoad[j.technician_id].assigned++;
-        if (j.status === 'Completed') {
-          techLoad[j.technician_id].completed++;
-        }
+        if (j.status === 'Completed') techLoad[j.technician_id].completed++;
+        if (j.status === 'Pending') techLoad[j.technician_id].pending++;
+        if (j.status === 'In Progress') techLoad[j.technician_id].in_progress++;
       }
     });
 
     const techsBody = document.getElementById('report-techs-body');
-    techsBody.innerHTML = '';
-    Object.values(techLoad).forEach((t) => {
-      const rate = t.assigned > 0 ? Math.round((t.completed / t.assigned) * 100) : 0;
-      techsBody.innerHTML += `
-                        <tr class="border-b border-white/5 hover:bg-white/5 transition-all text-slate-300">
-                            <td class="py-2.5 font-semibold">${t.name}</td>
-                            <td class="py-2.5 text-center font-mono">${t.assigned} jobs</td>
-                            <td class="py-2.5 text-right font-mono font-bold text-emerald-400">${rate}% (${t.completed}/${t.assigned})</td>
-                        </tr>
-                    `;
-    });
+    if (techsBody) {
+      techsBody.innerHTML = '';
+      const sortedTechs = Object.values(techLoad).sort((a, b) => b.assigned - a.assigned);
+      sortedTechs.forEach((t) => {
+        const rate = t.assigned > 0 ? Math.round((t.completed / t.assigned) * 100) : 0;
+        let rateColor = 'text-slate-400';
+        if (rate >= 80) rateColor = 'text-emerald-400';
+        else if (rate >= 50) rateColor = 'text-amber-400';
+        else rateColor = 'text-rose-400';
+
+        techsBody.innerHTML += `
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
+            <td class="py-2.5">
+              <div class="font-semibold text-white">${t.name}</div>
+              <div class="text-[10px] text-slate-500">${t.role || 'Technician'}</div>
+            </td>
+            <td class="py-2.5 text-center font-mono text-white">${t.assigned}</td>
+            <td class="py-2.5 text-center">
+              <span class="font-mono ${rateColor}">${t.completed}</span>
+              <span class="text-slate-500">/${t.assigned}</span>
+            </td>
+            <td class="py-2.5 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <div class="w-12 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div class="${rate >= 80 ? 'bg-emerald-500' : rate >= 50 ? 'bg-amber-500' : 'bg-rose-500'} h-full rounded-full" style="width: ${rate}%"></div>
+                </div>
+                <span class="text-xs font-bold ${rateColor} font-mono">${rate}%</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    // ── Recent Jobs Table ──
+    const recentJobsBody = document.getElementById('report-recent-jobs');
+    if (recentJobsBody) {
+      recentJobsBody.innerHTML = '';
+      const recentJobs = jobs.slice(0, 10);
+      if (recentJobs.length === 0) {
+        recentJobsBody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-500">No jobs found</td></tr>';
+      } else {
+        recentJobs.forEach((j) => {
+          const client = (lookups.clients || []).find((c) => c.id === j.client_id);
+          const tech = (lookups.technicians || []).find((t) => t.id === j.technician_id);
+          let statusClass = 'bg-slate-500/20 text-slate-400';
+          if (j.status === 'Completed') statusClass = 'bg-emerald-500/20 text-emerald-400';
+          else if (j.status === 'Pending') statusClass = 'bg-amber-500/20 text-amber-400';
+          else if (j.status === 'In Progress') statusClass = 'bg-blue-500/20 text-blue-400';
+
+          recentJobsBody.innerHTML += `
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-all">
+              <td class="py-2.5 font-mono text-amber-400">${j.id || 'N/A'}</td>
+              <td class="py-2.5 text-white truncate max-w-[150px]">${client?.company_name || j.client_id || 'Unknown'}</td>
+              <td class="py-2.5 text-slate-300">${j.service_type || 'N/A'}</td>
+              <td class="py-2.5 text-center">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">${j.status}</span>
+              </td>
+              <td class="py-2.5 text-slate-300">${tech?.name || j.technician_id || 'Unassigned'}</td>
+              <td class="py-2.5 text-right text-slate-400 text-[10px]">${j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td>
+            </tr>
+          `;
+        });
+      }
+    }
+
+    // ── Charts ──
+    renderReportCharts(jobs, lookups);
+
   } catch (e) {
     console.error('Failed to populate reports:', e);
   }
+}
+
+function renderReportCharts(jobs, lookups) {
+  // Job Status Chart
+  const statusCanvas = document.getElementById('jobStatusCanvas');
+  if (statusCanvas && typeof Chart !== 'undefined') {
+    const statusCtx = statusCanvas.getContext('2d');
+    const statusData = {
+      labels: ['Completed', 'Pending', 'In Progress', 'Cancelled'],
+      datasets: [{
+        data: [
+          jobs.filter((j) => j.status === 'Completed').length,
+          jobs.filter((j) => j.status === 'Pending').length,
+          jobs.filter((j) => j.status === 'In Progress').length,
+          jobs.filter((j) => j.status === 'Cancelled').length,
+        ],
+        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
+        borderWidth: 0,
+      }],
+    };
+
+    // Destroy existing chart if any
+    const existingChart = Chart.getChart(statusCanvas);
+    if (existingChart) existingChart.destroy();
+
+    new Chart(statusCtx, {
+      type: 'doughnut',
+      data: statusData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'right', labels: { color: '#94a3b8', font: { size: 10 }, padding: 10 } },
+        },
+        cutout: '60%',
+      },
+    });
+  }
+
+  // Service Type Chart
+  const typeCanvas = document.getElementById('serviceTypeCanvas');
+  if (typeCanvas && typeof Chart !== 'undefined') {
+    const typeCtx = typeCanvas.getContext('2d');
+    const typeCounts = {};
+    jobs.forEach((j) => {
+      const type = j.service_type || 'Other';
+      typeCounts[type] = (typeCounts[type] || 0) + 1;
+    });
+
+    const typeData = {
+      labels: Object.keys(typeCounts),
+      datasets: [{
+        data: Object.values(typeCounts),
+        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'],
+        borderWidth: 0,
+      }],
+    };
+
+    const existingChart = Chart.getChart(typeCanvas);
+    if (existingChart) existingChart.destroy();
+
+    new Chart(typeCtx, {
+      type: 'bar',
+      data: typeData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+          y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        },
+      },
+    });
+  }
+}
+
+// ============================================================================
+// POS TERMINAL FUNCTIONS
+// ============================================================================
+
+let posCart = [];
+let posProducts = [];
+let posPaymentMethod = 'USD';
+let posDiscount = 0;
+let posSalesHistory = [];
+let posCurrentCategory = 'all';
+
+async function loadPOSProducts() {
+  const baseUrl = document.getElementById('api-base').value;
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/lookups`);
+    const lookups = await res.json();
+    posProducts = (lookups.inventory_stock || []).map((item) => ({
+      code: item.item_code,
+      name: item.item_name,
+      category: item.category,
+      price_usd: item.unit_price || 0,
+      price_mmk: item.unit_price_mmk || 0,
+      stock: item.stock_qty || 0,
+      batch: item.batch_code || '',
+    }));
+    renderPOSProducts(posProducts);
+  } catch (e) {
+    console.error('Failed to load POS products:', e);
+  }
+}
+
+function renderPOSProducts(products) {
+  const grid = document.getElementById('pos-product-grid');
+  if (!grid) return;
+
+  if (products.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12 text-slate-500">
+        <div class="text-4xl mb-2">🔍</div>
+        <p class="text-sm">No products found</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = products
+    .map(
+      (p) => `
+    <button
+      onclick="addPOSProduct('${p.code}')"
+      class="pos-catalog-card bg-black/30 hover:bg-emerald-500/5 border border-white/5 rounded-xl p-3 text-left transition-all duration-200 ${p.stock <= 0 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}"
+      ${p.stock <= 0 ? 'disabled' : ''}
+    >
+      <div class="flex items-start justify-between mb-2">
+        <span class="text-[9px] font-mono text-slate-500 bg-black/40 px-1.5 py-0.5 rounded">${p.code}</span>
+        ${p.stock > 0 ? `<span class="text-[9px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">${p.stock}</span>` : `<span class="text-[9px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded">OUT</span>`}
+      </div>
+      <div class="text-[11px] font-semibold text-white leading-tight line-clamp-2 mb-2 min-h-[30px]">${p.name}</div>
+      <div class="flex items-end justify-between">
+        <div>
+          <div class="text-sm font-black text-emerald-400">$${p.price_usd.toFixed(2)}</div>
+          <div class="text-[9px] text-slate-500 font-mono">${p.price_mmk > 0 ? p.price_mmk.toLocaleString() + ' Ks' : ''}</div>
+        </div>
+        <div class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <svg class="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+      </div>
+    </button>
+  `
+    )
+    .join('');
+}
+
+function filterPOSProducts() {
+  // Support both old and new search inputs
+  const searchInput = document.getElementById('pos-stock-search') || document.getElementById('pos-search');
+  const search = (searchInput?.value || '').toLowerCase();
+
+  // Support category dropdown
+  const catDropdown = document.getElementById('pos-stock-cat');
+  const selectedCategory = catDropdown?.value || 'All';
+
+  // Support in-stock checkbox
+  const inStockOnly = document.getElementById('pos-filter-instock')?.checked ?? true;
+
+  const filtered = posProducts.filter((p) => {
+    const matchSearch =
+      p.name.toLowerCase().includes(search) ||
+      p.code.toLowerCase().includes(search) ||
+      (p.batch && p.batch.toLowerCase().includes(search));
+    const matchCategory = selectedCategory === 'All' || p.category === selectedCategory;
+    const matchStock = !inStockOnly || p.stock > 0;
+    return matchSearch && matchCategory && matchStock;
+  });
+  renderPOSProducts(filtered);
+}
+
+function filterPOSByCategory(category) {
+  posCurrentCategory = category;
+  document.querySelectorAll('.pos-cat-btn').forEach((btn) => {
+    btn.classList.remove('bg-amber-500', 'text-black', 'active');
+    btn.classList.add('bg-white/5', 'text-slate-400');
+  });
+  event.target.classList.remove('bg-white/5', 'text-slate-400');
+  event.target.classList.add('bg-amber-500', 'text-black', 'active');
+  filterPOSProducts();
+}
+
+function clearPOSSearch() {
+  document.getElementById('pos-search').value = '';
+  filterPOSProducts();
+}
+
+function addPOSProduct(code) {
+  const product = posProducts.find((p) => p.code === code);
+  if (!product || product.stock <= 0) return;
+
+  const existing = posCart.find((item) => item.code === code);
+  if (existing) {
+    if (existing.qty < product.stock) {
+      existing.qty++;
+    }
+  } else {
+    posCart.push({
+      code: product.code,
+      name: product.name,
+      price_usd: product.price_usd,
+      price_mmk: product.price_mmk,
+      qty: 1,
+      max_stock: product.stock,
+    });
+  }
+  renderPOSCart();
+}
+
+function removePOSProduct(code) {
+  posCart = posCart.filter((item) => item.code !== code);
+  renderPOSCart();
+}
+
+function updatePOSQty(code, delta) {
+  const item = posCart.find((i) => i.code === code);
+  if (!item) return;
+
+  item.qty += delta;
+  if (item.qty <= 0) {
+    removePOSProduct(code);
+  } else if (item.qty > item.max_stock) {
+    item.qty = item.max_stock;
+  }
+  renderPOSCart();
+}
+
+function clearPOSCart() {
+  posCart = [];
+  posDiscount = 0;
+  document.getElementById('pos-discount-input').value = '';
+  renderPOSCart();
+}
+
+function renderPOSCart() {
+  const container = document.getElementById('pos-cart-items');
+  const checkoutBtn = document.getElementById('pos-checkout-btn');
+
+  if (posCart.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-12 text-slate-500">
+        <div class="text-4xl mb-2">🛒</div>
+        <p class="text-sm">Cart is empty</p>
+      </div>
+    `;
+    if (checkoutBtn) checkoutBtn.disabled = true;
+    calculatePOSTotals();
+    return;
+  }
+
+  container.innerHTML = posCart
+    .map(
+      (item) => `
+    <div class="bg-black/30 rounded-lg p-2.5 flex gap-2 items-center border border-white/5 group hover:border-white/10 transition-all">
+      <div class="flex-1 min-w-0">
+        <div class="text-[11px] font-semibold text-white truncate">${item.name}</div>
+        <div class="text-[9px] text-slate-500 font-mono">${item.code}</div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="updatePOSQty('${item.code}', -1)" class="w-5 h-5 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-[10px] flex items-center justify-center transition">-</button>
+        <span class="text-[11px] font-bold text-white w-5 text-center">${item.qty}</span>
+        <button onclick="updatePOSQty('${item.code}', 1)" class="w-5 h-5 rounded bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-[10px] flex items-center justify-center transition">+</button>
+      </div>
+      <div class="text-right w-16">
+        <div class="text-[11px] font-bold text-emerald-400">$${(item.price_usd * item.qty).toFixed(2)}</div>
+        <button onclick="removePOSProduct('${item.code}')" class="text-[9px] text-rose-400/70 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition">remove</button>
+      </div>
+    </div>
+  `
+    )
+    .join('');
+
+  // Enable checkout button and calculate totals
+  if (checkoutBtn) checkoutBtn.disabled = false;
+  calculatePOSTotals();
+}
+
+function applyPOSDiscount() {
+  const input = document.getElementById('pos-discount-input');
+  const value = parseFloat(input.value) || 0;
+  posDiscount = Math.min(Math.max(value, 0), 100);
+  renderPOSCart();
+}
+
+function setPOSPayment(method) {
+  posPaymentMethod = method;
+  ['usd', 'mmk', 'both'].forEach((m) => {
+    const btn = document.getElementById(`pos-pay-${m}`);
+    if (m === method.toLowerCase()) {
+      btn.classList.remove('bg-white/5', 'text-slate-400');
+      btn.classList.add('bg-amber-500', 'text-black');
+    } else {
+      btn.classList.remove('bg-amber-500', 'text-black');
+      btn.classList.add('bg-white/5', 'text-slate-400');
+    }
+  });
+}
+
+async function processPOSCheckout() {
+  if (posCart.length === 0) return;
+
+  const subtotal = posCart.reduce((sum, item) => sum + item.price_usd * item.qty, 0);
+  const discountPct = parseFloat(document.getElementById('pos-discount-input')?.value) || 0;
+  const discountAmt = subtotal * (discountPct / 100);
+  const total = subtotal - discountAmt;
+
+  const customer = document.getElementById('pos-customer')?.value || 'Walk-in Customer';
+  const clientId = document.getElementById('pos-client-id')?.value || '';
+  const linkedJob = document.getElementById('pos-link-job')?.value || '';
+  const exchangeRate = parseFloat(document.getElementById('pos-exchange-rate')?.value) || 2100;
+  const payCurrency = document.getElementById('pos-pay-currency')?.value || 'USD';
+  const paidA = parseFloat(document.getElementById('pos-paid-amount-a')?.value) || 0;
+  const paidB = parseFloat(document.getElementById('pos-paid-amount-b')?.value) || 0;
+  const methodA = document.getElementById('pos-pay-method-a')?.value || 'Cash';
+  const methodB = document.getElementById('pos-paid-amount-b')?.value || '';
+  const totalPaid = paidA + paidB;
+  const creditDue = Math.max(0, total - totalPaid);
+
+  const receiptNo = `INV-${Date.now().toString(36).toUpperCase()}`;
+  const now = new Date();
+
+  const sale = {
+    receipt_no: receiptNo,
+    date: now.toISOString(),
+    customer: customer,
+    client_id: clientId,
+    linked_job: linkedJob,
+    items: [...posCart],
+    subtotal: subtotal,
+    discount_pct: discountPct,
+    discount_amt: discountAmt,
+    total: total,
+    exchange_rate: exchangeRate,
+    total_mmk: total * exchangeRate,
+    paid_a: paidA,
+    method_a: methodA,
+    paid_b: paidB,
+    method_b: methodB,
+    total_paid: totalPaid,
+    credit_due: creditDue,
+    payment_currency: payCurrency,
+  };
+
+  posSalesHistory.unshift(sale);
+  showPOSReceipt(sale);
+
+  // Save to backend
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    // Save cash transaction for Method A
+    if (paidA > 0) {
+      await fetch(`${baseUrl}/api/admin/cash/transaction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction_type: 'Deposit',
+          primary_currency: methodA === 'USD' || payCurrency === 'USD' ? 'USD' : 'MMK',
+          amount: paidA,
+          exchange_rate: exchangeRate,
+          equivalent_amount: paidA * exchangeRate,
+          notes: `POS Sale ${receiptNo} - ${methodA} - ${customer}`,
+        }),
+      });
+    }
+    // Save cash transaction for Method B
+    if (paidB > 0) {
+      await fetch(`${baseUrl}/api/admin/cash/transaction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction_type: 'Deposit',
+          primary_currency: methodB === 'USD' ? 'USD' : 'MMK',
+          amount: paidB,
+          exchange_rate: exchangeRate,
+          equivalent_amount: paidB * exchangeRate,
+          notes: `POS Sale ${receiptNo} - ${methodB} - ${customer}`,
+        }),
+      });
+    }
+  } catch (e) {
+    console.error('Failed to save transaction:', e);
+  }
+
+  // Clear cart
+  posCart = [];
+  document.getElementById('pos-discount-input').value = '0';
+  document.getElementById('pos-customer').value = '';
+  document.getElementById('pos-client-id').value = '';
+  document.getElementById('pos-link-job').value = '';
+  document.getElementById('pos-paid-amount-a').value = '';
+  document.getElementById('pos-paid-amount-b').value = '';
+  renderPOSCart();
+}
+
+function showPOSReceipt(sale) {
+  const modal = document.getElementById('pos-receipt-modal');
+  const content = document.getElementById('receipt-content');
+  const receiptNum = document.getElementById('receipt-number');
+
+  receiptNum.textContent = sale.receipt_no;
+
+  content.innerHTML = `
+    <div class="text-center text-xs text-slate-400 mb-4">
+      <p class="font-bold text-white">KosAI Technologies</p>
+      <p>${new Date(sale.date).toLocaleString()}</p>
+      <p>Invoice: ${sale.receipt_no}</p>
+      <p>Customer: ${sale.customer}</p>
+      ${sale.linked_job ? `<p>Job ID: ${sale.linked_job}</p>` : ''}
+    </div>
+    <div class="space-y-2">
+      ${sale.items
+        .map(
+          (item) => `
+        <div class="flex justify-between text-xs">
+          <span class="text-slate-300">${item.name} x${item.qty}</span>
+          <span class="text-white font-bold">$${(item.price_usd * item.qty).toFixed(2)}</span>
+        </div>
+      `
+        )
+        .join('')}
+    </div>
+    <div class="border-t border-white/10 mt-4 pt-4 space-y-2">
+      <div class="flex justify-between text-xs text-slate-400">
+        <span>Subtotal</span>
+        <span>$${sale.subtotal.toFixed(2)} / ${(sale.total_mmk || 0).toLocaleString()} Ks</span>
+      </div>
+      ${
+        sale.discount_amt > 0
+          ? `
+        <div class="flex justify-between text-xs text-emerald-400">
+          <span>Discount (${sale.discount_pct}%)</span>
+          <span>-$${sale.discount_amt.toFixed(2)}</span>
+        </div>
+      `
+          : ''
+      }
+      <div class="flex justify-between text-sm font-bold">
+        <span class="text-white">Total</span>
+        <span class="text-emerald-400">$${sale.total.toFixed(2)}</span>
+      </div>
+      <div class="border-t border-white/5 pt-2 mt-2 space-y-1">
+        <div class="text-[10px] text-slate-500 uppercase font-bold">Payment Details</div>
+        ${sale.paid_a > 0 ? `<div class="flex justify-between text-xs text-slate-400"><span>${sale.method_a}</span><span>$${sale.paid_a.toFixed(2)}</span></div>` : ''}
+        ${sale.paid_b > 0 ? `<div class="flex justify-between text-xs text-slate-400"><span>${sale.method_b}</span><span>$${sale.paid_b.toFixed(2)}</span></div>` : ''}
+        ${sale.total_paid > 0 ? `<div class="flex justify-between text-xs font-bold text-white"><span>Total Paid</span><span>$${sale.total_paid.toFixed(2)}</span></div>` : ''}
+        ${sale.credit_due > 0 ? `<div class="flex justify-between text-xs font-bold text-rose-400"><span>Credit Due</span><span>$${sale.credit_due.toFixed(2)}</span></div>` : ''}
+      </div>
+      <div class="text-[10px] text-slate-500 text-right mt-2">
+        Exchange Rate: ${sale.exchange_rate || 2100} Ks/USD
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+}
+
+function closePOSReceiptModal() {
+  document.getElementById('pos-receipt-modal').classList.add('hidden');
+}
+
+function printPOSReceipt() {
+  window.print();
+}
+
+function renderPOSSalesHistory() {
+  const tbody = document.getElementById('pos-sales-history');
+  if (!tbody) return;
+
+  if (posSalesHistory.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-600">No sales yet</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = posSalesHistory
+    .slice(0, 20)
+    .map(
+      (sale) => `
+    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+      <td class="py-2 font-mono text-amber-400">${sale.receipt_no}</td>
+      <td class="py-2 text-slate-300">${new Date(sale.date).toLocaleDateString()}</td>
+      <td class="py-2 text-slate-300">${sale.customer}</td>
+      <td class="py-2 text-slate-300">${sale.items.reduce((s, i) => s + i.qty, 0)} items</td>
+      <td class="py-2 text-white font-bold">$${sale.total.toFixed(2)}</td>
+      <td class="py-2 text-slate-400">${sale.payment_method}</td>
+      <td class="py-2 text-right">
+        <button onclick="showPOSReceipt(posSalesHistory.find(s => s.receipt_no === '${sale.receipt_no}'))" class="text-xs text-amber-400 hover:text-amber-300">View</button>
+      </td>
+    </tr>
+  `
+    )
+    .join('');
+}
+
+function loadPOSSalesHistory() {
+  renderPOSSalesHistory();
+}
+
+// ============================================================================
+// POS MODULE SWITCHING
+// ============================================================================
+
+function switchPosModule(module) {
+  // Hide all panels
+  document.getElementById('pos-panel-checkout').classList.add('hidden');
+  document.getElementById('pos-panel-credits').classList.add('hidden');
+
+  // Show selected panel
+  document.getElementById(`pos-panel-${module}`).classList.remove('hidden');
+
+  // Update button states
+  document.querySelectorAll('.pos-mod-btn').forEach((btn) => {
+    btn.classList.remove('active-pos-mod');
+    btn.classList.add('text-slate-400', 'hover:text-white');
+    btn.querySelector('.pos-mod-label').classList.remove('text-emerald-400');
+    btn.querySelector('.pos-mod-icon').style.background = 'rgba(255, 255, 255, 0.05)';
+    btn.querySelector('.pos-mod-icon').style.border = '1px solid rgba(255, 255, 255, 0.05)';
+    btn.querySelector('svg').classList.remove('text-emerald-400');
+    btn.querySelector('svg').classList.add('text-slate-400', 'group-hover:text-white');
+  });
+
+  // Activate selected button
+  const activeBtn = document.getElementById(`pos-mod-${module}`);
+  activeBtn.classList.add('active-pos-mod');
+  activeBtn.classList.remove('text-slate-400', 'hover:text-white');
+  activeBtn.querySelector('.pos-mod-label').classList.add('text-emerald-400');
+  activeBtn.querySelector('.pos-mod-icon').style.background = 'rgba(16, 185, 129, 0.2)';
+  activeBtn.querySelector('.pos-mod-icon').style.border = '1px solid rgba(16, 185, 129, 0.3)';
+  activeBtn.querySelector('svg').classList.add('text-emerald-400');
+  activeBtn.querySelector('svg').classList.remove('text-slate-400', 'group-hover:text-white');
+}
+
+// ============================================================================
+// POS CALCULATE TOTALS
+// ============================================================================
+
+function calculatePOSTotals() {
+  const subtotal = posCart.reduce((sum, item) => sum + item.price_usd * item.qty, 0);
+  const discountPct = parseFloat(document.getElementById('pos-discount-input')?.value) || 0;
+  const discountAmt = subtotal * (discountPct / 100);
+  const totalUSD = subtotal - discountAmt;
+
+  const exchangeRate = parseFloat(document.getElementById('pos-exchange-rate')?.value) || 2100;
+  const totalMMK = totalUSD * exchangeRate;
+
+  // Custom rate handling
+  const payCurrency = document.getElementById('pos-pay-currency')?.value || 'USD';
+  const customRateContainer = document.getElementById('pos-custom-rate-container');
+  if (payCurrency === 'USD_CUSTOM') {
+    customRateContainer?.classList.remove('hidden');
+  } else {
+    customRateContainer?.classList.add('hidden');
+  }
+
+  // Payment amounts
+  const paidA = parseFloat(document.getElementById('pos-paid-amount-a')?.value) || 0;
+  const paidB = parseFloat(document.getElementById('pos-paid-amount-b')?.value) || 0;
+  const totalPaid = paidA + paidB;
+
+  // Calculate change or credit
+  const changeDue = Math.max(0, totalPaid - totalUSD);
+  const creditDue = Math.max(0, totalUSD - totalPaid);
+
+  // Update UI
+  document.getElementById('pos-subtotal').textContent = `$${totalUSD.toFixed(2)} / ${totalMMK.toLocaleString()} Ks`;
+  document.getElementById('pos-total').textContent = `$${totalUSD.toFixed(2)}`;
+  document.getElementById('pos-total-mmk').textContent = `${totalMMK.toLocaleString()} Ks`;
+  document.getElementById('pos-credit-due').textContent = `$${creditDue.toFixed(2)} / ${(creditDue * exchangeRate).toLocaleString()} Ks`;
+  document.getElementById('pos-change-due').textContent = `$${changeDue.toFixed(2)} / ${(changeDue * exchangeRate).toLocaleString()} Ks`;
+
+  // Enable/disable checkout
+  const checkoutBtn = document.getElementById('pos-checkout-btn');
+  if (checkoutBtn) {
+    checkoutBtn.disabled = posCart.length === 0;
+  }
+}
+
+// ============================================================================
+// POS CLIENT MANAGEMENT
+// ============================================================================
+
+function posCreateWalkinClient() {
+  document.getElementById('pos-customer').value = 'Walk-in Customer';
+  document.getElementById('pos-client-id').value = '';
+}
+
+async function loadPOSClients() {
+  const baseUrl = document.getElementById('api-base').value;
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/lookups`);
+    const lookups = await res.json();
+    const clients = lookups.clients || [];
+
+    const datalist = document.getElementById('pos-clients-datalist');
+    if (datalist) {
+      datalist.innerHTML = '';
+      clients.forEach((c) => {
+        const opt = document.createElement('option');
+        opt.value = `${c.company_name} [${c.id}]`;
+        datalist.appendChild(opt);
+      });
+    }
+
+    // Load jobs for ticket linking
+    const jobsRes = await fetch(`${baseUrl}/api/jobs`);
+    const jobs = await jobsRes.json();
+    const jobSelect = document.getElementById('pos-link-job');
+    if (jobSelect) {
+      jobSelect.innerHTML = '<option value="">-- Select Ticket --</option>';
+      jobs.forEach((j) => {
+        const opt = document.createElement('option');
+        opt.value = j.id;
+        opt.textContent = `${j.id} - ${j.service_type} (${j.status})`;
+        jobSelect.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load POS clients:', e);
+  }
+}
+
+// ============================================================================
+// POS MODULE SWITCHING STYLES
+// ============================================================================
+
+const posStyles = document.createElement('style');
+posStyles.textContent = `
+  .active-pos-mod {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.05)) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  }
+  .active-pos-mod .pos-mod-label {
+    color: #34d399 !important;
+  }
+  .pos-mod-btn {
+    border: 1px solid transparent;
+  }
+  .pos-catalog-card:hover {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+  .pos-catalog-card:active {
+    transform: translateY(0);
+  }
+`;
+document.head.appendChild(posStyles);
+
+// ============================================================================
+// CLIENT MANAGEMENT FUNCTIONS
+// ============================================================================
+
+let clientsData = [];
+let currentClientTab = 'clients';
+
+function switchClientTab(tab) {
+  currentClientTab = tab;
+
+  // Update tab buttons
+  document.querySelectorAll('.client-tab').forEach(btn => {
+    btn.classList.remove('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    btn.classList.add('text-slate-400', 'border-transparent');
+  });
+  const activeBtn = document.getElementById(`client-tab-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    activeBtn.classList.remove('text-slate-400', 'border-transparent');
+  }
+
+  // Show/hide panels
+  document.getElementById('clients-panel').classList.toggle('hidden', tab !== 'clients');
+  document.getElementById('distributors-panel').classList.toggle('hidden', tab !== 'distributors');
+}
+
+async function loadClients() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/lookups`);
+    const lookups = await res.json();
+    clientsData = lookups.clients || [];
+    updateClientKPIs();
+    filterClients();
+  } catch (e) {
+    console.error('Failed to load clients:', e);
+  }
+}
+
+function updateClientKPIs() {
+  const total = clientsData.length;
+  const activeAMC = clientsData.filter(c => c.amc_status === 'Active').length;
+  const expiredAMC = clientsData.filter(c => c.amc_status === 'Expired').length;
+
+  document.getElementById('stat-total-clients').textContent = total;
+  document.getElementById('stat-active-amc').textContent = activeAMC;
+  document.getElementById('stat-expired-amc').textContent = expiredAMC;
+}
+
+function filterClients() {
+  const search = (document.getElementById('client-search-input')?.value || '').toLowerCase();
+  const amcFilter = document.getElementById('client-amc-filter')?.value || 'All';
+
+  const filtered = clientsData.filter(c => {
+    const matchSearch = !search ||
+      (c.company_name || '').toLowerCase().includes(search) ||
+      (c.contact_person || '').toLowerCase().includes(search) ||
+      (c.phone || '').toLowerCase().includes(search) ||
+      (c.address || '').toLowerCase().includes(search);
+    const matchAMC = amcFilter === 'All' || c.amc_status === amcFilter;
+    return matchSearch && matchAMC;
+  });
+
+  renderClientsGrid(filtered);
+}
+
+function renderClientsGrid(clients) {
+  const grid = document.getElementById('clients-panel');
+  if (!grid) return;
+
+  if (clients.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12 text-slate-500">
+        <div class="text-4xl mb-2">👥</div>
+        <p class="text-sm">No clients found</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = clients.map(c => {
+    let statusClass = 'bg-slate-500/20 text-slate-400';
+    let statusLabel = c.amc_status || 'Unknown';
+    if (c.amc_status === 'Active') { statusClass = 'bg-emerald-500/20 text-emerald-400'; }
+    else if (c.amc_status === 'Expired') { statusClass = 'bg-rose-500/20 text-rose-400'; }
+    else if (c.amc_status === 'No AMC') { statusClass = 'bg-amber-500/20 text-amber-400'; }
+    else if (c.amc_status === 'Individual') { statusClass = 'bg-indigo-500/20 text-indigo-400'; }
+
+    const initials = (c.company_name || 'U').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+    return `
+      <div class="glass-panel rounded-xl p-4 hover:border-white/10 transition-all group">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center text-amber-400 font-bold text-sm border border-amber-500/20">
+              ${initials}
+            </div>
+            <div>
+              <div class="text-sm font-bold text-white group-hover:text-amber-400 transition truncate max-w-[180px]">${c.company_name}</div>
+              <div class="text-[10px] text-slate-400">${c.contact_person || 'No contact'}</div>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${statusClass}">${statusLabel}</span>
+        </div>
+        <div class="space-y-2 text-[10px]">
+          ${c.phone ? `<div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.phone}</div>` : ''}
+          ${c.address ? `<div class="flex items-start gap-2 text-slate-400"><svg class="w-3 h-3 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="truncate">${c.address}</span></div>` : ''}
+          ${c.amc_end ? `<div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>AMC: ${c.amc_end}</div>` : ''}
+        </div>
+        <div class="mt-3 pt-3 border-t border-white/5 flex gap-2">
+          <button onclick="viewClientJobs('${c.id}')" class="flex-1 bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 font-bold py-1.5 rounded-lg transition">View Jobs</button>
+          <button onclick="editClient('${c.id}')" class="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-[10px] text-amber-400 font-bold py-1.5 rounded-lg transition">Edit</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openAddClientModal() {
+  document.getElementById('modal-add-client').classList.remove('hidden');
+}
+
+function closeAddClientModal() {
+  document.getElementById('modal-add-client').classList.add('hidden');
+}
+
+async function submitAddClient(event) {
+  event.preventDefault();
+  const form = event.target;
+  const data = {
+    company_name: form.company_name.value,
+    contact_person: form.contact_person.value,
+    phone: form.phone.value,
+    address: form.address.value,
+    amc_status: form.amc_status.value,
+    amc_end: form.amc_end.value,
+  };
+
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/clients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) {
+      showToast('Client added successfully', 'success');
+      closeAddClientModal();
+      form.reset();
+      loadClients();
+    } else {
+      showToast('Failed to add client', 'error');
+    }
+  } catch (e) {
+    console.error('Failed to add client:', e);
+    showToast('Error adding client', 'error');
+  }
+}
+
+function viewClientJobs(clientId) {
+  switchTab('tickets');
+  setTimeout(() => {
+    const searchInput = document.getElementById('job-search-input');
+    if (searchInput) {
+      searchInput.value = clientId;
+      filterJobs();
+    }
+  }, 500);
+}
+
+function editClient(clientId) {
+  showToast('Edit client feature - click to modify details', 'info');
+}
+
+function loadDistributors() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  fetch(`${baseUrl}/api/admin/lookups`)
+    .then(res => res.json())
+    .then(lookups => {
+      const tbody = document.getElementById('distributors-list-body');
+      if (!tbody) return;
+
+      const distributors = lookups.distributors || [];
+      document.getElementById('stat-distributors').textContent = distributors.length;
+
+      if (distributors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">No distributors found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = distributors.map(d => `
+        <tr class="hover:bg-white/5 transition-all">
+          <td class="p-4">
+            <div class="font-bold text-white">${d.name || 'N/A'}</div>
+          </td>
+          <td class="p-4 text-slate-300">${d.contact_person || 'N/A'}</td>
+          <td class="p-4 text-slate-300">${d.phone || 'N/A'}</td>
+          <td class="p-4 text-slate-300">${d.email || 'N/A'}</td>
+          <td class="p-4">
+            <span class="text-[10px] text-slate-400 bg-black/30 px-2 py-1 rounded">${d.product_lines || 'N/A'}</span>
+          </td>
+          <td class="p-4 text-right">
+            <button class="text-xs text-amber-400 hover:text-amber-300">Edit</button>
+          </td>
+        </tr>
+      `).join('');
+    })
+    .catch(e => console.error('Failed to load distributors:', e));
+}
+
+// Initialize clients on load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    loadClients();
+    loadDistributors();
+  }, 2000);
+});
+
+// Initialize POS on load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    loadPOSProducts();
+    loadPOSClients();
+  }, 1000);
+});
+
+// ============================================================================
+// BARCODE SCANNER FUNCTIONS
+// ============================================================================
+
+let barcodeStream = null;
+let barcodeScannerMode = 'inventory'; // 'inventory' or 'pos'
+
+function openBarcodeScanner(mode = 'inventory') {
+  barcodeScannerMode = mode;
+  document.getElementById('barcode-scanner-modal').classList.remove('hidden');
+  document.getElementById('barcode-result').classList.add('hidden');
+  document.getElementById('barcode-manual-input').value = '';
+  document.getElementById('barcode-manual-input').focus();
+}
+
+function closeBarcodeScanner() {
+  stopCameraScan();
+  document.getElementById('barcode-scanner-modal').classList.add('hidden');
+}
+
+async function startCameraScan() {
+  try {
+    const video = document.getElementById('barcode-video');
+    barcodeStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    video.srcObject = barcodeStream;
+    showToast('Camera started. Point at barcode.', 'info');
+  } catch (e) {
+    console.error('Camera error:', e);
+    showToast('Camera access denied. Use manual input.', 'error');
+  }
+}
+
+function stopCameraScan() {
+  if (barcodeStream) {
+    barcodeStream.getTracks().forEach(track => track.stop());
+    barcodeStream = null;
+    const video = document.getElementById('barcode-video');
+    if (video) video.srcObject = null;
+  }
+}
+
+function submitBarcode() {
+  const code = document.getElementById('barcode-manual-input').value.trim();
+  if (!code) {
+    showToast('Please enter a barcode', 'warning');
+    return;
+  }
+  handleBarcodeResult(code);
+}
+
+function handleBarcodeResult(code) {
+  const resultDiv = document.getElementById('barcode-result');
+  resultDiv.classList.remove('hidden');
+
+  // Search for product in inventory
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  fetch(`${baseUrl}/api/admin/lookups`)
+    .then(res => res.json())
+    .then(lookups => {
+      const stock = lookups.inventory_stock || [];
+      const item = stock.find(s => s.item_code === code || s.item_code.toLowerCase() === code.toLowerCase());
+
+      if (item) {
+        resultDiv.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-xs font-bold text-white">${item.item_name}</div>
+              <div class="text-[10px] text-slate-400">${item.item_code} | ${item.category}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-sm font-bold text-emerald-400">$${(item.unit_price || 0).toFixed(2)}</div>
+              <div class="text-[10px] ${item.stock_qty > 0 ? 'text-emerald-400' : 'text-rose-400'}">${item.stock_qty || 0} in stock</div>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button onclick="quickRestock('${item.item_code}')" class="flex-1 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-bold py-2 rounded-lg hover:bg-amber-500/30 transition">Quick Restock</button>
+            <button onclick="addToPOSFromScanner('${item.item_code}')" class="flex-1 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold py-2 rounded-lg hover:bg-emerald-500/30 transition">Add to POS</button>
+          </div>
+        `;
+        showToast(`Found: ${item.item_name}`, 'success');
+      } else {
+        resultDiv.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <svg class="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="text-xs font-bold text-amber-400">Item Not Found</div>
+              <div class="text-[10px] text-slate-400">Code: ${code}</div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <button onclick="addNewItemFromBarcode('${code}')" class="w-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold py-2 rounded-lg hover:bg-emerald-500/30 transition">Add as New Item</button>
+          </div>
+        `;
+        showToast('Item not found. Add as new?', 'warning');
+      }
+    })
+    .catch(e => {
+      console.error('Lookup failed:', e);
+      showToast('Failed to lookup item', 'error');
+    });
+}
+
+function quickRestock(code) {
+  closeBarcodeScanner();
+  setInvTab('restock');
+  document.getElementById('restock-code').value = code;
+  document.getElementById('restock-qty').focus();
+  showToast(`Ready to restock ${code}`, 'info');
+}
+
+function addToPOSFromScanner(code) {
+  closeBarcodeScanner();
+  switchTab('pos');
+  setTimeout(() => {
+    addPOSProduct(code);
+    showToast(`Added ${code} to POS cart`, 'success');
+  }, 500);
+}
+
+function addNewItemFromBarcode(code) {
+  closeBarcodeScanner();
+  switchTab('inventory');
+  setInvTab('add');
+  document.getElementById('new-item-code').value = code;
+  document.getElementById('new-item-name').focus();
+  showToast(`Enter details for ${code}`, 'info');
+}
+
+function scanForNewItem() {
+  openBarcodeScanner('inventory');
+  window._barcodeCallback = (code) => {
+    document.getElementById('new-item-code').value = code;
+    closeBarcodeScanner();
+  };
+}
+
+function scanForRestock() {
+  openBarcodeScanner('inventory');
+  window._barcodeCallback = (code) => {
+    document.getElementById('restock-code').value = code;
+    closeBarcodeScanner();
+    // Preview item
+    previewRestockItem(code);
+  };
+}
+
+function openBarcodeScannerForLookup() {
+  openBarcodeScanner('inventory');
+  window._barcodeCallback = (code) => {
+    document.getElementById('inv-lookup-input').value = code;
+    closeBarcodeScanner();
+    lookupInventoryItem();
+  };
+}
+
+function previewRestockItem(code) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  fetch(`${baseUrl}/api/admin/lookups`)
+    .then(res => res.json())
+    .then(lookups => {
+      const item = (lookups.inventory_stock || []).find(s => s.item_code === code);
+      const preview = document.getElementById('restock-item-preview');
+      if (item) {
+        preview.classList.remove('hidden');
+        document.getElementById('restock-item-name').textContent = item.item_name;
+        document.getElementById('restock-item-stock').textContent = `Current stock: ${item.stock_qty || 0} units`;
+      } else {
+        preview.classList.add('hidden');
+      }
+    });
+}
+
+// ============================================================================
+// INVENTORY MANAGEMENT FUNCTIONS
+// ============================================================================
+
+let inventoryData = [];
+let inventoryPage = 1;
+const inventoryPerPage = 20;
+
+function setInvTab(tab) {
+  document.querySelectorAll('.inv-tab').forEach(t => {
+    t.classList.remove('text-white', 'border-amber-500', 'bg-amber-500/5');
+    t.classList.add('text-slate-400', 'border-transparent');
+  });
+  const activeTab = document.getElementById(`inv-tab-${tab}`);
+  if (activeTab) {
+    activeTab.classList.add('text-white', 'border-amber-500', 'bg-amber-500/5');
+    activeTab.classList.remove('text-slate-400', 'border-transparent');
+  }
+
+  document.getElementById('inv-form-add').classList.add('hidden');
+  document.getElementById('inv-form-restock').classList.add('hidden');
+  document.getElementById('inv-form-search').classList.add('hidden');
+
+  document.getElementById(`inv-form-${tab}`).classList.remove('hidden');
+}
+
+async function loadInventory() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/lookups`);
+    const lookups = await res.json();
+    inventoryData = lookups.inventory_stock || [];
+    updateInventoryKPIs();
+    filterInventory();
+  } catch (e) {
+    console.error('Failed to load inventory:', e);
+  }
+}
+
+function updateInventoryKPIs() {
+  const total = inventoryData.length;
+  const inStock = inventoryData.filter(i => (i.stock_qty || 0) > 5).length;
+  const lowStock = inventoryData.filter(i => (i.stock_qty || 0) > 0 && (i.stock_qty || 0) <= 5).length;
+  const totalQty = inventoryData.reduce((sum, i) => sum + (i.stock_qty || 0), 0);
+  const totalValue = inventoryData.reduce((sum, i) => sum + (i.stock_qty || 0) * (i.unit_price || 0), 0);
+
+  document.getElementById('inv-total-items').textContent = total;
+  document.getElementById('inv-in-stock').textContent = inStock;
+  document.getElementById('inv-low-stock').textContent = lowStock;
+  document.getElementById('inv-total-qty').textContent = totalQty.toLocaleString();
+  document.getElementById('inv-total-value').textContent = `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+function filterInventory() {
+  const search = (document.getElementById('inv-search')?.value || '').toLowerCase();
+  const category = document.getElementById('inv-category-filter')?.value || 'All';
+  const stockFilter = document.getElementById('inv-stock-filter')?.value || 'All';
+
+  const filtered = inventoryData.filter(item => {
+    const matchSearch = !search ||
+      (item.item_code || '').toLowerCase().includes(search) ||
+      (item.item_name || '').toLowerCase().includes(search) ||
+      (item.category || '').toLowerCase().includes(search);
+    const matchCategory = category === 'All' || item.category === category;
+    const qty = item.stock_qty || 0;
+    let matchStock = true;
+    if (stockFilter === 'in-stock') matchStock = qty > 5;
+    else if (stockFilter === 'low-stock') matchStock = qty > 0 && qty <= 5;
+    else if (stockFilter === 'out-of-stock') matchStock = qty === 0;
+
+    return matchSearch && matchCategory && matchStock;
+  });
+
+  renderInventoryGrid(filtered);
+}
+
+function renderInventoryGrid(items) {
+  const grid = document.getElementById('inv-product-grid');
+  if (!grid) return;
+
+  const start = (inventoryPage - 1) * inventoryPerPage;
+  const paged = items.slice(start, start + inventoryPerPage);
+
+  document.getElementById('inv-result-count').textContent = `${items.length} items`;
+  document.getElementById('stock-page-indicator').textContent = `Page ${inventoryPage} of ${Math.ceil(items.length / inventoryPerPage) || 1}`;
+
+  if (paged.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12 text-slate-500">
+        <div class="text-4xl mb-2">📦</div>
+        <p class="text-sm">No items found</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = paged.map(item => {
+    const qty = item.stock_qty || 0;
+    const value = qty * (item.unit_price || 0);
+    let stockClass = 'bg-emerald-500/10 text-emerald-400';
+    let stockLabel = 'In Stock';
+    if (qty === 0) { stockClass = 'bg-rose-500/10 text-rose-400'; stockLabel = 'Out of Stock'; }
+    else if (qty <= 5) { stockClass = 'bg-amber-500/10 text-amber-400'; stockLabel = 'Low Stock'; }
+
+    return `
+      <div class="bg-black/30 border border-white/5 rounded-xl p-3 hover:border-white/10 transition-all group cursor-pointer" onclick="selectInventoryItem('${item.item_code}')">
+        <div class="flex items-start justify-between mb-2">
+          <span class="text-[9px] font-mono text-slate-500 bg-black/40 px-1.5 py-0.5 rounded">${item.item_code}</span>
+          <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${stockClass}">${qty}</span>
+        </div>
+        <div class="text-[11px] font-semibold text-white leading-tight line-clamp-2 mb-2 min-h-[30px]">${item.item_name}</div>
+        <div class="flex items-center justify-between">
+          <span class="text-[9px] text-slate-500">${item.category}</span>
+          <span class="text-[10px] font-bold text-emerald-400">$${(item.unit_price || 0).toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectInventoryItem(code) {
+  const item = inventoryData.find(i => i.item_code === code);
+  if (!item) return;
+
+  setInvTab('restock');
+  document.getElementById('restock-code').value = code;
+  previewRestockItem(code);
+  showToast(`Selected: ${item.item_name}`, 'info');
+}
+
+function changeStockPage(delta) {
+  inventoryPage = Math.max(1, inventoryPage + delta);
+  filterInventory();
+}
+
+function lookupInventoryItem() {
+  const query = (document.getElementById('inv-lookup-input')?.value || '').toLowerCase();
+  const resultDiv = document.getElementById('inv-lookup-result');
+
+  if (!query) {
+    resultDiv.classList.add('hidden');
+    return;
+  }
+
+  const item = inventoryData.find(i =>
+    i.item_code.toLowerCase().includes(query) ||
+    (i.item_name || '').toLowerCase().includes(query)
+  );
+
+  if (item) {
+    resultDiv.classList.remove('hidden');
+    resultDiv.innerHTML = `
+      <div class="bg-black/30 rounded-lg p-4 border border-white/5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <div class="text-xs font-bold text-white">${item.item_name}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${item.item_code}</div>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${(item.stock_qty || 0) > 5 ? 'bg-emerald-500/20 text-emerald-400' : (item.stock_qty || 0) > 0 ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'}">${item.stock_qty || 0} in stock</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-[10px]">
+          <div class="bg-black/20 rounded p-2"><span class="text-slate-500">Category:</span> <span class="text-white">${item.category}</span></div>
+          <div class="bg-black/20 rounded p-2"><span class="text-slate-500">Price:</span> <span class="text-emerald-400">$${(item.unit_price || 0).toFixed(2)}</span></div>
+          <div class="bg-black/20 rounded p-2"><span class="text-slate-500">Value:</span> <span class="text-white">$${((item.stock_qty || 0) * (item.unit_price || 0)).toFixed(2)}</span></div>
+          <div class="bg-black/20 rounded p-2"><span class="text-slate-500">Batch:</span> <span class="text-white">${item.batch_code || 'N/A'}</span></div>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <button onclick="quickRestock('${item.item_code}')" class="flex-1 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-bold py-2 rounded-lg hover:bg-amber-500/30 transition">Restock</button>
+          <button onclick="deleteInventoryItem('${item.item_code}')" class="bg-rose-500/20 border border-rose-500/30 text-rose-400 text-[10px] font-bold py-2 px-3 rounded-lg hover:bg-rose-500/30 transition">Delete</button>
+        </div>
+      </div>
+    `;
+  } else {
+    resultDiv.classList.remove('hidden');
+    resultDiv.innerHTML = `
+      <div class="bg-black/30 rounded-lg p-4 border border-white/5 text-center">
+        <div class="text-amber-400 text-xs font-bold">Item not found</div>
+        <div class="text-[10px] text-slate-400 mt-1">Try a different search term or scan a barcode</div>
+      </div>
+    `;
+  }
+}
+
+function exportInventoryExcel() {
+  // Trigger Excel export from reports
+  switchTab('reports');
+  setTimeout(() => exportAllReports(), 500);
+}
+
+function importInventoryExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  showToast('Import feature requires Excel parsing library. Use POS or Reports export.', 'info');
+  event.target.value = '';
+}
+
+function deleteInventoryItem(code) {
+  if (!confirm(`Delete item ${code}?`)) return;
+  showToast(`Delete ${code} - Feature requires API endpoint`, 'warning');
+}
+
+// Initialize inventory on load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadInventory, 1500);
+});
+
+// ============================================================================
+// REPORT EXPORT FUNCTIONS
+// ============================================================================
+
+let currentReportStyle = 'professional';
+
+const reportStyles = {
+  professional: {
+    primary: '1F4E79',
+    secondary: '2E75B6',
+    accent: 'FFC000',
+    headerBg: '1F4E79',
+    headerFont: 'FFFFFF',
+    altRow: 'D6E4F0',
+  },
+  modern: {
+    primary: '2E7D32',
+    secondary: '4CAF50',
+    accent: '81C784',
+    headerBg: '2E7D32',
+    headerFont: 'FFFFFF',
+    altRow: 'E8F5E9',
+  },
+  corporate: {
+    primary: '424242',
+    secondary: '757575',
+    accent: '9E9E9E',
+    headerBg: '424242',
+    headerFont: 'FFFFFF',
+    altRow: 'F5F5F5',
+  },
+  warm: {
+    primary: 'E65100',
+    secondary: 'FF9800',
+    accent: 'FFB74D',
+    headerBg: 'E65100',
+    headerFont: 'FFFFFF',
+    altRow: 'FFF3E0',
+  },
+};
+
+function setReportStyle(style) {
+  currentReportStyle = style;
+  document.querySelectorAll('.preset-btn').forEach((btn) => {
+    btn.classList.remove('ring-2', 'ring-white');
+  });
+  event.target.classList.add('ring-2', 'ring-white');
+}
+
+function selectAllReports() {
+  document.querySelectorAll('.report-checkbox').forEach((cb) => (cb.checked = true));
+}
+
+function deselectAllReports() {
+  document.querySelectorAll('.report-checkbox').forEach((cb) => (cb.checked = false));
+}
+
+function openReportCustomizer() {
+  document.getElementById('report-customizer-modal').classList.remove('hidden');
+}
+
+function closeReportCustomizer() {
+  document.getElementById('report-customizer-modal').classList.add('hidden');
+}
+
+async function exportAllReports() {
+  const baseUrl = document.getElementById('api-base').value;
+  showExportLoading();
+
+  try {
+    const [jobsRes, lookupsRes, safeRes] = await Promise.all([
+      fetch(`${baseUrl}/api/jobs`),
+      fetch(`${baseUrl}/api/admin/lookups`),
+      fetch(`${baseUrl}/api/admin/cash/safe`),
+    ]);
+
+    const jobs = await jobsRes.json();
+    const lookups = await lookupsRes.json();
+    const safe = await safeRes.json();
+
+    const wb = generateExcelWorkbook(jobs, lookups, safe, reportStyles[currentReportStyle]);
+    downloadWorkbook(wb, `KosAI_All_Reports_${getDateStr()}.xlsx`);
+  } catch (e) {
+    console.error('Export failed:', e);
+    alert('Export failed: ' + e.message);
+  } finally {
+    hideExportLoading();
+  }
+}
+
+async function exportCustomReports() {
+  const selectedReports = Array.from(document.querySelectorAll('.report-checkbox:checked')).map(
+    (cb) => cb.value
+  );
+
+  if (selectedReports.length === 0) {
+    alert('Please select at least one report');
+    return;
+  }
+
+  const baseUrl = document.getElementById('api-base').value;
+  showExportLoading();
+  closeReportCustomizer();
+
+  try {
+    const [jobsRes, lookupsRes, safeRes] = await Promise.all([
+      fetch(`${baseUrl}/api/jobs`),
+      fetch(`${baseUrl}/api/admin/lookups`),
+      fetch(`${baseUrl}/api/admin/cash/safe`),
+    ]);
+
+    const jobs = await jobsRes.json();
+    const lookups = await lookupsRes.json();
+    const safe = await safeRes.json();
+
+    const prefix = document.getElementById('export-filename').value || 'KosAI_Reports';
+    const wb = generateExcelWorkbook(jobs, lookups, safe, reportStyles[currentReportStyle], selectedReports);
+    downloadWorkbook(wb, `${prefix}_${getDateStr()}.xlsx`);
+  } catch (e) {
+    console.error('Export failed:', e);
+    alert('Export failed: ' + e.message);
+  } finally {
+    hideExportLoading();
+  }
+}
+
+function getDateStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function showExportLoading() {
+  const overlay = document.createElement('div');
+  overlay.id = 'export-loading';
+  overlay.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center';
+  overlay.innerHTML = `
+    <div class="glass-panel p-8 rounded-2xl text-center">
+      <div class="animate-spin w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+      <p class="text-white font-bold">Generating Excel Report...</p>
+      <p class="text-slate-400 text-sm mt-1">Please wait</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function hideExportLoading() {
+  const el = document.getElementById('export-loading');
+  if (el) el.remove();
+}
+
+// ============================================================================
+// REPORT TAB SWITCHING & CSV EXPORT
+// ============================================================================
+
+let currentReportTab = 'overview';
+
+function switchReportTab(tab) {
+  currentReportTab = tab;
+
+  // Update tab buttons
+  document.querySelectorAll('.report-tab').forEach(btn => {
+    btn.classList.remove('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    btn.classList.add('text-slate-400', 'border-transparent');
+  });
+  const activeBtn = document.getElementById(`report-tab-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    activeBtn.classList.remove('text-slate-400', 'border-transparent');
+  }
+
+  // Show/hide panels
+  ['overview', 'jobs', 'clients', 'inventory', 'financial', 'technicians'].forEach(p => {
+    const panel = document.getElementById(`report-panel-${p}`);
+    if (panel) panel.classList.toggle('hidden', p !== tab);
+  });
+
+  // Load data for the tab
+  loadReportTabData(tab);
+}
+
+function loadReportTabData(tab) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+
+  fetch(`${baseUrl}/api/jobs`)
+    .then(res => res.json())
+    .then(jobs => {
+      fetch(`${baseUrl}/api/admin/lookups`)
+        .then(res => res.json())
+        .then(lookups => {
+          fetch(`${baseUrl}/api/admin/cash/safe`)
+            .then(res => res.json())
+            .then(safe => {
+              renderReportTabData(tab, jobs, lookups, safe);
+            });
+        });
+    });
+}
+
+function renderReportTabData(tab, jobs, lookups, safe) {
+  switch (tab) {
+    case 'jobs':
+      renderJobsReport(jobs, lookups);
+      break;
+    case 'clients':
+      renderClientsReport(jobs, lookups);
+      break;
+    case 'inventory':
+      renderInventoryReport(lookups);
+      break;
+    case 'financial':
+      renderFinancialReport(safe);
+      break;
+    case 'technicians':
+      renderTechniciansReport(jobs, lookups);
+      break;
+  }
+}
+
+function renderJobsReport(jobs, lookups) {
+  // Status breakdown
+  const statusBody = document.getElementById('report-jobs-status-body');
+  if (statusBody) {
+    const statusCounts = {};
+    jobs.forEach(j => { statusCounts[j.status] = (statusCounts[j.status] || 0) + 1; });
+    const total = jobs.length;
+
+    statusBody.innerHTML = Object.entries(statusCounts).map(([status, count]) => {
+      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+      let statusClass = 'text-slate-400';
+      if (status === 'Completed') statusClass = 'text-emerald-400';
+      else if (status === 'Pending') statusClass = 'text-amber-400';
+      else if (status === 'In Progress') statusClass = 'text-blue-400';
+
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold ${statusClass}">${status}</td><td class="py-2 text-right font-mono">${count}</td><td class="py-2 text-right text-slate-400">${pct}%</td></tr>`;
+    }).join('');
+  }
+
+  // Type breakdown
+  const typeBody = document.getElementById('report-jobs-type-body');
+  if (typeBody) {
+    const typeCounts = {};
+    jobs.forEach(j => {
+      if (!typeCounts[j.service_type]) typeCounts[j.service_type] = { total: 0, completed: 0 };
+      typeCounts[j.service_type].total++;
+      if (j.status === 'Completed') typeCounts[j.service_type].completed++;
+    });
+
+    typeBody.innerHTML = Object.entries(typeCounts).map(([type, data]) => {
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white">${type}</td><td class="py-2 text-right font-mono">${data.total}</td><td class="py-2 text-right text-emerald-400">${data.completed}</td></tr>`;
+    }).join('');
+  }
+
+  // Recent jobs
+  renderRecentJobs(jobs, lookups);
+}
+
+function renderClientsReport(jobs, lookups) {
+  const clients = lookups.clients || [];
+
+  // AMC breakdown
+  const amcBody = document.getElementById('report-amc-body');
+  if (amcBody) {
+    const amcCounts = {};
+    clients.forEach(c => { amcCounts[c.amc_status] = (amcCounts[c.amc_status] || 0) + 1; });
+    const total = clients.length;
+
+    amcBody.innerHTML = Object.entries(amcCounts).map(([status, count]) => {
+      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+      let statusClass = 'text-slate-400';
+      if (status === 'Active') statusClass = 'text-emerald-400';
+      else if (status === 'Expired') statusClass = 'text-rose-400';
+
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold ${statusClass}">${status}</td><td class="py-2 text-right font-mono">${count}</td><td class="py-2 text-right text-slate-400">${pct}%</td></tr>`;
+    }).join('');
+  }
+
+  // Client jobs summary
+  const clientJobsBody = document.getElementById('report-client-jobs-body');
+  if (clientJobsBody) {
+    const clientJobs = {};
+    clients.forEach(c => { clientJobs[c.company_name] = { total: 0, completed: 0 }; });
+    jobs.forEach(j => {
+      const client = clients.find(c => c.id === j.client_id);
+      if (client && clientJobs[client.company_name]) {
+        clientJobs[client.company_name].total++;
+        if (j.status === 'Completed') clientJobs[client.company_name].completed++;
+      }
+    });
+
+    clientJobsBody.innerHTML = Object.entries(clientJobs)
+      .filter(([, data]) => data.total > 0)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 10)
+      .map(([name, data]) => {
+        return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white truncate max-w-[150px]">${name}</td><td class="py-2 text-right font-mono">${data.total}</td><td class="py-2 text-right text-emerald-400">${data.completed}</td></tr>`;
+      }).join('');
+  }
+}
+
+function renderInventoryReport(lookups) {
+  const stock = lookups.inventory_stock || [];
+
+  // Category breakdown
+  const catBody = document.getElementById('report-inventory-cat-body');
+  if (catBody) {
+    const catData = {};
+    stock.forEach(s => {
+      if (!catData[s.category]) catData[s.category] = { items: 0, qty: 0, value: 0 };
+      catData[s.category].items++;
+      catData[s.category].qty += s.stock_qty || 0;
+      catData[s.category].value += (s.stock_qty || 0) * (s.unit_price || 0);
+    });
+
+    catBody.innerHTML = Object.entries(catData)
+      .sort((a, b) => b[1].value - a[1].value)
+      .map(([cat, data]) => {
+        return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white">${cat}</td><td class="py-2 text-right font-mono">${data.items}</td><td class="py-2 text-right font-mono">${data.qty}</td><td class="py-2 text-right text-emerald-400 font-mono">$${data.value.toFixed(2)}</td></tr>`;
+      }).join('');
+  }
+
+  // Low stock items
+  const lowStockBody = document.getElementById('report-low-stock-body');
+  if (lowStockBody) {
+    const lowStock = stock.filter(s => (s.stock_qty || 0) <= 5).sort((a, b) => (a.stock_qty || 0) - (b.stock_qty || 0));
+
+    lowStockBody.innerHTML = lowStock.slice(0, 15).map(s => {
+      const statusClass = s.stock_qty === 0 ? 'text-rose-400' : 'text-amber-400';
+      const statusText = s.stock_qty === 0 ? 'OUT' : 'LOW';
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white truncate max-w-[150px]">${s.item_name}</td><td class="py-2 font-mono text-slate-400">${s.item_code}</td><td class="py-2 text-right font-mono">${s.stock_qty || 0}</td><td class="py-2 text-right font-bold ${statusClass}">${statusText}</td></tr>`;
+    }).join('');
+  }
+}
+
+function renderFinancialReport(safe) {
+  const safeBody = document.getElementById('report-cash-safe-body');
+  if (safeBody) {
+    safeBody.innerHTML = `
+      <tr class="hover:bg-white/5"><td class="py-2 font-semibold text-amber-400">USD</td><td class="py-2 text-right font-mono font-bold">$${(safe.usd_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>
+      <tr class="hover:bg-white/5"><td class="py-2 font-semibold text-indigo-400">MMK</td><td class="py-2 text-right font-mono font-bold">${(safe.mmk_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} Ks</td></tr>
+      <tr class="hover:bg-white/5 bg-white/5"><td class="py-2 font-bold text-white">Total (USD)</td><td class="py-2 text-right font-mono font-bold text-emerald-400">$${((safe.usd_balance || 0) + (safe.mmk_balance || 0) / 2100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>
+    `;
+  }
+
+  // Recent transactions
+  const transBody = document.getElementById('report-transactions-body');
+  if (transBody) {
+    const baseUrl = document.getElementById('api-base')?.value || '';
+    fetch(`${baseUrl}/api/admin/cash/transactions`)
+      .then(res => res.json())
+      .then(transactions => {
+        transBody.innerHTML = (transactions || []).slice(0, 10).map(t => {
+          const typeClass = t.transaction_type === 'Deposit' ? 'text-emerald-400' : 'text-rose-400';
+          return `<tr class="hover:bg-white/5"><td class="py-2 text-slate-400">${t.created_at ? new Date(t.created_at).toLocaleDateString() : 'N/A'}</td><td class="py-2 font-semibold ${typeClass}">${t.transaction_type}</td><td class="py-2 text-right font-mono">${t.primary_currency === 'USD' ? '$' : ''}${(t.amount || 0).toLocaleString()}</td><td class="py-2 text-slate-400 truncate max-w-[150px]">${t.notes || ''}</td></tr>`;
+        }).join('');
+      });
+  }
+}
+
+function renderTechniciansReport(jobs, lookups) {
+  const techsBody = document.getElementById('report-techs-body');
+  if (!techsBody) return;
+
+  const techData = {};
+  (lookups.technicians || []).forEach(t => {
+    techData[t.id] = { name: t.name, total: 0, completed: 0, inProgress: 0 };
+  });
+
+  jobs.forEach(j => {
+    if (techData[j.technician_id]) {
+      techData[j.technician_id].total++;
+      if (j.status === 'Completed') techData[j.technician_id].completed++;
+      if (j.status === 'In Progress') techData[j.technician_id].inProgress++;
+    }
+  });
+
+  techsBody.innerHTML = Object.values(techData)
+    .sort((a, b) => b.total - a.total)
+    .map(t => {
+      const rate = t.total > 0 ? Math.round((t.completed / t.total) * 100) : 0;
+      let rateClass = 'text-slate-400';
+      if (rate >= 80) rateClass = 'text-emerald-400';
+      else if (rate >= 50) rateClass = 'text-amber-400';
+
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white">${t.name}</td><td class="py-2 text-center font-mono">${t.total}</td><td class="py-2 text-center text-emerald-400 font-mono">${t.completed}</td><td class="py-2 text-center text-blue-400 font-mono">${t.inProgress}</td><td class="py-2 text-right font-bold ${rateClass}">${rate}%</td></tr>`;
+    }).join('');
+}
+
+function renderRecentJobs(jobs, lookups) {
+  const tbody = document.getElementById('report-recent-jobs');
+  if (!tbody) return;
+
+  tbody.innerHTML = jobs.slice(0, 10).map(j => {
+    const client = (lookups.clients || []).find(c => c.id === j.client_id);
+    const tech = (lookups.technicians || []).find(t => t.id === j.technician_id);
+    let statusClass = 'bg-slate-500/20 text-slate-400';
+    if (j.status === 'Completed') statusClass = 'bg-emerald-500/20 text-emerald-400';
+    else if (j.status === 'Pending') statusClass = 'bg-amber-500/20 text-amber-400';
+    else if (j.status === 'In Progress') statusClass = 'bg-blue-500/20 text-blue-400';
+
+    return `<tr class="hover:bg-white/5"><td class="py-2 font-mono text-amber-400">${j.id}</td><td class="py-2 text-white truncate max-w-[120px]">${client?.company_name || 'Unknown'}</td><td class="py-2 text-slate-300">${j.service_type}</td><td class="py-2 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">${j.status}</span></td><td class="py-2 text-slate-300">${tech?.name || 'Unassigned'}</td><td class="py-2 text-right text-slate-400 text-[10px]">${j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td></tr>`;
+  }).join('');
+}
+
+function filterReportsByDate() {
+  // Date filter functionality
+  showToast('Date filter applied', 'info');
+  populateReports();
+}
+
+function resetReportDates() {
+  document.getElementById('report-date-from').value = '';
+  document.getElementById('report-date-to').value = '';
+  showToast('Date filter reset', 'info');
+  populateReports();
+}
+
+function exportReportsCSV() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+
+  fetch(`${baseUrl}/api/jobs`)
+    .then(res => res.json())
+    .then(jobs => {
+      fetch(`${baseUrl}/api/admin/lookups`)
+        .then(res => res.json())
+        .then(lookups => {
+          // Generate CSV content
+          let csv = 'Job ID,Client,Service Type,Status,Technician,Created Date\n';
+          jobs.forEach(j => {
+            const client = (lookups.clients || []).find(c => c.id === j.client_id);
+            const tech = (lookups.technicians || []).find(t => t.id === j.technician_id);
+            csv += `"${j.id}","${client?.company_name || ''}","${j.service_type}","${j.status}","${tech?.name || ''}","${j.created_at || ''}"\n`;
+          });
+
+          // Download CSV
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `KosAI_Jobs_Report_${getDateStr()}.csv`;
+          link.click();
+          URL.revokeObjectURL(link.href);
+          showToast('CSV exported successfully', 'success');
+        });
+    });
+}
+
+function generateExcelWorkbook(jobs, lookups, safe, style, selectedReports = null) {
+  // Simple client-side Excel generation using SheetJS-like approach
+  // For full feature, we'll use a basic CSV-to-Excel approach
+  const wb = {
+    sheets: [],
+    style: style,
+  };
+
+  const allReports = {
+    // Inventory Reports
+    inventory_summary: () => generateInventoryReport(lookups),
+    inventory_category: () => generateInventoryCategoryReport(lookups),
+    inventory_value: () => generateInventoryValueReport(lookups),
+    low_stock: () => generateLowStockReport(lookups),
+    batch_purchase: () => generateBatchPurchaseReport(lookups),
+
+    // Client Reports
+    client_summary: () => generateClientReport(lookups),
+    amc_breakdown: () => generateAMCReport(lookups),
+    client_revenue: () => generateClientRevenueReport(jobs, lookups),
+    amc_expiry: () => generateClientAMCExpiryReport(lookups),
+
+    // Service/Job Reports
+    service_summary: () => generateServiceReport(jobs, lookups),
+    services_by_type: () => generateServiceTypeReport(jobs),
+    monthly_jobs: () => generateMonthlyJobReport(jobs),
+    job_duration: () => generateJobDurationReport(jobs, lookups),
+    service_timeline: () => generateServiceStatusTimelineReport(jobs),
+    service_fees: () => generateServiceFeeReport(lookups),
+
+    // Technician Reports
+    technician_perf: () => generateTechnicianReport(jobs, lookups),
+    technician_workload: () => generateTechnicianWorkloadReport(jobs, lookups),
+
+    // Financial Reports
+    cash_transactions: () => generateCashReport(safe),
+    cash_safe: () => generateCashSafeReport(safe),
+
+    // Warranty & Device Reports
+    warranty_status: () => generateWarrantyReport(lookups),
+    warranty_expiry: () => generateWarrantyExpiryReport(lookups),
+    device_status: () => generateDeviceStatusReport(lookups),
+    rma_tracking: () => generateRMAReport(lookups),
+  };
+
+  const reportsToGenerate = selectedReports || Object.keys(allReports);
+
+  reportsToGenerate.forEach((key) => {
+    if (allReports[key]) {
+      wb.sheets.push(allReports[key]());
+    }
+  });
+
+  return wb;
+}
+
+function generateInventoryReport(lookups) {
+  const stock = lookups.inventory_stock || [];
+  return {
+    name: 'Inventory Summary',
+    headers: ['Item Code', 'Item Name', 'Category', 'Qty', 'Price USD', 'Price MMK', 'Batch'],
+    data: stock.map((s) => [
+      s.item_code,
+      s.item_name,
+      s.category,
+      s.stock_qty,
+      s.unit_price,
+      s.unit_price_mmk,
+      s.batch_code,
+    ]),
+    summary: {
+      'Total Items': stock.length,
+      'Total Stock': stock.reduce((a, b) => a + (b.stock_qty || 0), 0),
+    },
+  };
+}
+
+function generateInventoryCategoryReport(lookups) {
+  const stock = lookups.inventory_stock || [];
+  const cats = {};
+  stock.forEach((s) => {
+    const cat = s.category || 'Unknown';
+    if (!cats[cat]) cats[cat] = { count: 0, qty: 0, value: 0 };
+    cats[cat].count++;
+    cats[cat].qty += s.stock_qty || 0;
+    cats[cat].value += (s.stock_qty || 0) * (s.unit_price || 0);
+  });
+  return {
+    name: 'Inventory by Category',
+    headers: ['Category', 'Item Count', 'Total Qty', 'Total Value USD'],
+    data: Object.entries(cats).map(([cat, v]) => [cat, v.count, v.qty, v.value]),
+    summary: { 'Total Categories': Object.keys(cats).length },
+  };
+}
+
+function generateLowStockReport(lookups) {
+  const stock = lookups.inventory_stock || [];
+  const low = stock.filter((s) => (s.stock_qty || 0) <= 5);
+  return {
+    name: 'Low Stock Alert',
+    headers: ['Item Code', 'Item Name', 'Category', 'Current Stock', 'Status'],
+    data: low.map((s) => [
+      s.item_code,
+      s.item_name,
+      s.category,
+      s.stock_qty,
+      s.stock_qty === 0 ? 'OUT OF STOCK' : 'LOW',
+    ]),
+    summary: { 'Total Low Stock': low.length },
+  };
+}
+
+function generateClientReport(lookups) {
+  const clients = lookups.clients || [];
+  return {
+    name: 'Client Summary',
+    headers: ['Company', 'Contact', 'Phone', 'AMC Status', 'AMC Start', 'AMC End'],
+    data: clients.map((c) => [
+      c.company_name,
+      c.contact_person,
+      c.phone,
+      c.amc_status,
+      c.amc_start,
+      c.amc_end,
+    ]),
+    summary: {
+      'Total Clients': clients.length,
+      'Active AMC': clients.filter((c) => c.amc_status === 'Active').length,
+    },
+  };
+}
+
+function generateAMCReport(lookups) {
+  const clients = lookups.clients || [];
+  const amc = {};
+  clients.forEach((c) => {
+    const status = c.amc_status || 'Unknown';
+    amc[status] = (amc[status] || 0) + 1;
+  });
+  return {
+    name: 'AMC Breakdown',
+    headers: ['Status', 'Client Count'],
+    data: Object.entries(amc).map(([status, count]) => [status, count]),
+    summary: { 'Total Clients': clients.length },
+  };
+}
+
+function generateServiceReport(jobs, lookups) {
+  return {
+    name: 'Service Records',
+    headers: ['Job ID', 'Type', 'Status', 'Client', 'Technician', 'Created'],
+    data: jobs.map((j) => {
+      const client = (lookups.clients || []).find((c) => c.id === j.client_id);
+      const tech = (lookups.technicians || []).find((t) => t.id === j.technician_id);
+      return [
+        j.id,
+        j.service_type,
+        j.status,
+        client?.company_name || j.client_id,
+        tech?.name || j.technician_id,
+        j.created_at,
+      ];
+    }),
+    summary: {
+      'Total Jobs': jobs.length,
+      'Completed': jobs.filter((j) => j.status === 'Completed').length,
+      'Pending': jobs.filter((j) => j.status === 'Pending').length,
+    },
+  };
+}
+
+function generateServiceTypeReport(jobs) {
+  const types = {};
+  jobs.forEach((j) => {
+    const type = j.service_type || 'Unknown';
+    if (!types[type]) types[type] = { total: 0, completed: 0, pending: 0 };
+    types[type].total++;
+    if (j.status === 'Completed') types[type].completed++;
+    if (j.status === 'Pending') types[type].pending++;
+  });
+  return {
+    name: 'Services by Type',
+    headers: ['Service Type', 'Total', 'Completed', 'Pending'],
+    data: Object.entries(types).map(([type, v]) => [type, v.total, v.completed, v.pending]),
+    summary: { 'Total Jobs': jobs.length },
+  };
+}
+
+function generateTechnicianReport(jobs, lookups) {
+  const techs = {};
+  (lookups.technicians || []).forEach((t) => {
+    techs[t.id] = { name: t.name, assigned: 0, completed: 0 };
+  });
+  jobs.forEach((j) => {
+    if (techs[j.technician_id]) {
+      techs[j.technician_id].assigned++;
+      if (j.status === 'Completed') techs[j.technician_id].completed++;
+    }
+  });
+  return {
+    name: 'Technician Performance',
+    headers: ['Technician', 'Assigned', 'Completed', 'Completion Rate'],
+    data: Object.values(techs).map((t) => [
+      t.name,
+      t.assigned,
+      t.completed,
+      t.assigned > 0 ? `${Math.round((t.completed / t.assigned) * 100)}%` : '0%',
+    ]),
+    summary: { 'Total Technicians': Object.keys(techs).length },
+  };
+}
+
+function generateCashReport(safe) {
+  return {
+    name: 'Cash Safe Summary',
+    headers: ['Currency', 'Balance'],
+    data: [
+      ['USD', safe.usd_balance || 0],
+      ['MMK', safe.mmk_balance || 0],
+    ],
+    summary: {},
+  };
+}
+
+function generateCashSafeReport(safe) {
+  return {
+    name: 'Cash Safe Details',
+    headers: ['Metric', 'Value'],
+    data: [
+      ['USD Balance', `$${(safe.usd_balance || 0).toLocaleString()}`],
+      ['MMK Balance', `${(safe.mmk_balance || 0).toLocaleString()} Ks`],
+      ['Est. Total USD', `$${((safe.usd_balance || 0) + (safe.mmk_balance || 0) / 3500).toFixed(2)}`],
+    ],
+    summary: {},
+  };
+}
+
+function generateWarrantyReport(lookups) {
+  const items = lookups.inventory_items || [];
+  return {
+    name: 'Warranty Status',
+    headers: ['Serial Number', 'Device', 'Client', 'Status', 'Warranty Months'],
+    data: items.map((i) => {
+      const client = (lookups.clients || []).find((c) => c.id === i.client_id);
+      return [i.serial_number, i.device_name, client?.company_name || i.client_id, i.status, i.warranty_months];
+    }),
+    summary: { 'Total Devices': items.length },
+  };
+}
+
+function generateRMAReport(lookups) {
+  const items = (lookups.inventory_items || []).filter((i) =>
+    ['Defective', 'RMA Sent', 'RMA Completed', 'Replaced'].includes(i.status)
+  );
+  return {
+    name: 'RMA Tracking',
+    headers: ['Serial Number', 'Device', 'Status', 'RMA ID', 'Distributor'],
+    data: items.map((i) => [i.serial_number, i.device_name, i.status, i.rma_tracking_id, i.distributor]),
+    summary: { 'Total RMA': items.length },
+  };
+}
+
+// ============================================================================
+// ADDITIONAL REPORTS
+// ============================================================================
+
+function generateMonthlyJobReport(jobs) {
+  const monthly = {};
+  jobs.forEach((j) => {
+    const date = j.created_at ? new Date(j.created_at) : null;
+    if (!date) return;
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    if (!monthly[month]) monthly[month] = { total: 0, completed: 0, pending: 0, in_progress: 0 };
+    monthly[month].total++;
+    if (j.status === 'Completed') monthly[month].completed++;
+    if (j.status === 'Pending') monthly[month].pending++;
+    if (j.status === 'In Progress') monthly[month].in_progress++;
+  });
+  return {
+    name: 'Monthly Job Trend',
+    headers: ['Month', 'Total Jobs', 'Completed', 'Pending', 'In Progress', 'Completion Rate'],
+    data: Object.entries(monthly)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([month, v]) => [
+        month,
+        v.total,
+        v.completed,
+        v.pending,
+        v.in_progress,
+        v.total > 0 ? `${Math.round((v.completed / v.total) * 100)}%` : '0%',
+      ]),
+    summary: {
+      'Total Months': Object.keys(monthly).length,
+      'Total Jobs': jobs.length,
+    },
+  };
+}
+
+function generateClientRevenueReport(jobs, lookups) {
+  const clients = {};
+  jobs.forEach((j) => {
+    const client = (lookups.clients || []).find((c) => c.id === j.client_id);
+    const name = client?.company_name || j.client_id || 'Unknown';
+    if (!clients[name]) clients[name] = { total: 0, completed: 0, pending: 0 };
+    clients[name].total++;
+    if (j.status === 'Completed') clients[name].completed++;
+    if (j.status === 'Pending') clients[name].pending++;
+  });
+  return {
+    name: 'Client-wise Job Summary',
+    headers: ['Client', 'Total Jobs', 'Completed', 'Pending', 'Status'],
+    data: Object.entries(clients)
+      .sort((a, b) => b[1].total - a[1].total)
+      .map(([name, v]) => [name, v.total, v.completed, v.pending, v.pending > 0 ? 'Active' : 'Completed']),
+    summary: {
+      'Total Clients': Object.keys(clients).length,
+      'Total Jobs': jobs.length,
+    },
+  };
+}
+
+function generateTechnicianWorkloadReport(jobs, lookups) {
+  const techs = {};
+  (lookups.technicians || []).forEach((t) => {
+    techs[t.id] = { name: t.name, role: t.role, pending: 0, in_progress: 0, completed: 0, cancelled: 0 };
+  });
+  jobs.forEach((j) => {
+    if (techs[j.technician_id]) {
+      if (j.status === 'Pending') techs[j.technician_id].pending++;
+      if (j.status === 'In Progress') techs[j.technician_id].in_progress++;
+      if (j.status === 'Completed') techs[j.technician_id].completed++;
+      if (j.status === 'Cancelled') techs[j.technician_id].cancelled++;
+    }
+  });
+  return {
+    name: 'Technician Workload',
+    headers: ['Technician', 'Role', 'Pending', 'In Progress', 'Completed', 'Cancelled', 'Total'],
+    data: Object.values(techs).map((t) => {
+      const total = t.pending + t.in_progress + t.completed + t.cancelled;
+      return [t.name, t.role, t.pending, t.in_progress, t.completed, t.cancelled, total];
+    }),
+    summary: {
+      'Total Technicians': Object.keys(techs).length,
+    },
+  };
+}
+
+function generateInventoryValueReport(lookups) {
+  const stock = lookups.inventory_stock || [];
+  const categories = {};
+  stock.forEach((s) => {
+    const cat = s.category || 'Unknown';
+    if (!categories[cat]) categories[cat] = { items: 0, qty: 0, value_usd: 0, value_mmk: 0 };
+    categories[cat].items++;
+    categories[cat].qty += s.stock_qty || 0;
+    categories[cat].value_usd += (s.stock_qty || 0) * (s.unit_price || 0);
+    categories[cat].value_mmk += (s.stock_qty || 0) * (s.unit_price_mmk || 0);
+  });
+  const sorted = Object.entries(categories).sort((a, b) => b[1].value_usd - a[1].value_usd);
+  return {
+    name: 'Inventory Value by Category',
+    headers: ['Category', 'Items', 'Total Qty', 'Value USD', 'Value MMK', '% of Total'],
+    data: sorted.map(([cat, v]) => {
+      const totalVal = sorted.reduce((sum, [, cv]) => sum + cv.value_usd, 0);
+      const pct = totalVal > 0 ? ((v.value_usd / totalVal) * 100).toFixed(1) : '0';
+      return [cat, v.items, v.qty, v.value_usd, v.value_mmk, `${pct}%`];
+    }),
+    summary: {
+      'Total Categories': sorted.length,
+      'Total Value USD': sorted.reduce((sum, [, v]) => sum + v.value_usd, 0),
+      'Total Value MMK': sorted.reduce((sum, [, v]) => sum + v.value_mmk, 0),
+    },
+  };
+}
+
+function generateServiceFeeReport(lookups) {
+  const fees = lookups.service_fees || [];
+  return {
+    name: 'Service Fee Schedule',
+    headers: ['Service Type', 'Fee Amount', 'Currency', 'Description'],
+    data: fees.map((f) => [f.service_type, f.fee_amount, f.currency, f.description]),
+    summary: {
+      'Total Fee Types': fees.length,
+    },
+  };
+}
+
+function generateWarrantyExpiryReport(lookups) {
+  const items = lookups.inventory_items || [];
+  const now = new Date();
+  const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const expirySoon = [];
+
+  items.forEach((i) => {
+    if (!i.installed_date || !i.warranty_months) return;
+    const installed = new Date(i.installed_date);
+    const expiry = new Date(installed.getTime() + i.warranty_months * 30 * 24 * 60 * 60 * 1000);
+    const daysUntilExpiry = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilExpiry <= 30 && daysUntilExpiry >= -30) {
+      const client = (lookups.clients || []).find((c) => c.id === i.client_id);
+      expirySoon.push({
+        serial: i.serial_number,
+        device: i.device_name,
+        client: client?.company_name || i.client_id,
+        expiry: expiry.toISOString().split('T')[0],
+        days: daysUntilExpiry,
+        status: daysUntilExpiry < 0 ? 'EXPIRED' : daysUntilExpiry <= 7 ? 'CRITICAL' : 'WARNING',
+      });
+    }
+  });
+
+  return {
+    name: 'Warranty Expiry Alert',
+    headers: ['Serial Number', 'Device', 'Client', 'Expiry Date', 'Days Left', 'Status'],
+    data: expirySoon.sort((a, b) => a.days - b.days).map((i) => [i.serial, i.device, i.client, i.expiry, i.days, i.status]),
+    summary: {
+      'Expiring Soon': expirySoon.filter((i) => i.days >= 0).length,
+      'Already Expired': expirySoon.filter((i) => i.days < 0).length,
+    },
+  };
+}
+
+function generateClientAMCExpiryReport(lookups) {
+  const clients = lookups.clients || [];
+  const now = new Date();
+  const expiring = [];
+
+  clients.forEach((c) => {
+    if (!c.amc_end) return;
+    const endDate = new Date(c.amc_end);
+    const daysUntilExpiry = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+
+    if (c.amc_status === 'Active' && daysUntilExpiry <= 60) {
+      expiring.push({
+        company: c.company_name,
+        contact: c.contact_person,
+        phone: c.phone,
+        end: c.amc_end,
+        days: daysUntilExpiry,
+        status: daysUntilExpiry <= 0 ? 'EXPIRED' : daysUntilExpiry <= 14 ? 'CRITICAL' : 'WARNING',
+      });
+    }
+  });
+
+  return {
+    name: 'AMC Expiry Alert',
+    headers: ['Company', 'Contact', 'Phone', 'AMC End Date', 'Days Left', 'Status'],
+    data: expiring.sort((a, b) => a.days - b.days).map((c) => [c.company, c.contact, c.phone, c.end, c.days, c.status]),
+    summary: {
+      'Expiring Soon': expiring.filter((i) => i.days >= 0).length,
+      'Already Expired': expiring.filter((i) => i.days < 0).length,
+    },
+  };
+}
+
+function generateBatchPurchaseReport(lookups) {
+  const batches = lookups.inventory_batches || [];
+  const stock = lookups.inventory_stock || [];
+
+  const batchData = {};
+  batches.forEach((b) => {
+    batchData[b.batch_code] = {
+      supplier: b.supplier,
+      buying_price: b.buying_price,
+      created: b.created_at,
+      items: 0,
+      total_qty: 0,
+    };
+  });
+
+  stock.forEach((s) => {
+    if (s.batch_code && batchData[s.batch_code]) {
+      batchData[s.batch_code].items++;
+      batchData[s.batch_code].total_qty += s.stock_qty || 0;
+    }
+  });
+
+  return {
+    name: 'Batch Purchase Report',
+    headers: ['Batch Code', 'Supplier', 'Buying Price', 'Items', 'Total Qty', 'Created'],
+    data: Object.entries(batchData).map(([code, v]) => [
+      code,
+      v.supplier,
+      v.buying_price,
+      v.items,
+      v.total_qty,
+      v.created,
+    ]),
+    summary: {
+      'Total Batches': Object.keys(batchData).length,
+    },
+  };
+}
+
+function generateJobDurationReport(jobs, lookups) {
+  const completed = jobs.filter((j) => j.status === 'Completed' && j.arrival_time && j.completion_time);
+  const durations = completed.map((j) => {
+    const start = new Date(j.arrival_time);
+    const end = new Date(j.completion_time);
+    const hours = Math.round((end - start) / (1000 * 60 * 60) * 10) / 10;
+    const client = (lookups.clients || []).find((c) => c.id === j.client_id);
+    const tech = (lookups.technicians || []).find((t) => t.id === j.technician_id);
+    return {
+      job: j.id,
+      type: j.service_type,
+      client: client?.company_name || j.client_id,
+      tech: tech?.name || j.technician_id,
+      hours,
+    };
+  });
+
+  return {
+    name: 'Job Duration Analysis',
+    headers: ['Job ID', 'Type', 'Client', 'Technician', 'Duration (Hours)'],
+    data: durations.sort((a, b) => b.hours - a.hours).map((d) => [d.job, d.type, d.client, d.tech, d.hours]),
+    summary: {
+      'Total Jobs': durations.length,
+      'Avg Duration (hrs)': durations.length > 0
+        ? (durations.reduce((sum, d) => sum + d.hours, 0) / durations.length).toFixed(1)
+        : 0,
+      'Max Duration (hrs)': durations.length > 0 ? Math.max(...durations.map((d) => d.hours)) : 0,
+    },
+  };
+}
+
+function generateServiceStatusTimelineReport(jobs) {
+  const statusCounts = { Pending: 0, 'In Progress': 0, Completed: 0, Cancelled: 0 };
+  const monthly = {};
+
+  jobs.forEach((j) => {
+    statusCounts[j.status] = (statusCounts[j.status] || 0) + 1;
+    const date = j.created_at ? new Date(j.created_at) : null;
+    if (!date) return;
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    if (!monthly[month]) monthly[month] = {};
+    monthly[month][j.status] = (monthly[month][j.status] || 0) + 1;
+  });
+
+  return {
+    name: 'Service Status Timeline',
+    headers: ['Month', 'Pending', 'In Progress', 'Completed', 'Cancelled', 'Total'],
+    data: Object.entries(monthly)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([month, statuses]) => [
+        month,
+        statuses.Pending || 0,
+        statuses['In Progress'] || 0,
+        statuses.Completed || 0,
+        statuses.Cancelled || 0,
+        Object.values(statuses).reduce((a, b) => a + b, 0),
+      ]),
+    summary: {
+      'Overall Pending': statusCounts.Pending,
+      'Overall In Progress': statusCounts['In Progress'],
+      'Overall Completed': statusCounts.Completed,
+      'Overall Cancelled': statusCounts.Cancelled,
+    },
+  };
+}
+
+function generateDeviceStatusReport(lookups) {
+  const items = lookups.inventory_items || [];
+  const statusCounts = {};
+  items.forEach((i) => {
+    const status = i.status || 'Unknown';
+    if (!statusCounts[status]) statusCounts[status] = { count: 0, devices: [] };
+    statusCounts[status].count++;
+    if (statusCounts[status].devices.length < 5) {
+      statusCounts[status].devices.push(i.device_name);
+    }
+  });
+
+  return {
+    name: 'Device Status Overview',
+    headers: ['Status', 'Count', 'Sample Devices'],
+    data: Object.entries(statusCounts).map(([status, v]) => [
+      status,
+      v.count,
+      v.devices.join(', ') + (v.count > 5 ? '...' : ''),
+    ]),
+    summary: {
+      'Total Devices': items.length,
+      'Active': statusCounts.Active?.count || 0,
+      'Defective': statusCounts.Defective?.count || 0,
+      'RMA Sent': statusCounts['RMA Sent']?.count || 0,
+    },
+  };
+}
+
+function downloadWorkbook(wb, filename) {
+  // Use SheetJS for proper Excel generation
+  if (typeof XLSX === 'undefined') {
+    alert('Excel library not loaded. Please refresh the page.');
+    return;
+  }
+
+  const newWorkbook = XLSX.utils.book_new();
+  const style = wb.style || reportStyles.professional;
+
+  wb.sheets.forEach((sheet) => {
+    // Create worksheet data with headers
+    const wsData = [sheet.headers, ...sheet.data];
+
+    // Add summary if exists
+    if (sheet.summary && Object.keys(sheet.summary).length > 0) {
+      wsData.push([]); // Empty row
+      wsData.push(['SUMMARY']);
+      Object.entries(sheet.summary).forEach(([key, val]) => {
+        wsData.push([key, val]);
+      });
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Set column widths
+    const colWidths = sheet.headers.map((h, i) => ({
+      wch: Math.max(h.length + 5, 15),
+    }));
+    ws['!cols'] = colWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(newWorkbook, ws, sheet.name.substring(0, 31));
+  });
+
+  // Generate and download
+  XLSX.writeFile(newWorkbook, filename);
 }
 
 async function populateLookupDropdowns() {
@@ -1645,6 +4421,150 @@ function renderFullJobsTable(jobs) {
   });
 }
 
+// ============================================================================
+// ENHANCED JOB MANAGEMENT FUNCTIONS
+// ============================================================================
+
+let allJobsData = [];
+let currentJobStatusFilter = 'All';
+
+function toggleNewTicketForm() {
+  const form = document.getElementById('new-ticket-form');
+  form.classList.toggle('hidden');
+}
+
+function filterJobsByStatus(status) {
+  currentJobStatusFilter = status;
+
+  // Update button states
+  document.querySelectorAll('.job-status-btn').forEach(btn => {
+    btn.classList.remove('text-amber-400', 'bg-amber-500/10', 'border-amber-500/20');
+    btn.classList.add('text-slate-400', 'border-transparent');
+  });
+  event.target.classList.add('text-amber-400', 'bg-amber-500/10', 'border-amber-500/20');
+  event.target.classList.remove('text-slate-400', 'border-transparent');
+
+  filterJobs();
+}
+
+function filterJobs() {
+  const search = (document.getElementById('job-search-input')?.value || '').toLowerCase();
+  const statusFilter = currentJobStatusFilter;
+  const typeFilter = document.getElementById('job-type-filter')?.value || 'All';
+
+  const filtered = allJobsData.filter(j => {
+    const matchSearch = !search ||
+      (j.id || '').toLowerCase().includes(search) ||
+      (j.company_name || '').toLowerCase().includes(search) ||
+      (j.tech_name || '').toLowerCase().includes(search) ||
+      (j.job_description || '').toLowerCase().includes(search);
+    const matchStatus = statusFilter === 'All' || j.status === statusFilter;
+    const matchType = typeFilter === 'All' || j.service_type === typeFilter;
+    return matchSearch && matchStatus && matchType;
+  });
+
+  renderJobsGrid(filtered);
+}
+
+function renderJobsGrid(jobs) {
+  const grid = document.getElementById('jobs-grid');
+  if (!grid) return;
+
+  if (jobs.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12 text-slate-500">
+        <div class="text-4xl mb-2">📋</div>
+        <p class="text-sm">No jobs found</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = jobs.map(j => {
+    let statusClass = 'bg-slate-500/20 text-slate-400';
+    let statusIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>';
+    if (j.status === 'Completed') { statusClass = 'bg-emerald-500/20 text-emerald-400'; statusIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'; }
+    else if (j.status === 'Pending') { statusClass = 'bg-amber-500/20 text-amber-400'; statusIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'; }
+    else if (j.status === 'In Progress') { statusClass = 'bg-blue-500/20 text-blue-400'; statusIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>'; }
+    else if (j.status === 'Cancelled') { statusClass = 'bg-rose-500/20 text-rose-400'; statusIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'; }
+
+    let typeClass = 'bg-slate-500/10 text-slate-400';
+    if (j.service_type === 'CCTV') typeClass = 'bg-amber-500/10 text-amber-400';
+    else if (j.service_type === 'Networking') typeClass = 'bg-blue-500/10 text-blue-400';
+    else if (j.service_type === 'WiFi') typeClass = 'bg-cyan-500/10 text-cyan-400';
+    else if (j.service_type === 'NAS') typeClass = 'bg-violet-500/10 text-violet-400';
+
+    const createdDate = j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A';
+
+    return `
+      <div class="glass-panel rounded-xl p-4 hover:border-white/10 transition-all group cursor-pointer" onclick="selectJob('${j.id}')">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">${j.id}</span>
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold ${typeClass}">${j.service_type}</span>
+          </div>
+          <span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${statusClass}">
+            ${statusIcon}
+            ${j.status}
+          </span>
+        </div>
+        <div class="text-sm font-bold text-white group-hover:text-amber-400 transition mb-2 truncate">${j.company_name || 'Unknown Client'}</div>
+        <div class="text-[10px] text-slate-400 mb-3 line-clamp-2">${j.job_description || 'No description'}</div>
+        <div class="flex items-center justify-between text-[10px]">
+          <div class="flex items-center gap-1 text-slate-400">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            ${j.tech_name || 'Unassigned'}
+          </div>
+          <span class="text-slate-500">${createdDate}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateJobStats(jobs) {
+  const total = jobs.length;
+  const pending = jobs.filter(j => j.status === 'Pending').length;
+  const inProgress = jobs.filter(j => j.status === 'In Progress').length;
+  const completed = jobs.filter(j => j.status === 'Completed').length;
+  const cancelled = jobs.filter(j => j.status === 'Cancelled').length;
+
+  document.getElementById('job-stat-total').textContent = total;
+  document.getElementById('job-stat-pending').textContent = pending;
+  document.getElementById('job-stat-progress').textContent = inProgress;
+  document.getElementById('job-stat-completed').textContent = completed;
+  document.getElementById('job-stat-cancelled').textContent = cancelled;
+
+  // Update status tab counts
+  document.getElementById('job-count-all').textContent = total;
+  document.getElementById('job-count-pending').textContent = pending;
+  document.getElementById('job-count-progress').textContent = inProgress;
+  document.getElementById('job-count-completed').textContent = completed;
+  document.getElementById('job-count-cancelled').textContent = cancelled;
+}
+
+function selectJob(jobId) {
+  document.getElementById('pdf-target-job-id').value = jobId;
+  showToast(`Selected job: ${jobId}`, 'info');
+}
+
+function loadJobs() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  fetch(`${baseUrl}/api/jobs`)
+    .then(res => res.json())
+    .then(jobs => {
+      allJobsData = jobs;
+      updateJobStats(jobs);
+      filterJobs();
+    })
+    .catch(e => console.error('Failed to load jobs:', e));
+}
+
+// Initialize jobs on load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadJobs, 1800);
+});
+
 function plotJobsOnMap(jobs) {
   // Remove previous markers
   mapMarkers.forEach((m) => map.removeLayer(m));
@@ -1996,3 +4916,288 @@ async function generateServiceReceiptPDF() {
     alert('PDF compilation engine process exception encountered: ' + err.message);
   }
 }
+
+// ============================================================================
+// USER MANAGEMENT FUNCTIONS
+// ============================================================================
+
+let allUsersData = [];
+
+function switchSettingsTab(tab) {
+  // Update tab buttons
+  document.querySelectorAll('.settings-tab').forEach(btn => {
+    btn.classList.remove('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    btn.classList.add('text-slate-400', 'border-transparent');
+  });
+  const activeBtn = document.getElementById(`settings-tab-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    activeBtn.classList.remove('text-slate-400', 'border-transparent');
+  }
+
+  // Show/hide panels
+  ['users', 'system', 'database'].forEach(p => {
+    const panel = document.getElementById(`settings-panel-${p}`);
+    if (panel) panel.classList.toggle('hidden', p !== tab);
+  });
+}
+
+async function loadUsers() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/lookups`);
+    const lookups = await res.json();
+    allUsersData = lookups.technicians || [];
+    updateUserStats();
+    filterUsers();
+  } catch (e) {
+    console.error('Failed to load users:', e);
+  }
+}
+
+function updateUserStats() {
+  const total = allUsersData.length;
+  const active = allUsersData.filter(u => u.active === 1).length;
+  const techs = allUsersData.filter(u => u.role === 'Technician').length;
+  const admins = allUsersData.filter(u => u.role === 'Admin').length;
+
+  document.getElementById('user-stat-total').textContent = total;
+  document.getElementById('user-stat-active').textContent = active;
+  document.getElementById('user-stat-techs').textContent = techs;
+  document.getElementById('user-stat-admins').textContent = admins;
+}
+
+function filterUsers() {
+  const search = (document.getElementById('user-search-input')?.value || '').toLowerCase();
+  const roleFilter = document.getElementById('user-role-filter')?.value || 'All';
+  const statusFilter = document.getElementById('user-status-filter')?.value || 'All';
+
+  const filtered = allUsersData.filter(u => {
+    const matchSearch = !search ||
+      (u.name || '').toLowerCase().includes(search) ||
+      (u.username || '').toLowerCase().includes(search) ||
+      (u.email || '').toLowerCase().includes(search) ||
+      (u.role || '').toLowerCase().includes(search);
+    const matchRole = roleFilter === 'All' || u.role === roleFilter;
+    const matchStatus = statusFilter === 'All' ||
+      (statusFilter === 'active' && u.active === 1) ||
+      (statusFilter === 'inactive' && u.active !== 1);
+    return matchSearch && matchRole && matchStatus;
+  });
+
+  renderUsersGrid(filtered);
+}
+
+function renderUsersGrid(users) {
+  const grid = document.getElementById('users-grid');
+  if (!grid) return;
+
+  if (users.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12 text-slate-500">
+        <div class="text-4xl mb-2">👥</div>
+        <p class="text-sm">No users found</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = users.map(u => {
+    const isActive = u.active === 1;
+    const initials = (u.name || u.username || 'U').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+    let roleClass = 'bg-slate-500/20 text-slate-400';
+    let roleIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+    if (u.role === 'Admin') { roleClass = 'bg-violet-500/20 text-violet-400'; roleIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'; }
+    else if (u.role === 'Technician') { roleClass = 'bg-blue-500/20 text-blue-400'; roleIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'; }
+    else if (u.role === 'Sales') { roleClass = 'bg-emerald-500/20 text-emerald-400'; roleIcon = '<svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>'; }
+
+    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never';
+
+    return `
+      <div class="glass-panel rounded-xl p-4 hover:border-white/10 transition-all group">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center text-amber-400 font-bold text-sm border border-amber-500/20">
+                ${initials}
+              </div>
+              <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-500'} border-2 border-black"></div>
+            </div>
+            <div>
+              <div class="text-sm font-bold text-white group-hover:text-amber-400 transition">${u.name || u.username}</div>
+              <div class="text-[10px] text-slate-400">${u.email || u.username || 'No email'}</div>
+            </div>
+          </div>
+          <span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${roleClass}">
+            ${roleIcon}
+            ${u.role}
+          </span>
+        </div>
+        <div class="space-y-2 text-[10px]">
+          ${u.phone ? `<div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${u.phone}</div>` : ''}
+          <div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Last login: ${lastLogin}</div>
+          <div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Permissions: ${u.permissions || 'read_write'}</div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-white/5 flex gap-2">
+          <button onclick="editUser('${u.id}')" class="flex-1 bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 font-bold py-1.5 rounded-lg transition">Edit</button>
+          <button onclick="toggleUserStatus('${u.id}')" class="flex-1 ${isActive ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400'} text-[10px] font-bold py-1.5 rounded-lg transition">${isActive ? 'Deactivate' : 'Activate'}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openAddUserModal() {
+  document.getElementById('modal-add-user').classList.remove('hidden');
+}
+
+function closeAddUserModal() {
+  document.getElementById('modal-add-user').classList.add('hidden');
+}
+
+async function submitNewUser(event) {
+  event.preventDefault();
+  const form = event.target;
+  const data = {
+    username: document.getElementById('new-user-username').value,
+    password: document.getElementById('new-user-password').value,
+    name: document.getElementById('new-user-name').value,
+    role: document.getElementById('new-user-role').value,
+    phone: document.getElementById('new-user-phone').value,
+    email: document.getElementById('new-user-email').value,
+  };
+
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (res.ok) {
+      showToast('User created successfully', 'success');
+      closeAddUserModal();
+      form.reset();
+      loadUsers();
+    } else {
+      showToast('Failed to create user', 'error');
+    }
+  } catch (e) {
+    console.error('Failed to create user:', e);
+    showToast('Error creating user', 'error');
+  }
+}
+
+function editUser(userId) {
+  showToast(`Edit user ${userId} - Feature coming soon`, 'info');
+}
+
+async function toggleUserStatus(userId) {
+  const user = allUsersData.find(u => u.id === userId);
+  if (!user) return;
+
+  const newStatus = user.active === 1 ? 0 : 1;
+  const action = newStatus === 0 ? 'deactivate' : 'activate';
+
+  if (!confirm(`Are you sure you want to ${action} ${user.name || user.username}?`)) return;
+
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/users/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: newStatus }),
+    });
+
+    if (res.ok) {
+      showToast(`User ${action}d successfully`, 'success');
+      loadUsers();
+    } else {
+      showToast(`Failed to ${action} user`, 'error');
+    }
+  } catch (e) {
+    console.error(`Failed to ${action} user:`, e);
+    showToast(`Error ${action} user`, 'error');
+  }
+}
+
+// Initialize users on load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadUsers, 2500);
+});
+
+// ============================================================================
+// ADDITIONAL SETTINGS FUNCTIONS
+// ============================================================================
+
+function saveCompanyProfile(event) {
+  event.preventDefault();
+  const profile = {
+    name: document.getElementById('company-name').value,
+    reg: document.getElementById('company-reg').value,
+    email: document.getElementById('company-email').value,
+    phone: document.getElementById('company-phone').value,
+    address: document.getElementById('company-address').value,
+  };
+  localStorage.setItem('company_profile', JSON.stringify(profile));
+  showToast('Company profile saved', 'success');
+}
+
+function saveTaxSettings() {
+  const settings = {
+    taxRate: document.getElementById('tax-rate').value,
+    serviceFee: document.getElementById('service-fee').value,
+  };
+  localStorage.setItem('tax_settings', JSON.stringify(settings));
+  showToast('Tax settings saved', 'success');
+}
+
+function saveNotificationSettings() {
+  const settings = {
+    sms: document.getElementById('notify-sms').checked,
+    email: document.getElementById('notify-email').checked,
+    telegram: document.getElementById('notify-telegram').checked,
+    lowStock: document.getElementById('notify-low-stock').checked,
+  };
+  localStorage.setItem('notification_settings', JSON.stringify(settings));
+  showToast('Notification settings saved', 'success');
+}
+
+function setTheme(theme) {
+  localStorage.setItem('theme', theme);
+  showToast(`Theme set to ${theme}`, 'info');
+}
+
+function setAccentColor(color) {
+  localStorage.setItem('accent_color', color);
+  showToast(`Accent color set to ${color}`, 'info');
+}
+
+function loadSettings() {
+  // Load company profile
+  const profile = JSON.parse(localStorage.getItem('company_profile') || '{}');
+  if (profile.name) document.getElementById('company-name').value = profile.name;
+  if (profile.reg) document.getElementById('company-reg').value = profile.reg;
+  if (profile.email) document.getElementById('company-email').value = profile.email;
+  if (profile.phone) document.getElementById('company-phone').value = profile.phone;
+  if (profile.address) document.getElementById('company-address').value = profile.address;
+
+  // Load tax settings
+  const tax = JSON.parse(localStorage.getItem('tax_settings') || '{}');
+  if (tax.taxRate) document.getElementById('tax-rate').value = tax.taxRate;
+  if (tax.serviceFee) document.getElementById('service-fee').value = tax.serviceFee;
+
+  // Load notification settings
+  const notif = JSON.parse(localStorage.getItem('notification_settings') || '{}');
+  if (notif.sms !== undefined) document.getElementById('notify-sms').checked = notif.sms;
+  if (notif.email !== undefined) document.getElementById('notify-email').checked = notif.email;
+  if (notif.telegram !== undefined) document.getElementById('notify-telegram').checked = notif.telegram;
+  if (notif.lowStock !== undefined) document.getElementById('notify-low-stock').checked = notif.lowStock;
+}
+
+// Initialize settings on load
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadSettings, 3000);
+});

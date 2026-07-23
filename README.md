@@ -14,30 +14,63 @@ A **field service management system** for CCTV, networking, and storage infrastr
 | **Desktop**  | Tauri (Rust)                               |
 | **CI/CD**    | Wrangler CLI                               |
 
-## Recent Updates (v1.1)
+## Recent Updates (v2.0)
 
-### UI/UX Improvements
-- **Dark/Light Theme Toggle** - Consistent theme across all pages with localStorage persistence
-- **Toast Notifications** - Replaced 80+ browser alerts with non-blocking toast messages
-- **Keyboard Shortcuts** - Ctrl+K (search), Ctrl+N (new ticket), Escape (close modals)
-- **Mobile Navigation** - Bottom navigation bar for admin panel
-- **Skeleton Loaders** - CSS classes for loading states
-- **OS Theme Detection** - Auto-matches system preference on first visit
-- **Responsive Design** - Card views for tables on mobile
+### Major UI Overhaul (v2.0)
+Complete redesign of all admin dashboard sections with modern, glass-morphism styled interface.
 
-### Dashboard Redesign
-- Time-based greeting (Good Morning/Afternoon/Evening)
-- Quick action buttons
-- System status indicators
-- Refresh button
-- Modern card-based layout
+#### Dashboard
+- **Today's Quick Stats** - Date, new jobs, completed, in progress
+- **9 KPI Cards** - Primary and secondary metrics with hover effects
+- **5 Charts** - Job Status, Service Types, Revenue Trend, Tech Performance, Monthly Trend
+- **Activity Feed** - Real-time activity stream
+- **Live Map & Calendar** - Dispatch tracking
 
-### System Improvements
-- Fixed null reference errors in warranty/RMA/reports
-- Added missing database tables (attendance, client_credits, etc.)
-- Replaced all browser alerts with toast notifications
-- Added touch swipe support for mobile sidebar
-- Added bottom navigation for mobile admin panel
+#### Service Tickets
+- **Status Tabs** - All, Pending, In Progress, Completed, Cancelled with counts
+- **Job Cards** - Visual card layout with status badges
+- **Search & Filter** - By ID, client, technician, status, type
+- **Collapsible Form** - New ticket creation
+
+#### Clients & Partners
+- **Card View** - Visual client cards with company initials
+- **AMC Status Badges** - Color-coded contract status
+- **Quick Actions** - View Jobs, Edit
+- **Tabbed Interface** - Clients / Distributors
+
+#### Inventory Management
+- **Barcode Scanner** - Camera-based scanning with visual overlay
+- **Product Grid** - Visual cards with stock indicators
+- **Search & Filter** - By code, name, category, stock level
+- **Import/Export Excel** - Bulk data operations
+
+#### POS Terminal
+- **Split Payments** - Method A + Method B
+- **Custom Exchange Rate** - USD/MMK conversion
+- **Customer Selector** - Autocomplete from client database
+- **Receipt Generation** - PDF-ready receipts
+- **Credit Tracking** - Outstanding balances
+
+#### Reports & Analytics
+- **Tabbed Interface** - Overview, Jobs, Clients, Inventory, Financial, Technicians
+- **Export Options** - Excel, CSV, Print, Customize
+- **Date Range Filter** - Filter by date period
+- **Chart Integration** - Visual analytics
+
+#### Settings & Configuration
+- **Company Profile** - Business information
+- **Exchange Rate** - USD/MMK configuration
+- **Tax & Fees** - Tax rate, service fees
+- **Notifications** - SMS, Email, Telegram, Low Stock alerts
+- **Appearance** - Theme, accent color, sidebar position
+
+### Technical Improvements
+- **SheetJS Integration** - Client-side Excel generation
+- **Chart.js Charts** - 5 chart types (doughnut, bar, line, horizontal bar, area)
+- **Camera API** - Barcode scanning with WebRTC
+- **LocalStorage Persistence** - Settings saved across sessions
+- **Toast Notification System** - Non-blocking alerts
+- **Glass Morphism Design** - Modern UI with blur effects
 
 ## Project Structure
 
