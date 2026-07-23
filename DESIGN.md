@@ -106,5 +106,5 @@ We use modern sans-serif typography for clean, readable layout structures:
 - **Scale Effects:** Smooth hover scaling on dashboard cards (`hover:scale-[1.01]`).
 - **Price Updates:** Quick transitions on price modifications showing MMK / USD inputs.
 - **Theme Toggle:** 0.4s smooth transitions between dark and light modes.
-- **Toast Notifications:** Slide-in animation from right side, auto-dismiss after 3 seconds.
+- **Toast Notifications:** Slide-in animation from top center, auto-dismiss after 3 seconds.
 - **Scroll Reveal:** Fade-up animation for elements entering viewport.

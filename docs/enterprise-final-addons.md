@@ -64,7 +64,7 @@ Use code with caution.Part 2: Public-Facing Customer History PortalFile: portal.
             const clientId = document.getElementById('client-id-input').value.trim();
             const feed = document.getElementById('portal-feed');
 
-            if(!clientId) return alert("Please supply a valid account parameter identifier.");
+            if(!clientId) return showToast("Please supply a valid account parameter identifier.", "warning");
             feed.innerHTML = '<div class="text-center py-12 text-indigo-400 animate-pulse font-mono">Querying global infrastructure matrix nodes...</div>';
 
             try {
@@ -136,7 +136,7 @@ Use code with caution.Injected Javascript Logic ModulesInclude this script block
         const jobId = document.getElementById('pdf-target-job-id').value.trim();
         const baseUrl = document.getElementById('api-base').value;
         
-        if (!jobId) return alert("Please specify a targeted ticket parameter entry.");
+        if (!jobId) return showToast("Please specify a targeted ticket parameter entry.", "warning");
         
         try {
             const res = await fetch(`${baseUrl}/api/jobs/receipt?job_id=${jobId}`);
@@ -220,7 +220,7 @@ Use code with caution.Injected Javascript Logic ModulesInclude this script block
             doc.save(`receipt-service-log-${job.id}.pdf`);
             
         } catch (err) {
-            alert("PDF compilation engine process exception encountered: " + err.message);
+            showToast("PDF compilation engine process exception encountered: " + err.message, "error");
         }
     }
 </script>

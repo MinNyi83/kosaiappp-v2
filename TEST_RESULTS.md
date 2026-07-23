@@ -220,7 +220,7 @@ All 69 tests passed with 0 failures. The system is fully functional and ready fo
 5. **Missing `client_credits` table** - Created for billing
 6. **Missing `filterUserTable` function** - Added to admin.js
 7. **Null reference errors** - Added null checks for `warrantyBody`, `rmaBody`, `amcBody`, `techsBody`
-8. **Alert notifications** - Replaced 80+ `alert()` calls with toast notifications
+8. **Alert notifications** - Replaced 80+ `alert()` calls with toast notifications positioned at **top center**
 
 ---
 

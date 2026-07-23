@@ -33,6 +33,7 @@ Comprehensive styling, functionality, and deployment session for the Awesome Mya
 
 ### Toast Notifications
 - Replaced **80+ browser alerts** with non-blocking toast messages
+- Positioned at **top center** of screen
 - 4 types: success, error, warning, info
 - Auto-dismiss after 3 seconds
 - Manual close button
