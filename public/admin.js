@@ -3042,6 +3042,8 @@ async function loadRMAData() {
   const warrantyBody = document.getElementById('warranty-list-body');
   const rmaBody = document.getElementById('rma-list-body');
 
+  let activeCount = 0, expiredCount = 0, openRmaCount = 0, completedRmaCount = 0;
+
   try {
     const res = await fetch(`${baseUrl}/api/admin/warranty/list`);
     if (!res.ok) throw new Error();
@@ -3051,7 +3053,7 @@ async function loadRMAData() {
     warrantyBody.innerHTML = '';
     if (warranties.length === 0) {
       warrantyBody.innerHTML =
-        '<tr><td colspan="5" class="py-4 text-center text-slate-600">No active customer warranties registered.</td></tr>';
+        '<tr><td colspan="6" class="py-8 text-center text-slate-600">No customer warranties registered yet.</td></tr>';
     } else {
       let wRowsHtml = '';
       warranties.forEach((item) => {
@@ -3064,20 +3066,21 @@ async function loadRMAData() {
           endDate.setMonth(startDate.getMonth() + months);
           isExpired = endDate < new Date();
         }
+        if (isExpired) expiredCount++; else activeCount++;
         const endStr = endDate ? endDate.toISOString().split('T')[0] : 'N/A';
         const statusBadge = isExpired
-          ? '<span class="bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded font-semibold text-[10px]">Expired</span>'
-          : '<span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-semibold text-[10px]">Active</span>';
+          ? '<span class="bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded font-semibold text-[10px] border border-rose-500/20">Expired</span>'
+          : '<span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-semibold text-[10px] border border-emerald-500/20">Active</span>';
 
         wRowsHtml += `
-                            <tr class="border-b border-white/5 hover:bg-white/5 transition-all text-slate-300">
-                                <td class="py-2.5 font-mono text-indigo-300 font-bold">${item.serial_number}</td>
-                                <td class="py-2.5 font-semibold text-white">${item.device_name}</td>
-                                <td class="py-2.5">${item.company_name || 'Individual Customer'}</td>
-                                <td class="py-2.5 font-mono">${endStr}</td>
-                                <td class="py-2.5">${statusBadge}</td>
-                            </tr>
-                        `;
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-all text-slate-300">
+            <td class="px-5 py-3 font-mono text-indigo-300 font-bold">${item.serial_number}</td>
+            <td class="px-5 py-3 font-semibold text-white">${item.device_name}</td>
+            <td class="px-5 py-3">${item.company_name || 'Individual'}</td>
+            <td class="px-5 py-3 font-mono text-slate-400">${item.installed_date || 'N/A'}</td>
+            <td class="px-5 py-3 font-mono">${endStr}</td>
+            <td class="px-5 py-3">${statusBadge}</td>
+          </tr>`;
       });
       warrantyBody.innerHTML = wRowsHtml;
     }
@@ -3095,34 +3098,30 @@ async function loadRMAData() {
     rmaBody.innerHTML = '';
     if (rmaList.length === 0) {
       rmaBody.innerHTML =
-        '<tr><td colspan="6" class="py-4 text-center text-slate-600">No active distributor claims registered.</td></tr>';
+        '<tr><td colspan="6" class="py-8 text-center text-slate-600">No distributor RMA claims registered.</td></tr>';
     } else {
       let rRowsHtml = '';
       rmaList.forEach((item) => {
-        const statusColor = item.status === 'RMA Completed' ? 'text-emerald-400' : 'text-amber-400';
-        const sentStr = item.installed_date ? item.installed_date : 'N/A';
+        const isCompleted = item.status === 'RMA Completed';
+        if (isCompleted) completedRmaCount++; else openRmaCount++;
+        const statusBadge = isCompleted
+          ? '<span class="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-bold text-[10px] border border-emerald-500/20">Completed</span>'
+          : '<span class="bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded font-bold text-[10px] border border-amber-500/20">Sent to Supplier</span>';
 
         rRowsHtml += `
-                            <tr class="border-b border-white/5 hover:bg-white/5 transition-all text-slate-300">
-                                <td class="py-2.5 font-mono text-amber-500 font-bold">${item.rma_tracking_id || 'RMA-3001'}</td>
-                                <td class="py-2.5">
-                                    <div class="font-mono text-slate-400">${item.serial_number}</div>
-                                    <div class="font-semibold text-white">${item.device_name}</div>
-                                </td>
-                                <td class="py-2.5">${item.distributor || 'Supplier'}</td>
-                                <td class="py-2.5 font-mono">${sentStr}</td>
-                                <td class="py-2.5">
-                                    <span class="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded font-bold text-[10px] uppercase ${statusColor}">
-                                        ${item.status === 'RMA Sent' ? 'Sent To Supplier' : item.status}
-                                    </span>
-                                </td>
-                                <td class="py-2.5 text-right">
-                                    <button onclick="resolveRMAClaim('${item.serial_number}')" class="text-slate-400 hover:text-emerald-400 text-sm" title="Mark Resolved">
-                                        ✔
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
+          <tr class="border-b border-white/5 hover:bg-white/5 transition-all text-slate-300">
+            <td class="px-5 py-3 font-mono text-amber-500 font-bold">${item.rma_tracking_id || 'N/A'}</td>
+            <td class="px-5 py-3">
+              <div class="font-mono text-slate-400 text-[10px]">${item.serial_number}</div>
+              <div class="font-semibold text-white">${item.device_name}</div>
+            </td>
+            <td class="px-5 py-3">${item.distributor || 'Supplier'}</td>
+            <td class="px-5 py-3 font-mono text-slate-400">${item.installed_date || 'N/A'}</td>
+            <td class="px-5 py-3">${statusBadge}</td>
+            <td class="px-5 py-3 text-right">
+              ${!isCompleted ? `<button onclick="resolveRMAClaim('${item.serial_number}')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-500/20 transition-all">Mark Resolved</button>` : '<span class="text-[10px] text-slate-600">Done</span>'}
+            </td>
+          </tr>`;
       });
       rmaBody.innerHTML = rRowsHtml;
     }
@@ -3130,10 +3129,47 @@ async function loadRMAData() {
   } catch (e) {
     console.error('RMA fetch exception', e);
   }
-  window.initExcelTableFilters('warranties-table');
-  window.initExcelTableFilters('rma-table');
-  window.applyExcelFiltersToTable('warranties-table');
-  window.applyExcelFiltersToTable('rma-table');
+
+  // Update KPI cards
+  const el = (id) => document.getElementById(id);
+  if (el('kpi-active-warranties')) el('kpi-active-warranties').textContent = activeCount;
+  if (el('kpi-expired-warranties')) el('kpi-expired-warranties').textContent = expiredCount;
+  if (el('kpi-open-rma')) el('kpi-open-rma').textContent = openRmaCount;
+  if (el('kpi-completed-rma')) el('kpi-completed-rma').textContent = completedRmaCount;
+}
+
+function switchWarrantyTab(tab) {
+  document.querySelectorAll('.warranty-tab').forEach(btn => {
+    btn.classList.remove('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    btn.classList.add('text-slate-400', 'border-transparent');
+  });
+  const activeBtn = document.getElementById(`warranty-tab-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    activeBtn.classList.remove('text-slate-400', 'border-transparent');
+  }
+  ['warranties', 'rma'].forEach(p => {
+    const panel = document.getElementById(`warranty-panel-${p}`);
+    if (panel) panel.classList.toggle('hidden', p !== tab);
+  });
+}
+
+function filterWarrantyTable() {
+  const query = document.getElementById('warranty-search')?.value.toLowerCase() || '';
+  const rows = document.querySelectorAll('#warranty-list-body tr');
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(query) ? '' : 'none';
+  });
+}
+
+function filterRMATable() {
+  const query = document.getElementById('rma-search')?.value.toLowerCase() || '';
+  const rows = document.querySelectorAll('#rma-list-body tr');
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(query) ? '' : 'none';
+  });
 }
 
 async function resolveRMAClaim(serialNumber) {
