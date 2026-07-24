@@ -58,6 +58,26 @@ let inventoryItems = [];
 let stockPage = 1;
 const stockPerPage = 10;
 
+// Intercept global fetch to automatically inject Authorization token
+const _originalFetch = window.fetch;
+window.fetch = async function (url, options = {}) {
+  let finalUrl = url;
+  if (finalUrl && finalUrl.includes('/api/')) {
+    options.headers = options.headers || {};
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  const res = await _originalFetch(finalUrl, options);
+  if (res.status === 401) {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
+    window.location.reload();
+  }
+  return res;
+};
+
 // Mobile sidebar controls
 function openSidebar() {
   document.getElementById('sidebar').classList.add('open');
@@ -116,6 +136,7 @@ async function handlePasswordLogin(e) {
     }
 
     localStorage.setItem('admin_user', JSON.stringify(user));
+    localStorage.setItem('admin_token', data.token);
     document.getElementById('auth-screen').classList.add('hidden');
     initializeAdminDesk();
   } catch (err) {
@@ -194,6 +215,7 @@ async function handleGoogleLogin(response) {
     }
 
     localStorage.setItem('admin_user', JSON.stringify(data.user));
+    localStorage.setItem('admin_token', data.token);
     document.getElementById('auth-screen').classList.add('hidden');
     initializeAdminDesk();
   } catch (err) {
@@ -203,6 +225,7 @@ async function handleGoogleLogin(response) {
 
 function handleLogout() {
   localStorage.removeItem('admin_user');
+  localStorage.removeItem('admin_token');
   document.getElementById('auth-screen').classList.remove('hidden');
 }
 

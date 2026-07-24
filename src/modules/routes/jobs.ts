@@ -9,6 +9,7 @@
 
 import { success, error } from '../utils/response.js';
 import { verifyToken } from '../utils/jwt.js';
+import { uploadFileToGoogleDrive } from '../utils/google.js';
 
 function register(router, env) {
   const db = env.DB;
@@ -297,6 +298,9 @@ function register(router, env) {
         'equipment_used',
         'arrival_time',
         'completion_time',
+        'before_photo',
+        'after_photo',
+        'checklist_data',
       ];
       const updates: string[] = [];
       const values: any[] = [];
@@ -388,9 +392,131 @@ function register(router, env) {
         .bind(...updateValues)
         .run();
 
+      // Send Telegram notification for status change
+      try {
+        const { sendTelegramNotification, sendTelegramPhotoNotification } = await import('../utils/telegram.js');
+
+        // Get client info
+        let clientName = 'N/A';
+        if (existing.client_id) {
+          const client = await db.prepare('SELECT company_name FROM clients WHERE id = ?').bind(existing.client_id).first();
+          if (client) clientName = client.company_name;
+        }
+
+        const statusEmoji = { 'Pending': '⏳', 'In Progress': '🔧', 'Completed': '✅', 'Cancelled': '❌' };
+        const emoji = statusEmoji[status] || '📋';
+        const notifyText = `${emoji} *Job ${status}*\n\n` +
+          `📋 *Job:* ${params.id}\n` +
+          `👤 *Client:* ${clientName}\n` +
+          `🔧 *Type:* ${existing.service_type}\n` +
+          `👨‍💼 *Technician:* ${user.name}\n` +
+          (notes ? `\n📝 ${notes}` : '');
+
+        await sendTelegramNotification(env, notifyText);
+
+        // Photos are sent on upload, not on status change
+      } catch (e) {
+        console.warn('Telegram notification failed:', e.message);
+      }
+
       return success({ id: params.id, previous_status: existing.status, new_status: status });
     } catch (err) {
       return error('Failed to update job status: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/jobs/:id/photo ──────────────────────────────────────────
+  router.post('/api/jobs/:id/photo', async (request, params) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json()) as any;
+      const { photo_base64, photo_type } = body; // photo_type: 'before' or 'after'
+      if (!photo_base64) return error('Missing photo_base64', 400);
+
+      const existing = await db
+        .prepare('SELECT * FROM service_records WHERE id = ?')
+        .bind(params.id)
+        .first();
+      if (!existing) return error('Job not found', 404);
+
+      // Get client name for Drive folder
+      let clientName = 'Unknown Client';
+      if (existing.client_id) {
+        const client = await db.prepare('SELECT company_name FROM clients WHERE id = ?').bind(existing.client_id).first();
+        if (client) clientName = client.company_name;
+      }
+
+      // Convert base64 to blob
+      const base64Data = photo_base64.replace(/^data:image\/\w+;base64,/, '');
+      const binaryStr = atob(base64Data);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'image/jpeg' });
+
+      const filename = `${params.id}_${photo_type || 'photo'}_${Date.now()}.jpg`;
+      const driveFileId = await uploadFileToGoogleDrive(env, blob, filename, clientName, params.id);
+
+      // Get Drive URL
+      let photoUrl = null;
+      if (driveFileId) {
+        photoUrl = `https://drive.google.com/uc?id=${driveFileId}`;
+      }
+
+      // Update job with photo URL
+      const field = photo_type === 'signature' ? 'before_photo' : (photo_type === 'after' ? 'after_photo' : 'before_photo');
+      if (photoUrl) {
+        await db
+          .prepare(`UPDATE service_records SET ${field} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+          .bind(photoUrl, params.id)
+          .run();
+      }
+
+      // Send photo to Telegram immediately (use base64 for reliable delivery)
+      try {
+        const { sendTelegramPhotoNotification } = await import('../utils/telegram.js');
+        const typeLabel = photo_type === 'before' ? 'Before' : photo_type === 'after' ? 'After' : 'Signature';
+        await sendTelegramPhotoNotification(env, photo_base64, `📸 ${typeLabel} Photo — ${params.id}`);
+      } catch (e) {
+        console.warn('Telegram photo notification failed:', e.message);
+      }
+
+      return success({ drive_file_id: driveFileId, photo_url: photoUrl, field });
+    } catch (err) {
+      return error('Failed to upload photo: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/jobs/:id/notify ─────────────────────────────────────────
+  router.post('/api/jobs/:id/notify', async (request, params) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json()) as any;
+      const { message } = body;
+
+      const job = await db.prepare('SELECT j.*, c.company_name, c.phone FROM service_records j LEFT JOIN clients c ON j.client_id = c.id WHERE j.id = ?').bind(params.id).first();
+      if (!job) return error('Job not found', 404);
+
+      // Send Telegram notification
+      try {
+        const { sendTelegramNotification } = await import('../utils/telegram.js');
+        const notifyText = `✅ *Job Completed*\n\n` +
+          `📋 *Job:* ${params.id}\n` +
+          `👤 *Client:* ${job.company_name || 'N/A'}\n` +
+          `🔧 *Type:* ${job.service_type}\n` +
+          `👨‍💼 *Technician:* ${user.name}\n` +
+          (message ? `\n📝 ${message}` : '');
+        await sendTelegramNotification(env, notifyText);
+      } catch (e) {
+        console.warn('Telegram notification failed:', e.message);
+      }
+
+      return success({ notified: true });
+    } catch (err) {
+      return error('Failed to send notification: ' + err.message, 500);
     }
   });
 

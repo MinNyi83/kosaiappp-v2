@@ -66,6 +66,7 @@ function register(router, env) {
           email: tech.email,
           phone: tech.phone,
           role: tech.role,
+          photo: tech.photo || null,
           specialties: tech.specialties ? (JSON.parse(tech.specialties) as any) : [],
         },
       });

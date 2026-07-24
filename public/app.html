@@ -164,9 +164,38 @@
         letter-spacing: 0.075em !important;
         font-weight: 800 !important;
       }
-      /* ID Card 3D flip */
-      #my-id-card-flipper.flipped {
-        transform: rotateY(180deg);
+      /* Hardware inventory dropdown */
+      .hw-dropdown { scrollbar-width: thin; scrollbar-color: rgba(99,102,241,0.3) transparent; }
+      .hw-dropdown::-webkit-scrollbar { width: 4px; }
+      .hw-dropdown::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 2px; }
+      .hw-opt { transition: background 0.15s ease; }
+      .hw-opt:active { background: rgba(99, 102, 241, 0.3); }
+      /* ID Card flip — smooth scale+fade animation */
+      #my-id-card-flipper {
+        transition: opacity 0.35s ease, transform 0.35s ease;
+      }
+      #my-id-card-flipper .card-front,
+      #my-id-card-flipper .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transition: opacity 0.35s ease, transform 0.35s ease;
+      }
+      #my-id-card-flipper .card-front {
+        opacity: 1;
+        transform: scale(1);
+      }
+      #my-id-card-flipper .card-back {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      #my-id-card-flipper.flipped .card-front {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      #my-id-card-flipper.flipped .card-back {
+        opacity: 1;
+        transform: scale(1);
       }
       /* Searchable Select — indigo accent for tech portal */
       .ss-wrapper {
@@ -387,16 +416,16 @@
                   height: 0;
                   padding-bottom: 65%;
                   transform-style: preserve-3d;
-                  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+                  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
                 "
               >
                 <!-- FRONT -->
                 <div
+                  class="card-front"
                   style="
                     position: absolute;
                     width: 100%;
                     height: 100%;
-                    backface-visibility: hidden;
                     border-radius: 14px;
                     overflow: hidden;
                     background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 60%, #1a1a2e 100%);
@@ -519,14 +548,10 @@
 
                     <!-- Mini QR -->
                     <div style="flex-shrink: 0; padding-top: 4px">
-                      <img
+                      <div
                         id="my-card-qr-mini"
-                        width="58"
-                        height="58"
-                        style="border-radius: 5px; background: #fff; padding: 2px; display: block"
-                        src=""
-                        alt="QR"
-                      />
+                        style="width: 58px; height: 58px; border-radius: 5px; background: #fff; padding: 2px; display: flex; align-items: center; justify-content: center; overflow: hidden;"
+                      ></div>
                     </div>
                   </div>
 
@@ -566,12 +591,11 @@
 
                 <!-- BACK -->
                 <div
+                  class="card-back"
                   style="
                     position: absolute;
                     width: 100%;
                     height: 100%;
-                    backface-visibility: hidden;
-                    transform: rotateY(180deg);
                     border-radius: 14px;
                     overflow: hidden;
                     background: linear-gradient(135deg, #0f0f1a, #1a1a2e);
@@ -619,14 +643,10 @@
                   </div>
                   <!-- Large QR on back -->
                   <div style="position: absolute; bottom: 10px; right: 14px">
-                    <img
+                    <div
                       id="my-card-qr-back"
-                      width="70"
-                      height="70"
-                      style="border-radius: 5px; background: #fff; padding: 3px; display: block"
-                      src=""
-                      alt="QR"
-                    />
+                      style="width: 100px; height: 100px; border-radius: 8px; background: #fff; padding: 4px; overflow: hidden;"
+                    ></div>
                   </div>
                   <div style="position: absolute; bottom: 12px; left: 16px">
                     <div
@@ -658,22 +678,6 @@
             <p class="text-[9px] text-slate-600 text-center uppercase tracking-wider">
               Tap card to flip · Shows back with QR
             </p>
-
-            <!-- QR Verify URL -->
-            <div class="flex items-center gap-2 bg-black/30 border border-white/5 rounded-xl p-3">
-              <img
-                id="my-card-qr-main"
-                width="60"
-                height="60"
-                style="border-radius: 5px; background: #fff; padding: 3px; flex-shrink: 0"
-                src=""
-                alt="QR"
-              />
-              <div>
-                <p class="text-[9px] font-bold text-white mb-0.5">Scan to Verify Identity</p>
-                <p id="my-card-qr-url" class="text-[8px] text-slate-500 font-mono break-all">—</p>
-              </div>
-            </div>
           </div>
           <!-- ─────────────────────────────────────────────────────── -->
 
@@ -779,12 +783,12 @@
     <div id="toast-container" class="fixed top-4 z-[100] space-y-2 w-full max-w-md px-4 pointer-events-none" style="left: 50%; transform: translateX(-50%);"></div>
 
     <!-- Core App Logic & Scripts (Separated to app.js) -->
-    <script src="./app.js?v=3.2"></script>
+    <script src="./app.js?v=4.2"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker
-            .register('./sw.js?v=3')
+            .register('./sw.js?v=4')
             .then((reg) => {
               reg.update();
               console.log('SW registered & updated');

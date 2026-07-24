@@ -41,27 +41,54 @@ export async function sendTelegramPhotoNotification(env, photoSource, caption) {
     let contentType = 'image/jpeg';
 
     if (photoSource.startsWith('data:')) {
-      // Legacy Base64 data URI path
+      // Base64 data URI path
       const parts = photoSource.split(',');
-      if (parts.length < 2) return;
-      contentType = parts[0].split(':')[1].split(';')[0];
-      const base64Str = parts[1];
-      if (typeof Buffer !== 'undefined') {
-        uint8 = new Uint8Array(Buffer.from(base64Str, 'base64'));
-      } else {
-        const binaryStr = atob(base64Str);
-        uint8 = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) uint8[i] = binaryStr.charCodeAt(i);
+      if (parts.length < 2) { console.warn('Invalid data URI'); return; }
+      contentType = parts[0].split(':')[1].split(';')[0] || 'image/jpeg';
+      const base64Str = parts[1].replace(/\s/g, '');
+      try {
+        if (typeof Buffer !== 'undefined') {
+          uint8 = new Uint8Array(Buffer.from(base64Str, 'base64'));
+        } else {
+          const binaryStr = atob(base64Str);
+          uint8 = new Uint8Array(binaryStr.length);
+          for (let i = 0; i < binaryStr.length; i++) uint8[i] = binaryStr.charCodeAt(i);
+        }
+      } catch (e) {
+        console.error('Failed to decode base64 photo:', e.message);
+        return;
       }
     } else if (photoSource.startsWith('https://')) {
-      // Google Drive URL — fetch image bytes using OAuth token
+      // Google Drive URL — use Drive API to download
       const { getGoogleAccessToken } = await import('./google.js');
       const token = await getGoogleAccessToken(env);
-      const fetchHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-      const imgRes = await fetch(photoSource, { headers: fetchHeaders });
-      if (!imgRes.ok) {
-        console.error('Failed to fetch photo from Drive for Telegram:', imgRes.status, photoSource);
-        // Fallback: send as text link instead
+
+      // Extract file ID from Drive URL
+      const fileIdMatch = photoSource.match(/[?&]id=([^&]+)/);
+      if (fileIdMatch && token) {
+        const fileId = fileIdMatch[1];
+        const imgRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (imgRes.ok) {
+          contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+          uint8 = new Uint8Array(await imgRes.arrayBuffer());
+        } else {
+          console.error('Drive API download failed:', imgRes.status);
+          // Fallback: send as text link
+          await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: env.TELEGRAM_CHAT_ID,
+              text: `${caption || '📸 Photo'}\n[View on Google Drive](${photoSource})`,
+              parse_mode: 'Markdown',
+            }),
+          });
+          return;
+        }
+      } else {
+        // No token or no file ID — send as text link
         await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -73,8 +100,6 @@ export async function sendTelegramPhotoNotification(env, photoSource, caption) {
         });
         return;
       }
-      contentType = imgRes.headers.get('content-type') || 'image/jpeg';
-      uint8 = new Uint8Array(await imgRes.arrayBuffer());
     } else {
       console.warn('sendTelegramPhotoNotification: unrecognized photo source format');
       return;
@@ -82,13 +107,12 @@ export async function sendTelegramPhotoNotification(env, photoSource, caption) {
 
     const blob = new Blob([uint8], { type: contentType });
 
-    // Try sending as Photo first (for inline preview)
+    // Send as Photo (for inline preview) — no parse_mode to avoid emoji issues
     const formData = new FormData();
     formData.append('chat_id', env.TELEGRAM_CHAT_ID);
     formData.append('photo', blob, 'photo.jpg');
     if (caption) {
       formData.append('caption', caption);
-      formData.append('parse_mode', 'Markdown');
     }
 
     const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendPhoto`, {

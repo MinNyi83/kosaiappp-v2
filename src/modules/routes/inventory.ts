@@ -499,6 +499,71 @@ function register(router, env) {
     }
   });
 
+  // ── GET /api/warranty/lookup/:serial ──────────────────────────────────
+  router.get('/api/warranty/lookup/:serial', async (request, params) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const item = await db
+        .prepare('SELECT i.*, c.company_name FROM inventory_items i LEFT JOIN clients c ON i.client_id = c.id WHERE i.serial_number = ?')
+        .bind(params.serial)
+        .first();
+
+      if (!item) return error('Serial number not found', 404);
+
+      // Calculate warranty status
+      const installed = new Date(item.installed_date);
+      const warrantyEnd = new Date(installed);
+      warrantyEnd.setMonth(warrantyEnd.getMonth() + (item.warranty_months || 12));
+      const now = new Date();
+      const isActive = now <= warrantyEnd && item.status === 'Active';
+      const daysLeft = Math.ceil((warrantyEnd - now) / (1000 * 60 * 60 * 24));
+
+      return success({
+        ...item,
+        warranty_end: warrantyEnd.toISOString().split('T')[0],
+        warranty_active: isActive,
+        warranty_days_left: daysLeft,
+      });
+    } catch (err) {
+      return error('Failed to lookup warranty: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/warranty/register ──────────────────────────────────────
+  router.post('/api/warranty/register', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json()) as any;
+      const { serial_number, device_name, client_id, job_id, warranty_months } = body;
+      if (!serial_number || !device_name) {
+        return error('Missing required fields: serial_number, device_name', 400);
+      }
+
+      await db
+        .prepare(
+          'INSERT OR REPLACE INTO inventory_items (serial_number, device_name, client_id, installed_date, warranty_months, status, job_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        )
+        .bind(
+          serial_number,
+          device_name,
+          client_id || null,
+          new Date().toISOString().split('T')[0],
+          warranty_months || 12,
+          'Active',
+          job_id || null
+        )
+        .run();
+
+      return success({ serial_number, status: 'Active', warranty_months: warranty_months || 12 }, 201);
+    } catch (err) {
+      return error('Failed to register warranty: ' + err.message, 500);
+    }
+  });
+
   // ── GET /api/admin/rma/list ───────────────────────────────────────────
   router.get('/api/admin/rma/list', async (request) => {
     try {

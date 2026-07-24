@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kosai-tech-portal-v3';
+const CACHE_NAME = 'kosai-tech-portal-v4';
 const ASSETS_TO_CACHE = [
   './app.html',
   './app.js',
