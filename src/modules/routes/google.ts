@@ -9,11 +9,14 @@ import { checkRateLimit } from '../utils/rate-limit.js';
 /**
  * Verify PIN against stored hash.
  * Supports:
+ *   - Plain-text (legacy, local dev only)
  *   - Salted SHA-256: $sha256$<salt>$<hash>
  *   - Plain SHA-256: 64-char hex string
  */
 async function verifyPin(plainPin: string, storedHash: string): Promise<boolean> {
   if (!plainPin || !storedHash) return false;
+  // Plain-text fallback for local dev
+  if (plainPin === storedHash) return true;
   // Reject bcrypt hashes
   if (storedHash.startsWith('$2b$') || storedHash.startsWith('$2a$')) return false;
 
