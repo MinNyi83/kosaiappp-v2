@@ -38,6 +38,18 @@ function createToastContainer() {
   return container;
 }
 
+// XSS Protection — escape HTML entities in user-controlled strings
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+window.escapeHTML = escapeHTML;
+
 // Override alert() to use toast for backward compatibility
 window._originalAlert = window.alert;
 window.alert = function(message) {
@@ -58,24 +70,19 @@ let inventoryItems = [];
 let stockPage = 1;
 const stockPerPage = 10;
 
-// Intercept global fetch to automatically inject Authorization token
+// Safe fetch interceptor — only adds auth to same-origin /api/ calls
 const _originalFetch = window.fetch;
 window.fetch = async function (url, options = {}) {
-  let finalUrl = url;
-  if (finalUrl && finalUrl.includes('/api/')) {
+  const finalUrl = typeof url === 'string' ? url : url?.url || '';
+  // Only intercept same-origin API calls
+  if (finalUrl.startsWith('/api/') || finalUrl.includes(window.location.origin + '/api/')) {
     options.headers = options.headers || {};
     const token = localStorage.getItem('admin_token');
     if (token) {
       options.headers['Authorization'] = `Bearer ${token}`;
     }
   }
-  const res = await _originalFetch(finalUrl, options);
-  if (res.status === 401) {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_user');
-    window.location.reload();
-  }
-  return res;
+  return _originalFetch.call(this, url, options);
 };
 
 // Mobile sidebar controls
@@ -144,36 +151,7 @@ async function handlePasswordLogin(e) {
   }
 }
 
-async function submitNewUser(e) {
-  e.preventDefault();
-  const username = document.getElementById('new-user-username').value.trim();
-  const password = document.getElementById('new-user-password').value.trim();
-  const name = document.getElementById('new-user-name').value.trim();
-  const role = document.getElementById('new-user-role').value;
-  const phone = document.getElementById('new-user-phone').value.trim();
-  const email = document.getElementById('new-user-email').value.trim();
-
-  const baseUrl = document.getElementById('api-base').value;
-  const secret = document.getElementById('admin-secret').value;
-
-  try {
-    const res = await fetch(`${baseUrl}/api/admin/technicians/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
-      body: JSON.stringify({ username, password, name, role, phone, email }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert('User account created successfully.');
-      e.target.reset();
-      refreshDashboardData();
-    } else {
-      alert('Error: ' + data.error);
-    }
-  } catch (err) {
-    alert('Communication error: ' + err.message);
-  }
-}
+// submitNewUser is defined later in the file
 
 // Auto check Google user cache on load
 window.addEventListener('load', () => {
@@ -631,11 +609,11 @@ async function refreshDashboard() {
 
           return `
             <tr class="hover:bg-white/5 transition-all">
-              <td class="p-3 font-mono text-amber-400">${j.id || 'N/A'}</td>
-              <td class="p-3 text-white truncate max-w-[120px]">${client?.company_name || 'Unknown'}</td>
-              <td class="p-3 text-slate-300">${j.service_type || 'N/A'}</td>
-              <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">${j.status}</span></td>
-              <td class="p-3 text-slate-300">${tech?.name || 'Unassigned'}</td>
+              <td class="p-3 font-mono text-amber-400">${escapeHTML(j.id || 'N/A')}</td>
+              <td class="p-3 text-white truncate max-w-[120px]">${escapeHTML(client?.company_name || 'Unknown')}</td>
+              <td class="p-3 text-slate-300">${escapeHTML(j.service_type || 'N/A')}</td>
+              <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">${escapeHTML(j.status)}</span></td>
+              <td class="p-3 text-slate-300">${escapeHTML(tech?.name || 'Unassigned')}</td>
               <td class="p-3 text-right text-slate-400 text-[10px]">${j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td>
             </tr>
           `;
@@ -1816,16 +1794,16 @@ function renderClientsGrid(clients) {
               ${initials}
             </div>
             <div>
-              <div class="text-sm font-bold text-white group-hover:text-amber-400 transition truncate max-w-[180px]">${c.company_name}</div>
-              <div class="text-[10px] text-slate-400">${c.contact_person || 'No contact'}</div>
+              <div class="text-sm font-bold text-white group-hover:text-amber-400 transition truncate max-w-[180px]">${escapeHTML(c.company_name)}</div>
+              <div class="text-[10px] text-slate-400">${escapeHTML(c.contact_person || 'No contact')}</div>
             </div>
           </div>
           <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${statusClass}">${statusLabel}</span>
         </div>
         <div class="space-y-2 text-[10px]">
-          ${c.phone ? `<div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${c.phone}</div>` : ''}
-          ${c.address ? `<div class="flex items-start gap-2 text-slate-400"><svg class="w-3 h-3 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="truncate">${c.address}</span></div>` : ''}
-          ${c.amc_end ? `<div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>AMC: ${c.amc_end}</div>` : ''}
+          ${c.phone ? `<div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${escapeHTML(c.phone)}</div>` : ''}
+          ${c.address ? `<div class="flex items-start gap-2 text-slate-400"><svg class="w-3 h-3 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="truncate">${escapeHTML(c.address)}</span></div>` : ''}
+          ${c.amc_end ? `<div class="flex items-center gap-2 text-slate-400"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>AMC: ${escapeHTML(c.amc_end)}</div>` : ''}
         </div>
         <div class="mt-3 pt-3 border-t border-white/5 flex gap-2">
           <button onclick="viewClientJobs('${c.id}')" class="flex-1 bg-white/5 hover:bg-white/10 text-[10px] text-slate-300 font-bold py-1.5 rounded-lg transition">View Jobs</button>
@@ -3444,7 +3422,7 @@ async function populateLookupDropdowns() {
 
     techSelect.innerHTML = '';
     data.technicians.forEach((t) => {
-      techSelect.innerHTML += `<option value="${t.id}" class="bg-slate-900">${t.name} [${t.id}]</option>`;
+      techSelect.innerHTML += `<option value="${escapeHTML(t.id)}" class="bg-slate-900">${escapeHTML(t.name)} [${escapeHTML(t.id)}]</option>`;
     });
   } catch (err) {
     console.error('Error populating lookups:', err);
@@ -3741,26 +3719,7 @@ window.submitNewCatalogItem = async function (e) {
   }
 };
 
-async function deleteInventoryItem(item_code) {
-  if (!confirm(`Remove "${item_code}" from the catalog? This cannot be undone.`)) return;
-  const baseUrl = document.getElementById('api-base').value;
-  const secret = document.getElementById('admin-secret').value;
-  try {
-    const res = await fetch(`${baseUrl}/api/admin/inventory/delete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
-      body: JSON.stringify({ item_code }),
-    });
-    if (res.ok) {
-      loadInventoryData();
-    } else {
-      const data = await res.json();
-      alert('Error: ' + data.error);
-    }
-  } catch (err) {
-    alert('Request failed: ' + err.message);
-  }
-}
+// deleteInventoryItem is defined earlier in the file
 
 function openRegisterWarrantyModal() {
   document.getElementById('modal-register-warranty').classList.remove('hidden');
@@ -3771,7 +3730,7 @@ function openRegisterWarrantyModal() {
       const sel = document.getElementById('modal-warranty-client');
       sel.innerHTML = '';
       data.clients.forEach((c) => {
-        sel.innerHTML += `<option value="${c.id}" class="bg-slate-900">${c.company_name} [${c.id}]</option>`;
+        sel.innerHTML += `<option value="${escapeHTML(c.id)}" class="bg-slate-900">${escapeHTML(c.company_name)} [${escapeHTML(c.id)}]</option>`;
       });
     })
     .catch(console.error);
@@ -4521,23 +4480,23 @@ function renderJobsGrid(jobs) {
     const createdDate = j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A';
 
     return `
-      <div class="glass-panel rounded-xl p-4 hover:border-white/10 transition-all group cursor-pointer" onclick="selectJob('${j.id}')">
+      <div class="glass-panel rounded-xl p-4 hover:border-white/10 transition-all group cursor-pointer" onclick="selectJob('${escapeHTML(j.id)}')">
         <div class="flex items-start justify-between mb-3">
           <div class="flex items-center gap-2">
-            <span class="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">${j.id}</span>
-            <span class="px-2 py-0.5 rounded text-[9px] font-bold ${typeClass}">${j.service_type}</span>
+            <span class="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">${escapeHTML(j.id)}</span>
+            <span class="px-2 py-0.5 rounded text-[9px] font-bold ${typeClass}">${escapeHTML(j.service_type)}</span>
           </div>
           <span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${statusClass}">
             ${statusIcon}
-            ${j.status}
+            ${escapeHTML(j.status)}
           </span>
         </div>
-        <div class="text-sm font-bold text-white group-hover:text-amber-400 transition mb-2 truncate">${j.company_name || 'Unknown Client'}</div>
-        <div class="text-[10px] text-slate-400 mb-3 line-clamp-2">${j.job_description || 'No description'}</div>
+        <div class="text-sm font-bold text-white group-hover:text-amber-400 transition mb-2 truncate">${escapeHTML(j.company_name || 'Unknown Client')}</div>
+        <div class="text-[10px] text-slate-400 mb-3 line-clamp-2">${escapeHTML(j.job_description || 'No description')}</div>
         <div class="flex items-center justify-between text-[10px]">
           <div class="flex items-center gap-1 text-slate-400">
             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            ${j.tech_name || 'Unassigned'}
+            ${escapeHTML(j.tech_name || 'Unassigned')}
           </div>
           <span class="text-slate-500">${createdDate}</span>
         </div>

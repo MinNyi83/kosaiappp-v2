@@ -71,7 +71,8 @@ function register(router, env) {
         },
       });
     } catch (err) {
-      return error('Login failed: ' + err.message, 500);
+      console.error('Login error:', err.message);
+      return error('Login failed', 500);
     }
   });
 

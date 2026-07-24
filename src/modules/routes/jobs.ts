@@ -130,7 +130,8 @@ function register(router, env) {
         totalPages: Math.ceil((countResult?.total ?? 0) / limit),
       });
     } catch (err) {
-      return error('Failed to fetch jobs: ' + err.message, 500);
+      console.error('Fetch jobs error:', err.message);
+      return error('Failed to fetch jobs', 500);
     }
   });
 
@@ -155,7 +156,8 @@ function register(router, env) {
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch active jobs: ' + err.message, 500);
+      console.error('Fetch active jobs error:', err.message);
+      return error('Failed to fetch active jobs', 500);
     }
   });
 
@@ -187,7 +189,8 @@ function register(router, env) {
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch calendar: ' + err.message, 500);
+      console.error('Fetch calendar error:', err.message);
+      return error('Failed to fetch calendar', 500);
     }
   });
 
@@ -216,7 +219,8 @@ function register(router, env) {
 
       return success(job || null);
     } catch (err) {
-      return error('Failed to fetch receipt: ' + err.message, 500);
+      console.error('Fetch receipt error:', err.message);
+      return error('Failed to fetch receipt', 500);
     }
   });
 
@@ -239,7 +243,8 @@ function register(router, env) {
 
       return success(job);
     } catch (err) {
-      return error('Failed to fetch job: ' + err.message, 500);
+      console.error('Fetch job error:', err.message);
+      return error('Failed to fetch job', 500);
     }
   });
 
@@ -267,7 +272,8 @@ function register(router, env) {
 
       return success({ id, service_type, status: 'Pending' }, 201);
     } catch (err) {
-      return error('Failed to create job: ' + err.message, 500);
+      console.error('Create job error:', err.message);
+      return error('Failed to create job', 500);
     }
   });
 
@@ -324,7 +330,8 @@ function register(router, env) {
 
       return success({ message: 'Job updated' });
     } catch (err) {
-      return error('Failed to update job: ' + err.message, 500);
+      console.error('Update job error:', err.message);
+      return error('Failed to update job', 500);
     }
   });
 
@@ -344,7 +351,8 @@ function register(router, env) {
       await db.prepare('DELETE FROM service_records WHERE id = ?').bind(params.id).run();
       return success({ message: 'Job deleted' });
     } catch (err) {
-      return error('Failed to delete job: ' + err.message, 500);
+      console.error('Delete job error:', err.message);
+      return error('Failed to delete job', 500);
     }
   });
 
@@ -421,7 +429,8 @@ function register(router, env) {
 
       return success({ id: params.id, previous_status: existing.status, new_status: status });
     } catch (err) {
-      return error('Failed to update job status: ' + err.message, 500);
+      console.error('Update status error:', err.message);
+      return error('Failed to update job status', 500);
     }
   });
 
@@ -490,7 +499,8 @@ function register(router, env) {
 
       return success({ drive_file_id: driveFileId, photo_url: photoUrl, field });
     } catch (err) {
-      return error('Failed to upload photo: ' + err.message, 500);
+      console.error('Upload photo error:', err.message);
+      return error('Failed to upload photo', 500);
     }
   });
 
@@ -522,7 +532,8 @@ function register(router, env) {
 
       return success({ notified: true });
     } catch (err) {
-      return error('Failed to send notification: ' + err.message, 500);
+      console.error('Send notification error:', err.message);
+      return error('Failed to send notification', 500);
     }
   });
 
@@ -563,7 +574,8 @@ function register(router, env) {
       await db.prepare(`UPDATE service_records SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
       return success({ message: 'Job updated' });
     } catch (err) {
-      return error('Failed to update job: ' + err.message, 500);
+      console.error('Update job error:', err.message);
+      return error('Failed to update job', 500);
     }
   });
 
@@ -583,7 +595,8 @@ function register(router, env) {
       await db.prepare("UPDATE service_records SET status = 'Cancelled', updated_at = datetime('now') WHERE id = ?").bind(id).run();
       return success({ id, previous_status: existing.status, new_status: 'Cancelled' });
     } catch (err) {
-      return error('Failed to cancel job: ' + err.message, 500);
+      console.error('Cancel job error:', err.message);
+      return error('Failed to cancel job', 500);
     }
   });
 }

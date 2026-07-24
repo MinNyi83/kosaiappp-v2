@@ -94,6 +94,11 @@ function register(router, env) {
         return error('Missing required fields: name, email, pin', 400);
       }
 
+      // Validate PIN: must be 4-6 digits
+      if (!/^\d{4,6}$/.test(pin)) {
+        return error('PIN must be 4-6 digits', 400);
+      }
+
       // Hash PIN using Web Crypto API
       const encoder = new TextEncoder();
       const salt = crypto.getRandomValues(new Uint8Array(16));
