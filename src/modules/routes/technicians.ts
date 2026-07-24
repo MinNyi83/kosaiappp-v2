@@ -18,7 +18,7 @@ function register(router, env) {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
     const token = authHeader.slice(7);
-    return verifyToken(token);
+    return await verifyToken(token);
   }
 
   // ── GET /api/technicians ──────────────────────────────────────────────

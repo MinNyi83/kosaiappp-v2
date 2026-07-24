@@ -17,7 +17,7 @@ function register(router, env) {
   async function authenticate(request) {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    return verifyToken(authHeader.slice(7));
+    return await verifyToken(authHeader.slice(7));
   }
 
   // Base SELECT with joins for all job queries
@@ -435,6 +435,13 @@ function register(router, env) {
       const { photo_base64, photo_type } = body; // photo_type: 'before' or 'after'
       if (!photo_base64) return error('Missing photo_base64', 400);
 
+      // Enforce 10MB max photo size
+      const base64Data = photo_base64.replace(/^data:image\/\w+;base64,/, '');
+      const estimatedSize = Math.ceil(base64Data.length * 3 / 4);
+      if (estimatedSize > 10 * 1024 * 1024) {
+        return error('Photo too large (max 10MB)', 400);
+      }
+
       const existing = await db
         .prepare('SELECT * FROM service_records WHERE id = ?')
         .bind(params.id)
@@ -449,7 +456,6 @@ function register(router, env) {
       }
 
       // Convert base64 to blob
-      const base64Data = photo_base64.replace(/^data:image\/\w+;base64,/, '');
       const binaryStr = atob(base64Data);
       const bytes = new Uint8Array(binaryStr.length);
       for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);

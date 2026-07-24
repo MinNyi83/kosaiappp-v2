@@ -58,9 +58,11 @@ export async function getGoogleAccessToken(env) {
 }
 
 export async function getOrCreateDriveFolder(token: any, folderName: any, parentFolderId?: any) {
+  // Escape single quotes in folder name to prevent injection
+  const safeName = String(folderName).replace(/'/g, "\\'");
   // Search for existing folder
   const query = encodeURIComponent(
-    `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false` +
+    `name='${safeName}' and mimeType='application/vnd.google-apps.folder' and trashed=false` +
       (parentFolderId ? ` and '${parentFolderId}' in parents` : '')
   );
   const searchRes = await fetch(

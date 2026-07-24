@@ -11,7 +11,7 @@ function register(router, env) {
   async function authenticate(request) {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    return verifyToken(authHeader.slice(7));
+    return await verifyToken(authHeader.slice(7));
   }
 
   // ── GET /api/inventory ────────────────────────────────────────────────
@@ -245,6 +245,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       await db.prepare('DELETE FROM inventory_stock WHERE item_code = ?').bind(params.id).run();
       return success({ message: 'Inventory item deleted' });
@@ -257,6 +258,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const { item_code } = (await request.json()) as any;
       if (!item_code) return error('Missing item_code', 400);
@@ -273,6 +275,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const { quantity_change, reason } = (await request.json()) as any;
       if (quantity_change === undefined) {
@@ -518,7 +521,7 @@ function register(router, env) {
       warrantyEnd.setMonth(warrantyEnd.getMonth() + (item.warranty_months || 12));
       const now = new Date();
       const isActive = now <= warrantyEnd && item.status === 'Active';
-      const daysLeft = Math.ceil((warrantyEnd - now) / (1000 * 60 * 60 * 24));
+      const daysLeft = Math.ceil((warrantyEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
       return success({
         ...item,

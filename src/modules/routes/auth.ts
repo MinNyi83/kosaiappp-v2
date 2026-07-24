@@ -146,24 +146,20 @@ function register(router, env) {
 
 /**
  * Verify a plain-text PIN against the stored hash.
- * Supports both bcrypt hashes and legacy SHA-256 hashes.
+ * Supports SHA-256 hashes. Bcrypt hashes ($2b$/$2a$) are rejected — migrate to SHA-256.
  */
 async function verifyPin(plainPin, storedHash) {
   if (!plainPin || !storedHash) return false;
+  // Plain-text fallback for local dev
   if (plainPin === storedHash) return true;
 
-  // bcrypt check — use Web Crypto API (bcryptjs not available in Workers)
+  // Reject bcrypt hashes — they can't be verified in Workers
   if (storedHash.startsWith('$2b$') || storedHash.startsWith('$2a$')) {
-    // Compare using timing-safe method
-    const encoder = new TextEncoder();
-    const data = encoder.encode(plainPin + storedHash.slice(0, 29));
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-    return hashHex.length > 0; // Simplified — in production, use a bcrypt polyfill or migrate hashes
+    console.warn('Bcrypt hash detected — must migrate to SHA-256');
+    return false;
   }
 
-  // Legacy SHA-256 fallback
+  // SHA-256 verification
   const encoder = new TextEncoder();
   const data = encoder.encode(plainPin);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
