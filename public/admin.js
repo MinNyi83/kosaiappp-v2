@@ -811,6 +811,129 @@ function saveHQConfig(e) {
     });
 }
 
+// ============================================================================
+// Settings Tab Switching
+// ============================================================================
+let currentSettingsTab = 'company';
+
+function switchSettingsTab(tab) {
+  currentSettingsTab = tab;
+  // Update tab buttons
+  document.querySelectorAll('.settings-tab').forEach(btn => {
+    btn.classList.remove('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    btn.classList.add('text-slate-400', 'border-transparent');
+  });
+  const activeBtn = document.getElementById(`settings-tab-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    activeBtn.classList.remove('text-slate-400', 'border-transparent');
+  }
+  // Show/hide panels
+  ['company', 'users', 'system', 'receipt', 'database'].forEach(p => {
+    const panel = document.getElementById(`settings-panel-${p}`);
+    if (panel) panel.classList.toggle('hidden', p !== tab);
+  });
+  // Load tab data
+  if (tab === 'users') loadSettingsUsers();
+  if (tab === 'database') loadDatabaseStats();
+}
+
+// ============================================================================
+// Company Profile
+// ============================================================================
+function saveCompanyProfile() {
+  const profile = {
+    name: document.getElementById('cfg-company-name')?.value || '',
+    phone: document.getElementById('cfg-company-phone')?.value || '',
+    email: document.getElementById('cfg-company-email')?.value || '',
+    address: document.getElementById('cfg-company-address')?.value || '',
+    website: document.getElementById('cfg-company-website')?.value || '',
+  };
+  localStorage.setItem('company_profile', JSON.stringify(profile));
+  const baseUrl = document.getElementById('api-base').value;
+  fetch(`${baseUrl}/api/admin/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ config_key: 'company_profile', config_value: JSON.stringify(profile) }),
+  }).then(() => showToast('Company profile saved!', 'success'))
+    .catch(() => showToast('Saved locally', 'warning'));
+}
+
+function loadCompanyProfile() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('company_profile') || '{}');
+    if (saved.name) document.getElementById('cfg-company-name').value = saved.name;
+    if (saved.phone) document.getElementById('cfg-company-phone').value = saved.phone;
+    if (saved.email) document.getElementById('cfg-company-email').value = saved.email;
+    if (saved.address) document.getElementById('cfg-company-address').value = saved.address;
+    if (saved.website) document.getElementById('cfg-company-website').value = saved.website;
+  } catch (_) {}
+}
+
+// ============================================================================
+// Settings Users Tab
+// ============================================================================
+async function loadSettingsUsers() {
+  const container = document.getElementById('settings-users-content');
+  if (!container) return;
+  try {
+    const baseUrl = document.getElementById('api-base').value;
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`${baseUrl}/api/admin/technicians`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    const users = data.data || data || [];
+    container.innerHTML = `
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        ${users.map(u => `
+          <div class="glass-panel p-4 rounded-xl border border-white/5 space-y-2">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-400">${(u.name || '?')[0].toUpperCase()}</div>
+              <div>
+                <p class="text-xs font-bold text-white">${u.name || 'Unknown'}</p>
+                <p class="text-[10px] text-slate-500 font-mono">${u.id || u.username || ''}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 text-[9px] rounded-full font-bold ${u.role === 'Admin' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : u.role === 'Technician' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${u.role || 'N/A'}</span>
+              <span class="text-[9px] ${u.active ? 'text-emerald-400' : 'text-rose-400'}">${u.active ? 'Active' : 'Inactive'}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<p class="text-xs text-rose-400 text-center py-4">Failed to load users: ${err.message}</p>`;
+  }
+}
+
+// ============================================================================
+// Database Stats
+// ============================================================================
+async function loadDatabaseStats() {
+  const baseUrl = document.getElementById('api-base').value;
+  const token = localStorage.getItem('admin_token');
+  const headers = { Authorization: `Bearer ${token}` };
+  try {
+    const [techs, clients, jobs, inv] = await Promise.all([
+      fetch(`${baseUrl}/api/admin/technicians`, { headers }).then(r => r.json()),
+      fetch(`${baseUrl}/api/admin/clients`, { headers }).then(r => r.json()),
+      fetch(`${baseUrl}/api/jobs`, { headers }).then(r => r.json()),
+      fetch(`${baseUrl}/api/inventory`, { headers }).then(r => r.json()),
+    ]);
+    const el = (id) => document.getElementById(id);
+    if (el('db-stat-techs')) el('db-stat-techs').textContent = (techs.data || techs || []).length;
+    if (el('db-stat-clients')) el('db-stat-clients').textContent = (clients.data || clients || []).length;
+    const jobsArr = Array.isArray(jobs.data) ? jobs.data : jobs.jobs || [];
+    if (el('db-stat-jobs')) el('db-stat-jobs').textContent = jobsArr.length;
+    const invData = inv.data;
+    if (el('db-stat-inventory')) el('db-stat-inventory').textContent = invData?.total || (invData?.items || []).length || 0;
+  } catch (err) {
+    console.error('Failed to load DB stats:', err);
+  }
+}
+
 function toggleCustomerTypeFields(val) {
   const corpField = document.getElementById('corporate-client-field');
   const indField = document.getElementById('individual-customer-fields');

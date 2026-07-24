@@ -1,778 +1,267 @@
-<div id="view-system-settings" class="space-y-8 tab-view">
-  <div>
-    <h1 class="text-2xl font-black text-white uppercase tracking-tight">System Settings</h1>
-    <p class="text-xs text-slate-400 mt-1">
-      Adjust currency rate rules, perform database management, and set office location.
-    </p>
+<div id="view-system-settings" class="space-y-6 tab-view">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-white uppercase tracking-tight">System Settings</h1>
+      <p class="text-xs text-slate-400 mt-1">Configure your business profile, users, system preferences, and database.</p>
+    </div>
   </div>
 
-  <!-- Part 1: System Administration Panels -->
-  <div class="grid md:grid-cols-2 gap-8">
-    <!-- Backup & Restore Operations -->
-    <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
-      <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-        <span>💾</span> Database Management Binds
-      </h2>
-      <p class="text-xs text-slate-400 leading-relaxed">
-        Save database state snaps or run system restorations directly from edge storage points.
-      </p>
-      <div class="flex gap-3 pt-2">
-        <button
-          class="bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-md uppercase tracking-wider flex-1"
-          onclick="triggerBackup()"
-        >
-          💾 Backup Database
-        </button>
-        <button
-          class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 font-extrabold text-xs px-4 py-2.5 rounded-xl transition uppercase tracking-wider flex-1"
-          onclick="triggerRestore()"
-        >
-          🔄 Restore System
-        </button>
-        <input
-          name="restore-file-input"
-          type="file"
-          id="restore-file-input"
-          style="display: none"
-          onchange="handleRestoreFile(event)"
-        />
+  <!-- Settings Tabs -->
+  <div class="flex gap-2 flex-wrap border-b border-white/10 pb-2">
+    <button onclick="switchSettingsTab('company')" id="settings-tab-company" class="settings-tab px-4 py-2 text-xs font-bold text-white bg-amber-500/10 border border-amber-500/20 rounded-lg transition-all">Company Profile</button>
+    <button onclick="switchSettingsTab('users')" id="settings-tab-users" class="settings-tab px-4 py-2 text-xs font-bold text-slate-400 hover:text-white border border-transparent rounded-lg transition-all">Users</button>
+    <button onclick="switchSettingsTab('system')" id="settings-tab-system" class="settings-tab px-4 py-2 text-xs font-bold text-slate-400 hover:text-white border border-transparent rounded-lg transition-all">System</button>
+    <button onclick="switchSettingsTab('receipt')" id="settings-tab-receipt" class="settings-tab px-4 py-2 text-xs font-bold text-slate-400 hover:text-white border border-transparent rounded-lg transition-all">Receipt Builder</button>
+    <button onclick="switchSettingsTab('database')" id="settings-tab-database" class="settings-tab px-4 py-2 text-xs font-bold text-slate-400 hover:text-white border border-transparent rounded-lg transition-all">Database</button>
+  </div>
+
+  <!-- ═══ TAB: Company Profile ═══ -->
+  <div id="settings-panel-company" class="space-y-6">
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- Company Info -->
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <span class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-sm">🏢</span>
+          Company Information
+        </h3>
+        <div class="space-y-3">
+          <div class="space-y-1">
+            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Company Name</label>
+            <input type="text" id="cfg-company-name" value="Awesome Myanmar" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Phone</label>
+              <input type="text" id="cfg-company-phone" placeholder="+95 9 XXX-XXXXXX" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
+            </div>
+            <div class="space-y-1">
+              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Email</label>
+              <input type="email" id="cfg-company-email" placeholder="info@company.com" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Address</label>
+            <input type="text" id="cfg-company-address" placeholder="Yangon, Myanmar" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
+          </div>
+          <div class="space-y-1">
+            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Website</label>
+            <input type="text" id="cfg-company-website" placeholder="www.example.com" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all" />
+          </div>
+          <button onclick="saveCompanyProfile()" class="w-full bg-amber-600 hover:bg-amber-500 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition-all shadow-md">Save Company Profile</button>
+        </div>
+      </div>
+
+      <!-- Head Office Location -->
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <span class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-sm">📍</span>
+          Head Office Location
+        </h3>
+        <p class="text-[10px] text-slate-500">Sets the center point for the dispatch map and primary HQ pin.</p>
+        <div class="space-y-3">
+          <div class="space-y-1">
+            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">HQ Name</label>
+            <input type="text" id="hq-name" value="AwesomeMyanmar Head Office" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-all" />
+          </div>
+          <div class="space-y-1">
+            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Google Maps Link</label>
+            <input type="text" id="hq-maps-url" placeholder="https://maps.app.goo.gl/..." oninput="resolveMapsUrlToCoords(this.value)" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500 transition-all" />
+            <span id="hq-resolve-status" class="block text-[8px] text-slate-500 mt-1">Default coordinates preloaded</span>
+          </div>
+          <div class="space-y-1">
+            <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Physical Address</label>
+            <input type="text" id="hq-address" value="Q5F7+V9 Yangon, Myanmar" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-all" />
+          </div>
+          <input name="hq-lat" type="hidden" id="hq-lat" value="16.774687" />
+          <input name="hq-lng" type="hidden" id="hq-lng" value="96.163438" />
+          <button onclick="saveHQConfig(event)" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition-all shadow-md">Save HQ Settings</button>
+        </div>
       </div>
     </div>
 
-    <!-- Exchange Rate Controls -->
-    <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
-      <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-        <span>💵</span> System Exchange Rate rules
-      </h2>
-      <p class="text-xs text-slate-400 leading-relaxed">
-        Set the global exchange conversion factor for MMK currencies across the ledger modules.
-      </p>
-      <div class="flex items-center gap-3 pt-2">
-        <div
-          class="flex-grow flex items-center gap-2 text-xs font-bold text-slate-400 bg-black/40 px-3 py-2 rounded-xl border border-white/10"
-        >
+    <!-- Exchange Rate -->
+    <div class="glass-panel rounded-2xl p-6">
+      <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-4">
+        <span class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-sm">💱</span>
+        Exchange Rate
+      </h3>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 text-sm font-bold text-slate-300 bg-black/40 px-4 py-3 rounded-xl border border-white/10">
           <span>1 USD =</span>
-          <input
-            name="cash-rate-local"
-            type="number"
-            id="cash-rate-local"
-            value="4500"
-            oninput="syncExchangeRate(this.value)"
-            class="w-16 bg-black/50 border border-white/10 text-white rounded px-2 py-1 text-center font-mono"
-          />
-          <span>MMK</span>
+          <input type="number" id="cash-rate-local" value="4500" oninput="syncExchangeRate(this.value)" class="w-20 bg-black/50 border border-white/10 text-white rounded-lg px-3 py-1.5 text-center font-mono text-sm" />
+          <span class="text-slate-500">MMK</span>
+        </div>
+        <span class="text-[10px] text-slate-500">Applied across POS, invoices, and cash ledger</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: Users ═══ -->
+  <div id="settings-panel-users" class="space-y-6 hidden">
+    <div id="settings-users-content" class="glass-panel rounded-2xl p-6">
+      <p class="text-xs text-slate-500 text-center py-8">Loading users...</p>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: System ═══ -->
+  <div id="settings-panel-system" class="space-y-6 hidden">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <span class="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-sm">⚡</span>
+          System Health
+        </h3>
+        <div id="system-health-status" class="space-y-2">
+          <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+            <span class="text-xs text-slate-400">API Status</span>
+            <span class="text-xs font-bold text-emerald-400">Online</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+            <span class="text-xs text-slate-400">Database</span>
+            <span class="text-xs font-bold text-emerald-400">Connected</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+            <span class="text-xs text-slate-400">Last Backup</span>
+            <span id="system-last-backup" class="text-xs text-slate-300">Never</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <span class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-sm">🔔</span>
+          Notifications
+        </h3>
+        <div class="space-y-3">
+          <label class="flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer">
+            <span class="text-xs text-slate-300">Job Assignment Alerts</span>
+            <input type="checkbox" checked class="accent-amber-500 w-4 h-4" />
+          </label>
+          <label class="flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer">
+            <span class="text-xs text-slate-300">Low Stock Warnings</span>
+            <input type="checkbox" checked class="accent-amber-500 w-4 h-4" />
+          </label>
+          <label class="flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer">
+            <span class="text-xs text-slate-300">AMC Expiry Reminders</span>
+            <input type="checkbox" checked class="accent-amber-500 w-4 h-4" />
+          </label>
+          <label class="flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer">
+            <span class="text-xs text-slate-300">Daily Summary Email</span>
+            <input type="checkbox" class="accent-amber-500 w-4 h-4" />
+          </label>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Head Office Location Setup -->
-    <div class="glass-panel rounded-2xl overflow-hidden space-y-4 md:col-span-2">
-      <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-        <span>🏢</span> Head Office Location Setup (Map Reference)
-      </h2>
-      <p class="text-xs text-slate-400">
-        Specify the location details of the headquarters. This centers the dispatch map and displays
-        a primary home base pin.
-      </p>
-      <form
-        method="POST"
-        onsubmit="saveHQConfig(event)"
-        class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2"
-      >
-        <div class="space-y-1">
-          <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-            >HQ Label / Name</label
-          >
-          <input
-            name="hq-name"
-            type="text"
-            id="hq-name"
-            value="AwesomeMyanmar Head Office"
-            required
-            class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
-        </div>
-        <div class="space-y-1 md:col-span-2">
-          <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-            >HQ Google Maps Share Link</label
-          >
-          <input
-            name="hq-maps-url"
-            type="text"
-            id="hq-maps-url"
-            placeholder="https://maps.app.goo.gl/..."
-            oninput="resolveMapsUrlToCoords(this.value)"
-            class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
-          <span id="hq-resolve-status" class="block text-[8px] text-slate-500 mt-1"
-            >Default coordinates preloaded</span
-          >
-        </div>
-        <div class="space-y-1 flex items-end">
-          <button
-            type="submit"
-            class="w-full bg-amber-600 hover:bg-amber-500 py-2 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition"
-          >
-            Save HQ Settings
-          </button>
-        </div>
-        <input name="hq-lat" type="hidden" id="hq-lat" value="16.774687" />
-        <input name="hq-lng" type="hidden" id="hq-lng" value="96.163438" />
-        <div class="space-y-1 md:col-span-4">
-          <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-            >HQ Physical Address</label
-          >
-          <input
-            name="hq-address"
-            type="text"
-            id="hq-address"
-            value="Q5F7+V9 Yangon, Myanmar (Burma)"
-            required
-            class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
-        </div>
-      </form>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- RECEIPT / INVOICE PDF BUILDER                                   -->
-    <!-- ═══════════════════════════════════════════════════════════════ -->
-    <div class="glass-panel rounded-2xl md:col-span-2 overflow-hidden">
-      <!-- Builder Topbar -->
-      <div
-        class="flex items-center justify-between px-6 py-4 border-b border-white/5"
-        style="background: rgba(0, 0, 0, 0.2)"
-      >
+  <!-- ═══ TAB: Receipt Builder ═══ -->
+  <div id="settings-panel-receipt" class="space-y-6 hidden">
+    <div class="glass-panel rounded-2xl overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/20">
         <div class="flex items-center gap-3">
-          <div
-            class="w-8 h-8 rounded-lg flex items-center justify-center"
-            style="
-              background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(168, 85, 247, 0.1));
-              border: 1px solid rgba(168, 85, 247, 0.3);
-            "
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              class="w-4 h-4 text-purple-400"
-            >
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
+          <div class="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="w-4 h-4 text-purple-400"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Invoice Receipt PDF Builder</h2>
-            <p class="text-[9px] text-slate-500 mt-0.5">
-              Customize paper, branding, colors, banner, footer & display options
-            </p>
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">Invoice Receipt PDF Builder</h2>
+            <p class="text-[9px] text-slate-500 mt-0.5">Customize paper, branding, colors, and display options</p>
           </div>
         </div>
-        <button
-          onclick="savePdfBuilderConfig()"
-          class="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            class="w-3.5 h-3.5"
-          >
-            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-            <polyline points="17 21 17 13 7 13 7 21" />
-            <polyline points="7 3 7 8 15 8" />
-          </svg>
+        <button onclick="savePdfBuilderConfig()" class="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           Save Config
         </button>
       </div>
-
-      <div class="flex flex-col xl:flex-row">
-        <!-- ── LEFT: Tabbed Form Sections ── -->
-        <div class="flex-1 min-w-0 divide-y divide-white/5">
-          <!-- Paper & Layout -->
-          <div class="px-6 py-4 space-y-3">
-            <p
-              class="text-[8px] font-black text-slate-600 uppercase tracking-[0.18em] flex items-center gap-1.5"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="w-3 h-3"
-              >
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              Paper &amp; Layout
-            </p>
-            <div class="grid grid-cols-3 gap-3">
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Paper Size</label
-                >
-                <select
-                  id="pdf-cfg-paper"
-                  onchange="updatePdfPreview()"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
-                >
-                  <option value="a4">A4 (210×297mm)</option>
-                  <option value="a5">A5 (148×210mm)</option>
-                  <option value="letter">Letter (216×279mm)</option>
-                  <option value="thermal80">Thermal 80mm</option>
-                </select>
-              </div>
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Header Style</label
-                >
-                <select
-                  id="pdf-cfg-header-style"
-                  onchange="updatePdfPreview()"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
-                >
-                  <option value="full">Full Color Banner</option>
-                  <option value="slim">Slim Bar + Logo</option>
-                  <option value="minimal">Minimal / Text Only</option>
-                  <option value="classic">Classic Bordered</option>
-                </select>
-              </div>
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Orientation</label
-                >
-                <select
-                  id="pdf-cfg-orientation"
-                  onchange="updatePdfPreview()"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
-                >
-                  <option value="portrait">Portrait</option>
-                  <option value="landscape">Landscape</option>
-                </select>
-              </div>
+      <div class="p-6 grid md:grid-cols-3 gap-6">
+        <!-- Settings Column -->
+        <div class="md:col-span-2 space-y-5">
+          <div class="grid grid-cols-3 gap-3">
+            <div class="space-y-1">
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Paper Size</label>
+              <select id="pdf-cfg-paper" onchange="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white"><option value="a4">A4</option><option value="a5">A5</option><option value="letter">Letter</option><option value="thermal80">Thermal 80mm</option></select>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Header Style</label>
+              <select id="pdf-cfg-header-style" onchange="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white"><option value="full">Full Color</option><option value="slim">Slim Bar</option><option value="minimal">Minimal</option><option value="classic">Classic</option></select>
+            </div>
+            <div class="space-y-1">
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Orientation</label>
+              <select id="pdf-cfg-orientation" onchange="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>
             </div>
           </div>
-
-          <!-- Business Branding -->
-          <div class="px-6 py-4 space-y-3">
-            <p
-              class="text-[8px] font-black text-slate-600 uppercase tracking-[0.18em] flex items-center gap-1.5"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="w-3 h-3"
-              >
-                <rect x="2" y="7" width="20" height="14" rx="2" />
-                <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
-              </svg>
-              Business Branding
-            </p>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Business Name</label
-                >
-                <input
-                  type="text"
-                  id="pdf-cfg-company"
-                  value="AWESOME MYANMAR"
-                  oninput="updatePdfPreview()"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500/50"
-                />
-              </div>
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Invoice Subtitle / Tagline</label
-                >
-                <input
-                  type="text"
-                  id="pdf-cfg-subtitle"
-                  value="POINT OF SALE INVOICE RECEIPT"
-                  oninput="updatePdfPreview()"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500/50"
-                />
-              </div>
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Phone / Contact</label
-                >
-                <input
-                  type="text"
-                  id="pdf-cfg-phone"
-                  value="+95 9 XXX-XXXXXX"
-                  oninput="updatePdfPreview()"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500/50"
-                />
-              </div>
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Website / Email</label
-                >
-                <input
-                  type="text"
-                  id="pdf-cfg-website"
-                  value="www.awesomemyanmar.com"
-                  oninput="updatePdfPreview()"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500/50"
-                />
-              </div>
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Company Address</label
-              >
-              <input
-                type="text"
-                id="pdf-cfg-address"
-                value="Yangon, Myanmar"
-                oninput="updatePdfPreview()"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500/50"
-              />
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Logo / Banner Image URL
-                <span class="text-slate-600 normal-case font-normal"
-                  >(optional — hosted image link)</span
-                ></label
-              >
-              <input
-                type="text"
-                id="pdf-cfg-logo-url"
-                placeholder="https://your-cdn.com/logo.png"
-                oninput="updatePdfPreview()"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-purple-500/50"
-              />
-            </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Business Name</label><input type="text" id="pdf-cfg-company" value="AWESOME MYANMAR" oninput="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" /></div>
+            <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Invoice Subtitle</label><input type="text" id="pdf-cfg-subtitle" value="POINT OF SALE INVOICE RECEIPT" oninput="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" /></div>
           </div>
-
-          <!-- Color Theme -->
-          <div class="px-6 py-4 space-y-3">
-            <p
-              class="text-[8px] font-black text-slate-600 uppercase tracking-[0.18em] flex items-center gap-1.5"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="w-3 h-3"
-              >
-                <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
-                <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
-                <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
-                <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
-                <path
-                  d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"
-                />
-              </svg>
-              Color Theme
-            </p>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Header Background</label
-                >
-                <div class="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    id="pdf-cfg-color"
-                    value="#0f172a"
-                    oninput="updatePdfPreview()"
-                    class="bg-transparent border-0 w-10 h-10 cursor-pointer rounded-xl shrink-0"
-                    style="padding: 2px"
-                  />
-                  <input
-                    type="text"
-                    id="pdf-cfg-color-hex"
-                    value="#0f172a"
-                    readonly
-                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
-                  />
-                </div>
-              </div>
-              <div class="space-y-1">
-                <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                  >Accent / Table Row Color</label
-                >
-                <div class="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    id="pdf-cfg-accent"
-                    value="#0ea5e9"
-                    oninput="updatePdfPreview()"
-                    class="bg-transparent border-0 w-10 h-10 cursor-pointer rounded-xl shrink-0"
-                    style="padding: 2px"
-                  />
-                  <input
-                    type="text"
-                    id="pdf-cfg-accent-hex"
-                    value="#0ea5e9"
-                    readonly
-                    class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono"
-                  />
-                </div>
-              </div>
-            </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Phone</label><input type="text" id="pdf-cfg-phone" value="+95 9 XXX-XXXXXX" oninput="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" /></div>
+            <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Website</label><input type="text" id="pdf-cfg-website" value="www.awesomemyanmar.com" oninput="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" /></div>
           </div>
-
-          <!-- Banner Note & Footer -->
-          <div class="px-6 py-4 space-y-3">
-            <p
-              class="text-[8px] font-black text-slate-600 uppercase tracking-[0.18em] flex items-center gap-1.5"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="w-3 h-3"
-              >
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
-              Banner, Footer &amp; Terms
-            </p>
-            <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Invoice Header Banner Note
-                <span class="text-slate-600 normal-case font-normal"
-                  >(shown as pill in header)</span
-                ></label
-              >
-              <input
-                type="text"
-                id="pdf-cfg-banner"
-                placeholder="e.g. All prices are inclusive of VAT"
-                oninput="updatePdfPreview()"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500/50"
-              />
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Footer / Thank You Message</label
-              >
-              <textarea
-                id="pdf-cfg-footer"
-                rows="2"
-                oninput="updatePdfPreview()"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white resize-none focus:outline-none focus:border-purple-500/50"
-              >
-Thank you for your business!</textarea>
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-                >Terms &amp; Conditions
-                <span class="text-slate-600 normal-case font-normal">(one per line)</span></label
-              >
-              <textarea
-                id="pdf-cfg-terms"
-                rows="3"
-                oninput="updatePdfPreview()"
-                placeholder="1. All sales are final.&#10;2. Warranty as per manufacturer terms.&#10;3. Returns within 7 days with receipt."
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white resize-none focus:outline-none focus:border-purple-500/50"
-              ></textarea>
-            </div>
+          <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Address</label><input type="text" id="pdf-cfg-address" value="Yangon, Myanmar" oninput="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white" /></div>
+          <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Logo URL <span class="text-slate-600 normal-case font-normal">(optional)</span></label><input type="text" id="pdf-cfg-logo-url" placeholder="https://cdn.example.com/logo.png" oninput="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" /></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Header Color</label><div class="flex gap-2 items-center"><input type="color" id="pdf-cfg-color" value="#0f172a" oninput="updatePdfPreview()" class="w-10 h-10 cursor-pointer rounded-lg shrink-0" /><input type="text" id="pdf-cfg-color-hex" value="#0f172a" readonly class="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" /></div></div>
+            <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Accent Color</label><div class="flex gap-2 items-center"><input type="color" id="pdf-cfg-accent" value="#0ea5e9" oninput="updatePdfPreview()" class="w-10 h-10 cursor-pointer rounded-lg shrink-0" /><input type="text" id="pdf-cfg-accent-hex" value="#0ea5e9" readonly class="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono" /></div></div>
           </div>
-
-          <!-- Display Toggles -->
-          <div class="px-6 py-4 space-y-3">
-            <p
-              class="text-[8px] font-black text-slate-600 uppercase tracking-[0.18em] flex items-center gap-1.5"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                class="w-3 h-3"
-              >
-                <polyline points="9 11 12 14 22 4" />
-                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-              </svg>
-              Display Options
-            </p>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-y-3 gap-x-4">
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="pdf-cfg-show-mmk"
-                  checked
-                  onchange="updatePdfPreview()"
-                  class="rounded text-emerald-500 focus:ring-0 bg-black/40 border-white/10 w-4 h-4"
-                />
-                <span class="text-[10px]">MMK Equivalent</span>
-              </label>
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="pdf-cfg-show-sig"
-                  checked
-                  onchange="updatePdfPreview()"
-                  class="rounded text-emerald-500 focus:ring-0 bg-black/40 border-white/10 w-4 h-4"
-                />
-                <span class="text-[10px]">Signature Line</span>
-              </label>
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="pdf-cfg-show-payment"
-                  checked
-                  onchange="updatePdfPreview()"
-                  class="rounded text-emerald-500 focus:ring-0 bg-black/40 border-white/10 w-4 h-4"
-                />
-                <span class="text-[10px]">Payment Detail</span>
-              </label>
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="pdf-cfg-show-tax"
-                  onchange="updatePdfPreview()"
-                  class="rounded text-emerald-500 focus:ring-0 bg-black/40 border-white/10 w-4 h-4"
-                />
-                <span class="text-[10px]">Tax Line</span>
-              </label>
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="pdf-cfg-show-terms"
-                  checked
-                  onchange="updatePdfPreview()"
-                  class="rounded text-emerald-500 focus:ring-0 bg-black/40 border-white/10 w-4 h-4"
-                />
-                <span class="text-[10px]">Terms Block</span>
-              </label>
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="pdf-cfg-show-address"
-                  checked
-                  onchange="updatePdfPreview()"
-                  class="rounded text-emerald-500 focus:ring-0 bg-black/40 border-white/10 w-4 h-4"
-                />
-                <span class="text-[10px]">Company Address</span>
-              </label>
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="pdf-cfg-show-banner-note"
-                  onchange="updatePdfPreview()"
-                  class="rounded text-emerald-500 focus:ring-0 bg-black/40 border-white/10 w-4 h-4"
-                />
-                <span class="text-[10px]">Banner Note Strip</span>
-              </label>
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  id="pdf-cfg-show-itemcode"
-                  checked
-                  onchange="updatePdfPreview()"
-                  class="rounded text-emerald-500 focus:ring-0 bg-black/40 border-white/10 w-4 h-4"
-                />
-                <span class="text-[10px]">Item SKU Code</span>
-              </label>
-            </div>
+          <div class="space-y-1"><label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold">Footer Message</label><textarea id="pdf-cfg-footer" rows="2" oninput="updatePdfPreview()" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white resize-none">Thank you for your business!</textarea></div>
+          <div class="grid grid-cols-3 gap-3">
+            <label class="flex items-center gap-2 text-[10px] text-slate-300"><input type="checkbox" id="pdf-cfg-show-mmk" checked onchange="updatePdfPreview()" class="accent-emerald-500 w-3.5 h-3.5" />MMK</label>
+            <label class="flex items-center gap-2 text-[10px] text-slate-300"><input type="checkbox" id="pdf-cfg-show-sig" checked onchange="updatePdfPreview()" class="accent-emerald-500 w-3.5 h-3.5" />Signature</label>
+            <label class="flex items-center gap-2 text-[10px] text-slate-300"><input type="checkbox" id="pdf-cfg-show-payment" checked onchange="updatePdfPreview()" class="accent-emerald-500 w-3.5 h-3.5" />Payment</label>
+            <label class="flex items-center gap-2 text-[10px] text-slate-300"><input type="checkbox" id="pdf-cfg-show-tax" onchange="updatePdfPreview()" class="accent-emerald-500 w-3.5 h-3.5" />Tax</label>
+            <label class="flex items-center gap-2 text-[10px] text-slate-300"><input type="checkbox" id="pdf-cfg-show-terms" checked onchange="updatePdfPreview()" class="accent-emerald-500 w-3.5 h-3.5" />Terms</label>
+            <label class="flex items-center gap-2 text-[10px] text-slate-300"><input type="checkbox" id="pdf-cfg-show-address" checked onchange="updatePdfPreview()" class="accent-emerald-500 w-3.5 h-3.5" />Address</label>
           </div>
         </div>
-
-        <!-- ── RIGHT: Live Preview Panel ── -->
-        <div
-          class="w-full xl:w-72 2xl:w-80 shrink-0 flex flex-col p-4 xl:border-l border-white/5 bg-black/10"
-        >
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">
-              Live Preview
-            </p>
-            <span
-              id="pdf-preview-size-badge"
-              class="text-[7px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded-full font-mono uppercase"
-              >A4</span
-            >
-          </div>
-
-          <!-- Simulated paper -->
-          <div
-            id="pdf-preview-paper"
-            class="bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200 font-sans w-full overflow-hidden flex-shrink-0"
-            style="font-size: 7px"
-          >
-            <!-- Header -->
-            <div
-              id="prev-pdf-header"
-              class="text-white"
-              style="background-color: #0f172a; padding: 10px 12px"
-            >
-              <div class="flex items-start justify-between gap-2">
-                <div class="flex-1 min-w-0">
-                  <div id="prev-pdf-banner-note" class="hidden mb-1">
-                    <span
-                      class="text-[4.5px] font-black uppercase tracking-wider border border-white/25 rounded px-1.5 py-0.5 opacity-80"
-                    ></span>
-                  </div>
-                  <p
-                    id="prev-pdf-title"
-                    class="font-black leading-none"
-                    style="font-size: 9px; letter-spacing: 0.06em"
-                  >
-                    AWESOME MYANMAR
-                  </p>
-                  <p id="prev-pdf-subtitle" class="opacity-65 mt-0.5" style="font-size: 5px">
-                    POINT OF SALE INVOICE RECEIPT
-                  </p>
-                  <div
-                    id="prev-pdf-contact-block"
-                    class="mt-1 space-y-0"
-                    style="font-size: 4.5px; opacity: 0.55"
-                  >
-                    <p id="prev-pdf-address-line">Yangon, Myanmar</p>
-                    <p id="prev-pdf-phone-line">+95 9 XXX-XXXXXX</p>
-                    <p id="prev-pdf-website-line">www.awesomemyanmar.com</p>
-                  </div>
-                </div>
-                <div
-                  class="text-right shrink-0"
-                  style="font-size: 5px; opacity: 0.8; font-family: monospace; line-height: 1.6"
-                >
-                  <p class="font-bold">INV-83921</p>
-                  <p>14/07/2026</p>
-                  <p>4,500 Ks/USD</p>
-                </div>
-              </div>
+        <!-- Preview Column -->
+        <div class="bg-black/10 rounded-xl p-4 border border-white/5">
+          <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-3">Live Preview</p>
+          <div id="pdf-preview-paper" class="bg-white rounded-lg shadow-2xl overflow-hidden" style="font-size: 7px">
+            <div id="prev-pdf-header" style="background-color: #0f172a; padding: 10px 12px; color: white;">
+              <p id="prev-pdf-title" class="font-black" style="font-size: 9px;">AWESOME MYANMAR</p>
+              <p id="prev-pdf-subtitle" style="font-size: 5px; opacity: 0.65;">POINT OF SALE INVOICE RECEIPT</p>
             </div>
-
-            <div style="padding: 7px 12px" class="space-y-2">
-              <!-- Bill To -->
-              <div style="font-size: 5.5px" class="text-slate-600">
-                <p
-                  class="font-black text-slate-500 uppercase tracking-wider mb-0.5"
-                  style="font-size: 4.5px"
-                >
-                  Bill To:
-                </p>
-                <p class="font-bold text-slate-900" style="font-size: 7px">Elite Tech Group Co.</p>
-                <p>Yangon, Myanmar</p>
-              </div>
-
-              <!-- Items Table -->
-              <table class="w-full border-collapse" style="font-size: 5.5px">
-                <thead>
-                  <tr
-                    id="prev-pdf-table-header"
-                    style="background-color: #0ea5e9"
-                    class="text-white"
-                  >
-                    <th class="text-left py-1 px-1">Item</th>
-                    <th class="text-left py-1 px-1" id="prev-pdf-sku-col">SKU</th>
-                    <th class="text-center py-1 px-1">Qty</th>
-                    <th class="text-right py-1 px-1">Price</th>
-                    <th class="text-right py-1 px-1">Total</th>
-                  </tr>
-                </thead>
-                <tbody class="text-slate-700">
-                  <tr class="border-b border-slate-100">
-                    <td class="py-1 px-1">2MP IP Camera</td>
-                    <td class="py-1 px-1 font-mono text-slate-400 text-[4px]" id="prev-pdf-sku-val">
-                      CAM-2MP
-                    </td>
-                    <td class="py-1 px-1 text-center">2</td>
-                    <td class="py-1 px-1 text-right">$45.00</td>
-                    <td class="py-1 px-1 text-right font-bold">$90.00</td>
-                  </tr>
-                  <tr class="border-b border-slate-100">
-                    <td class="py-1 px-1">Cat6 Cable 305m</td>
-                    <td class="py-1 px-1 font-mono text-slate-400 text-[4px]">CAB-C6</td>
-                    <td class="py-1 px-1 text-center">1</td>
-                    <td class="py-1 px-1 text-right">$35.00</td>
-                    <td class="py-1 px-1 text-right font-bold">$35.00</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <!-- Totals -->
-              <div class="flex justify-end" style="font-size: 5.5px">
-                <div class="text-right space-y-0.5" style="min-width: 90px">
-                  <div class="flex justify-between gap-3 text-slate-500">
-                    <span>Subtotal:</span><span>$125.00</span>
-                  </div>
-                  <div
-                    id="prev-pdf-tax-line"
-                    class="hidden flex justify-between gap-3 text-slate-500"
-                  >
-                    <span>Tax (5%):</span><span>$6.25</span>
-                  </div>
-                  <div
-                    class="flex justify-between gap-3 font-black text-slate-900 border-t border-slate-200 pt-0.5"
-                  >
-                    <span>TOTAL:</span><span>$125.00</span>
-                  </div>
-                  <div id="prev-pdf-total-mmk" class="flex justify-between gap-3 text-slate-500">
-                    <span>MMK:</span><span>562,500 Ks</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Payment Block -->
-              <div
-                id="prev-pdf-payment-detail"
-                class="rounded p-1.5 border border-slate-100 bg-slate-50/80"
-                style="font-size: 4.5px"
-              >
-                <p
-                  class="font-black text-slate-600 uppercase tracking-wider mb-0.5"
-                  style="font-size: 3.5px"
-                >
-                  Payment
-                </p>
-                <p class="text-slate-500">Method A: Cash — $100.00</p>
-                <p class="text-slate-500">Method B: Mobile Pay — $25.00</p>
-              </div>
-
-              <!-- Footer -->
-              <div
-                class="border-t border-dashed border-slate-200 pt-1.5 space-y-1"
-                style="font-size: 5px"
-              >
-                <p id="prev-pdf-footer" class="text-slate-500 font-medium">
-                  Thank you for your business!
-                </p>
-                <div
-                  id="prev-pdf-terms-block"
-                  class="text-slate-400 border-t border-slate-100 pt-1 space-y-0.5"
-                >
-                  <p
-                    class="font-black text-slate-500 uppercase tracking-wider"
-                    style="font-size: 3.5px"
-                  >
-                    Terms &amp; Conditions
-                  </p>
-                  <p>1. All sales are final.</p>
-                  <p>2. Returns within 7 days with receipt.</p>
-                </div>
-              </div>
-
-              <!-- Signature -->
-              <div id="prev-pdf-sig-block" class="flex justify-end pt-1 pb-2">
-                <div
-                  class="border-t border-slate-300 text-center"
-                  style="width: 55px; font-size: 3.5px; padding-top: 2px; color: #94a3b8"
-                >
-                  AUTHORIZED SIGNATURE
-                </div>
-              </div>
+            <div style="padding: 8px 12px;">
+              <table class="w-full text-[5.5px]"><thead><tr id="prev-pdf-table-header" style="background-color: #0ea5e9; color: white;"><th class="text-left py-1 px-1">Item</th><th class="text-center py-1 px-1">Qty</th><th class="text-right py-1 px-1">Price</th></tr></thead><tbody><tr class="border-b border-slate-100"><td class="py-1 px-1">Sample Item</td><td class="text-center py-1 px-1">1</td><td class="text-right py-1 px-1">$50.00</td></tr></tbody></table>
+              <div class="text-right mt-1 text-[5.5px]"><div class="font-black border-t border-slate-200 pt-0.5">TOTAL: $50.00</div></div>
+              <p id="prev-pdf-footer" class="text-[5px] text-slate-500 mt-2 text-center">Thank you for your business!</p>
             </div>
           </div>
-
-          <p class="text-[7px] text-slate-700 mt-2 text-center">
-            Preview is scaled — actual PDF uses selected paper size
-          </p>
+          <p class="text-[7px] text-slate-600 mt-2 text-center">Preview — actual PDF uses selected paper</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: Database ═══ -->
+  <div id="settings-panel-database" class="space-y-6 hidden">
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <span class="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-sm">💾</span>
+          Backup & Restore
+        </h3>
+        <p class="text-[10px] text-slate-500">Save a snapshot of your database or restore from a previous backup.</p>
+        <div class="flex gap-3">
+          <button onclick="triggerBackup()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs px-4 py-3 rounded-xl transition shadow-md uppercase tracking-wider">Backup Database</button>
+          <button onclick="triggerRestore()" class="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 font-extrabold text-xs px-4 py-3 rounded-xl transition uppercase tracking-wider">Restore System</button>
+          <input type="file" id="restore-file-input" style="display: none" onchange="handleRestoreFile(event)" />
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <span class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-sm">📊</span>
+          Database Statistics
+        </h3>
+        <div id="db-stats" class="space-y-2">
+          <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl"><span class="text-xs text-slate-400">Technicians</span><span id="db-stat-techs" class="text-xs font-bold text-white">-</span></div>
+          <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl"><span class="text-xs text-slate-400">Clients</span><span id="db-stat-clients" class="text-xs font-bold text-white">-</span></div>
+          <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl"><span class="text-xs text-slate-400">Service Records</span><span id="db-stat-jobs" class="text-xs font-bold text-white">-</span></div>
+          <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl"><span class="text-xs text-slate-400">Inventory Items</span><span id="db-stat-inventory" class="text-xs font-bold text-white">-</span></div>
+        </div>
+        <button onclick="loadDatabaseStats()" class="w-full bg-white/5 hover:bg-white/10 py-2.5 rounded-xl text-xs font-bold text-slate-300 uppercase tracking-wider border border-white/10 transition-all">Refresh Stats</button>
       </div>
     </div>
   </div>
