@@ -185,6 +185,43 @@ function register(router, env) {
     }
   });
 
+  // ── POST /api/admin/config/save (alias for PDF builder) ───────────────
+  router.post('/api/admin/config/save', async (request) => {
+    try {
+      const user = await requireAdmin(request);
+      if (!user) return error('Unauthorized', 401);
+
+      // CSRF protection for state-changing request
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+
+      const { key, value } = (await request.json()) as any;
+      if (!key) return error('Missing key', 400);
+
+      const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+      const existing = await db
+        .prepare('SELECT config_key FROM system_config WHERE config_key = ?')
+        .bind(key)
+        .first();
+
+      if (existing) {
+        await db
+          .prepare('UPDATE system_config SET config_value = ? WHERE config_key = ?')
+          .bind(serialized, key)
+          .run();
+      } else {
+        await db
+          .prepare('INSERT INTO system_config (config_key, config_value) VALUES (?, ?)')
+          .bind(key, serialized)
+          .run();
+      }
+
+      return success({ message: 'Config saved', key });
+    } catch (err) {
+      console.error('Save config error:', err.message);
+      return error('Failed to save config', 500);
+    }
+  });
+
   // ── POST /api/admin/config ────────────────────────────────────────────
   router.post('/api/admin/config', async (request) => {
     try {

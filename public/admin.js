@@ -927,24 +927,27 @@ function filterSettingsUsers() {
 async function loadDatabaseStats() {
   const baseUrl = document.getElementById('api-base').value;
   const token = localStorage.getItem('admin_token');
+  if (!token) return;
   const headers = { Authorization: `Bearer ${token}` };
-  try {
-    const [techs, clients, jobs, inv] = await Promise.all([
-      fetch(`${baseUrl}/api/admin/technicians`, { headers }).then(r => r.json()),
-      fetch(`${baseUrl}/api/admin/clients`, { headers }).then(r => r.json()),
-      fetch(`${baseUrl}/api/jobs`, { headers }).then(r => r.json()),
-      fetch(`${baseUrl}/api/inventory`, { headers }).then(r => r.json()),
-    ]);
-    const el = (id) => document.getElementById(id);
-    if (el('db-stat-techs')) el('db-stat-techs').textContent = (techs.data || techs || []).length;
-    if (el('db-stat-clients')) el('db-stat-clients').textContent = (clients.data || clients || []).length;
-    const jobsArr = Array.isArray(jobs.data) ? jobs.data : jobs.jobs || [];
-    if (el('db-stat-jobs')) el('db-stat-jobs').textContent = jobsArr.length;
-    const invData = inv.data;
-    if (el('db-stat-inventory')) el('db-stat-inventory').textContent = invData?.total || (invData?.items || []).length || 0;
-  } catch (err) {
-    console.error('Failed to load DB stats:', err);
-  }
+  const safeFetch = async (url) => {
+    try {
+      const res = await fetch(url, { headers });
+      return res.ok ? await res.json() : null;
+    } catch { return null; }
+  };
+  const [techs, clients, jobs, inv] = await Promise.all([
+    safeFetch(`${baseUrl}/api/admin/technicians`),
+    safeFetch(`${baseUrl}/api/admin/clients`),
+    safeFetch(`${baseUrl}/api/jobs`),
+    safeFetch(`${baseUrl}/api/inventory`),
+  ]);
+  const el = (id) => document.getElementById(id);
+  if (el('db-stat-techs')) el('db-stat-techs').textContent = (techs?.data || techs || []).length;
+  if (el('db-stat-clients')) el('db-stat-clients').textContent = (clients?.data || clients || []).length;
+  const jobsArr = Array.isArray(jobs?.data) ? jobs.data : jobs?.jobs || [];
+  if (el('db-stat-jobs')) el('db-stat-jobs').textContent = jobsArr.length;
+  const invData = inv?.data;
+  if (el('db-stat-inventory')) el('db-stat-inventory').textContent = invData?.total || (invData?.items || []).length || 0;
   // Update settings KPIs
   const kpiRate = document.getElementById('settings-kpi-rate');
   if (kpiRate) kpiRate.textContent = `${
