@@ -4339,18 +4339,24 @@ function renderFullJobsTable(jobs) {
           ? 'bg-indigo-500/10 text-indigo-400'
           : 'bg-amber-500/10 text-amber-500';
 
-    // Construct photos UI
+    // Construct photos UI — show link for Drive files, inline for data URIs
     let photosHtml = '';
     if (j.before_photo) {
+      const isDrive = j.before_photo.includes('drive.google.com');
       photosHtml += `<div class="space-y-1">
                         <span class="block text-[8px] uppercase tracking-wider text-slate-500 font-bold">Before Photo</span>
-                        <img src="${escapeHTML(j.before_photo)}" class="w-20 h-16 object-cover rounded-lg border border-white/10 hover:scale-105 transition-all cursor-pointer" onerror="this.style.display='none'" loading="lazy">
+                        ${isDrive
+                          ? `<a href="${escapeHTML(j.before_photo)}" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>View</a>`
+                          : `<img src="${escapeHTML(j.before_photo)}" class="w-20 h-16 object-cover rounded-lg border border-white/10 hover:scale-105 transition-all cursor-pointer" loading="lazy">`}
                     </div>`;
     }
     if (j.after_photo) {
+      const isDrive = j.after_photo.includes('drive.google.com');
       photosHtml += `<div class="space-y-1">
                         <span class="block text-[8px] uppercase tracking-wider text-slate-500 font-bold">After Photo</span>
-                        <img src="${escapeHTML(j.after_photo)}" class="w-20 h-16 object-cover rounded-lg border border-white/10 hover:scale-105 transition-all cursor-pointer" onerror="this.style.display='none'" loading="lazy">
+                        ${isDrive
+                          ? `<a href="${escapeHTML(j.after_photo)}" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>View</a>`
+                          : `<img src="${escapeHTML(j.after_photo)}" class="w-20 h-16 object-cover rounded-lg border border-white/10 hover:scale-105 transition-all cursor-pointer" loading="lazy">`}
                     </div>`;
     }
     const photosWrapper = photosHtml ? `<div class="flex gap-4 mt-2">${photosHtml}</div>` : '';

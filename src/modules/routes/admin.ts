@@ -244,6 +244,20 @@ function register(router, env) {
     }
   });
 
+  // ── GET /api/admin/roles/list (alias for /api/admin/roles) ─────────────
+  router.get('/api/admin/roles/list', async (request) => {
+    try {
+      const user = await requireAdmin(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const result = await db.prepare('SELECT * FROM roles ORDER BY name ASC').all();
+      return success(result.results);
+    } catch (err) {
+      console.error('Fetch roles list error:', err.message);
+      return error('Failed to fetch roles', 500);
+    }
+  });
+
   // ── DELETE /api/admin/roles/:id ───────────────────────────────────────
   router.delete('/api/admin/roles/:id', async (request, params) => {
     try {
