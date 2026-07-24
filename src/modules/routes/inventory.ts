@@ -3,16 +3,10 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { verifyToken } from '../utils/jwt.js';
+import { authenticate } from '../utils/auth-middleware.js';
 
 function register(router, env) {
   const db = env.DB;
-
-  async function authenticate(request) {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    return await verifyToken(authHeader.slice(7));
-  }
 
   // ── GET /api/inventory ────────────────────────────────────────────────
   router.get('/api/inventory', async (request) => {
@@ -482,6 +476,15 @@ function register(router, env) {
         return error('Missing required fields: serial_number, device_name', 400);
       }
 
+      // Check if warranty already exists
+      const existing = await db
+        .prepare('SELECT serial_number, status FROM inventory_items WHERE serial_number = ?')
+        .bind(serial_number)
+        .first();
+      if (existing) {
+        return error('Warranty already registered for this serial number', 409);
+      }
+
       await db
         .prepare(
           'INSERT OR REPLACE INTO inventory_items (serial_number, device_name, client_id, installed_date, warranty_months, status) VALUES (?, ?, ?, ?, ?, ?)'
@@ -544,6 +547,15 @@ function register(router, env) {
       const { serial_number, device_name, client_id, job_id, warranty_months } = body;
       if (!serial_number || !device_name) {
         return error('Missing required fields: serial_number, device_name', 400);
+      }
+
+      // Check if warranty already exists
+      const existing = await db
+        .prepare('SELECT serial_number, status FROM inventory_items WHERE serial_number = ?')
+        .bind(serial_number)
+        .first();
+      if (existing) {
+        return error('Warranty already registered for this serial number', 409);
       }
 
       await db

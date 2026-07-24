@@ -322,8 +322,8 @@ function initializeAdminDesk() {
   initLeafletMap();
   setupSearchableClientsListeners();
   refreshDashboardData();
-  // Start dashboard auto refresh loops every 10 seconds
-  setInterval(refreshDashboardData, 10000);
+  // Auto refresh every 60 seconds (reduced from 10s to lower API load)
+  setInterval(refreshDashboardData, 60000);
 }
 
 let hqMarker = null;
@@ -2491,19 +2491,13 @@ function switchReportTab(tab) {
 function loadReportTabData(tab) {
   const baseUrl = document.getElementById('api-base')?.value || '';
 
-  fetch(`${baseUrl}/api/jobs`)
-    .then(res => res.json())
-    .then(jobs => {
-      fetch(`${baseUrl}/api/admin/lookups`)
-        .then(res => res.json())
-        .then(lookups => {
-          fetch(`${baseUrl}/api/admin/cash/safe`)
-            .then(res => res.json())
-            .then(safe => {
-              renderReportTabData(tab, jobs, lookups, safe);
-            });
-        });
-    });
+  Promise.all([
+    fetch(`${baseUrl}/api/jobs`).then(r => r.json()),
+    fetch(`${baseUrl}/api/admin/lookups`).then(r => r.json()),
+    fetch(`${baseUrl}/api/admin/cash/safe`).then(r => r.json()),
+  ]).then(([jobs, lookups, safe]) => {
+    renderReportTabData(tab, jobs, lookups, safe);
+  }).catch(err => console.error('Failed to load report data:', err));
 }
 
 function renderReportTabData(tab, jobs, lookups, safe) {

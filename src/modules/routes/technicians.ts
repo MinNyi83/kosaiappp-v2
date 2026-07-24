@@ -4,7 +4,7 @@
 
 import { getCorsHeaders } from '../utils/cors.js';
 import { success, error } from '../utils/response.js';
-import { verifyToken } from '../utils/jwt.js';
+import { authenticate } from '../utils/auth-middleware.js';
 
 /**
  * @param {import("../utils/router").Router} router
@@ -12,14 +12,6 @@ import { verifyToken } from '../utils/jwt.js';
  */
 function register(router, env) {
   const db = env.DB;
-
-  // ── Auth middleware ───────────────────────────────────────────────────
-  async function authenticate(request) {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    const token = authHeader.slice(7);
-    return await verifyToken(token);
-  }
 
   // ── GET /api/technicians ──────────────────────────────────────────────
   router.get('/api/technicians', async (request) => {

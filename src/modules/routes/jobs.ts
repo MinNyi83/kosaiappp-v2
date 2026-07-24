@@ -8,17 +8,11 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { verifyToken } from '../utils/jwt.js';
+import { authenticate } from '../utils/auth-middleware.js';
 import { uploadFileToGoogleDrive } from '../utils/google.js';
 
 function register(router, env) {
   const db = env.DB;
-
-  async function authenticate(request) {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    return await verifyToken(authHeader.slice(7));
-  }
 
   // Base SELECT with joins for all job queries
   const BASE_SELECT = `
@@ -557,14 +551,6 @@ function register(router, env) {
           updates.push(`${field} = ?`);
           values.push(body[field]);
         }
-      }
-
-      // Allow renaming job ID if new_id provided
-      if (body.new_id && body.new_id !== id) {
-        const exists = await db.prepare('SELECT id FROM service_records WHERE id = ?').bind(body.new_id).first();
-        if (exists) return error('Job ID already exists', 400);
-        updates.push('id = ?');
-        values.push(body.new_id);
       }
 
       if (updates.length === 0) return error('No fields to update', 400);

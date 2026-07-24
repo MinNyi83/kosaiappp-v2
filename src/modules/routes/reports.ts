@@ -3,17 +3,11 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { verifyToken } from '../utils/jwt.js';
+import { authenticate } from '../utils/auth-middleware.js';
 import { getCorsHeaders } from '../utils/cors.js';
 
 function register(router, env) {
   const db = env.DB;
-
-  async function authenticate(request) {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    return await verifyToken(authHeader.slice(7));
-  }
 
   // ── GET /api/reports/dashboard ────────────────────────────────────────
   router.get('/api/reports/dashboard', async (request) => {
