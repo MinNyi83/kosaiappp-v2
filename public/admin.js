@@ -884,33 +884,41 @@ async function loadSettingsUsers() {
     });
     const data = await res.json();
     const users = data.data || data || [];
+    // Update KPI
+    const kpiEl = document.getElementById('settings-kpi-users');
+    if (kpiEl) kpiEl.textContent = users.length;
+    // Render cards
     container.innerHTML = `
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        ${users.map(u => `
-          <div class="glass-panel p-4 rounded-xl border border-white/5 space-y-2">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-400">${(u.name || '?')[0].toUpperCase()}</div>
-              <div>
-                <p class="text-xs font-bold text-white">${u.name || 'Unknown'}</p>
-                <p class="text-[10px] text-slate-500 font-mono">${u.id || u.username || ''}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 text-[9px] rounded-full font-bold ${u.role === 'Admin' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : u.role === 'Technician' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${u.role || 'N/A'}</span>
-              <span class="text-[9px] ${u.active ? 'text-emerald-400' : 'text-rose-400'}">${u.active ? 'Active' : 'Inactive'}</span>
+      ${users.map(u => `
+        <div class="glass-panel p-4 rounded-xl border border-white/5 space-y-3" data-searchable="${(u.name || '').toLowerCase()} ${(u.id || u.username || '').toLowerCase()} ${(u.role || '').toLowerCase()}">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl ${u.role === 'Admin' ? 'bg-violet-500/10 border-violet-500/20' : u.role === 'Technician' ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-amber-500/10 border-amber-500/20'} border flex items-center justify-center text-sm font-bold ${u.role === 'Admin' ? 'text-violet-400' : u.role === 'Technician' ? 'text-cyan-400' : 'text-amber-400'}">${(u.name || '?')[0].toUpperCase()}</div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-bold text-white truncate">${u.name || 'Unknown'}</p>
+              <p class="text-[10px] text-slate-500 font-mono truncate">${u.id || u.username || ''}</p>
             </div>
           </div>
-        `).join('')}
-      </div>
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 text-[9px] rounded-full font-bold ${u.role === 'Admin' ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : u.role === 'Technician' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">${u.role || 'N/A'}</span>
+            <span class="text-[9px] ${u.active ? 'text-emerald-400' : 'text-rose-400'} font-bold">${u.active ? 'Active' : 'Inactive'}</span>
+          </div>
+        </div>
+      `).join('')}
     `;
   } catch (err) {
-    container.innerHTML = `<p class="text-xs text-rose-400 text-center py-4">Failed to load users: ${err.message}</p>`;
+    container.innerHTML = `<div class="col-span-full glass-panel p-6 rounded-xl text-center text-rose-400 text-xs">Failed to load users: ${err.message}</div>`;
   }
 }
 
-// ============================================================================
-// Database Stats
-// ============================================================================
+function filterSettingsUsers() {
+  const query = document.getElementById('settings-user-search')?.value.toLowerCase() || '';
+  const cards = document.querySelectorAll('#settings-users-content [data-searchable]');
+  cards.forEach(card => {
+    const text = card.getAttribute('data-searchable') || '';
+    card.style.display = text.includes(query) ? '' : 'none';
+  });
+}
+
 async function loadDatabaseStats() {
   const baseUrl = document.getElementById('api-base').value;
   const token = localStorage.getItem('admin_token');
@@ -932,6 +940,40 @@ async function loadDatabaseStats() {
   } catch (err) {
     console.error('Failed to load DB stats:', err);
   }
+  // Update settings KPIs
+  const kpiRate = document.getElementById('settings-kpi-rate');
+  if (kpiRate) kpiRate.textContent = `${
+    document.getElementById('cash-rate-local')?.value || '4500'
+  }`;
+
+  const kpiTables = document.getElementById('settings-kpi-tables');
+  if (kpiTables) kpiTables.textContent = '14';
+}
+
+// ============================================================================
+// Copilot Stats
+// ============================================================================
+let copilotQueryCount = 0;
+let copilotDispatchCount = 0;
+let copilotRouteCount = 0;
+let copilotTotalTime = 0;
+
+function updateCopilotStats(type, responseTimeMs) {
+  if (type === 'query') {
+    copilotQueryCount++;
+    if (responseTimeMs) copilotTotalTime += responseTimeMs;
+  } else if (type === 'dispatch') copilotDispatchCount++;
+  else if (type === 'route') copilotRouteCount++;
+
+  const el = (id) => document.getElementById(id);
+  if (el('kpi-copilot-queries')) el('kpi-copilot-queries').textContent = copilotQueryCount;
+  if (el('kpi-copilot-dispatches')) el('kpi-copilot-dispatches').textContent = copilotDispatchCount;
+  if (el('kpi-copilot-routes')) el('kpi-copilot-routes').textContent = copilotRouteCount;
+  if (el('kpi-copilot-speed') && copilotQueryCount > 0) {
+    el('kpi-copilot-speed').textContent = Math.round(copilotTotalTime / copilotQueryCount) + 'ms';
+  }
+  const queryKpi = document.getElementById('copilot-kpi-queries');
+  if (queryKpi) queryKpi.textContent = `${copilotQueryCount} queries this session`;
 }
 
 function toggleCustomerTypeFields(val) {
