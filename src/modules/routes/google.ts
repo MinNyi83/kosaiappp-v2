@@ -7,14 +7,31 @@ import { verifyToken, signToken } from '../utils/jwt.js';
 import { checkRateLimit } from '../utils/rate-limit.js';
 
 /**
- * Verify PIN against stored hash (SHA-256). Rejects bcrypt and plain-text.
+ * Verify PIN against stored hash.
+ * Supports:
+ *   - Salted SHA-256: $sha256$<salt>$<hash>
+ *   - Plain SHA-256: 64-char hex string
  */
 async function verifyPin(plainPin: string, storedHash: string): Promise<boolean> {
   if (!plainPin || !storedHash) return false;
   // Reject bcrypt hashes
   if (storedHash.startsWith('$2b$') || storedHash.startsWith('$2a$')) return false;
-  // SHA-256 verification
+
   const encoder = new TextEncoder();
+
+  // Salted SHA-256 format: $sha256$<salt>$<hash>
+  const saltedMatch = storedHash.match(/^\$sha256\$([a-f0-9]+)\$([a-f0-9]+)$/);
+  if (saltedMatch) {
+    const salt = saltedMatch[1];
+    const expectedHash = saltedMatch[2];
+    const data = encoder.encode(plainPin + salt);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hashHex === expectedHash;
+  }
+
+  // Plain SHA-256 verification (64-char hex)
   const data = encoder.encode(plainPin);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));

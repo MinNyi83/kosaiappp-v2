@@ -171,7 +171,10 @@ function register(router, env) {
 
 /**
  * Verify a plain-text PIN against the stored hash.
- * Supports SHA-256 hashes. Bcrypt hashes ($2b$/$2a$) are rejected — migrate to SHA-256.
+ * Supports:
+ *   - Salted SHA-256: $sha256$<salt>$<hash>
+ *   - Plain SHA-256: 64-char hex string
+ *   - Plain-text fallback for local dev only
  */
 async function verifyPin(plainPin, storedHash) {
   if (!plainPin || !storedHash) return false;
@@ -184,8 +187,21 @@ async function verifyPin(plainPin, storedHash) {
     return false;
   }
 
-  // SHA-256 verification
   const encoder = new TextEncoder();
+
+  // Salted SHA-256 format: $sha256$<salt>$<hash>
+  const saltedMatch = storedHash.match(/^\$sha256\$([a-f0-9]+)\$([a-f0-9]+)$/);
+  if (saltedMatch) {
+    const salt = saltedMatch[1];
+    const expectedHash = saltedMatch[2];
+    const data = encoder.encode(plainPin + salt);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hashHex === expectedHash;
+  }
+
+  // Plain SHA-256 verification (64-char hex)
   const data = encoder.encode(plainPin);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
