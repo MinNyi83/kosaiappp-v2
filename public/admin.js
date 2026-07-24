@@ -6524,8 +6524,8 @@ window.loadPosData = async function () {
       body: JSON.stringify({ technician_id: '' }),
     }).catch(() => null);
 
-    // Fetch all service tickets for linking
-    const ticketsRes = await fetch(`${baseUrl}/api/portal/history?client_id=`, {
+    // Fetch all service tickets for linking (use admin endpoint, not portal)
+    const ticketsRes = await fetch(`${baseUrl}/api/jobs?limit=200`, {
       headers: { Authorization: `Bearer ${token}` },
     }).catch(() => null);
 
