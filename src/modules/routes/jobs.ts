@@ -374,6 +374,12 @@ function register(router, env) {
         return error('Forbidden', 403);
       }
 
+      // Validate CSRF token for state-changing requests
+      const { requireCsrf } = await import('../utils/csrf.js');
+      if (!(await requireCsrf(request, user.id))) {
+        return error('Invalid CSRF token', 403);
+      }
+
       const updateFields: string[] = ['status = ?', 'updated_at = CURRENT_TIMESTAMP'];
       const updateValues: any[] = [status];
 

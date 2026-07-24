@@ -58,7 +58,8 @@ function register(router, env) {
         email: tech.email,
       });
 
-      return success({
+      // Set httpOnly cookie for additional security (fallback to localStorage)
+      const response = success({
         token,
         technician: {
           id: tech.id,
@@ -70,6 +71,11 @@ function register(router, env) {
           specialties: tech.specialties ? (JSON.parse(tech.specialties) as any) : [],
         },
       });
+
+      // Add httpOnly cookie
+      const newHeaders = new Headers(response.headers);
+      newHeaders.append('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400`);
+      return new Response(response.body, { status: response.status, headers: newHeaders });
     } catch (err) {
       console.error('Login error:', err.message);
       return error('Login failed', 500);
@@ -141,6 +147,24 @@ function register(router, env) {
       return success(tech);
     } catch (err) {
       return error('Failed to fetch profile: ' + err.message, 500);
+    }
+  });
+
+  // ── GET /api/auth/csrf-token ──────────────────────────────────────────
+  router.get('/api/auth/csrf-token', async (request) => {
+    try {
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return error('Unauthorized', 401);
+      }
+      const payload = await verifyToken(authHeader.slice(7));
+      if (!payload) return error('Invalid token', 401);
+
+      const { generateCsrfToken } = await import('../utils/csrf.js');
+      const csrfToken = await generateCsrfToken(payload.id);
+      return success({ csrf_token: csrfToken });
+    } catch (err) {
+      return error('Failed to generate CSRF token', 500);
     }
   });
 }

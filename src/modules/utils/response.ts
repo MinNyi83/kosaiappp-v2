@@ -1,14 +1,26 @@
 // src/modules/utils/response.ts
-export const success = (data: any, message: any = null, status: any = 200) => {
+export const success = (data: any, message: any = null, status: any = 200, headers: any = {}) => {
   let msg = typeof message === 'string' ? message : null;
   let code = typeof message === 'number' ? message : status;
   const body: any = { success: true, data };
   if (msg) body.message = msg;
   return new Response(JSON.stringify(body), {
     status: code,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
   });
 };
+
+/**
+ * Set an httpOnly secure cookie on the response
+ */
+export function setAuthCookie(response: Response, token: string): Response {
+  const newHeaders = new Headers(response.headers);
+  newHeaders.append('Set-Cookie', `auth_token=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400`);
+  return new Response(response.body, {
+    status: response.status,
+    headers: newHeaders,
+  });
+}
 
 export const error = (
   message: any = 'Internal Server Error',
