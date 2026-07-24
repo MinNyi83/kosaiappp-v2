@@ -1454,16 +1454,16 @@ function showPOSReceipt(sale) {
     <div class="text-center text-xs text-slate-400 mb-4">
       <p class="font-bold text-white">KosAI Technologies</p>
       <p>${new Date(sale.date).toLocaleString()}</p>
-      <p>Invoice: ${sale.receipt_no}</p>
-      <p>Customer: ${sale.customer}</p>
-      ${sale.linked_job ? `<p>Job ID: ${sale.linked_job}</p>` : ''}
+      <p>Invoice: ${escapeHTML(sale.receipt_no)}</p>
+      <p>Customer: ${escapeHTML(sale.customer)}</p>
+      ${sale.linked_job ? `<p>Job ID: ${escapeHTML(sale.linked_job)}</p>` : ''}
     </div>
     <div class="space-y-2">
       ${sale.items
         .map(
           (item) => `
         <div class="flex justify-between text-xs">
-          <span class="text-slate-300">${item.name} x${item.qty}</span>
+          <span class="text-slate-300">${escapeHTML(item.name)} x${item.qty}</span>
           <span class="text-white font-bold">$${(item.price_usd * item.qty).toFixed(2)}</span>
         </div>
       `
@@ -1890,13 +1890,13 @@ function loadDistributors() {
       tbody.innerHTML = distributors.map(d => `
         <tr class="hover:bg-white/5 transition-all">
           <td class="p-4">
-            <div class="font-bold text-white">${d.name || 'N/A'}</div>
+            <div class="font-bold text-white">${escapeHTML(d.name || 'N/A')}</div>
           </td>
-          <td class="p-4 text-slate-300">${d.contact_person || 'N/A'}</td>
-          <td class="p-4 text-slate-300">${d.phone || 'N/A'}</td>
-          <td class="p-4 text-slate-300">${d.email || 'N/A'}</td>
+          <td class="p-4 text-slate-300">${escapeHTML(d.contact_person || 'N/A')}</td>
+          <td class="p-4 text-slate-300">${escapeHTML(d.phone || 'N/A')}</td>
+          <td class="p-4 text-slate-300">${escapeHTML(d.email || 'N/A')}</td>
           <td class="p-4">
-            <span class="text-[10px] text-slate-400 bg-black/30 px-2 py-1 rounded">${d.product_lines || 'N/A'}</span>
+            <span class="text-[10px] text-slate-400 bg-black/30 px-2 py-1 rounded">${escapeHTML(d.product_lines || 'N/A')}</span>
           </td>
           <td class="p-4 text-right">
             <button class="text-xs text-amber-400 hover:text-amber-300">Edit</button>
@@ -1994,8 +1994,8 @@ function handleBarcodeResult(code) {
               <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
             <div class="flex-1">
-              <div class="text-xs font-bold text-white">${item.item_name}</div>
-              <div class="text-[10px] text-slate-400">${item.item_code} | ${item.category}</div>
+              <div class="text-xs font-bold text-white">${escapeHTML(item.item_name)}</div>
+              <div class="text-[10px] text-slate-400">${escapeHTML(item.item_code)} | ${escapeHTML(item.category)}</div>
             </div>
             <div class="text-right">
               <div class="text-sm font-bold text-emerald-400">$${(item.unit_price || 0).toFixed(2)}</div>
@@ -2003,8 +2003,8 @@ function handleBarcodeResult(code) {
             </div>
           </div>
           <div class="mt-3 flex gap-2">
-            <button onclick="quickRestock('${item.item_code}')" class="flex-1 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-bold py-2 rounded-lg hover:bg-amber-500/30 transition">Quick Restock</button>
-            <button onclick="addToPOSFromScanner('${item.item_code}')" class="flex-1 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold py-2 rounded-lg hover:bg-emerald-500/30 transition">Add to POS</button>
+            <button onclick="quickRestock('${escapeHTML(item.item_code)}')" class="flex-1 bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-bold py-2 rounded-lg hover:bg-amber-500/30 transition">Quick Restock</button>
+            <button onclick="addToPOSFromScanner('${escapeHTML(item.item_code)}')" class="flex-1 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold py-2 rounded-lg hover:bg-emerald-500/30 transition">Add to POS</button>
           </div>
         `;
         showToast(`Found: ${item.item_name}`, 'success');
@@ -4565,8 +4565,8 @@ function plotJobsOnMap(jobs) {
   hqMarker = L.marker([hq.lat, hq.lng], { icon: hqIcon }).addTo(map).bindPopup(`
                     <div class="text-xs space-y-1">
                         <span class="text-[10px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded font-bold uppercase">HQ</span>
-                        <strong class="text-white block font-bold mt-1">${hq.name}</strong>
-                        <div class="text-slate-400 text-[10px]">${hq.address}</div>
+                        <strong class="text-white block font-bold mt-1">${escapeHTML(hq.name)}</strong>
+                        <div class="text-slate-400 text-[10px]">${escapeHTML(hq.address)}</div>
                     </div>
                 `);
 
@@ -4586,10 +4586,10 @@ function plotJobsOnMap(jobs) {
 
     const m = L.marker([lat, lng], { icon: customIcon }).addTo(map).bindPopup(`
                         <div class="text-xs space-y-1">
-                            <strong class="text-amber-500 font-mono">${job.id}</strong>
-                            <div class="font-bold text-white">${job.company_name || 'Client Site'}</div>
-                            <div class="text-slate-400">Assigned: ${job.tech_name || 'N/A'}</div>
-                            <div class="font-semibold text-indigo-300">${job.service_type} (${job.status})</div>
+                            <strong class="text-amber-500 font-mono">${escapeHTML(job.id)}</strong>
+                            <div class="font-bold text-white">${escapeHTML(job.company_name || 'Client Site')}</div>
+                            <div class="text-slate-400">Assigned: ${escapeHTML(job.tech_name || 'N/A')}</div>
+                            <div class="font-semibold text-indigo-300">${escapeHTML(job.service_type)} (${escapeHTML(job.status)})</div>
                         </div>
                     `);
     mapMarkers.push(m);
