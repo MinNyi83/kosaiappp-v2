@@ -24,13 +24,25 @@ window.showToast = function (message, type = 'info', duration = 3000) {
     warning: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
     info: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
   };
-  toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl border ${colors[type]} shadow-lg backdrop-blur-xl transform translate-y-[-100%] transition-transform duration-300 pointer-events-auto`;
+  const barColors = {
+    success: 'bg-emerald-500', error: 'bg-rose-500',
+    warning: 'bg-amber-500', info: 'bg-blue-500',
+  };
+  toast.style.cssText = 'transform: translateY(-120%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); pointer-events: auto;';
+  toast.className = `relative flex items-center gap-3 px-4 py-3 rounded-xl border ${colors[type]} shadow-lg backdrop-blur-xl overflow-hidden`;
   toast.innerHTML = `<span class="text-sm font-medium flex-1">${escapeHTML(message)}</span>
-    <button onclick="this.parentElement.remove()" class="flex-shrink-0 opacity-60 hover:opacity-100 text-xs">&times;</button>`;
+    <button onclick="this.parentElement.remove()" class="flex-shrink-0 opacity-60 hover:opacity-100 text-xs">&times;</button>
+    <div class="absolute bottom-0 left-0 h-0.5 ${barColors[type]}" style="width:100%;transition:width ${duration}ms linear;"></div>`;
   container.appendChild(toast);
-  requestAnimationFrame(() => toast.classList.remove('translate-y-[-100%]'));
+  requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; });
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const bar = toast.querySelector('div');
+      if (bar) bar.style.width = '0%';
+    });
+  });
   setTimeout(() => {
-    toast.classList.add('translate-y-[-100%]');
+    toast.style.transform = 'translateY(-120%)';
     setTimeout(() => toast.remove(), 300);
   }, duration);
 };
