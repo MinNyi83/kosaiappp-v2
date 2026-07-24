@@ -892,24 +892,20 @@ ${schema}`;
   });
 
   // ── GET /api/portal/history ───────────────────────────────────────────
-  // Client job history for portal / POS
+  // Client job history for portal — public access with client_id parameter
   router.get('/api/portal/history', async (request) => {
     try {
-      const user = await authenticate(request);
-      if (!user) return error('Unauthorized', 401);
-
       const url = new URL(request.url);
       const client_id = url.searchParams.get('client_id');
+      if (!client_id) return error('Missing client_id parameter', 400);
 
-      let query = `SELECT sr.*, t.name as tech_name
+      // Allow public access — no auth required for portal
+      let query = `SELECT sr.*, t.name as tech_name, c.company_name
                    FROM service_records sr
-                   LEFT JOIN technicians t ON sr.technician_id = t.id`;
-      const params: any[] = [];
-
-      if (client_id) {
-        query += ' WHERE sr.client_id = ?';
-        params.push(client_id);
-      }
+                   LEFT JOIN technicians t ON sr.technician_id = t.id
+                   LEFT JOIN clients c ON sr.client_id = c.id
+                   WHERE sr.client_id = ?`;
+      const params: any[] = [client_id];
       query += ' ORDER BY sr.created_at DESC LIMIT 50';
 
       const result = await db
@@ -919,6 +915,48 @@ ${schema}`;
       return success(result.results);
     } catch (err) {
       return error('Failed to fetch history: ' + err.message, 500);
+    }
+  });
+
+  // ── GET /api/portal/warranties ────────────────────────────────────────
+  // Client warranties for portal — public access
+  router.get('/api/portal/warranties', async (request) => {
+    try {
+      const url = new URL(request.url);
+      const client_id = url.searchParams.get('client_id');
+      if (!client_id) return error('Missing client_id parameter', 400);
+
+      const result = await db
+        .prepare('SELECT * FROM inventory_items WHERE client_id = ? ORDER BY installed_date DESC')
+        .bind(client_id)
+        .all();
+      return success(result.results);
+    } catch (err) {
+      return error('Failed to fetch warranties: ' + err.message, 500);
+    }
+  });
+
+  // ── GET /api/portal/transactions ──────────────────────────────────────
+  // Client transactions for portal — public access
+  router.get('/api/portal/transactions', async (request) => {
+    try {
+      const url = new URL(request.url);
+      const client_id = url.searchParams.get('client_id');
+      if (!client_id) return error('Missing client_id parameter', 400);
+
+      // Get transactions linked to this client's jobs
+      const result = await db
+        .prepare(
+          `SELECT ct.* FROM cash_transactions ct
+           LEFT JOIN service_records sr ON ct.linked_batch = sr.id
+           WHERE sr.client_id = ? OR ct.notes LIKE ?
+           ORDER BY ct.created_at DESC LIMIT 50`
+        )
+        .bind(client_id, `%${client_id}%`)
+        .all();
+      return success(result.results);
+    } catch (err) {
+      return error('Failed to fetch transactions: ' + err.message, 500);
     }
   });
 

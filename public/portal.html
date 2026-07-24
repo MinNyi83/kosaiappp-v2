@@ -197,6 +197,15 @@
     <script>
       const API_BASE_URL = window.location.origin;
 
+      function escapeHTML(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      }
+
+      function safeNum(val, decimals = 5) {
+        return (val != null && !isNaN(val)) ? Number(val).toFixed(decimals) : 'N/A';
+      }
+
       let activeFeedLogs = [];
       let feedPage = 1;
       const feedPerPage = 4;
@@ -294,8 +303,8 @@
                                       return `
                                     <div class="flex justify-between items-center text-xs bg-black/40 p-2.5 rounded-lg border border-white/5">
                                         <div>
-                                            <span class="text-white font-bold block">${w.device_name}</span>
-                                            <span class="text-[9px] text-slate-400 font-mono">S/N: ${w.serial_number}</span>
+                                            <span class="text-white font-bold block">${escapeHTML(w.device_name)}</span>
+                                            <span class="text-[9px] text-slate-400 font-mono">S/N: ${escapeHTML(w.serial_number)}</span>
                                         </div>
                                         <div class="text-right font-mono">
                                             <span class="block text-[9px] text-slate-500">Exp: ${expiryDate.toLocaleDateString()}</span>
@@ -345,7 +354,7 @@
                                 <div class="flex justify-between items-center text-xs bg-black/40 p-2.5 rounded-lg border border-white/5 font-mono">
                                     <div>
                                         <span class="px-2 py-0.5 rounded-full font-bold text-[9px] border ${badgeColor} mr-2">${t.transaction_type}</span>
-                                        <span class="text-slate-300 font-bold">${t.notes}</span>
+                                        <span class="text-slate-300 font-bold">${escapeHTML(t.notes)}</span>
                                     </div>
                                     <div class="text-right">
                                         <span class="text-white block font-bold">${amountPrefix}${t.primary_currency === 'USD' ? '$' : ''}${t.amount.toLocaleString()} ${t.primary_currency === 'MMK' ? 'Ks' : ''}</span>
@@ -355,7 +364,7 @@
                             `;
               });
             }
-          } catch (e) {}
+          } catch (e) { console.error('Error:', e); }
 
           feedPage = 1;
           renderFeed();
@@ -394,7 +403,7 @@
           let equipmentList = [];
           try {
             equipmentList = JSON.parse(log.equipment_used || '[]');
-          } catch (e) {}
+          } catch (e) { console.error('Error:', e); }
 
           block.innerHTML = `
                     <div class="flex justify-between items-start border-b border-white/5 pb-3">
@@ -409,22 +418,22 @@
                     <div class="grid grid-cols-2 gap-4 text-xs bg-black/20 p-3 rounded-xl border border-white/5 font-mono text-slate-400">
                         <div>
                             <span class="font-bold text-slate-300 block mb-0.5">⏱️ Arrival</span>
-                            ${log.arrival_time ? `${log.arrival_time}<br><a href="https://www.google.com/maps?q=${log.arrival_lat},${log.arrival_lng}" target="_blank" class="text-indigo-400 hover:underline">GPS: ${log.arrival_lat.toFixed(5)}, ${log.arrival_lng.toFixed(5)}</a>` : 'Not recorded'}
+                            ${log.arrival_time ? `${escapeHTML(log.arrival_time)}${log.arrival_lat != null && log.arrival_lng != null ? `<br><a href="https://www.google.com/maps?q=${log.arrival_lat},${log.arrival_lng}" target="_blank" class="text-indigo-400 hover:underline">GPS: ${safeNum(log.arrival_lat)}, ${safeNum(log.arrival_lng)}</a>` : ''}` : 'Not recorded'}
                         </div>
                         <div>
                             <span class="font-bold text-slate-300 block mb-0.5">⏱️ Completion</span>
-                            ${log.completion_time ? `${log.completion_time}<br><a href="https://www.google.com/maps?q=${log.completion_lat},${log.completion_lng}" target="_blank" class="text-indigo-400 hover:underline">GPS: ${log.completion_lat.toFixed(5)}, ${log.completion_lng.toFixed(5)}</a>` : 'Not recorded'}
+                            ${log.completion_time ? `${escapeHTML(log.completion_time)}${log.completion_lat != null && log.completion_lng != null ? `<br><a href="https://www.google.com/maps?q=${log.completion_lat},${log.completion_lng}" target="_blank" class="text-indigo-400 hover:underline">GPS: ${safeNum(log.completion_lat)}, ${safeNum(log.completion_lng)}</a>` : ''}` : 'Not recorded'}
                         </div>
                     </div>
 
                     <div class="grid md:grid-cols-2 gap-5 text-sm">
                         <div class="space-y-1">
                             <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target Statement of Scope</h4>
-                            <p class="text-slate-300 bg-black/30 p-4 rounded-xl border border-white/5 leading-relaxed">${log.job_description}</p>
+                            <p class="text-slate-300 bg-black/30 p-4 rounded-xl border border-white/5 leading-relaxed">${escapeHTML(log.job_description)}</p>
                         </div>
                         <div class="space-y-1">
                             <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Engineer Resolutions & Signoff Notes</h4>
-                            <p class="text-emerald-400 bg-emerald-950/10 p-4 rounded-xl border border-emerald-500/20 leading-relaxed">${log.technician_notes || 'No closing addenda documented.'}</p>
+                            <p class="text-emerald-400 bg-emerald-950/10 p-4 rounded-xl border border-emerald-500/20 leading-relaxed">${escapeHTML(log.technician_notes || 'No closing addenda documented.')}</p>
                         </div>
                     </div>
                     <div class="space-y-2">
