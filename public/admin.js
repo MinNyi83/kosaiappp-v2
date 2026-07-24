@@ -7901,7 +7901,7 @@ window.loadRbacSettings = async function () {
   const token = localStorage.getItem('admin_token');
 
   try {
-    const res = await fetch(`${baseUrl}/api/admin/roles/list`, {
+    const res = await fetch(`${baseUrl}/api/admin/roles`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
