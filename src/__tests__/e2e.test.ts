@@ -45,7 +45,8 @@ describe('POST /api/auth/login-password', () => {
 
   beforeAll(async () => {
     // Seed test admin via wrangler D1 CLI before worker starts
-    seedDB("INSERT OR REPLACE INTO technicians (id, name, role, username, password, active, email) VALUES ('TEST-LOGIN-1', 'Test Login Admin', 'Admin', 'testlogin', 'pass123', 1, 'testlogin@test.com')");
+    // PIN is SHA-256 hashed (9b8769... = hash of 'pass123')
+    seedDB("INSERT OR REPLACE INTO technicians (id, name, role, username, pin, active, email) VALUES ('TEST-LOGIN-1', 'Test Login Admin', 'Admin', 'testlogin', '9b8769a4a742959a2d0298c36fb70623f2dfacda8436237df08d8dfd5b37374c', 1, 'testlogin@test.com')");
 
     worker = await unstable_dev('src/index.ts', {
       experimental: { disableExperimentalWarning: true },
@@ -102,7 +103,8 @@ describe('RMA & Warranty endpoints', () => {
 
   beforeAll(async () => {
     // Seed admin user via wrangler D1 CLI
-    seedDB("INSERT OR REPLACE INTO technicians (id, name, role, username, password, active, email) VALUES ('RMA-ADMIN', 'RMA Admin', 'Admin', 'rmaadmin', 'rmapass', 1, 'rma@test.com')");
+    // PIN is SHA-256 hashed (fe7476... = hash of 'rmapass')
+    seedDB("INSERT OR REPLACE INTO technicians (id, name, role, username, pin, active, email) VALUES ('RMA-ADMIN', 'RMA Admin', 'Admin', 'rmaadmin', 'fe7476b2c7dbe38e82aaaa00637eac78f24b8ca42456b24427fd0aa6ea2aaa56', 1, 'rma@test.com')");
 
     worker = await unstable_dev('src/index.ts', {
       experimental: { disableExperimentalWarning: true },

@@ -202,7 +202,7 @@ describe('Google Routes', () => {
         name: 'Test Tech',
         email: 'test@test.com',
         role: 'technician',
-        password: 'correct-password',
+        pin: '9246aa9be8de7b40d64eb664986430793b6cc13a19d2a456981e44f28303f9cf', // SHA-256 of 'correct-password'
         active: 1,
       });
 

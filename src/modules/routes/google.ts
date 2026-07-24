@@ -4,6 +4,23 @@
 
 import { success, error } from '../utils/response.js';
 import { verifyToken, signToken } from '../utils/jwt.js';
+import { checkRateLimit } from '../utils/rate-limit.js';
+
+/**
+ * Verify PIN against stored hash (SHA-256). Rejects bcrypt and plain-text.
+ */
+async function verifyPin(plainPin: string, storedHash: string): Promise<boolean> {
+  if (!plainPin || !storedHash) return false;
+  // Reject bcrypt hashes
+  if (storedHash.startsWith('$2b$') || storedHash.startsWith('$2a$')) return false;
+  // SHA-256 verification
+  const encoder = new TextEncoder();
+  const data = encoder.encode(plainPin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return hashHex === storedHash;
+}
 
 function register(router, env) {
   const db = env.DB;
@@ -11,6 +28,12 @@ function register(router, env) {
   // ── POST /api/auth/google ─────────────────────────────────────────────
   router.post('/api/auth/google', async (request) => {
     try {
+      // Rate limit login attempts
+      const rateLimitRes = await checkRateLimit(request, 'login', 'auth:google');
+      if (rateLimitRes.blocked) {
+        return error('Too many login attempts. Please try again later.', 429);
+      }
+
       const { credential, client_id } = (await request.json()) as any;
       if (!credential) return error('Missing Google credential', 400);
 
@@ -74,6 +97,12 @@ function register(router, env) {
   // ── POST /api/auth/login-password ─────────────────────────────────────
   router.post('/api/auth/login-password', async (request) => {
     try {
+      // Rate limit login attempts
+      const rateLimitRes = await checkRateLimit(request, 'login', 'auth:login-password');
+      if (rateLimitRes.blocked) {
+        return error('Too many login attempts. Please try again later.', 429);
+      }
+
       const { username, password } = (await request.json()) as any;
       if (!username || !password) return error('Missing username or password', 400);
 
@@ -86,11 +115,9 @@ function register(router, env) {
 
       if (!tech) return error('Invalid credentials', 401);
 
-      // Check password field first, then fall back to pin
-      const passwordValid =
-        (tech.password && tech.password === password) ||
-        (tech.pin && tech.pin === password);
-      if (!passwordValid) return error('Invalid credentials', 401);
+      // Verify PIN using SHA-256 hash comparison (never plain-text)
+      const pinValid = tech.pin ? await verifyPin(password, tech.pin) : false;
+      if (!pinValid) return error('Invalid credentials', 401);
 
       const token = await signToken({
         id: tech.id,

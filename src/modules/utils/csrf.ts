@@ -4,7 +4,14 @@
  * Tokens are short-lived (15 min) and bound to the user's session.
  */
 
-const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET || 'csrf-fallback-dev-only';
+const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET;
+
+function getCsrfSecret(): string {
+  if (!CSRF_SECRET) {
+    throw new Error('CSRF_SECRET or JWT_SECRET must be defined in environment variables');
+  }
+  return CSRF_SECRET;
+}
 
 /**
  * Generate a CSRF token for a user session
@@ -18,7 +25,7 @@ export async function generateCsrfToken(userId: string): Promise<string> {
   const data = JSON.stringify(payload);
   const key = await crypto.subtle.importKey(
     'raw',
-    new TextEncoder().encode(CSRF_SECRET),
+    new TextEncoder().encode(getCsrfSecret()),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
@@ -53,7 +60,7 @@ export async function validateCsrfToken(token: string, userId: string): Promise<
     // Verify signature
     const key = await crypto.subtle.importKey(
       'raw',
-      new TextEncoder().encode(CSRF_SECRET),
+      new TextEncoder().encode(getCsrfSecret()),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['verify']

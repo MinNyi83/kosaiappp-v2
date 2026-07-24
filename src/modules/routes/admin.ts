@@ -3,7 +3,7 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { authenticate } from '../utils/auth-middleware.js';
+import { authenticate, requireCsrf } from '../utils/auth-middleware.js';
 import { fetchGeminiWithFallback } from '../utils/gemini.js';
 import { validateSql, ALLOWED_TABLES } from '../utils/sql-validator.js';
 
@@ -46,7 +46,7 @@ function register(router, env) {
 
       const result = await db
         .prepare(
-          'SELECT id, name, nickname, email, phone, role, active, username, pin, telegram_username, photo, permissions FROM technicians ORDER BY name ASC'
+          'SELECT id, name, nickname, email, phone, role, active, username, telegram_username, photo, permissions FROM technicians ORDER BY name ASC'
         )
         .all();
 
@@ -64,6 +64,9 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+
+      // CSRF protection for state-changing request
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       const existing = await db
@@ -115,6 +118,9 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+
+      // CSRF protection for state-changing request
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       await db.prepare('DELETE FROM technicians WHERE id = ?').bind(params.id).run();
       return success({ message: 'Technician deleted' });
@@ -185,6 +191,9 @@ function register(router, env) {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
+      // CSRF protection for state-changing request
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+
       const { key, value, description } = (await request.json()) as any;
       if (!key || value === undefined) return error('Missing key or value', 400);
 
@@ -227,6 +236,9 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+
+      // CSRF protection for state-changing request
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { name, permissions, description } = (await request.json()) as any;
       if (!name) return error('Missing role name', 400);
@@ -278,9 +290,11 @@ function register(router, env) {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
-      // Export all tables to JSON
+      // CSRF protection for state-changing request
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+
+      // Export all tables to JSON (exclude sensitive columns)
       const tables = [
-        'technicians',
         'clients',
         'service_records',
         'inventory_stock',
@@ -294,6 +308,12 @@ function register(router, env) {
         'invoices',
       ];
       const backup: any = {};
+
+      // Technicians table: exclude pin and password columns
+      const techResult = await db
+        .prepare('SELECT id, name, nickname, email, phone, role, active, username, telegram_username, photo, permissions, specialties, created_at, last_login FROM technicians')
+        .all();
+      backup.technicians = (techResult as any).results;
 
       for (const table of tables) {
         const result = await db.prepare(`SELECT * FROM ${table}`).all();
@@ -315,6 +335,9 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+
+      // CSRF protection for state-changing request
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       if (!body || !body._exported_at) return error('Invalid backup format', 400);
@@ -898,14 +921,17 @@ ${schema}`;
   });
 
   // ── GET /api/portal/history ───────────────────────────────────────────
-  // Client job history for portal — public access with client_id parameter
+  // Client job history for portal — requires admin auth or portal token
   router.get('/api/portal/history', async (request) => {
     try {
       const url = new URL(request.url);
       const client_id = url.searchParams.get('client_id');
       if (!client_id) return error('Missing client_id parameter', 400);
 
-      // Allow public access — no auth required for portal
+      // Require admin auth for portal access (client portal should use separate auth)
+      const user = await authenticate(request);
+      if (!user || user.role?.toLowerCase() !== 'admin') return error('Unauthorized', 401);
+
       let query = `SELECT sr.*, t.name as tech_name, c.company_name
                    FROM service_records sr
                    LEFT JOIN technicians t ON sr.technician_id = t.id
@@ -926,12 +952,16 @@ ${schema}`;
   });
 
   // ── GET /api/portal/warranties ────────────────────────────────────────
-  // Client warranties for portal — public access
+  // Client warranties for portal — requires admin auth
   router.get('/api/portal/warranties', async (request) => {
     try {
       const url = new URL(request.url);
       const client_id = url.searchParams.get('client_id');
       if (!client_id) return error('Missing client_id parameter', 400);
+
+      // Require admin auth for portal access
+      const user = await authenticate(request);
+      if (!user || user.role?.toLowerCase() !== 'admin') return error('Unauthorized', 401);
 
       const result = await db
         .prepare('SELECT * FROM inventory_items WHERE client_id = ? ORDER BY installed_date DESC')
@@ -945,12 +975,16 @@ ${schema}`;
   });
 
   // ── GET /api/portal/transactions ──────────────────────────────────────
-  // Client transactions for portal — public access
+  // Client transactions for portal — requires admin auth
   router.get('/api/portal/transactions', async (request) => {
     try {
       const url = new URL(request.url);
       const client_id = url.searchParams.get('client_id');
       if (!client_id) return error('Missing client_id parameter', 400);
+
+      // Require admin auth for portal access
+      const user = await authenticate(request);
+      if (!user || user.role?.toLowerCase() !== 'admin') return error('Unauthorized', 401);
 
       // Get transactions linked to this client's jobs
       const result = await db

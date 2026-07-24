@@ -19,9 +19,9 @@ function register(router, env) {
   // ── POST /api/auth/login ──────────────────────────────────────────────
   router.post('/api/auth/login', async (request) => {
     try {
-      const rateLimitRes = await checkRateLimit(request);
+      const rateLimitRes = await checkRateLimit(request, 'login', 'auth:login');
       if (rateLimitRes.blocked) {
-        return error('Too many requests, try again later.', 429);
+        return error('Too many login attempts. Please try again later.', 429);
       }
 
       const { id, pin } = (await request.json()) as any;

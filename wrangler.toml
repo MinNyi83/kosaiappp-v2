@@ -9,10 +9,15 @@ binding = "DB"
 database_name = "cctv-fsm-db"
 database_id = "a887d01b-41ac-4ef7-9e9d-464a3f52f15b"
 
+# Non-sensitive vars only. Secrets go in .dev.vars (local) or Cloudflare dashboard (production)
 [vars]
-GOOGLE_CLIENT_ID = "609507528219-2foc0ch65rkqkgdlvlihqagb6dqbmpcm.apps.googleusercontent.com"
 ADMIN_EMAIL = "nyinyimin2007@gmail.com"
-JWT_SECRET = "6abfbf0ba5f5f11913b9197ee30f8686b917fca55c70b8cf055696d81e57b613c2f7530d00b8f8b7dcb3d0e98a566f058ed1c2337ca7c2cfb4bb600ceb4e1283"
+
+# IMPORTANT: Secrets must be set via:
+# - Local dev: .dev.vars file (not committed to git)
+# - Production: Cloudflare Dashboard > Workers > Settings > Variables
+# Required secrets: JWT_SECRET, CSRF_SECRET, GOOGLE_CLIENT_ID, GEMINI_API_KEY,
+#                  TELEGRAM_BOT_TOKEN, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN
 
 [triggers]
 crons = ["0 0 * * *"]

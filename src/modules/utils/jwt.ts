@@ -1,7 +1,11 @@
 // src/modules/utils/jwt.ts — HMAC-SHA256 JWT implementation
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET is not defined in environment variables');
+
+function getJwtSecret(): string {
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not defined in environment variables');
+  }
+  return JWT_SECRET;
 }
 
 function base64UrlEncode(data: Uint8Array): string {
@@ -20,7 +24,7 @@ function base64UrlDecode(str: string): Uint8Array {
 async function getKey(): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     'raw',
-    new TextEncoder().encode(JWT_SECRET),
+    new TextEncoder().encode(getJwtSecret()),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify']
