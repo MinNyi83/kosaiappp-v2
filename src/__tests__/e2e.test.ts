@@ -139,10 +139,11 @@ describe('RMA & Warranty endpoints', () => {
   });
 
   it('POST /api/admin/warranty/register should create warranty', async () => {
+    const uniqueSerial = 'SN-TEST-' + Date.now();
     const res = await worker.fetch('/api/admin/warranty/register', {
       method: 'POST',
       body: JSON.stringify({
-        serial_number: 'SN-TEST-001',
+        serial_number: uniqueSerial,
         device_name: 'Test Camera',
         client_id: null,
         installed_date: '2024-01-15',
@@ -153,7 +154,7 @@ describe('RMA & Warranty endpoints', () => {
     expect(res.status).toBe(201);
     const data = await res.json();
     expect(data.success).toBe(true);
-    expect(data.data.serial_number).toBe('SN-TEST-001');
+    expect(data.data.serial_number).toBe(uniqueSerial);
   });
 
   it('GET /api/admin/warranty/list should return registered warranty', async () => {
