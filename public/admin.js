@@ -314,26 +314,29 @@ function handleLogout() {
 
 async function triggerBackup() {
   const baseUrl = document.getElementById('api-base').value;
-  const secret = document.getElementById('admin-secret').value;
+  const token = localStorage.getItem('admin_token');
   try {
+    showToast('Creating backup...', 'info');
     const res = await fetch(`${baseUrl}/api/admin/backup`, {
-      headers: { 'X-Admin-Secret': secret },
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Could not download backup file.');
-    const data = await res.json();
+    const resp = await res.json();
+    const data = resp.data || resp;
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `awesomemyanmar_backup_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `kosai_backup_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showToast('Backup downloaded successfully!', 'success');
   } catch (e) {
-    showToast('Backup failed', 'error');
+    showToast('Backup failed: ' + e.message, 'error');
   }
 }
 
@@ -356,15 +359,17 @@ async function handleRestoreFile(event) {
   const reader = new FileReader();
   reader.onload = async function (e) {
     const baseUrl = document.getElementById('api-base').value;
-    const secret = document.getElementById('admin-secret').value;
+    const token = localStorage.getItem('admin_token');
     try {
       const parsed = JSON.parse(e.target.result);
-      if (!parsed.data) throw new Error('Invalid backup file structure.');
+      // Unwrap if wrapped in {success, data} envelope
+      const backupData = parsed.data || parsed;
+      if (!backupData._exported_at) throw new Error('Invalid backup file structure.');
 
       const res = await fetch(`${baseUrl}/api/admin/restore`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
-        body: JSON.stringify(parsed),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(backupData),
       });
       const resData = await res.json();
       if (res.ok) {
@@ -374,7 +379,7 @@ async function handleRestoreFile(event) {
         throw new Error(resData.error || 'Restoration failed.');
       }
     } catch (err) {
-      showToast('Restore aborted', 'warning');
+      showToast('Restore failed: ' + err.message, 'error');
     } finally {
       event.target.value = '';
     }

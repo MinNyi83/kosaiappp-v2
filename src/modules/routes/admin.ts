@@ -262,10 +262,13 @@ function register(router, env) {
         'service_records',
         'inventory_stock',
         'inventory_items',
+        'inventory_batches',
         'cash_safes',
         'cash_transactions',
+        'service_fees',
         'system_config',
-        'landing_page',
+        'distributors',
+        'invoices',
       ];
       const backup: any = {};
 
@@ -298,10 +301,13 @@ function register(router, env) {
         'service_records',
         'inventory_stock',
         'inventory_items',
+        'inventory_batches',
         'cash_safes',
         'cash_transactions',
+        'service_fees',
         'system_config',
-        'landing_page',
+        'distributors',
+        'invoices',
       ];
       let restored = 0;
 
