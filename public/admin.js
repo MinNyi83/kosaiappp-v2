@@ -1118,6 +1118,10 @@ function initLeafletMap() {
 }
 
 async function refreshDashboardData() {
+  // Show loading spinner
+  const spinner = document.getElementById('dashboard-loading-spinner');
+  if (spinner) spinner.classList.remove('hidden');
+
   const tasks = [
     populateLookupDropdowns,
     loadJobsData,
@@ -1137,6 +1141,9 @@ async function refreshDashboardData() {
       console.error(`Error in ${task.name}:`, err);
     }
   }
+
+  // Hide loading spinner
+  if (spinner) spinner.classList.add('hidden');
 }
 
 async function populateReports() {
