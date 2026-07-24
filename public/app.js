@@ -25,21 +25,29 @@ window.showToast = function (message, type = 'info', duration = 3000) {
     info:    { bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.3)', text: '#60a5fa', bar: '#3b82f6' }
   };
   const s = styles[type] || styles.info;
-  toast.style.cssText = `transform: translateY(-120%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); pointer-events: auto; background: ${s.bg}; border: 1px solid ${s.border}; color: ${s.text};`;
+  toast.style.cssText = `transform: translateY(-120%) scale(0.95); opacity: 0; transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease-out; pointer-events: auto; background: ${s.bg}; border: 1px solid ${s.border}; color: ${s.text};`;
   toast.className = 'relative flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg backdrop-blur-xl overflow-hidden';
   toast.innerHTML = `<span class="text-sm font-medium flex-1">${escapeHTML(message)}</span>
     <button onclick="this.parentElement.remove()" class="flex-shrink-0 opacity-60 hover:opacity-100 text-xs">&times;</button>
     <div class="absolute bottom-0 left-0 h-0.5" style="background:${s.bar};width:100%;transition:width ${duration}ms linear;"></div>`;
   container.appendChild(toast);
-  requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; });
+  // Entrance: slide down + fade in + scale up
+  requestAnimationFrame(() => {
+    toast.style.transform = 'translateY(0) scale(1)';
+    toast.style.opacity = '1';
+  });
+  // Animate progress bar
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const bar = toast.querySelector('div');
       if (bar) bar.style.width = '0%';
     });
   });
+  // Exit: slide up + fade out + scale down
   setTimeout(() => {
-    toast.style.transform = 'translateY(-120%)';
+    toast.style.transition = 'transform 0.3s ease-in, opacity 0.25s ease-in';
+    toast.style.transform = 'translateY(-120%) scale(0.95)';
+    toast.style.opacity = '0';
     setTimeout(() => toast.remove(), 300);
   }, duration);
 };
