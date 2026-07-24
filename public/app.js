@@ -18,21 +18,18 @@ window.showToast = function (message, type = 'info', duration = 3000) {
   const container = document.getElementById('toast-container');
   if (!container) return;
   const toast = document.createElement('div');
-  const colors = {
-    success: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-    error: 'bg-rose-500/10 border-rose-500/30 text-rose-400',
-    warning: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-    info: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+  const styles = {
+    success: { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', text: '#34d399', bar: '#10b981' },
+    error:   { bg: 'rgba(244,63,94,0.12)', border: 'rgba(244,63,94,0.3)', text: '#fb7185', bar: '#f43f5e' },
+    warning: { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', text: '#fbbf24', bar: '#f59e0b' },
+    info:    { bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.3)', text: '#60a5fa', bar: '#3b82f6' }
   };
-  const barColors = {
-    success: 'bg-emerald-500', error: 'bg-rose-500',
-    warning: 'bg-amber-500', info: 'bg-blue-500',
-  };
-  toast.style.cssText = 'transform: translateY(-120%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); pointer-events: auto;';
-  toast.className = `relative flex items-center gap-3 px-4 py-3 rounded-xl border ${colors[type]} shadow-lg backdrop-blur-xl overflow-hidden`;
+  const s = styles[type] || styles.info;
+  toast.style.cssText = `transform: translateY(-120%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); pointer-events: auto; background: ${s.bg}; border: 1px solid ${s.border}; color: ${s.text};`;
+  toast.className = 'relative flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg backdrop-blur-xl overflow-hidden';
   toast.innerHTML = `<span class="text-sm font-medium flex-1">${escapeHTML(message)}</span>
     <button onclick="this.parentElement.remove()" class="flex-shrink-0 opacity-60 hover:opacity-100 text-xs">&times;</button>
-    <div class="absolute bottom-0 left-0 h-0.5 ${barColors[type]}" style="width:100%;transition:width ${duration}ms linear;"></div>`;
+    <div class="absolute bottom-0 left-0 h-0.5" style="background:${s.bar};width:100%;transition:width ${duration}ms linear;"></div>`;
   container.appendChild(toast);
   requestAnimationFrame(() => { toast.style.transform = 'translateY(0)'; });
   requestAnimationFrame(() => {
