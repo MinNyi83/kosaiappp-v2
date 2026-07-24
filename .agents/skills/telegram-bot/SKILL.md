@@ -3,83 +3,143 @@ name: telegram-bot
 description: Rules and guidance on the Telegram Bot feature, including webhook commands, voice message processing, photo message handling, AI dispatching, and outbound notifications.
 ---
 
-# 🤖 Telegram Bot Integration & Features
+# Telegram Bot Integration & Features
 
-This skill guides you through the Telegram Bot features integrated into the Field Service Worker application. It covers incoming webhook processing, commands, voice transcription, photo handling, AI dispatching, and outbound telemetry alerts.
+This skill guides you through the Telegram Bot features integrated into the KosAI Field Service system. It covers incoming webhook processing, commands, voice transcription, photo handling, AI dispatching, and outbound notifications.
 
-## ⚙️ Environment Variables
+## Environment Variables
 
-The Telegram bot relies on the following environment variables in [**`wrangler.toml`**](file:///d:/kosai-project/v2/wrangler.toml) or [**`.dev.vars`**](file:///d:/kosai-project/v2/.dev.vars):
+The Telegram bot relies on the following environment variables in `wrangler.toml` or `.dev.vars`:
 
 - `TELEGRAM_BOT_TOKEN`: The bot token obtained from BotFather.
 - `TELEGRAM_CHAT_ID`: The target Telegram channel or group ID for dispatch alerts/notifications.
 - `GEMINI_API_KEY`: API key for Gemini 2.5 Flash, used for voice transcription and dispatcher decision routing.
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`: Credentials used by the bot to pull uploaded files from Google Drive securely before sending them to Telegram.
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`: Credentials used to pull uploaded files from Google Drive.
 
 ---
 
-## 📡 Webhook Actions (`/api/telegram/webhook`)
+## Webhook Actions (`/api/telegram/webhook`)
 
 Incoming webhook requests are handled via a `POST` handler at `/api/telegram/webhook`.
 
-### 1. Telegram Slash Commands (15+ commands)
+### Slash Commands (15+ commands)
 
-- **/start** - Welcome message
-- **/help** - Show all available commands
-- **/clock** - Quick clock status summary
-- **/checkin** or **/clockin** - Clock in for today
-- **/checkout** or **/clockout** - Clock out
-- **/status** - Check clock-in status & active jobs
-- **/report** - Weekly attendance summary
-- **/team** - See who is currently clocked in
-- **/leaderboard** - Weekly hours leaderboard
-- **/history** - My clock-in/out history this week
-- **/jobs** - List your active jobs
-- **/completed** - List your completed jobs
-- **/today** - Show today's jobs & attendance
-- **/ticket JOB-xxx** - View job details
-- **/accept JOB-xxx** - Accept a job assignment
-- **/assign JOB-xxx TechName** - Assign technician (searches by id, name, or nickname)
-- **/cancel JOB-xxx** - Cancel a job
+- `/start` - Welcome message
+- `/help` - Show all available commands
+- `/clock` - Quick clock status summary
+- `/checkin` or `/clockin` - Clock in for today
+- `/checkout` or `/clockout` - Clock out
+- `/status` - Check clock-in status & active jobs
+- `/report` - Weekly attendance summary
+- `/team` - See who is currently clocked in
+- `/leaderboard` - Weekly hours leaderboard
+- `/history` - My clock-in/out history this week
+- `/jobs` - List your active jobs
+- `/completed` - List your completed jobs
+- `/today` - Show today's jobs & attendance
+- `/ticket JOB-xxx` - View job details
+- `/accept JOB-xxx` - Accept a job assignment
+- `/assign JOB-xxx TechName` - Assign technician
+- `/cancel JOB-xxx` - Cancel a job
 
-### 2. AI Voice Transcription & Auto-Dispatch
+### AI Voice Transcription & Auto-Dispatch
 
-- **Trigger condition**: When a voice message is received (`update.message.voice`)
-- **Voice Transcription**:
-  - Downloads voice message files via the Telegram Bot API (`getFile` and `file` endpoints)
-  - Sends the audio (`audio/ogg`) to Gemini `gemini-2.5-flash` with the prompt: _"Transcribe this spoken technical issue or service complaint into plain English text. Do not summarize, output only the transcribed text."_
-- **AI Technician Matcher & Router**:
-  - Retrieves all active technicians
-  - Prompts Gemini to select a domain (`CCTV`, `Networking`, `WiFi`, `NAS`, `General Maintenance`) and choose the best matching technician based on the issue or explicit mention of names/nicknames
-  - Creates or updates a client record with ID `CLI-TG-JOB-TG-[random]` and a ticket with ID `JOB-TG-[random]`
-  - Sends a confirmation message back to the Telegram chat
+- **Trigger**: Voice message received (`update.message.voice`)
+- **Transcription**: Downloads voice, sends to Gemini `gemini-2.5-flash` with prompt: _"Transcribe this spoken technical issue into plain English text."_
+- **Auto-Matcher**: Gemini selects service domain (CCTV, Networking, WiFi, NAS, General Maintenance) and best technician
+- **Creates**: Client record (`CLI-TG-...`) and job record (`JOB-TG-...`)
+- **Confirms**: Sends dispatch message with assigned technician and Job ID
 
-### 3. Photo Message Handling
+### Photo Message Handling
 
-- **Trigger condition**: When a photo message is received (`update.message.photo`)
-- **Photo Processing**:
-  - Downloads the highest-resolution photo via Telegram Bot API
-  - Uploads to Google Drive using `uploadFileToGoogleDrive` utility (organized under `Awesome Myanmar - Service Records / {Client} / {JobID}`)
-  - Creates a job record with the Google Drive link stored in `before_photo` field
-  - Sends confirmation with Job ID back to Telegram chat
+- **Trigger**: Photo message received (`update.message.photo`)
+- **Processing**: Downloads highest-res photo, uploads to Google Drive via `uploadFileToGoogleDrive`
+- **Storage**: Organized in `Awesome Myanmar - Service Records / {Client} / {JobID}/`
+- **Creates**: Job record with `before_photo` pointing to Drive link
+- **Confirms**: Sends Job ID back to Telegram chat
 
-### 4. Inline Keyboard Callbacks
+### Inline Keyboard Callbacks
 
-- **accept_job**: Marks job as "In Progress" and assigns to technician
-- **complete_job**: Marks job as "Completed"
+- `accept_job` - Marks job as "In Progress" and assigns to technician
+- `complete_job` - Marks job as "Completed"
 
 ---
 
-## 🔔 Outbound Notifications
+## Outbound Notifications
 
-The application triggers outbound alerts to the Telegram channel in these scenarios:
+### Status Change Notifications
 
-1. **Site Photos / Job Completion**:
-   - Sends text and before/after photos during site uploads in [**`src/index.ts`**](file:///d:/kosai-project/v2/src/index.ts).
-   - **Photo Delivery Pipeline**: Instead of passing raw Google Drive URLs (which Telegram cannot download because they require authorization), the worker retrieves the binary stream from Google Drive using the OAuth refresh token, formats it, and transmits it directly via `sendTelegramPhotoNotification`.
+Every job status change sends a text notification to the Telegram group:
 
-2. **System Database Backups**:
-   - Sends database backup logs automatically upon backup events (cron at midnight).
+```
+✅ Job Completed
 
-3. **Job Assignment Notifications**:
-   - Notifies technicians when assigned to a job via `/assign` or `accept_job` callback.
+📋 Job: JOB-202
+👤 Client: Omega Logistics Hub
+🔧 Type: CCTV
+👨‍💼 Technician: Alex Mercer
+📝 5/5 checklist items, 2 hardware items used
+```
+
+**Status emojis:**
+- `⏳` Pending
+- `🔧` In Progress
+- `✅` Completed
+- `❌` Cancelled
+
+### Photo Notifications
+
+Every photo upload sends an inline photo to Telegram:
+
+- **Trigger**: `POST /api/jobs/:id/photo` endpoint
+- **Delivery**: Photo sent as inline image via `sendPhoto` API
+- **Caption**: `📸 Before/After/Signature Photo — JOB-XXX`
+- **Source**: Uses base64 data URI directly (avoids Drive re-download issues)
+
+### Photo Delivery Pipeline
+
+The `sendTelegramPhotoNotification` function handles photo delivery:
+
+1. **Base64 data URI**: Decodes directly, creates Blob, sends via `sendPhoto`
+2. **Google Drive URL**: Extracts file ID, uses Drive API to download, then sends via `sendPhoto`
+3. **Fallback**: If photo fails, sends text link to Google Drive
+
+**Important**: Always use base64 for delivery (not Drive URLs) to avoid authorization issues in Workers.
+
+### System Notifications
+
+- **Database Backups**: Sends backup logs on cron events
+- **Job Assignment**: Notifies technicians when assigned via `/assign` or `accept_job`
+
+---
+
+## API Endpoints
+
+### Notification Endpoints
+
+- `POST /api/jobs/:id/status` - Updates status + sends Telegram notification
+- `POST /api/jobs/:id/photo` - Uploads photo to Drive + sends to Telegram
+- `POST /api/jobs/:id/notify` - Sends custom Telegram notification
+
+### Utility Functions
+
+```typescript
+// Send text notification
+sendTelegramNotification(env, text)
+
+// Send photo notification
+sendTelegramPhotoNotification(env, photoSource, caption)
+
+// Send message to specific chat
+sendTelegramMessage(env, chatId, text)
+```
+
+---
+
+## Rules
+
+- Photos must be sent as inline images (not Drive links)
+- Use base64 data URIs for reliable photo delivery
+- Remove `parse_mode: 'Markdown'` from photo captions (emoji can break parsing)
+- Status notifications include emoji prefix for quick visual scanning
+- All notifications are non-blocking (errors logged but don't fail the request)
