@@ -171,6 +171,10 @@ function switchMobileTab(tab) {
 
 // ── Jobs ─────────────────────────────────────────────────────────────────
 async function fetchJobs() {
+  const container = document.getElementById('view-job');
+  if (container && container.children.length === 0) {
+    container.innerHTML = '<div class="glass-panel p-8 rounded-3xl text-center"><div class="animate-spin w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full mx-auto mb-3"></div><p class="text-sm text-slate-400">Loading jobs...</p></div>';
+  }
   try {
     const res = await fetch(`${API_BASE_URL}/api/jobs?limit=100`, { headers: authHeaders() });
     const data = await res.json();
@@ -281,10 +285,15 @@ async function addJobNotes(jobId) {
   const notes = prompt('Enter notes for this job:');
   if (!notes) return;
   try {
+    // Get current status first to avoid changing it
+    const jobRes = await fetch(`${API_BASE_URL}/api/jobs/${jobId}`, { headers: authHeaders() });
+    const jobData = await jobRes.json();
+    const currentStatus = jobData.data?.status || 'Pending';
+
     const res = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({ status: 'In Progress', notes }),
+      body: JSON.stringify({ status: currentStatus, notes }),
     });
     if (res.ok) showToast('Notes saved!', 'success');
   } catch (err) { showToast('Error: ' + err.message, 'error'); }
@@ -749,14 +758,17 @@ function addHardwareRow() {
     dropdown.classList.add('hidden');
   });
 
-  document.addEventListener('click', (e) => {
-    if (!row.contains(e.target)) dropdown.classList.add('hidden');
-  });
-
   nameInput.addEventListener('blur', () => {
     setTimeout(() => dropdown.classList.add('hidden'), 200);
   });
 }
+
+// Global click handler to close all open dropdowns (event delegation)
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('.hw-dropdown:not(.hidden)').forEach(dd => {
+    if (!dd.parentElement.contains(e.target)) dd.classList.add('hidden');
+  });
+});
 
 async function lookupWarranty(btn) {
   const row = btn.closest('.glass-panel');

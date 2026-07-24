@@ -62,7 +62,8 @@ function register(router, env) {
         totalPages: Math.ceil((countResult?.total ?? 0) / limit),
       });
     } catch (err) {
-      return error('Failed to fetch inventory: ' + err.message, 500);
+      console.error('Fetch inventory error:', err.message);
+      return error('Failed to fetch inventory', 500);
     }
   });
 
@@ -76,7 +77,8 @@ function register(router, env) {
         .all();
       return success(items.results);
     } catch (err: any) {
-      return error('Failed to fetch low stock items: ' + err.message, 500);
+      console.error('Fetch low stock error:', err.message);
+      return error('Failed to fetch low stock items', 500);
     }
   });
 
@@ -90,7 +92,8 @@ function register(router, env) {
         .all();
       return success(result.results.map((r) => r.category));
     } catch (err) {
-      return error('Failed to fetch categories: ' + err.message, 500);
+      console.error('Fetch categories error:', err.message);
+      return error('Failed to fetch categories', 500);
     }
   });
 
@@ -105,7 +108,8 @@ function register(router, env) {
 
       return success(item);
     } catch (err) {
-      return error('Failed to fetch item: ' + err.message, 500);
+      console.error('Fetch item error:', err.message);
+      return error('Failed to fetch item', 500);
     }
   });
 
@@ -181,7 +185,8 @@ function register(router, env) {
 
       return success({ item_code, item_name }, 201);
     } catch (err: any) {
-      return error('Failed to save inventory item: ' + err.message, 500);
+      console.error('Save inventory error:', err.message);
+      return error('Failed to save inventory item', 500);
     }
   };
 
@@ -231,7 +236,8 @@ function register(router, env) {
 
       return success({ message: 'Inventory item updated' });
     } catch (err: any) {
-      return error('Failed to update inventory item: ' + err.message, 500);
+      console.error('Update inventory error:', err.message);
+      return error('Failed to update inventory item', 500);
     }
   });
 
@@ -245,7 +251,8 @@ function register(router, env) {
       await db.prepare('DELETE FROM inventory_stock WHERE item_code = ?').bind(params.id).run();
       return success({ message: 'Inventory item deleted' });
     } catch (err: any) {
-      return error('Failed to delete inventory item: ' + err.message, 500);
+      console.error('Delete inventory error:', err.message);
+      return error('Failed to delete inventory item', 500);
     }
   });
 
@@ -261,7 +268,8 @@ function register(router, env) {
       await db.prepare('DELETE FROM inventory_stock WHERE item_code = ?').bind(item_code).run();
       return success({ message: 'Inventory item deleted' });
     } catch (err: any) {
-      return error('Failed to delete inventory item: ' + err.message, 500);
+      console.error('Delete inventory error:', err.message);
+      return error('Failed to delete inventory item', 500);
     }
   });
 
@@ -314,7 +322,8 @@ function register(router, env) {
         new_quantity: newQuantity,
       });
     } catch (err: any) {
-      return error('Failed to adjust inventory: ' + err.message, 500);
+      console.error('Adjust inventory error:', err.message);
+      return error('Failed to adjust inventory', 500);
     }
   });
 
@@ -371,7 +380,8 @@ function register(router, env) {
         totalPages: Math.ceil(total / limit),
       });
     } catch (err) {
-      return error('Failed to fetch inventory list: ' + err.message, 500);
+      console.error('Fetch inventory list error:', err.message);
+      return error('Failed to fetch inventory list', 500);
     }
   });
 
@@ -390,7 +400,8 @@ function register(router, env) {
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch batches: ' + err.message, 500);
+      console.error('Fetch batches error:', err.message);
+      return error('Failed to fetch batches', 500);
     }
   });
 
@@ -402,7 +413,8 @@ function register(router, env) {
       const result = await db.prepare('SELECT * FROM inv_categories ORDER BY name ASC').all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch categories: ' + err.message, 500);
+      console.error('Fetch categories error:', err.message);
+      return error('Failed to fetch categories', 500);
     }
   });
 
@@ -423,7 +435,8 @@ function register(router, env) {
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch sub-categories: ' + err.message, 500);
+      console.error('Fetch sub-categories error:', err.message);
+      return error('Failed to fetch sub-categories', 500);
     }
   });
 
@@ -435,7 +448,8 @@ function register(router, env) {
       const result = await db.prepare('SELECT * FROM inv_brands ORDER BY name ASC').all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch brands: ' + err.message, 500);
+      console.error('Fetch brands error:', err.message);
+      return error('Failed to fetch brands', 500);
     }
   });
 
@@ -447,7 +461,8 @@ function register(router, env) {
       const result = await db.prepare('SELECT * FROM inv_stock_units ORDER BY name ASC').all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch units: ' + err.message, 500);
+      console.error('Fetch units error:', err.message);
+      return error('Failed to fetch units', 500);
     }
   });
 
@@ -461,7 +476,8 @@ function register(router, env) {
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch warranties: ' + err.message, 500);
+      console.error('Fetch warranties error:', err.message);
+      return error('Failed to fetch warranties', 500);
     }
   });
 
@@ -502,7 +518,8 @@ function register(router, env) {
 
       return success({ serial_number, status: 'Active' }, 201);
     } catch (err) {
-      return error('Failed to register warranty: ' + err.message, 500);
+      console.error('Register warranty error:', err.message);
+      return error('Failed to register warranty', 500);
     }
   });
 
@@ -534,7 +551,8 @@ function register(router, env) {
         warranty_days_left: daysLeft,
       });
     } catch (err) {
-      return error('Failed to lookup warranty: ' + err.message, 500);
+      console.error('Lookup warranty error:', err.message);
+      return error('Failed to lookup warranty', 500);
     }
   });
 
@@ -576,7 +594,8 @@ function register(router, env) {
 
       return success({ serial_number, status: 'Active', warranty_months: warranty_months || 12 }, 201);
     } catch (err) {
-      return error('Failed to register warranty: ' + err.message, 500);
+      console.error('Register warranty error:', err.message);
+      return error('Failed to register warranty', 500);
     }
   });
 
@@ -590,7 +609,8 @@ function register(router, env) {
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch RMA records: ' + err.message, 500);
+      console.error('Fetch RMA error:', err.message);
+      return error('Failed to fetch RMA records', 500);
     }
   });
 
@@ -621,7 +641,8 @@ function register(router, env) {
 
       return success({ serial_number, status: 'RMA Sent' });
     } catch (err) {
-      return error('Failed to raise RMA claim: ' + err.message, 500);
+      console.error('Raise RMA error:', err.message);
+      return error('Failed to raise RMA claim', 500);
     }
   });
 
@@ -646,7 +667,8 @@ function register(router, env) {
 
       return success({ serial_number, status: status || 'RMA Completed' });
     } catch (err) {
-      return error('Failed to update RMA: ' + err.message, 500);
+      console.error('Update RMA error:', err.message);
+      return error('Failed to update RMA', 500);
     }
   });
 
@@ -669,7 +691,8 @@ function register(router, env) {
 
       return success({ message: 'Price updated successfully', item_code });
     } catch (err: any) {
-      return error('Failed to update price: ' + err.message, 500);
+      console.error('Update price error:', err.message);
+      return error('Failed to update price', 500);
     }
   });
 
@@ -757,7 +780,8 @@ function register(router, env) {
 
       return success({ message: 'Batch registered successfully', batch_code, item_code });
     } catch (err: any) {
-      return error('Failed to register batch: ' + err.message, 500);
+      console.error('Register batch error:', err.message);
+      return error('Failed to register batch', 500);
     }
   });
 
@@ -792,7 +816,8 @@ function register(router, env) {
 
       return success({ message: 'Batch updated successfully', batch_code });
     } catch (err: any) {
-      return error('Failed to edit batch: ' + err.message, 500);
+      console.error('Edit batch error:', err.message);
+      return error('Failed to edit batch', 500);
     }
   });
 }

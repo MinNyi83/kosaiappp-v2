@@ -867,35 +867,6 @@ ${schema}`;
     }
   });
 
-  // ── GET /api/jobs/receipt ─────────────────────────────────────────────
-  // Job receipt by job_id query param
-  router.get('/api/jobs/receipt', async (request) => {
-    try {
-      const user = await requireAdmin(request);
-      if (!user) return error('Unauthorized', 401);
-
-      const url = new URL(request.url);
-      const job_id = url.searchParams.get('job_id');
-      if (!job_id) return success(null);
-
-      const job = await db
-        .prepare(
-          `SELECT sr.*, c.company_name, c.address, c.phone as client_phone, c.amc_status,
-                  t.name as tech_name, t.phone as tech_phone
-           FROM service_records sr
-           LEFT JOIN clients c ON sr.client_id = c.id
-           LEFT JOIN technicians t ON sr.technician_id = t.id
-           WHERE sr.id = ?`
-        )
-        .bind(job_id)
-        .first();
-
-      return success(job || null);
-    } catch (err) {
-      return error('Failed to fetch receipt: ' + err.message, 500);
-    }
-  });
-
   // ── GET /api/portal/history ───────────────────────────────────────────
   // Client job history for portal — public access with client_id parameter
   router.get('/api/portal/history', async (request) => {
