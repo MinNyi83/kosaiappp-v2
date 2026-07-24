@@ -4344,13 +4344,13 @@ function renderFullJobsTable(jobs) {
     if (j.before_photo) {
       photosHtml += `<div class="space-y-1">
                         <span class="block text-[8px] uppercase tracking-wider text-slate-500 font-bold">Before Photo</span>
-                        <img src="${j.before_photo}" class="w-20 h-16 object-cover rounded-lg border border-white/10 hover:scale-105 transition-all cursor-pointer" onclick="window.open().document.write('<img src=\\'${j.before_photo.replace(/'/g, "\\'")}\\' style=\\'max-width:100%\\' />')">
+                        <img src="${escapeHTML(j.before_photo)}" class="w-20 h-16 object-cover rounded-lg border border-white/10 hover:scale-105 transition-all cursor-pointer" onerror="this.style.display='none'" loading="lazy">
                     </div>`;
     }
     if (j.after_photo) {
       photosHtml += `<div class="space-y-1">
                         <span class="block text-[8px] uppercase tracking-wider text-slate-500 font-bold">After Photo</span>
-                        <img src="${j.after_photo}" class="w-20 h-16 object-cover rounded-lg border border-white/10 hover:scale-105 transition-all cursor-pointer" onclick="window.open().document.write('<img src=\\'${j.after_photo.replace(/'/g, "\\'")}\\' style=\\'max-width:100%\\' />')">
+                        <img src="${escapeHTML(j.after_photo)}" class="w-20 h-16 object-cover rounded-lg border border-white/10 hover:scale-105 transition-all cursor-pointer" onerror="this.style.display='none'" loading="lazy">
                     </div>`;
     }
     const photosWrapper = photosHtml ? `<div class="flex gap-4 mt-2">${photosHtml}</div>` : '';
