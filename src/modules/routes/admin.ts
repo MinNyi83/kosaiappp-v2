@@ -33,7 +33,8 @@ function register(router, env) {
         technicians: techsResult.results,
       });
     } catch (err) {
-      return error('Failed to fetch lookups: ' + err.message, 500);
+      console.error('Fetch lookups error:', err.message);
+      return error('Failed to fetch lookups', 500);
     }
   });
 
@@ -53,7 +54,8 @@ function register(router, env) {
 
       return success(technicians);
     } catch (err) {
-      return error('Failed to fetch technicians: ' + err.message, 500);
+      console.error('Fetch technicians error:', err.message);
+      return error('Failed to fetch technicians', 500);
     }
   });
 
@@ -103,7 +105,8 @@ function register(router, env) {
 
       return success({ message: 'Technician updated' });
     } catch (err) {
-      return error('Failed to update technician: ' + err.message, 500);
+      console.error('Update technician error:', err.message);
+      return error('Failed to update technician', 500);
     }
   });
 
@@ -116,7 +119,8 @@ function register(router, env) {
       await db.prepare('DELETE FROM technicians WHERE id = ?').bind(params.id).run();
       return success({ message: 'Technician deleted' });
     } catch (err) {
-      return error('Failed to delete technician: ' + err.message, 500);
+      console.error('Delete technician error:', err.message);
+      return error('Failed to delete technician', 500);
     }
   });
 
@@ -151,7 +155,8 @@ function register(router, env) {
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch clients: ' + err.message, 500);
+      console.error('Fetch clients error:', err.message);
+      return error('Failed to fetch clients', 500);
     }
   });
 
@@ -169,7 +174,8 @@ function register(router, env) {
       if (!config) return error('Config key not found', 404);
       return success(config);
     } catch (err) {
-      return error('Failed to fetch config: ' + err.message, 500);
+      console.error('Fetch config error:', err.message);
+      return error('Failed to fetch config', 500);
     }
   });
 
@@ -196,7 +202,8 @@ function register(router, env) {
 
       return success({ key, value });
     } catch (err) {
-      return error('Failed to save config: ' + err.message, 500);
+      console.error('Save config error:', err.message);
+      return error('Failed to save config', 500);
     }
   });
 
@@ -210,7 +217,8 @@ function register(router, env) {
 
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch roles: ' + err.message, 500);
+      console.error('Fetch roles error:', err.message);
+      return error('Failed to fetch roles', 500);
     }
   });
 
@@ -231,7 +239,8 @@ function register(router, env) {
 
       return success({ id, name }, 201);
     } catch (err) {
-      return error('Failed to create role: ' + err.message, 500);
+      console.error('Create role error:', err.message);
+      return error('Failed to create role', 500);
     }
   });
 
@@ -244,7 +253,8 @@ function register(router, env) {
       await db.prepare('DELETE FROM roles WHERE id = ?').bind(params.id).run();
       return success({ message: 'Role deleted' });
     } catch (err) {
-      return error('Failed to delete role: ' + err.message, 500);
+      console.error('Delete role error:', err.message);
+      return error('Failed to delete role', 500);
     }
   });
 
@@ -281,7 +291,8 @@ function register(router, env) {
 
       return success(backup);
     } catch (err) {
-      return error('Failed to create backup: ' + err.message, 500);
+      console.error('Create backup error:', err.message);
+      return error('Failed to create backup', 500);
     }
   });
 
@@ -293,6 +304,12 @@ function register(router, env) {
 
       const body = (await request.json()) as any;
       if (!body || !body._exported_at) return error('Invalid backup format', 400);
+
+      // Validate backup size (max 10MB)
+      const backupSize = JSON.stringify(body).length;
+      if (backupSize > 10 * 1024 * 1024) {
+        return error('Backup too large (max 10MB)', 400);
+      }
 
       const tables = [
         'technicians',
@@ -336,7 +353,8 @@ function register(router, env) {
 
       return success({ message: `Restored ${restored} rows across ${tables.length} tables` });
     } catch (err) {
-      return error('Failed to restore backup: ' + err.message, 500);
+      console.error('Restore backup error:', err.message);
+      return error('Failed to restore backup', 500);
     }
   });
 
@@ -372,7 +390,8 @@ function register(router, env) {
         total_revenue: totalRevenue.total,
       });
     } catch (err) {
-      return error('Failed to fetch stats: ' + err.message, 500);
+      console.error('Fetch stats error:', err.message);
+      return error('Failed to fetch stats', 500);
     }
   });
 
@@ -383,7 +402,8 @@ function register(router, env) {
       const row = await db.prepare('SELECT * FROM landing_page WHERE id = 1').first();
       return success(row || {});
     } catch (err) {
-      return error('Failed to fetch landing page: ' + err.message, 500);
+      console.error('Fetch landing page error:', err.message);
+      return error('Failed to fetch landing page', 500);
     }
   });
 
@@ -418,7 +438,8 @@ function register(router, env) {
 
       return success({ message: 'Landing page updated' });
     } catch (err) {
-      return error('Failed to update landing page: ' + err.message, 500);
+      console.error('Update landing page error:', err.message);
+      return error('Failed to update landing page', 500);
     }
   });
 
@@ -474,7 +495,8 @@ function register(router, env) {
 
       return success({ message: 'HQ Configuration saved and synchronized successfully' });
     } catch (err) {
-      return error('Failed to save HQ configuration: ' + err.message, 500);
+      console.error('Save HQ config error:', err.message);
+      return error('Failed to save HQ configuration', 500);
     }
   });
 
@@ -500,7 +522,8 @@ function register(router, env) {
       const rows = await db.prepare('SELECT * FROM system_config').all();
       return success(rows.results);
     } catch (err) {
-      return error('Failed to fetch config: ' + err.message, 500);
+      console.error('Fetch config error:', err.message);
+      return error('Failed to fetch config', 500);
     }
   });
 
@@ -533,20 +556,8 @@ function register(router, env) {
 
       return success({ message: 'Config saved', key });
     } catch (err) {
-      return error('Failed to save config: ' + err.message, 500);
-    }
-  });
-
-  // ── GET /api/admin/roles/list ─────────────────────────────────────────
-  router.get('/api/admin/roles/list', async (request) => {
-    try {
-      const user = await requireAdmin(request);
-      if (!user) return error('Unauthorized', 401);
-
-      const rows = await db.prepare('SELECT * FROM roles ORDER BY name ASC').all();
-      return success(rows.results);
-    } catch (err) {
-      return error('Failed to fetch roles: ' + err.message, 500);
+      console.error('Save config error:', err.message);
+      return error('Failed to save config', 500);
     }
   });
 
@@ -585,7 +596,8 @@ function register(router, env) {
 
       return success({ original: raw, polished, job_id: job_id || null });
     } catch (err) {
-      return error('AI polish failed: ' + err.message, 500);
+      console.error('AI polish error:', err.message);
+      return error('AI polish failed', 500);
     }
   });
 
@@ -756,7 +768,8 @@ ${schema}`;
 
       return success({ reply, message: reply, query: userMsg, sql, results, summary: reply });
     } catch (err) {
-      return error('AI chat failed: ' + err.message, 500);
+      console.error('AI chat error:', err.message);
+      return error('AI chat failed', 500);
     }
   });
 
@@ -787,7 +800,8 @@ ${schema}`;
         optimized_route: jobs.results,
       });
     } catch (err) {
-      return error('Route optimize failed: ' + err.message, 500);
+      console.error('Route optimize error:', err.message);
+      return error('Route optimize failed', 500);
     }
   });
 
@@ -852,7 +866,8 @@ ${schema}`;
         alternatives: scored.slice(1, 4),
       });
     } catch (err) {
-      return error('Auto-dispatch failed: ' + err.message, 500);
+      console.error('Auto-dispatch error:', err.message);
+      return error('Auto-dispatch failed', 500);
     }
   });
 
@@ -863,7 +878,8 @@ ${schema}`;
       if (!user) return error('Unauthorized', 401);
       return success({ transcription: '', message: 'Transcription endpoint active.' });
     } catch (err) {
-      return error('Transcribe failed: ' + err.message, 500);
+      console.error('Transcribe error:', err.message);
+      return error('Transcribe failed', 500);
     }
   });
 
@@ -890,7 +906,8 @@ ${schema}`;
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch history: ' + err.message, 500);
+      console.error('Fetch history error:', err.message);
+      return error('Failed to fetch history', 500);
     }
   });
 
@@ -908,7 +925,8 @@ ${schema}`;
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch warranties: ' + err.message, 500);
+      console.error('Fetch warranties error:', err.message);
+      return error('Failed to fetch warranties', 500);
     }
   });
 
@@ -932,7 +950,8 @@ ${schema}`;
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch transactions: ' + err.message, 500);
+      console.error('Fetch transactions error:', err.message);
+      return error('Failed to fetch transactions', 500);
     }
   });
 
@@ -966,7 +985,8 @@ ${schema}`;
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch POS sales: ' + err.message, 500);
+      console.error('Fetch POS sales error:', err.message);
+      return error('Failed to fetch POS sales', 500);
     }
   });
 
@@ -995,7 +1015,8 @@ ${schema}`;
         .all();
       return success(result.results);
     } catch (err) {
-      return error('Failed to fetch credits: ' + err.message, 500);
+      console.error('Fetch credits error:', err.message);
+      return error('Failed to fetch credits', 500);
     }
   });
 }

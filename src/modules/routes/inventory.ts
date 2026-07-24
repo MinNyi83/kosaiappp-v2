@@ -290,6 +290,11 @@ function register(router, env) {
         return error('Missing quantity_change', 400);
       }
 
+      // Validate quantity is an integer
+      if (!Number.isInteger(quantity_change)) {
+        return error('quantity_change must be an integer', 400);
+      }
+
       const item = await db
         .prepare('SELECT * FROM inventory_stock WHERE item_code = ?')
         .bind(params.id)
@@ -661,6 +666,12 @@ function register(router, env) {
       const { serial_number, status, distributor, rma_tracking_id } = body;
       if (!serial_number) {
         return error('Missing required field: serial_number', 400);
+      }
+
+      // Validate status if provided
+      const validStatuses = ['Active', 'Defective', 'RMA Sent', 'RMA Completed', 'Replaced'];
+      if (status && !validStatuses.includes(status)) {
+        return error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`, 400);
       }
 
       await db
