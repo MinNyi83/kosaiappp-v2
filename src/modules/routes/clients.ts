@@ -89,6 +89,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
       const { company_name, contact_person, address, phone, amc_status, amc_start, amc_end } = body;
@@ -171,6 +172,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const existing = await db
         .prepare('SELECT id FROM clients WHERE id = ?')

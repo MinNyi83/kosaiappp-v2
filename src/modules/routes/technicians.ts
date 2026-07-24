@@ -2,7 +2,6 @@
  * Technicians Routes — CRUD + management for technician accounts
  */
 
-import { getCorsHeaders } from '../utils/cors.js';
 import { success, error } from '../utils/response.js';
 import { authenticate } from '../utils/auth-middleware.js';
 

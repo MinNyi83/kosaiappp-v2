@@ -1,3 +1,9 @@
+// XSS Protection
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Toast notification system - replaces alert()
 window.showToast = function(message, type = 'info', duration = 3000) {
   const container = document.getElementById('toast-container') || createToastContainer();
@@ -17,7 +23,7 @@ window.showToast = function(message, type = 'info', duration = 3000) {
   toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl border ${colors[type]} shadow-lg backdrop-blur-xl transform translate-y-[-100%] transition-transform duration-300 pointer-events-auto`;
   toast.innerHTML = `
     <span class="flex-shrink-0">${icons[type]}</span>
-    <span class="text-sm font-medium flex-1">${message}</span>
+    <span class="text-sm font-medium flex-1">${escapeHTML(message)}</span>
     <button onclick="this.parentElement.remove()" class="flex-shrink-0 opacity-60 hover:opacity-100">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
@@ -37,18 +43,6 @@ function createToastContainer() {
   document.body.appendChild(container);
   return container;
 }
-
-// XSS Protection — escape HTML entities in user-controlled strings
-function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-window.escapeHTML = escapeHTML;
 
 // Override alert() to use toast for backward compatibility
 window._originalAlert = window.alert;

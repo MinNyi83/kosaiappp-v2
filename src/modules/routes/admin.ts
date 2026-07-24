@@ -3,17 +3,16 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { verifyToken } from '../utils/jwt.js';
+import { authenticate } from '../utils/auth-middleware.js';
 import { fetchGeminiWithFallback } from '../utils/gemini.js';
 import { validateSql, ALLOWED_TABLES } from '../utils/sql-validator.js';
 
 function register(router, env) {
   const db = env.DB;
 
-  async function authenticate(request) {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-    const user = await verifyToken(authHeader.slice(7));
+  // Admin-only auth: verify token AND check admin role
+  async function requireAdmin(request) {
+    const user = await authenticate(request);
     if (!user || user.role?.toLowerCase() !== 'admin') return null;
     return user;
   }
@@ -21,7 +20,7 @@ function register(router, env) {
   // ── GET /api/admin/lookups ─────────────────────────────────────────────
   router.get('/api/admin/lookups', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const [clientsResult, techsResult] = await Promise.all([
@@ -41,7 +40,7 @@ function register(router, env) {
   // ── GET /api/admin/technicians ────────────────────────────────────────
   router.get('/api/admin/technicians', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const result = await db
@@ -61,7 +60,7 @@ function register(router, env) {
   // ── PUT /api/admin/technicians/:id ────────────────────────────────────
   router.put('/api/admin/technicians/:id', async (request, params) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const body = (await request.json()) as any;
@@ -111,7 +110,7 @@ function register(router, env) {
   // ── DELETE /api/admin/technicians/:id ─────────────────────────────────
   router.delete('/api/admin/technicians/:id', async (request, params) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       await db.prepare('DELETE FROM technicians WHERE id = ?').bind(params.id).run();
@@ -124,7 +123,7 @@ function register(router, env) {
   // ── GET /api/admin/clients ────────────────────────────────────────────
   router.get('/api/admin/clients', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
@@ -159,7 +158,7 @@ function register(router, env) {
   // ── GET /api/admin/config/:key ────────────────────────────────────────
   router.get('/api/admin/config/:key', async (request, params) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const config = await db
@@ -177,7 +176,7 @@ function register(router, env) {
   // ── POST /api/admin/config ────────────────────────────────────────────
   router.post('/api/admin/config', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const { key, value, description } = (await request.json()) as any;
@@ -204,7 +203,7 @@ function register(router, env) {
   // ── GET /api/admin/roles ──────────────────────────────────────────────
   router.get('/api/admin/roles', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const result = await db.prepare('SELECT * FROM roles ORDER BY name ASC').all();
@@ -218,7 +217,7 @@ function register(router, env) {
   // ── POST /api/admin/roles ─────────────────────────────────────────────
   router.post('/api/admin/roles', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const { name, permissions, description } = (await request.json()) as any;
@@ -239,7 +238,7 @@ function register(router, env) {
   // ── DELETE /api/admin/roles/:id ───────────────────────────────────────
   router.delete('/api/admin/roles/:id', async (request, params) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       await db.prepare('DELETE FROM roles WHERE id = ?').bind(params.id).run();
@@ -252,7 +251,7 @@ function register(router, env) {
   // ── POST /api/admin/backup ────────────────────────────────────────────
   router.post('/api/admin/backup', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       // Export all tables to JSON
@@ -289,7 +288,7 @@ function register(router, env) {
   // ── POST /api/admin/restore ───────────────────────────────────────────
   router.post('/api/admin/restore', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const body = (await request.json()) as any;
@@ -344,7 +343,7 @@ function register(router, env) {
   // ── GET /api/admin/stats ──────────────────────────────────────────────
   router.get('/api/admin/stats', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const [totalJobs, activeJobs, totalClients, totalTechs, totalExpenses, totalRevenue] =
@@ -391,7 +390,7 @@ function register(router, env) {
   // ── POST /api/landing-page ────────────────────────────────────────────
   router.post('/api/landing-page', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const body = (await request.json()) as any;
@@ -426,7 +425,7 @@ function register(router, env) {
   // ── POST /api/admin/hq-config ─────────────────────────────────────────
   router.post('/api/admin/hq-config', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const hq = (await request.json()) as any;
@@ -483,7 +482,7 @@ function register(router, env) {
   // Key-value config store. ?key=pdf_builder_config etc.
   router.get('/api/admin/config', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
@@ -508,7 +507,7 @@ function register(router, env) {
   // ── POST /api/admin/config ────────────────────────────────────────────
   router.post('/api/admin/config', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const { key, value } = (await request.json()) as any;
@@ -541,7 +540,7 @@ function register(router, env) {
   // ── GET /api/admin/roles/list ─────────────────────────────────────────
   router.get('/api/admin/roles/list', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const rows = await db.prepare('SELECT * FROM roles ORDER BY name ASC').all();
@@ -555,7 +554,7 @@ function register(router, env) {
   // AI polish for job notes — forwards to Gemini, falls back gracefully
   router.post('/api/admin/jobs/ai-polish', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const { text, notes, job_id } = (await request.json()) as any;
@@ -594,7 +593,7 @@ function register(router, env) {
   // AI Copilot chat with database query execution
   router.post('/api/admin/ai/chat-data', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const { message, query, question, history } = (await request.json()) as any;
@@ -764,7 +763,7 @@ ${schema}`;
   // ── POST /api/admin/ai/route-optimize ────────────────────────────────
   router.post('/api/admin/ai/route-optimize', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
@@ -795,7 +794,7 @@ ${schema}`;
   // ── POST /api/admin/ai/auto-dispatch ──────────────────────────────────
   router.post('/api/admin/ai/auto-dispatch', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const { text, job_type, priority } = (await request.json()) as any;
@@ -860,7 +859,7 @@ ${schema}`;
   // ── POST /api/admin/ai/transcribe ─────────────────────────────────────
   router.post('/api/admin/ai/transcribe', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
       return success({ transcription: '', message: 'Transcription endpoint active.' });
     } catch (err) {
@@ -872,7 +871,7 @@ ${schema}`;
   // Job receipt by job_id query param
   router.get('/api/jobs/receipt', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
@@ -969,7 +968,7 @@ ${schema}`;
   // ── GET /api/pos/sales ────────────────────────────────────────────────
   router.get('/api/pos/sales', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);
@@ -1003,7 +1002,7 @@ ${schema}`;
   // ── GET /api/pos/credits ──────────────────────────────────────────────
   router.get('/api/pos/credits', async (request) => {
     try {
-      const user = await authenticate(request);
+      const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
 
       const url = new URL(request.url);

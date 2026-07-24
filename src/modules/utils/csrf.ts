@@ -3,9 +3,8 @@
  * Generates and validates CSRF tokens for state-changing endpoints.
  * Tokens are short-lived (15 min) and bound to the user's session.
  */
-import { verifyToken } from './jwt.js';
 
-const CSRF_SECRET = 'csrf-protection-v1';
+const CSRF_SECRET = process.env.CSRF_SECRET || process.env.JWT_SECRET || 'csrf-fallback-dev-only';
 
 /**
  * Generate a CSRF token for a user session

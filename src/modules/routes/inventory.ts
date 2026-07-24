@@ -114,6 +114,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
       const item_code = (body.item_code || body.sku || '').toUpperCase();
