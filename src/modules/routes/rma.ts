@@ -33,11 +33,16 @@ function register(router, env) {
       }
       query += ' ORDER BY r.created_at DESC';
 
-      const result = await db
-        .prepare(query)
-        .bind(...params)
-        .all();
-      return success(result.results);
+      try {
+        const result = await db
+          .prepare(query)
+          .bind(...params)
+          .all();
+        return success(result.results);
+      } catch (_) {
+        // Table may not exist yet — return empty list
+        return success([]);
+      }
     } catch (err) {
       return error('Failed to fetch RMA requests: ' + err.message, 500);
     }

@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS cash_safes (
 CREATE TABLE IF NOT EXISTS cash_transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id TEXT REFERENCES service_records(id),
-    transaction_type TEXT CHECK(transaction_type IN ('Deposit', 'Withdrawal')) NOT NULL,
+    transaction_type TEXT CHECK(transaction_type IN ('Deposit', 'Withdrawal', 'Income', 'Sale', 'Refund')) NOT NULL,
     primary_currency TEXT CHECK(primary_currency IN ('USD', 'MMK')) NOT NULL,
     amount REAL NOT NULL,
     exchange_rate REAL NOT NULL,
@@ -133,6 +133,77 @@ CREATE TABLE IF NOT EXISTS service_fees (
 CREATE TABLE IF NOT EXISTS system_config (
     config_key TEXT PRIMARY KEY,
     config_value TEXT
+);
+
+-- Distributor directory
+CREATE TABLE IF NOT EXISTS distributors (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    contact_person TEXT,
+    phone TEXT,
+    email TEXT,
+    product_lines TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- POS / Invoice tables
+CREATE TABLE IF NOT EXISTS invoices (
+    id TEXT PRIMARY KEY,
+    client_id TEXT REFERENCES clients(id),
+    items TEXT DEFAULT '[]',
+    amount REAL DEFAULT 0,
+    tax REAL DEFAULT 0,
+    total REAL DEFAULT 0,
+    status TEXT CHECK(status IN ('pending', 'paid', 'cancelled', 'refunded')) DEFAULT 'pending',
+    notes TEXT,
+    payment_method TEXT,
+    payment_ref TEXT,
+    amount_paid REAL DEFAULT 0,
+    due_date TEXT,
+    drive_file_id TEXT,
+    drive_url TEXT,
+    created_by TEXT REFERENCES technicians(id),
+    paid_at TEXT,
+    paid_by TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Expenses tracking
+CREATE TABLE IF NOT EXISTS expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    amount REAL NOT NULL,
+    currency TEXT CHECK(currency IN ('USD', 'MMK')) DEFAULT 'USD',
+    category TEXT,
+    description TEXT,
+    receipt_url TEXT,
+    submitted_by TEXT REFERENCES technicians(id),
+    approved_by TEXT,
+    status TEXT CHECK(status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at TEXT
+);
+
+-- Client credit tracking for POS
+CREATE TABLE IF NOT EXISTS client_credits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client_id TEXT REFERENCES clients(id),
+    invoice_id TEXT REFERENCES invoices(id),
+    amount REAL NOT NULL DEFAULT 0,
+    status TEXT CHECK(status IN ('pending', 'paid', 'cancelled')) DEFAULT 'pending',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    paid_at TEXT
+);
+
+-- Serial number tracking for inventory items
+CREATE TABLE IF NOT EXISTS serial_numbers (
+    serial_number TEXT PRIMARY KEY,
+    item_code TEXT REFERENCES inventory_stock(item_code),
+    batch_code TEXT REFERENCES inventory_batches(batch_code),
+    status TEXT CHECK(status IN ('in_stock', 'sold', 'rma', 'returned', 'defective')) DEFAULT 'in_stock',
+    client_id TEXT REFERENCES clients(id),
+    invoice_id TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 PRAGMA foreign_keys = ON;

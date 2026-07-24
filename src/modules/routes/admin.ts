@@ -259,11 +259,13 @@ function register(router, env) {
       const tables = [
         'technicians',
         'clients',
-        'jobs',
-        'inventory',
-        'expenses',
-        'attendance',
+        'service_records',
+        'inventory_stock',
+        'inventory_items',
+        'cash_safes',
+        'cash_transactions',
         'system_config',
+        'landing_page',
       ];
       const backup: any = {};
 
@@ -293,11 +295,13 @@ function register(router, env) {
       const tables = [
         'technicians',
         'clients',
-        'jobs',
-        'inventory',
-        'expenses',
-        'attendance',
+        'service_records',
+        'inventory_stock',
+        'inventory_items',
+        'cash_safes',
+        'cash_transactions',
         'system_config',
+        'landing_page',
       ];
       let restored = 0;
 
@@ -339,21 +343,18 @@ function register(router, env) {
 
       const [totalJobs, activeJobs, totalClients, totalTechs, totalExpenses, totalRevenue] =
         await Promise.all([
-          db.prepare('SELECT COUNT(*) as count FROM jobs').first(),
+          db.prepare('SELECT COUNT(*) as count FROM service_records').first(),
           db
             .prepare(
-              "SELECT COUNT(*) as count FROM jobs WHERE status IN ('pending', 'assigned', 'in_progress')"
+              "SELECT COUNT(*) as count FROM service_records WHERE status IN ('Pending', 'In Progress')"
             )
             .first(),
           db.prepare('SELECT COUNT(*) as count FROM clients').first(),
           db.prepare('SELECT COUNT(*) as count FROM technicians WHERE active = 1').first(),
           db
             .prepare(
-              "SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE status = 'approved'"
+              "SELECT COALESCE(SUM(amount), 0) as total FROM cash_transactions WHERE transaction_type = 'Withdrawal'"
             )
-            .first(),
-          db
-            .prepare("SELECT COALESCE(SUM(amount), 0) as total FROM invoices WHERE status = 'paid'")
             .first(),
         ]);
 

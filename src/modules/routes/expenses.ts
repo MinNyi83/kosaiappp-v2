@@ -42,15 +42,15 @@ function register(router, env) {
         countParams.push(category);
       }
       if (dateFrom) {
-        query += ' AND e.expense_date >= ?';
+        query += ' AND e.created_at >= ?';
         params.push(dateFrom);
-        countQuery += ' AND expense_date >= ?';
+        countQuery += ' AND created_at >= ?';
         countParams.push(dateFrom);
       }
       if (dateTo) {
-        query += ' AND e.expense_date <= ?';
+        query += ' AND e.created_at <= ?';
         params.push(dateTo);
-        countQuery += ' AND expense_date <= ?';
+        countQuery += ' AND created_at <= ?';
         countParams.push(dateTo);
       }
       if (status) {
@@ -66,7 +66,7 @@ function register(router, env) {
         countParams.push(user.id);
       }
 
-      query += ' ORDER BY e.expense_date DESC LIMIT ? OFFSET ?';
+      query += ' ORDER BY e.created_at DESC LIMIT ? OFFSET ?';
       params.push(limit, offset);
 
       const [expensesResult, countResult] = await Promise.all([

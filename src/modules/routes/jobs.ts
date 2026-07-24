@@ -393,6 +393,67 @@ function register(router, env) {
       return error('Failed to update job status: ' + err.message, 500);
     }
   });
+
+  // ── POST /api/admin/jobs/edit (alias for PUT /api/jobs/:id) ────────────
+  router.post('/api/admin/jobs/edit', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
+
+      const body = (await request.json()) as any;
+      const id = body.id;
+      if (!id) return error('Missing job id', 400);
+
+      const allowed = ['client_id', 'technician_id', 'service_type', 'status', 'job_description', 'maps_url', 'arrival_lat', 'arrival_lng', 'technician_notes'];
+      const updates = [];
+      const values = [];
+
+      for (const field of allowed) {
+        if (body[field] !== undefined) {
+          updates.push(`${field} = ?`);
+          values.push(body[field]);
+        }
+      }
+
+      // Allow renaming job ID if new_id provided
+      if (body.new_id && body.new_id !== id) {
+        const exists = await db.prepare('SELECT id FROM service_records WHERE id = ?').bind(body.new_id).first();
+        if (exists) return error('Job ID already exists', 400);
+        updates.push('id = ?');
+        values.push(body.new_id);
+      }
+
+      if (updates.length === 0) return error('No fields to update', 400);
+      updates.push("updated_at = datetime('now')");
+      values.push(id);
+
+      await db.prepare(`UPDATE service_records SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
+      return success({ message: 'Job updated' });
+    } catch (err) {
+      return error('Failed to update job: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/admin/jobs/cancel (alias for POST /api/jobs/:id/status) ──
+  router.post('/api/admin/jobs/cancel', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json()) as any;
+      const id = body.id;
+      if (!id) return error('Missing job id', 400);
+
+      const existing = await db.prepare('SELECT * FROM service_records WHERE id = ?').bind(id).first();
+      if (!existing) return error('Job not found', 404);
+
+      await db.prepare("UPDATE service_records SET status = 'Cancelled', updated_at = datetime('now') WHERE id = ?").bind(id).run();
+      return success({ id, previous_status: existing.status, new_status: 'Cancelled' });
+    } catch (err) {
+      return error('Failed to cancel job: ' + err.message, 500);
+    }
+  });
 }
 
 export { register };

@@ -49,26 +49,23 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { name, contact_person, phone, email, address, notes } = (await request.json()) as any;
+      const { name, contact_person, phone, email, notes } = (await request.json()) as any;
       if (!name) return error('Missing distributor name', 400);
 
-      const id = 'DIST-' + Date.now().toString(36).toUpperCase();
-      await db
+      const result = await db
         .prepare(
-          'INSERT INTO distributors (id, name, contact_person, phone, email, address, notes) VALUES (?, ?, ?, ?, ?, ?, ?)'
+          'INSERT INTO distributors (name, contact_person, phone, email, product_lines) VALUES (?, ?, ?, ?, ?)'
         )
         .bind(
-          id,
           name,
           contact_person || null,
           phone || null,
           email || null,
-          address || null,
           notes || null
         )
         .run();
 
-      return success({ id, name }, 201);
+      return success({ id: result.meta?.last_row_id, name }, 201);
     } catch (err) {
       return error('Failed to create distributor: ' + err.message, 500);
     }
@@ -81,7 +78,7 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       const body = (await request.json()) as any;
-      const allowed = ['name', 'contact_person', 'phone', 'email', 'address', 'notes'];
+      const allowed = ['name', 'contact_person', 'phone', 'email', 'product_lines'];
       const updates = [];
       const values = [];
 
@@ -113,6 +110,45 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       await db.prepare('DELETE FROM distributors WHERE id = ?').bind(params.id).run();
+      return success({ message: 'Distributor deleted' });
+    } catch (err) {
+      return error('Failed to delete distributor: ' + err.message, 500);
+    }
+  });
+
+  // ── Alias routes for /api/admin/distributors/* (frontend paths) ───────
+  router.get('/api/admin/distributors/list', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+      const result = await db.prepare('SELECT * FROM distributors ORDER BY name ASC').all();
+      return success(result.results);
+    } catch (err) {
+      return error('Failed to fetch distributors: ' + err.message, 500);
+    }
+  });
+
+  router.post('/api/admin/distributors/add', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+      const { name, contact_person, phone, email, notes } = (await request.json()) as any;
+      if (!name) return error('Missing distributor name', 400);
+      const result = await db.prepare('INSERT INTO distributors (name, contact_person, phone, email, product_lines) VALUES (?, ?, ?, ?, ?)').bind(name, contact_person || null, phone || null, email || null, notes || null).run();
+      return success({ id: result.meta?.last_row_id, name }, 201);
+    } catch (err) {
+      return error('Failed to create distributor: ' + err.message, 500);
+    }
+  });
+
+  router.post('/api/admin/distributors/delete', async (request) => {
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id');
+    if (!id) return error('Missing id parameter', 400);
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+      await db.prepare('DELETE FROM distributors WHERE id = ?').bind(id).run();
       return success({ message: 'Distributor deleted' });
     } catch (err) {
       return error('Failed to delete distributor: ' + err.message, 500);

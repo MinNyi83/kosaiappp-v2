@@ -1045,8 +1045,8 @@ async function populateReports() {
       techsBody.innerHTML += `
                         <tr class="border-b border-white/5 hover:bg-white/5 transition-all text-slate-300">
                             <td class="py-2.5 font-semibold">${t.name}</td>
-                            <td class="py-2.5 text-center font-mono">${t.assigned} jobs</td>
-                            <td class="py-2.5 text-right font-mono font-bold text-emerald-400">${rate}% (${t.completed}/${t.assigned})</td>
+                            <td class="py-2.5 text-center font-mono">${t.load} jobs</td>
+                            <td class="py-2.5 text-right font-mono font-bold text-emerald-400">${rate}%</td>
                         </tr>
                     `;
     });
@@ -8304,3 +8304,331 @@ window.filterTicketTable = function () {
 window.filterTicketByDomain = function (val) {
   window.filterTicketTable();
 };
+
+// ============================================================================
+// REPORT TAB SWITCHING & EXPORTS (synced from web/admin.js)
+// ============================================================================
+
+let currentReportTab = 'overview';
+
+function switchReportTab(tab) {
+  currentReportTab = tab;
+  document.querySelectorAll('.report-tab').forEach(btn => {
+    btn.classList.remove('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    btn.classList.add('text-slate-400', 'border-transparent');
+  });
+  const activeBtn = document.getElementById(`report-tab-${tab}`);
+  if (activeBtn) {
+    activeBtn.classList.add('text-white', 'bg-amber-500/10', 'border-amber-500/20');
+    activeBtn.classList.remove('text-slate-400', 'border-transparent');
+  }
+  ['overview', 'jobs', 'clients', 'inventory', 'financial', 'technicians'].forEach(p => {
+    const panel = document.getElementById(`report-panel-${p}`);
+    if (panel) panel.classList.toggle('hidden', p !== tab);
+  });
+  loadReportTabData(tab);
+}
+
+function loadReportTabData(tab) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  fetch(`${baseUrl}/api/jobs`)
+    .then(res => res.json())
+    .then(jobs => {
+      fetch(`${baseUrl}/api/admin/lookups`)
+        .then(res => res.json())
+        .then(lookups => {
+          fetch(`${baseUrl}/api/admin/cash/safe`)
+            .then(res => res.json())
+            .then(safe => {
+              renderReportTabData(tab, jobs, lookups, safe);
+            });
+        });
+    });
+}
+
+function renderReportTabData(tab, jobs, lookups, safe) {
+  switch (tab) {
+    case 'jobs': renderJobsReport(jobs, lookups); break;
+    case 'clients': renderClientsReport(jobs, lookups); break;
+    case 'inventory': renderInventoryReport(lookups); break;
+    case 'financial': renderFinancialReport(safe); break;
+    case 'technicians': renderTechniciansReport(jobs, lookups); break;
+  }
+}
+
+function renderJobsReport(jobs, lookups) {
+  const statusBody = document.getElementById('report-jobs-status-body');
+  if (statusBody) {
+    const statusCounts = {};
+    jobs.forEach(j => { statusCounts[j.status] = (statusCounts[j.status] || 0) + 1; });
+    const total = jobs.length;
+    statusBody.innerHTML = Object.entries(statusCounts).map(([status, count]) => {
+      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+      let statusClass = 'text-slate-400';
+      if (status === 'Completed') statusClass = 'text-emerald-400';
+      else if (status === 'Pending') statusClass = 'text-amber-400';
+      else if (status === 'In Progress') statusClass = 'text-blue-400';
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold ${statusClass}">${status}</td><td class="py-2 text-right font-mono">${count}</td><td class="py-2 text-right text-slate-400">${pct}%</td></tr>`;
+    }).join('');
+  }
+  const typeBody = document.getElementById('report-jobs-type-body');
+  if (typeBody) {
+    const typeCounts = {};
+    jobs.forEach(j => {
+      if (!typeCounts[j.service_type]) typeCounts[j.service_type] = { total: 0, completed: 0 };
+      typeCounts[j.service_type].total++;
+      if (j.status === 'Completed') typeCounts[j.service_type].completed++;
+    });
+    typeBody.innerHTML = Object.entries(typeCounts).map(([type, data]) => {
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white">${type}</td><td class="py-2 text-right font-mono">${data.total}</td><td class="py-2 text-right text-emerald-400">${data.completed}</td></tr>`;
+    }).join('');
+  }
+  renderRecentJobs(jobs, lookups);
+}
+
+function renderClientsReport(jobs, lookups) {
+  const clients = lookups.clients || [];
+  const amcBody = document.getElementById('report-amc-body');
+  if (amcBody) {
+    const amcCounts = {};
+    clients.forEach(c => { amcCounts[c.amc_status] = (amcCounts[c.amc_status] || 0) + 1; });
+    const total = clients.length;
+    amcBody.innerHTML = Object.entries(amcCounts).map(([status, count]) => {
+      const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+      let statusClass = 'text-slate-400';
+      if (status === 'Active') statusClass = 'text-emerald-400';
+      else if (status === 'Expired') statusClass = 'text-rose-400';
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold ${statusClass}">${status}</td><td class="py-2 text-right font-mono">${count}</td><td class="py-2 text-right text-slate-400">${pct}%</td></tr>`;
+    }).join('');
+  }
+  const clientJobsBody = document.getElementById('report-client-jobs-body');
+  if (clientJobsBody) {
+    const clientJobs = {};
+    clients.forEach(c => { clientJobs[c.company_name] = { total: 0, completed: 0 }; });
+    jobs.forEach(j => {
+      const client = clients.find(c => c.id === j.client_id);
+      if (client && clientJobs[client.company_name]) {
+        clientJobs[client.company_name].total++;
+        if (j.status === 'Completed') clientJobs[client.company_name].completed++;
+      }
+    });
+    clientJobsBody.innerHTML = Object.entries(clientJobs)
+      .filter(([, data]) => data.total > 0)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 10)
+      .map(([name, data]) => {
+        return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white truncate max-w-[150px]">${name}</td><td class="py-2 text-right font-mono">${data.total}</td><td class="py-2 text-right text-emerald-400">${data.completed}</td></tr>`;
+      }).join('');
+  }
+}
+
+function renderInventoryReport(lookups) {
+  const stock = lookups.inventory_stock || [];
+  const catBody = document.getElementById('report-inventory-cat-body');
+  if (catBody) {
+    const catData = {};
+    stock.forEach(s => {
+      if (!catData[s.category]) catData[s.category] = { items: 0, qty: 0, value: 0 };
+      catData[s.category].items++;
+      catData[s.category].qty += s.stock_qty || 0;
+      catData[s.category].value += (s.stock_qty || 0) * (s.unit_price || 0);
+    });
+    catBody.innerHTML = Object.entries(catData)
+      .sort((a, b) => b[1].value - a[1].value)
+      .map(([cat, data]) => {
+        return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white">${cat}</td><td class="py-2 text-right font-mono">${data.items}</td><td class="py-2 text-right font-mono">${data.qty}</td><td class="py-2 text-right text-emerald-400 font-mono">$${data.value.toFixed(2)}</td></tr>`;
+      }).join('');
+  }
+  const lowStockBody = document.getElementById('report-low-stock-body');
+  if (lowStockBody) {
+    const lowStock = stock.filter(s => (s.stock_qty || 0) <= 5).sort((a, b) => (a.stock_qty || 0) - (b.stock_qty || 0));
+    lowStockBody.innerHTML = lowStock.slice(0, 15).map(s => {
+      const statusClass = s.stock_qty === 0 ? 'text-rose-400' : 'text-amber-400';
+      const statusText = s.stock_qty === 0 ? 'OUT' : 'LOW';
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white truncate max-w-[150px]">${s.item_name}</td><td class="py-2 font-mono text-slate-400">${s.item_code}</td><td class="py-2 text-right font-mono">${s.stock_qty || 0}</td><td class="py-2 text-right font-bold ${statusClass}">${statusText}</td></tr>`;
+    }).join('');
+  }
+}
+
+function renderFinancialReport(safe) {
+  const safeBody = document.getElementById('report-cash-safe-body');
+  if (safeBody) {
+    safeBody.innerHTML = `
+      <tr class="hover:bg-white/5"><td class="py-2 font-semibold text-amber-400">USD</td><td class="py-2 text-right font-mono font-bold">$${(safe.usd_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>
+      <tr class="hover:bg-white/5"><td class="py-2 font-semibold text-indigo-400">MMK</td><td class="py-2 text-right font-mono font-bold">${(safe.mmk_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} Ks</td></tr>
+      <tr class="hover:bg-white/5 bg-white/5"><td class="py-2 font-bold text-white">Total (USD)</td><td class="py-2 text-right font-mono font-bold text-emerald-400">$${((safe.usd_balance || 0) + (safe.mmk_balance || 0) / 2100).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td></tr>
+    `;
+  }
+  const transBody = document.getElementById('report-transactions-body');
+  if (transBody) {
+    const baseUrl = document.getElementById('api-base')?.value || '';
+    fetch(`${baseUrl}/api/admin/cash/transactions`)
+      .then(res => res.json())
+      .then(transactions => {
+        transBody.innerHTML = (transactions || []).slice(0, 10).map(t => {
+          const typeClass = t.transaction_type === 'Deposit' ? 'text-emerald-400' : 'text-rose-400';
+          return `<tr class="hover:bg-white/5"><td class="py-2 text-slate-400">${t.created_at ? new Date(t.created_at).toLocaleDateString() : 'N/A'}</td><td class="py-2 font-semibold ${typeClass}">${t.transaction_type}</td><td class="py-2 text-right font-mono">${t.primary_currency === 'USD' ? '$' : ''}${(t.amount || 0).toLocaleString()}</td><td class="py-2 text-slate-400 truncate max-w-[150px]">${t.notes || ''}</td></tr>`;
+        }).join('');
+      });
+  }
+}
+
+function renderTechniciansReport(jobs, lookups) {
+  const techsBody = document.getElementById('report-techs-body');
+  if (!techsBody) return;
+  const techData = {};
+  (lookups.technicians || []).forEach(t => {
+    techData[t.id] = { name: t.name, total: 0, completed: 0, inProgress: 0 };
+  });
+  jobs.forEach(j => {
+    if (techData[j.technician_id]) {
+      techData[j.technician_id].total++;
+      if (j.status === 'Completed') techData[j.technician_id].completed++;
+      if (j.status === 'In Progress') techData[j.technician_id].inProgress++;
+    }
+  });
+  techsBody.innerHTML = Object.values(techData)
+    .sort((a, b) => b.total - a.total)
+    .map(t => {
+      const rate = t.total > 0 ? Math.round((t.completed / t.total) * 100) : 0;
+      let rateClass = 'text-slate-400';
+      if (rate >= 80) rateClass = 'text-emerald-400';
+      else if (rate >= 50) rateClass = 'text-amber-400';
+      return `<tr class="hover:bg-white/5"><td class="py-2 font-semibold text-white">${t.name}</td><td class="py-2 text-center font-mono">${t.total}</td><td class="py-2 text-center text-emerald-400 font-mono">${t.completed}</td><td class="py-2 text-center text-blue-400 font-mono">${t.inProgress}</td><td class="py-2 text-right font-bold ${rateClass}">${rate}%</td></tr>`;
+    }).join('');
+}
+
+function renderRecentJobs(jobs, lookups) {
+  const tbody = document.getElementById('report-recent-jobs');
+  if (!tbody) return;
+  tbody.innerHTML = jobs.slice(0, 10).map(j => {
+    const client = (lookups.clients || []).find(c => c.id === j.client_id);
+    const tech = (lookups.technicians || []).find(t => t.id === j.technician_id);
+    let statusClass = 'bg-slate-500/20 text-slate-400';
+    if (j.status === 'Completed') statusClass = 'bg-emerald-500/20 text-emerald-400';
+    else if (j.status === 'Pending') statusClass = 'bg-amber-500/20 text-amber-400';
+    else if (j.status === 'In Progress') statusClass = 'bg-blue-500/20 text-blue-400';
+    return `<tr class="hover:bg-white/5"><td class="py-2 font-mono text-amber-400">${j.id}</td><td class="py-2 text-white truncate max-w-[120px]">${client?.company_name || 'Unknown'}</td><td class="py-2 text-slate-300">${j.service_type}</td><td class="py-2 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${statusClass}">${j.status}</span></td><td class="py-2 text-slate-300">${tech?.name || 'Unassigned'}</td><td class="py-2 text-right text-slate-400 text-[10px]">${j.created_at ? new Date(j.created_at).toLocaleDateString() : 'N/A'}</td></tr>`;
+  }).join('');
+}
+
+function filterReportsByDate() {
+  if (typeof showToast === 'function') showToast('Date filter applied', 'info');
+  populateReports();
+}
+
+function resetReportDates() {
+  const fromEl = document.getElementById('report-date-from');
+  const toEl = document.getElementById('report-date-to');
+  if (fromEl) fromEl.value = '';
+  if (toEl) toEl.value = '';
+  if (typeof showToast === 'function') showToast('Date filter reset', 'info');
+  populateReports();
+}
+
+function exportReportsCSV() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  fetch(`${baseUrl}/api/jobs`)
+    .then(res => res.json())
+    .then(jobs => {
+      fetch(`${baseUrl}/api/admin/lookups`)
+        .then(res => res.json())
+        .then(lookups => {
+          let csv = 'Job ID,Client,Service Type,Status,Technician,Created Date\n';
+          jobs.forEach(j => {
+            const client = (lookups.clients || []).find(c => c.id === j.client_id);
+            const tech = (lookups.technicians || []).find(t => t.id === j.technician_id);
+            csv += `"${j.id}","${client?.company_name || ''}","${j.service_type}","${j.status}","${tech?.name || ''}","${j.created_at || ''}"\n`;
+          });
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `KosAI_Jobs_Report_${new Date().toISOString().split('T')[0]}.csv`;
+          link.click();
+          URL.revokeObjectURL(link.href);
+          if (typeof showToast === 'function') showToast('CSV exported successfully', 'success');
+        });
+    });
+}
+
+function openReportCustomizer() {
+  const modal = document.getElementById('report-customizer-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeReportCustomizer() {
+  const modal = document.getElementById('report-customizer-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function exportAllReports() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  fetch(`${baseUrl}/api/jobs`)
+    .then(res => res.json())
+    .then(jobs => {
+      fetch(`${baseUrl}/api/admin/lookups`)
+        .then(res => res.json())
+        .then(lookups => {
+          fetch(`${baseUrl}/api/admin/cash/safe`)
+            .then(res => res.json())
+            .then(safe => {
+              const wb = generateExcelWorkbook(jobs, lookups, safe);
+              downloadWorkbook(wb);
+            });
+        });
+    });
+}
+
+function generateExcelWorkbook(jobs, lookups, safe, style, selectedReports) {
+  const wb = { sheets: [], style: style || {} };
+  const clients = lookups.clients || [];
+  const stock = lookups.inventory_stock || [];
+  const techs = lookups.technicians || [];
+
+  // Jobs sheet
+  wb.sheets.push({
+    name: 'Jobs',
+    headers: ['Job ID', 'Client', 'Type', 'Status', 'Technician', 'Created'],
+    data: jobs.map(j => {
+      const c = clients.find(cl => cl.id === j.client_id);
+      const t = techs.find(tt => tt.id === j.technician_id);
+      return [j.id, c?.company_name || '', j.service_type, j.status, t?.name || '', j.created_at || ''];
+    })
+  });
+
+  // Clients sheet
+  wb.sheets.push({
+    name: 'Clients',
+    headers: ['Company', 'Contact', 'Phone', 'AMC Status'],
+    data: clients.map(c => [c.company_name, c.contact_person, c.phone, c.amc_status])
+  });
+
+  // Inventory sheet
+  wb.sheets.push({
+    name: 'Inventory',
+    headers: ['Code', 'Name', 'Category', 'Qty', 'Price USD', 'Price MMK'],
+    data: stock.map(s => [s.item_code, s.item_name, s.category, s.stock_qty, s.unit_price, s.unit_price_mmk])
+  });
+
+  return wb;
+}
+
+function downloadWorkbook(wb) {
+  // Generate CSV from workbook sheets
+  const sheet = wb.sheets[0];
+  if (!sheet) return;
+  let csv = sheet.headers.join(',') + '\n';
+  sheet.data.forEach(row => {
+    csv += row.map(v => {
+      const s = String(v ?? '');
+      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(',') + '\n';
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `KosAI_Report_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  if (typeof showToast === 'function') showToast('Report exported successfully', 'success');
+}

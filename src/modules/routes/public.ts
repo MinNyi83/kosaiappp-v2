@@ -82,7 +82,7 @@ function register(router, env) {
 
       const item = await db
         .prepare(
-          'SELECT i.name, i.sku, b.batch_number, s.serial_number, s.status FROM serial_numbers s JOIN inventory i ON s.item_id = i.id LEFT JOIN batches b ON s.batch_id = b.id WHERE s.serial_number = ?'
+          'SELECT s.device_name, s.batch_code, s.serial_number, s.status FROM inventory_items s WHERE s.serial_number = ?'
         )
         .bind(serial)
         .first();

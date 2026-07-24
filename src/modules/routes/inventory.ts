@@ -72,13 +72,41 @@ function register(router, env) {
     }
   });
 
+  // ── GET /api/inventory/low-stock ──────────────────────────────────────
+  router.get('/api/inventory/low-stock', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+      const items = await db
+        .prepare('SELECT * FROM inventory_stock WHERE stock_qty <= 5 ORDER BY stock_qty ASC')
+        .all();
+      return success(items.results);
+    } catch (err: any) {
+      return error('Failed to fetch low stock items: ' + err.message, 500);
+    }
+  });
+
+  // ── GET /api/inventory/categories ─────────────────────────────────────
+  router.get('/api/inventory/categories', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+      const result = await db
+        .prepare('SELECT DISTINCT category FROM inventory_stock WHERE category IS NOT NULL ORDER BY category ASC')
+        .all();
+      return success(result.results.map((r) => r.category));
+    } catch (err) {
+      return error('Failed to fetch categories: ' + err.message, 500);
+    }
+  });
+
   // ── GET /api/inventory/:id ────────────────────────────────────────────
   router.get('/api/inventory/:id', async (request, params) => {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const item = await db.prepare('SELECT * FROM inventory WHERE id = ?').bind(params.id).first();
+      const item = await db.prepare('SELECT * FROM inventory_stock WHERE item_code = ?').bind(params.id).first();
       if (!item) return error('Inventory item not found', 404);
 
       return success(item);
@@ -140,16 +168,13 @@ function register(router, env) {
       } else {
         await db
           .prepare(
-            `INSERT INTO inventory_stock (item_code, item_name, category, sub_category_id, brand_id, stocking_um, stock_qty, unit_price, unit_price_mmk, buying_price, batch_code)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            `INSERT INTO inventory_stock (item_code, item_name, category, stock_qty, unit_price, unit_price_mmk, buying_price, batch_code)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .bind(
             item_code,
             item_name,
             category,
-            sub_category_id,
-            brand_id,
-            stocking_um,
             stock_qty,
             unit_price,
             unit_price_mmk,
@@ -184,9 +209,6 @@ function register(router, env) {
       const allowed = [
         'item_name',
         'category',
-        'sub_category_id',
-        'brand_id',
-        'stocking_um',
         'stock_qty',
         'unit_price',
         'unit_price_mmk',
@@ -295,41 +317,6 @@ function register(router, env) {
       });
     } catch (err: any) {
       return error('Failed to adjust inventory: ' + err.message, 500);
-    }
-  });
-
-  // ── GET /api/inventory/low-stock ──────────────────────────────────────
-  router.get('/api/inventory/low-stock', async (request) => {
-    try {
-      const user = await authenticate(request);
-      if (!user) return error('Unauthorized', 401);
-
-      // inventory_stock doesn't have reorder_level, we filter by stock_qty <= 5
-      const items = await db
-        .prepare('SELECT * FROM inventory_stock WHERE stock_qty <= 5 ORDER BY stock_qty ASC')
-        .all();
-
-      return success(items.results);
-    } catch (err: any) {
-      return error('Failed to fetch low stock items: ' + err.message, 500);
-    }
-  });
-
-  // ── GET /api/inventory/categories ─────────────────────────────────────
-  router.get('/api/inventory/categories', async (request) => {
-    try {
-      const user = await authenticate(request);
-      if (!user) return error('Unauthorized', 401);
-
-      const result = await db
-        .prepare(
-          'SELECT DISTINCT category FROM inventory_stock WHERE category IS NOT NULL ORDER BY category ASC'
-        )
-        .all();
-
-      return success(result.results.map((r) => r.category));
-    } catch (err) {
-      return error('Failed to fetch categories: ' + err.message, 500);
     }
   });
 
@@ -467,41 +454,118 @@ function register(router, env) {
   });
 
   // ── GET /api/admin/warranty/list ──────────────────────────────────────
-  // Stub: warranty table may not exist yet; return empty array gracefully
   router.get('/api/admin/warranty/list', async (request) => {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      // Try querying; if table doesn't exist, return empty
-      try {
-        const result = await db
-          .prepare('SELECT * FROM warranty_records ORDER BY created_at DESC LIMIT 100')
-          .all();
-        return success(result.results);
-      } catch (_) {
-        return success([]);
-      }
+      const result = await db
+        .prepare('SELECT i.*, c.company_name FROM inventory_items i LEFT JOIN clients c ON i.client_id = c.id ORDER BY i.installed_date DESC LIMIT 100')
+        .all();
+      return success(result.results);
     } catch (err) {
       return error('Failed to fetch warranties: ' + err.message, 500);
     }
   });
 
+  // ── POST /api/admin/warranty/register ─────────────────────────────────
+  router.post('/api/admin/warranty/register', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json()) as any;
+      const { serial_number, device_name, client_id, installed_date, warranty_months } = body;
+      if (!serial_number || !device_name) {
+        return error('Missing required fields: serial_number, device_name', 400);
+      }
+
+      await db
+        .prepare(
+          'INSERT OR REPLACE INTO inventory_items (serial_number, device_name, client_id, installed_date, warranty_months, status) VALUES (?, ?, ?, ?, ?, ?)'
+        )
+        .bind(
+          serial_number,
+          device_name,
+          client_id || null,
+          installed_date || new Date().toISOString().split('T')[0],
+          warranty_months || 12,
+          'Active'
+        )
+        .run();
+
+      return success({ serial_number, status: 'Active' }, 201);
+    } catch (err) {
+      return error('Failed to register warranty: ' + err.message, 500);
+    }
+  });
+
   // ── GET /api/admin/rma/list ───────────────────────────────────────────
-  // Stub: RMA table may not exist yet; return empty array gracefully
   router.get('/api/admin/rma/list', async (request) => {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      try {
-        const result = await db
-          .prepare('SELECT * FROM rma_records ORDER BY created_at DESC LIMIT 100')
-          .all();
-        return success(result.results);
-      } catch (_) {
-        return success([]);
-      }
+      const result = await db
+        .prepare("SELECT * FROM inventory_items WHERE status IN ('RMA Sent', 'RMA Completed') ORDER BY installed_date DESC LIMIT 100")
+        .all();
+      return success(result.results);
     } catch (err) {
       return error('Failed to fetch RMA records: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/admin/rma/raise ─────────────────────────────────────────
+  router.post('/api/admin/rma/raise', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json()) as any;
+      const { serial_number, distributor, rma_id, sent_date } = body;
+      if (!serial_number) {
+        return error('Missing required field: serial_number', 400);
+      }
+
+      const existing = await db
+        .prepare('SELECT serial_number, status FROM inventory_items WHERE serial_number = ?')
+        .bind(serial_number)
+        .first();
+      if (!existing) return error('Serial number not found in inventory', 404);
+
+      await db
+        .prepare(
+          "UPDATE inventory_items SET status = 'RMA Sent', distributor = ?, rma_tracking_id = ?, installed_date = COALESCE(?, installed_date) WHERE serial_number = ?"
+        )
+        .bind(distributor || null, rma_id || null, sent_date || null, serial_number)
+        .run();
+
+      return success({ serial_number, status: 'RMA Sent' });
+    } catch (err) {
+      return error('Failed to raise RMA claim: ' + err.message, 500);
+    }
+  });
+
+  // ── POST /api/admin/rma/update ────────────────────────────────────────
+  router.post('/api/admin/rma/update', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const body = (await request.json()) as any;
+      const { serial_number, status, distributor, rma_tracking_id } = body;
+      if (!serial_number) {
+        return error('Missing required field: serial_number', 400);
+      }
+
+      await db
+        .prepare(
+          'UPDATE inventory_items SET status = ?, distributor = ?, rma_tracking_id = ? WHERE serial_number = ?'
+        )
+        .bind(status || 'RMA Completed', distributor || null, rma_tracking_id || null, serial_number)
+        .run();
+
+      return success({ serial_number, status: status || 'RMA Completed' });
+    } catch (err) {
+      return error('Failed to update RMA: ' + err.message, 500);
     }
   });
 
@@ -535,7 +599,8 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       const body = (await request.json()) as any;
-      const { batch_code, item_code, quantity, buying_price, supplier, serials } = body;
+      const { batch_code, item_code, buying_price, supplier, serials } = body;
+      const quantity = body.quantity || body.manual_qty || 0;
 
       if (!batch_code || !item_code || !quantity) {
         return error('Missing required fields: batch_code, item_code, quantity', 400);
@@ -625,13 +690,23 @@ function register(router, env) {
       const { batch_code, buying_price, supplier, quantity } = body;
       if (!batch_code) return error('Missing batch_code', 400);
 
+      // Only update remaining_qty if quantity is explicitly provided
+      const updates: string[] = [];
+      const values: any[] = [];
+      if (buying_price !== undefined) { updates.push('buying_price = ?'); values.push(buying_price); }
+      if (supplier !== undefined) { updates.push('supplier = ?'); values.push(supplier); }
+      if (quantity !== undefined) {
+        updates.push('quantity = ?');
+        updates.push('remaining_qty = ?');
+        values.push(quantity, quantity);
+      }
+
+      if (updates.length === 0) return error('No fields to update', 400);
+      values.push(batch_code);
+
       await db
-        .prepare(
-          `UPDATE inventory_batches 
-           SET buying_price = ?, supplier = ?, quantity = ?, remaining_qty = ?
-           WHERE batch_code = ?`
-        )
-        .bind(buying_price || 0, supplier || '', quantity || 0, quantity || 0, batch_code)
+        .prepare(`UPDATE inventory_batches SET ${updates.join(', ')} WHERE batch_code = ?`)
+        .bind(...values)
         .run();
 
       return success({ message: 'Batch updated successfully', batch_code });

@@ -29,7 +29,7 @@ function register(router, env) {
       const offset = (page - 1) * limit;
 
       let query =
-        'SELECT i.*, c.name as client_name FROM invoices i LEFT JOIN clients c ON i.client_id = c.id WHERE 1=1';
+        'SELECT i.*, c.company_name as client_name FROM invoices i LEFT JOIN clients c ON i.client_id = c.id WHERE 1=1';
       const params = [];
 
       if (status) {
@@ -131,7 +131,7 @@ function register(router, env) {
 
       const invoice = await db
         .prepare(
-          'SELECT i.*, c.name as client_name FROM invoices i LEFT JOIN clients c ON i.client_id = c.id WHERE i.id = ?'
+          'SELECT i.*, c.company_name as client_name FROM invoices i LEFT JOIN clients c ON i.client_id = c.id WHERE i.id = ?'
         )
         .bind(params.id)
         .first();
@@ -163,45 +163,139 @@ function register(router, env) {
     }
   });
 
+  // ── POST /api/pos/resolve-serial ──────────────────────────────────────
+  router.get('/api/pos/resolve-serial', async (request) => {
+    try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
+      const url = new URL(request.url);
+      const serial = url.searchParams.get('serial');
+      if (!serial) return error('Missing serial parameter', 400);
+
+      const item = await db
+        .prepare('SELECT * FROM inventory_stock WHERE item_code = ?')
+        .bind(serial)
+        .first();
+
+      if (!item) return error('Item not found', 404);
+      return success(item);
+    } catch (err) {
+      return error('Serial lookup failed: ' + err.message, 500);
+    }
+  });
+
   // ── POST /api/pos/checkout ────────────────────────────────────────────
   router.post('/api/pos/checkout', async (request) => {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
 
-      const { client_id, items, payments, notes } = (await request.json()) as any;
-      if (!items || !items.length) return error('No items in cart', 400);
+      const body = (await request.json()) as any;
+      // Frontend sends: { client_id, cart: [{item_code, qty}], discount, exchange_rate, ... }
+      const cart = body.cart || body.items;
+      if (!cart || !cart.length) return error('No items in cart', 400);
+
+      // Look up item details from inventory_stock to get accurate prices and names
+      const resolvedItems = [];
+      for (const c of cart) {
+        const stockItem = await db
+          .prepare('SELECT * FROM inventory_stock WHERE item_code = ?')
+          .bind(c.item_code)
+          .first();
+        if (!stockItem) continue;
+        if ((stockItem.stock_qty || 0) < (c.qty || 1)) {
+          return error(`Insufficient stock for ${stockItem.item_name}: available ${stockItem.stock_qty}, requested ${c.qty}`, 400);
+        }
+        resolvedItems.push({
+          item_code: stockItem.item_code,
+          name: stockItem.item_name,
+          category: stockItem.category,
+          price: stockItem.unit_price,
+          price_mmk: stockItem.unit_price_mmk,
+          quantity: c.qty || 1,
+        });
+      }
+      if (!resolvedItems.length) return error('No valid items in cart', 400);
 
       // Calculate totals
-      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const tax = subtotal * 0.12; // 12% VAT example
-      const total = subtotal + tax;
+      const subtotal = resolvedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const subtotalMmk = resolvedItems.reduce((sum, item) => sum + item.price_mmk * item.quantity, 0);
+      const discount = body.discount || 0;
+      const discountAmount = subtotal * (discount / 100);
+      const afterDiscount = subtotal - discountAmount;
+      const afterDiscountMmk = subtotalMmk - (subtotalMmk * discount / 100);
+      const tax = afterDiscount * 0.0;
+      const total = afterDiscount + tax;
+      const totalMmk = afterDiscountMmk;
 
-      // Create invoice
+      // Create invoice record
       const invoiceId = 'INV-' + Date.now().toString(36).toUpperCase();
       await db
         .prepare(
-          "INSERT INTO invoices (id, client_id, items, amount, tax, total, status, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, 'paid', ?, ?)"
+          "INSERT INTO invoices (id, client_id, items, amount, total, status, notes, created_by) VALUES (?, ?, ?, ?, ?, 'paid', ?, ?)"
         )
         .bind(
           invoiceId,
-          client_id || null,
-          JSON.stringify(items),
-          subtotal,
-          tax,
+          body.client_id || null,
+          JSON.stringify(resolvedItems),
           total,
-          notes || null,
+          total,
+          body.notes || null,
           user.id
         )
         .run();
 
-      // Deduct inventory
-      for (const item of items) {
-        if (item.item_id) {
+      // Deduct inventory_stock
+      for (const item of resolvedItems) {
+        await db
+          .prepare('UPDATE inventory_stock SET stock_qty = stock_qty - ? WHERE item_code = ? AND stock_qty >= ?')
+          .bind(item.quantity, item.item_code, item.quantity)
+          .run();
+      }
+
+      // Record cash transaction if payment was made
+      const paidA = body.paid_amount_a || 0;
+      const paidB = body.paid_amount_b || 0;
+      const totalPaid = paidA + paidB;
+      if (totalPaid > 0) {
+        const currency = body.currency_type || 'USD';
+        const exchangeRate = body.exchange_rate || 1;
+        const equivalentAmount = currency === 'MMK' ? totalPaid / exchangeRate : totalPaid;
+        await db
+          .prepare(
+            "INSERT INTO cash_transactions (transaction_type, primary_currency, amount, exchange_rate, equivalent_amount, notes, linked_batch) VALUES ('Deposit', ?, ?, ?, ?, ?, ?)"
+          )
+          .bind(
+            currency === 'MMK' ? 'MMK' : 'USD',
+            totalPaid,
+            exchangeRate,
+            equivalentAmount,
+            `POS Sale ${invoiceId}`,
+            invoiceId
+          )
+          .run();
+
+        // Update cash safe
+        if (currency === 'MMK') {
+          await db.prepare('UPDATE cash_safes SET mmk_balance = mmk_balance + ? WHERE id = 1').bind(totalPaid).run();
+        } else {
+          await db.prepare('UPDATE cash_safes SET usd_balance = usd_balance + ? WHERE id = 1').bind(totalPaid).run();
+        }
+      }
+
+      // Handle credit if any
+      const creditAmount = body.credit_amount || 0;
+      if (creditAmount > 0 && body.client_id) {
+        try {
           await db
-            .prepare('UPDATE inventory SET quantity = quantity - ? WHERE id = ? AND quantity >= ?')
-            .bind(item.quantity, item.item_id, item.quantity)
+            .prepare(
+              "INSERT INTO client_credits (client_id, invoice_id, amount, status, created_at) VALUES (?, ?, ?, 'pending', datetime('now'))"
+            )
+            .bind(body.client_id, invoiceId, creditAmount)
             .run();
+        } catch (_) {
+          // client_credits table may not exist — skip gracefully
         }
       }
 
@@ -209,9 +303,11 @@ function register(router, env) {
         {
           invoice_id: invoiceId,
           subtotal,
-          tax,
-          total,
-          payment: payments || [],
+          total_usd: total,
+          total_mmk: totalMmk,
+          discount,
+          credit_amount: creditAmount,
+          items: resolvedItems,
         },
         201
       );

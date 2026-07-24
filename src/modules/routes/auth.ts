@@ -127,7 +127,7 @@ function register(router, env) {
 
       const tech = await db
         .prepare(
-          'SELECT id, name, email, phone, role, specialties, active, created_at, last_login FROM technicians WHERE id = ?'
+          'SELECT id, name, email, phone, role, active, created_at, last_login FROM technicians WHERE id = ?'
         )
         .bind(payload.id)
         .first();
@@ -136,10 +136,7 @@ function register(router, env) {
         return error('Technician not found', 404);
       }
 
-      return success({
-        ...tech,
-        specialties: tech.specialties ? (JSON.parse(tech.specialties) as any) : [],
-      });
+      return success(tech);
     } catch (err) {
       return error('Failed to fetch profile: ' + err.message, 500);
     }

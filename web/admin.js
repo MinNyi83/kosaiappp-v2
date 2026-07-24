@@ -110,11 +110,12 @@ async function handlePasswordLogin(e) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Authentication failed');
 
-    if (data.user.role !== 'Admin') {
+    const user = data.technician || data.user;
+    if (!user || user.role !== 'Admin') {
       throw new Error('Your account does not have Admin privileges.');
     }
 
-    localStorage.setItem('admin_user', JSON.stringify(data.user));
+    localStorage.setItem('admin_user', JSON.stringify(user));
     document.getElementById('auth-screen').classList.add('hidden');
     initializeAdminDesk();
   } catch (err) {

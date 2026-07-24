@@ -86,7 +86,11 @@ function register(router, env) {
 
       if (!tech) return error('Invalid credentials', 401);
 
-      if (tech.password !== password) return error('Invalid credentials', 401);
+      // Check password field first, then fall back to pin
+      const passwordValid =
+        (tech.password && tech.password === password) ||
+        (tech.pin && tech.pin === password);
+      if (!passwordValid) return error('Invalid credentials', 401);
 
       const token = await signToken({
         id: tech.id,
