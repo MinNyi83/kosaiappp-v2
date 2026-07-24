@@ -244,11 +244,15 @@ async function updateJobStatus(jobId, status) {
 }
 
 function startJob(jobId) {
+  if (!confirm('Start service for this job?')) return;
   currentJobId = jobId;
   updateJobStatus(jobId, 'In Progress');
   switchMobileTab('checklist');
 }
-function completeJob(jobId) { updateJobStatus(jobId, 'Completed'); }
+function completeJob(jobId) {
+  if (!confirm('Mark this job as completed?')) return;
+  updateJobStatus(jobId, 'Completed');
+}
 
 async function checkinJob(jobId) {
   const coords = await getGeoLocation();
@@ -1058,7 +1062,7 @@ async function loadJobHistory() {
     const completedJobs = jobs.filter(j => j.status === 'Completed');
     container.innerHTML = '';
     if (completedJobs.length === 0) {
-      container.innerHTML = '<div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm"><span class="text-3xl block mb-2">📋</span>No completed jobs yet.</div>';
+      container.innerHTML = '<div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm"><span class="text-3xl block mb-2">⏳</span>No completed jobs yet.<br><span class="text-[10px] text-slate-600">Complete a job from the Jobs tab to see it here.</span></div>';
       return;
     }
     completedJobs.forEach((job) => {

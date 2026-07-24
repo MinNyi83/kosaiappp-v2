@@ -5,6 +5,10 @@
 import { success, error } from '../utils/response.js';
 import { authenticate } from '../utils/auth-middleware.js';
 
+// Constants
+const LOW_STOCK_THRESHOLD = 5;
+const DEFAULT_PAGE_LIMIT = 200;
+
 function register(router, env) {
   const db = env.DB;
 
@@ -18,7 +22,7 @@ function register(router, env) {
       const search = url.searchParams.get('search');
       const category = url.searchParams.get('category');
       const page = parseInt(url.searchParams.get('page') || '1');
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || '200'), 500);
+      const limit = Math.min(parseInt(url.searchParams.get('limit') || String(DEFAULT_PAGE_LIMIT)), 500);
       const offset = (page - 1) * limit;
 
       let query = 'SELECT * FROM inventory_stock WHERE 1=1';
@@ -73,7 +77,8 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
       const items = await db
-        .prepare('SELECT * FROM inventory_stock WHERE stock_qty <= 5 ORDER BY stock_qty ASC')
+        .prepare(`SELECT * FROM inventory_stock WHERE stock_qty <= ? ORDER BY stock_qty ASC`)
+        .bind(LOW_STOCK_THRESHOLD)
         .all();
       return success(items.results);
     } catch (err: any) {

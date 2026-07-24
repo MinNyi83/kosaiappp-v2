@@ -193,4 +193,4 @@ async function verifyPin(plainPin, storedHash) {
   return hashHex === storedHash;
 }
 
-export default { register };
+export { register };

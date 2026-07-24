@@ -312,12 +312,16 @@ function switchTab(tabId) {
   }
 }
 
+// Auto refresh interval ID (prevents stacking)
+let _dashboardRefreshInterval = null;
+
 function initializeAdminDesk() {
   initLeafletMap();
   setupSearchableClientsListeners();
   refreshDashboardData();
-  // Auto refresh every 60 seconds (reduced from 10s to lower API load)
-  setInterval(refreshDashboardData, 60000);
+  // Clear any existing interval to prevent stacking
+  if (_dashboardRefreshInterval) clearInterval(_dashboardRefreshInterval);
+  _dashboardRefreshInterval = setInterval(refreshDashboardData, 60000);
 }
 
 let hqMarker = null;
@@ -1214,14 +1218,16 @@ function filterPOSProducts() {
   renderPOSProducts(filtered);
 }
 
-function filterPOSByCategory(category) {
+function filterPOSByCategory(category, event) {
   posCurrentCategory = category;
   document.querySelectorAll('.pos-cat-btn').forEach((btn) => {
     btn.classList.remove('bg-amber-500', 'text-black', 'active');
     btn.classList.add('bg-white/5', 'text-slate-400');
   });
-  event.target.classList.remove('bg-white/5', 'text-slate-400');
-  event.target.classList.add('bg-amber-500', 'text-black', 'active');
+  if (event && event.target) {
+    event.target.classList.remove('bg-white/5', 'text-slate-400');
+    event.target.classList.add('bg-amber-500', 'text-black', 'active');
+  }
   filterPOSProducts();
 }
 
@@ -2344,12 +2350,14 @@ const reportStyles = {
   },
 };
 
-function setReportStyle(style) {
+function setReportStyle(style, event) {
   currentReportStyle = style;
   document.querySelectorAll('.preset-btn').forEach((btn) => {
     btn.classList.remove('ring-2', 'ring-white');
   });
-  event.target.classList.add('ring-2', 'ring-white');
+  if (event && event.target) {
+    event.target.classList.add('ring-2', 'ring-white');
+  }
 }
 
 function selectAllReports() {
@@ -4404,7 +4412,7 @@ function toggleNewTicketForm() {
   form.classList.toggle('hidden');
 }
 
-function filterJobsByStatus(status) {
+function filterJobsByStatus(status, event) {
   currentJobStatusFilter = status;
 
   // Update button states
@@ -4412,8 +4420,10 @@ function filterJobsByStatus(status) {
     btn.classList.remove('text-amber-400', 'bg-amber-500/10', 'border-amber-500/20');
     btn.classList.add('text-slate-400', 'border-transparent');
   });
-  event.target.classList.add('text-amber-400', 'bg-amber-500/10', 'border-amber-500/20');
-  event.target.classList.remove('text-slate-400', 'border-transparent');
+  if (event && event.target) {
+    event.target.classList.add('text-amber-400', 'bg-amber-500/10', 'border-amber-500/20');
+    event.target.classList.remove('text-slate-400', 'border-transparent');
+  }
 
   filterJobs();
 }
