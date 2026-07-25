@@ -103,8 +103,8 @@ export async function uploadFileToGoogleDrive(env, fileBlob, filename, clientNam
   const token = await getGoogleAccessToken(env);
   if (!token) return null;
 
-  // Get or create the main folder
-  const mainFolderId = await getOrCreateDriveFolder(token, 'Awesome Myanmar - Service Records');
+  // Get or create the main folder (matches existing Google Drive structure)
+  const mainFolderId = await getOrCreateDriveFolder(token, 'AWESOME Myanmar');
   if (!mainFolderId) return null;
 
   // Get or create client subfolder
@@ -151,7 +151,8 @@ export async function uploadBackupToGoogleDrive(env, backupJsonString: string, f
     return null;
   }
 
-  const mainFolderId = await getOrCreateDriveFolder(token, 'Awesome Myanmar - Service Records');
+  // Matches existing Google Drive structure
+  const mainFolderId = await getOrCreateDriveFolder(token, 'AWESOME Myanmar');
   if (!mainFolderId) {
     console.error('uploadBackupToGoogleDrive: Failed to get/create main folder');
     return null;
