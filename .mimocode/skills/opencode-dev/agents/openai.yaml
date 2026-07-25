@@ -1,0 +1,8 @@
+interface:
+  display_name: "OpenCode Dev"
+  short_description: "Cloudflare Workers development workflow for KosAI"
+  brand_color: "#F6821F"
+  default_prompt: "Use $opencode-dev to help me add a new API endpoint for the KosAI system."
+
+policy:
+  allow_implicit_invocation: true
