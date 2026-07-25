@@ -62,6 +62,8 @@ src/
 - Login via Employee ID + PIN: `POST /api/auth/login`
 - Token stored in `localStorage` as `gate_pass_token`
 - `authHeaders()` returns `{ Authorization: 'Bearer <token>' }`
+- PINs stored as salted SHA-256: `$sha256$<salt>$<hash>`
+- Plain-text PINs supported for local dev only
 
 ### Checklist Flow
 1. Start Service → sets job to "In Progress", opens checklist
@@ -100,6 +102,8 @@ src/
 - Login via username/password: `POST /api/auth/login-password`
 - Token stored in `localStorage` as `admin_token`
 - Global fetch interceptor adds `Authorization: Bearer <token>` to all `/api/` requests
+- CSRF token required for POST/PUT/DELETE: `X-CSRF-Token` header
+- Rate limiting: 5 login attempts per 15 minutes
 
 ### Dashboard Sections
 1. **Dashboard** — KPIs, charts, activity feed, dispatch map/calendar
@@ -163,12 +167,21 @@ Cancelled  Cancelled
 - `GET /api/admin/lookups` — All lookup data (clients, techs, inventory)
 - `GET /api/admin/cash/safe` — Cash safe balance
 - `POST /api/admin/cash/transaction` — Add cash transaction
-- `GET /api/admin/users` — List users
-- `POST /api/admin/users` — Add user
-- `POST /api/admin/backup` — Database backup
+- `GET /api/admin/technicians` — List technicians (excludes PIN)
+- `PUT /api/admin/technicians/:id` — Update technician
+- `DELETE /api/admin/technicians/:id` — Delete technician
+- `GET /api/admin/config` — Get config value (or all)
+- `POST /api/admin/config` — Save config (upsert)
+- `POST /api/admin/config/save` — Save config alias (for PDF builder)
+- `POST /api/admin/backup` — Database backup (excludes PIN)
+- `POST /api/admin/restore` — Restore from backup
+- `GET /api/admin/stats` — Dashboard statistics
 
 ### Public
 - `GET /api/public/technician/:id` — Public technician verification
+- `GET /api/portal/history` — Client job history (requires admin auth)
+- `GET /api/portal/warranties` — Client warranties (requires admin auth)
+- `GET /api/portal/transactions` — Client transactions (requires admin auth)
 
 ### Reports
 - `GET /api/reports/dashboard` — Dashboard stats
@@ -200,16 +213,29 @@ Cancelled  Cancelled
 
 ## Google Drive Integration
 
+### Folder Structure
+```
+AWESOME Myanmar/                    ← Main folder (existing)
+├── {Client Name}/                  ← Client subfolder
+│   └── {Job ID}/                   ← Job subfolder
+│       ├── {JobID}_before_{ts}.jpg
+│       ├── {JobID}_after_{ts}.jpg
+│       └── {JobID}_signature_{ts}.jpg
+└── Database Backups/               ← Auto-backups
+    └── backup_{date}_autobackup.json
+```
+
 ### Photo Upload Flow
 1. Frontend captures photo as base64 data URI
 2. Sent to `POST /api/jobs/:id/photo`
 3. Backend converts base64 → Blob
-4. Upload to Drive folder: `Awesome Myanmar - Service Records > {Client} > {JobId}/`
+4. Reuses existing folder structure: `AWESOME Myanmar > {Client} > {JobId}/`
 5. Returns `drive_file_id` and `photo_url`
 6. Photo URL saved to `before_photo` / `after_photo` in database
+7. Photo also sent to Telegram notification
 
 ### OAuth Setup
-- Client ID/Secret in `.dev.vars`
+- Client ID/Secret in `.dev.vars` (or Cloudflare encrypted vars)
 - Refresh token stored in `system_config` table (key: `google_drive_refresh_token`)
 - Token refreshed automatically via `getGoogleAccessToken()`
 
@@ -312,3 +338,30 @@ const COLORS = {
 - Photos upload to Google Drive AND send to Telegram
 - Warranty auto-registered on job completion
 - Service worker version must match HTML script version
+
+## Security
+
+### Authentication
+- JWT tokens with HMAC-SHA256 signing
+- Tokens expire after 24 hours
+- CSRF protection on state-changing endpoints (POST/PUT/DELETE)
+- Rate limiting on login endpoints (5 attempts per 15 min)
+
+### PIN Storage
+- Salted SHA-256: `$sha256$<16-char-hex-salt>$<64-char-hex-hash>`
+- Example: `$sha256$1234567890abcdef$b0c2e374dff1965a4ce7e147d069c7b84d4e44e8958dfbd24fb664d38d370e59`
+- Plain-text fallback for local dev only
+
+### Secrets Management
+- **Local dev**: `.dev.vars` file (not committed to git)
+- **Production**: Cloudflare Dashboard > Workers > Settings > Variables (encrypted)
+- Required secrets: `JWT_SECRET`, `CSRF_SECRET`, `GEMINI_API_KEY`, `GOOGLE_CLIENT_SECRET`, etc.
+
+### CORS Configuration
+- Allowed origins: `*.awesomemyanmar.pages.dev`, `awesomemyanmar.com`, `tauri://localhost`, `localhost:5173`
+- Credentials allowed for cross-origin requests
+
+### Admin API Protection
+- All `/api/admin/*` endpoints require admin role
+- PINs excluded from admin API responses
+- Backup exports exclude sensitive columns (pin, password)
