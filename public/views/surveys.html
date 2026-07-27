@@ -1,0 +1,118 @@
+<!-- Surveys & Quotations Management View -->
+<div id="view-surveys" class="tab-view space-y-6 hidden">
+  <!-- Top Control Bar & Stats -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-2xl border border-white/5">
+    <div>
+      <h2 class="text-xl font-bold text-white flex items-center gap-2">
+        <span>📋</span> Site Surveys & Quotations
+      </h2>
+      <p class="text-xs text-slate-400 mt-1">Manage field site assessments, AI estimated price quotations, and client approvals.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="openNewSurveyModal()" class="btn-primary text-xs flex items-center gap-2">
+        <span>➕</span> New Site Survey
+      </button>
+      <button onclick="openNewQuotationModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2">
+        <span>💰</span> Create Quotation
+      </button>
+    </div>
+  </div>
+
+  <!-- Metric Overview Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-slate-400">Total Surveys</span>
+        <span class="p-2 rounded-xl bg-teal-500/10 text-teal-400 text-base">🔍</span>
+      </div>
+      <div class="text-2xl font-extrabold text-white" id="surveys-count-total">0</div>
+      <div class="text-[10px] text-slate-500">Site assessments logged</div>
+    </div>
+    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-slate-400">Active Quotations</span>
+        <span class="p-2 rounded-xl bg-amber-500/10 text-amber-400 text-base">📄</span>
+      </div>
+      <div class="text-2xl font-extrabold text-amber-400" id="quotations-count-active">0</div>
+      <div class="text-[10px] text-slate-500">Draft / Sent to clients</div>
+    </div>
+    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-slate-400">Approved Quotes</span>
+        <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-base">✅</span>
+      </div>
+      <div class="text-2xl font-extrabold text-emerald-400" id="quotations-count-approved">0</div>
+      <div class="text-[10px] text-slate-500">Signed & client accepted</div>
+    </div>
+    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-semibold text-slate-400">Converted Jobs/Invoices</span>
+        <span class="p-2 rounded-xl bg-sky-500/10 text-sky-400 text-base">🚀</span>
+      </div>
+      <div class="text-2xl font-extrabold text-sky-400" id="quotations-count-converted">0</div>
+      <div class="text-[10px] text-slate-500">Converted to active work</div>
+    </div>
+  </div>
+
+  <!-- Main Tables Container -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Site Surveys Table -->
+    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-teal-400"></span> Site Surveys
+        </h3>
+        <button onclick="loadSurveysData()" class="text-xs text-amber-400 hover:underline">Refresh</button>
+      </div>
+      <div class="table-scroll-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Client</th>
+              <th>Type</th>
+              <th>Cameras</th>
+              <th>Cable</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="surveys-table-body">
+            <tr>
+              <td colspan="7" class="text-center py-6 text-slate-500 italic">Loading site surveys...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Quotations Table -->
+    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span> Price Quotations
+        </h3>
+        <button onclick="loadQuotationsData()" class="text-xs text-amber-400 hover:underline">Refresh</button>
+      </div>
+      <div class="table-scroll-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Client</th>
+              <th>Total</th>
+              <th>Valid Until</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="quotations-table-body">
+            <tr>
+              <td colspan="6" class="text-center py-6 text-slate-500 italic">Loading quotations...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

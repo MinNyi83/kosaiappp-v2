@@ -500,10 +500,144 @@ function switchTab(tabId) {
     window.loadServiceFeesData();
   }
 
+  if (tabId === 'surveys') {
+    window.loadSurveysData();
+    window.loadQuotationsData();
+  }
+
   if (tabId === 'system-settings') {
     window.loadPdfBuilderConfig();
   }
 }
+
+// ── Surveys & Quotations Tab Functions ──────────────────────────────────────
+async function loadSurveysData() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  const bodyEl = document.getElementById('surveys-table-body');
+  if (!bodyEl) return;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/surveys`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    const surveys = Array.isArray(data) ? data : (data.data || []);
+    
+    document.getElementById('surveys-count-total').textContent = surveys.length;
+
+    if (surveys.length === 0) {
+      bodyEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 italic">No site surveys logged yet.</td></tr>`;
+      return;
+    }
+
+    bodyEl.innerHTML = surveys.map(s => `
+      <tr class="hover:bg-white/5 transition-all">
+        <td class="font-mono font-bold text-teal-400">${escapeHTML(s.id)}</td>
+        <td>${escapeHTML(s.client_name || s.client_id || 'Unknown')}</td>
+        <td><span class="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-800 text-slate-300">${escapeHTML(s.survey_type || 'CCTV')}</span></td>
+        <td class="font-mono text-center">${s.camera_count || 0}</td>
+        <td>${escapeHTML(s.cable_type || 'Cat6')} (${s.estimated_cable_meters || 0}m)</td>
+        <td><span class="badge badge-quoted">${escapeHTML(s.status || 'Draft')}</span></td>
+        <td>
+          <button onclick="estimateQuotationForSurvey('${s.id}')" class="text-xs text-amber-400 hover:underline font-bold">🤖 AI Quote</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to load surveys:', err);
+    bodyEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-rose-400 font-bold">Error loading surveys</td></tr>`;
+  }
+}
+window.loadSurveysData = loadSurveysData;
+
+async function loadQuotationsData() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  const bodyEl = document.getElementById('quotations-table-body');
+  if (!bodyEl) return;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    const quotations = Array.isArray(data) ? data : (data.data || []);
+
+    const activeCount = quotations.filter(q => q.status === 'Draft' || q.status === 'Sent').length;
+    const approvedCount = quotations.filter(q => q.status === 'Approved').length;
+    const convertedCount = quotations.filter(q => q.status === 'Converted').length;
+
+    if (document.getElementById('quotations-count-active')) document.getElementById('quotations-count-active').textContent = activeCount;
+    if (document.getElementById('quotations-count-approved')) document.getElementById('quotations-count-approved').textContent = approvedCount;
+    if (document.getElementById('quotations-count-converted')) document.getElementById('quotations-count-converted').textContent = convertedCount;
+
+    if (quotations.length === 0) {
+      bodyEl.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 italic">No price quotations created yet.</td></tr>`;
+      return;
+    }
+
+    bodyEl.innerHTML = quotations.map(q => `
+      <tr class="hover:bg-white/5 transition-all">
+        <td class="font-mono font-bold text-amber-400">${escapeHTML(q.id)}</td>
+        <td>${escapeHTML(q.client_name || q.client_id || 'Unknown')}</td>
+        <td class="font-mono font-bold text-white">$${(q.total_amount || 0).toFixed(2)}</td>
+        <td class="text-xs text-slate-400">${escapeHTML(q.valid_until || '--')}</td>
+        <td><span class="badge ${q.status === 'Approved' ? 'badge-approved' : q.status === 'Converted' ? 'badge-converted' : 'badge-pending'}">${escapeHTML(q.status || 'Draft')}</span></td>
+        <td class="space-x-2">
+          ${q.status !== 'Converted' ? `
+            <button onclick="convertQuotationToJob('${q.id}')" class="text-[11px] text-sky-400 hover:underline font-bold">🚀 Job</button>
+            <button onclick="convertQuotationToInvoice('${q.id}')" class="text-[11px] text-emerald-400 hover:underline font-bold">💰 Invoice</button>
+          ` : `<span class="text-xs text-slate-500 font-semibold">Converted</span>`}
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to load quotations:', err.message);
+    bodyEl.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-rose-400 font-bold">Error loading quotations</td></tr>`;
+  }
+}
+window.loadQuotationsData = loadQuotationsData;
+
+async function convertQuotationToJob(quotationId) {
+  if (!confirm(`Convert Quotation ${quotationId} into an active Service Job?`)) return;
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/convert-job`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Conversion failed');
+    showToast(data.message || 'Converted to Job!', 'success');
+    loadQuotationsData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+window.convertQuotationToJob = convertQuotationToJob;
+
+async function convertQuotationToInvoice(quotationId) {
+  if (!confirm(`Convert Quotation ${quotationId} into a POS Invoice?`)) return;
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/convert-invoice`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Conversion failed');
+    showToast(data.message || 'Converted to POS Invoice!', 'success');
+    loadQuotationsData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+window.convertQuotationToInvoice = convertQuotationToInvoice;
 
 async function initializeAdminDesk() {
   const workspace = document.getElementById('app-workspace');
@@ -515,6 +649,7 @@ async function initializeAdminDesk() {
     { name: 'dispatch-map', file: 'dispatch-map.html' },
     { name: 'ai-copilot', file: 'ai-copilot.html' },
     { name: 'tickets', file: 'tickets.html' },
+    { name: 'surveys', file: 'surveys.html' },
     { name: 'amc', file: 'amc.html' },
     { name: 'currency', file: 'currency.html' },
     { name: 'reports', file: 'reports.html' },
