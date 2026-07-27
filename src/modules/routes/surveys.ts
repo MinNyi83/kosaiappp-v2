@@ -56,6 +56,19 @@ export function register(router: Router, env: any) {
       const body: any = await request.json();
       if (!body.client_id) return error('client_id is required', 400);
 
+      // Check if client_id exists in clients table, or resolve by company_name / create fallback
+      let client = await db.prepare('SELECT id FROM clients WHERE id = ? OR company_name = ?').bind(body.client_id, body.client_id).first();
+      let resolvedClientId = client?.id;
+
+      if (!resolvedClientId) {
+        // Auto-create client entry if non-existent ID or company name was entered
+        resolvedClientId = `CLI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+        await db
+          .prepare("INSERT INTO clients (id, company_name, address, amc_status) VALUES (?, ?, 'Site Survey Client', 'Individual')")
+          .bind(resolvedClientId, body.client_id)
+          .run();
+      }
+
       const id = `SURV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       const technicianId = body.technician_id || user.id;
 
@@ -69,7 +82,7 @@ export function register(router: Router, env: any) {
         )
         .bind(
           id,
-          body.client_id,
+          resolvedClientId,
           technicianId,
           body.survey_type || 'CCTV',
           body.status || 'Draft',
@@ -86,8 +99,8 @@ export function register(router: Router, env: any) {
 
       return success({ id, message: 'Site survey created successfully' }, 201);
     } catch (err: any) {
-      console.error('Create survey error:', err.message);
-      return error('Failed to create site survey', 500);
+      console.error('Create survey error:', err.message || err);
+      return error(`Failed to create site survey: ${err.message || 'Database error'}`, 500);
     }
   });
 
@@ -134,6 +147,18 @@ export function register(router: Router, env: any) {
       const body: any = await request.json();
       if (!body.client_id) return error('client_id is required', 400);
 
+      // Check if client_id exists in clients table, or resolve by company_name / create fallback
+      let client = await db.prepare('SELECT id FROM clients WHERE id = ? OR company_name = ?').bind(body.client_id, body.client_id).first();
+      let resolvedClientId = client?.id;
+
+      if (!resolvedClientId) {
+        resolvedClientId = `CLI-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+        await db
+          .prepare("INSERT INTO clients (id, company_name, address, amc_status) VALUES (?, ?, 'Quotation Client', 'Individual')")
+          .bind(resolvedClientId, body.client_id)
+          .run();
+      }
+
       const id = `QUO-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       const preparedBy = body.prepared_by || user.id;
       const itemsJson = JSON.stringify(body.items || []);
@@ -154,7 +179,7 @@ export function register(router: Router, env: any) {
         .bind(
           id,
           body.survey_id || null,
-          body.client_id,
+          resolvedClientId,
           preparedBy,
           validDays,
           validUntil,
