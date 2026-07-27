@@ -674,12 +674,36 @@ async function convertQuotationToInvoice(quotationId) {
 }
 window.convertQuotationToInvoice = convertQuotationToInvoice;
 
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden');
+}
+window.openModal = openModal;
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+}
+window.closeModal = closeModal;
+
 function openNewSurveyModal() {
-  const clientId = prompt('Enter Client ID (or Company Name) for this Site Survey:');
-  if (!clientId) return;
-  const cameraCountStr = prompt('Number of Cameras estimated:', '8');
-  if (cameraCountStr === null) return;
-  const cableMetersStr = prompt('Estimated Cable Distance (in meters):', '150');
+  openModal('modal-new-survey');
+}
+window.openNewSurveyModal = openNewSurveyModal;
+
+function openNewQuotationModal() {
+  openModal('modal-new-quotation');
+}
+window.openNewQuotationModal = openNewQuotationModal;
+
+function submitNewSurvey(e) {
+  e.preventDefault();
+  const clientId = document.getElementById('modal-survey-client-input')?.value?.trim();
+  const surveyType = document.getElementById('modal-survey-type')?.value;
+  const cameraCount = parseInt(document.getElementById('modal-survey-cameras')?.value) || 0;
+  const cableMeters = parseFloat(document.getElementById('modal-survey-cable-meters')?.value) || 0;
+
+  if (!clientId) return showToast('Please enter a Client ID or Company Name', 'warning');
 
   const baseUrl = document.getElementById('api-base')?.value || '';
   const token = localStorage.getItem('admin_token');
@@ -689,26 +713,29 @@ function openNewSurveyModal() {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({
       client_id: clientId,
-      camera_count: parseInt(cameraCountStr) || 0,
-      estimated_cable_meters: parseFloat(cableMetersStr) || 0,
-      survey_type: 'CCTV',
+      survey_type: surveyType,
+      camera_count: cameraCount,
+      estimated_cable_meters: cableMeters,
       status: 'Draft',
     }),
   })
     .then((res) => res.json())
     .then((data) => {
-      showToast(data.message || 'Site Survey logged!', 'success');
+      showToast(data.message || 'Site Survey logged successfully!', 'success');
+      closeModal('modal-new-survey');
       loadSurveysData();
     })
     .catch((err) => showToast('Failed to create survey: ' + err.message, 'error'));
 }
-window.openNewSurveyModal = openNewSurveyModal;
+window.submitNewSurvey = submitNewSurvey;
 
-function openNewQuotationModal() {
-  const clientId = prompt('Enter Client ID for this Price Quotation:');
-  if (!clientId) return;
-  const amountStr = prompt('Total Quotation Amount (USD):', '450.00');
-  if (!amountStr) return;
+function submitNewQuotation(e) {
+  e.preventDefault();
+  const clientId = document.getElementById('modal-quote-client-input')?.value?.trim();
+  const totalAmount = parseFloat(document.getElementById('modal-quote-amount')?.value) || 0;
+  const validDays = parseInt(document.getElementById('modal-quote-valid-days')?.value) || 14;
+
+  if (!clientId) return showToast('Please enter a Client ID or Company Name', 'warning');
 
   const baseUrl = document.getElementById('api-base')?.value || '';
   const token = localStorage.getItem('admin_token');
@@ -718,21 +745,22 @@ function openNewQuotationModal() {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({
       client_id: clientId,
-      subtotal: parseFloat(amountStr) || 0,
-      total_amount: parseFloat(amountStr) || 0,
+      subtotal: totalAmount,
+      total_amount: totalAmount,
       currency: 'USD',
-      valid_days: 14,
+      valid_days: validDays,
       status: 'Draft',
     }),
   })
     .then((res) => res.json())
     .then((data) => {
-      showToast(data.message || 'Quotation created!', 'success');
+      showToast(data.message || 'Quotation generated successfully!', 'success');
+      closeModal('modal-new-quotation');
       loadQuotationsData();
     })
     .catch((err) => showToast('Failed to create quotation: ' + err.message, 'error'));
 }
-window.openNewQuotationModal = openNewQuotationModal;
+window.submitNewQuotation = submitNewQuotation;
 
 async function estimateQuotationForSurvey(surveyId) {
   showToast('🤖 AI Estimating Bill of Materials...', 'info', 3000);
