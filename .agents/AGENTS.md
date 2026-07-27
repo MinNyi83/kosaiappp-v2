@@ -6,6 +6,54 @@
 - Do NOT deploy to Cloudflare until the user explicitly requests it with **"deploy cloudflare"** or **"deploy to cloudflare"**.
 - When deploying Cloudflare Pages, always target the project name `awesomemyanmar` using command: `npx wrangler pages deploy public --project-name=awesomemyanmar`.
 
+## Code Quality & Security Standards
+
+### Authentication & Authorization
+- **Never duplicate auth logic**: Use `authenticate()` from `src/modules/utils/auth-middleware.ts` — do not reimplement Bearer token extraction inline.
+- **Require admin role consistently**: Use pattern `if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);` on all admin-only endpoints.
+- **CSRF protection**: Apply `requireCsrf()` from `src/modules/utils/csrf.ts` to ALL state-changing requests (POST, PUT, DELETE) except login.
+
+### Input Validation
+- **Request body typing**: Define interfaces for request bodies instead of `as any`. Example:
+  ```typescript
+  interface CreateClientBody {
+    company_name: string;
+    contact_person?: string;
+    address: string;
+    phone?: string;
+  }
+  ```
+- **Required field validation**: Validate all required fields before database operations.
+- **Search parameter sanitization**: Escape `%` and `_` in LIKE patterns to prevent query manipulation.
+
+### SQL Safety
+- **Dynamic field updates**: Use the `allowed` array pattern for field whitelisting. Never interpolate user input directly into SQL strings.
+- **AI-generated SQL**: The `validateSql()` function in `src/modules/utils/sql-validator.ts` blocks dangerous keywords. Always validate before execution.
+- **Parameterized queries**: Always use `.bind()` for values, never string interpolation.
+
+### Error Handling
+- **Generic error messages**: Return `"Failed to fetch clients"` to clients, log `err.message` server-side.
+- **Consistent error format**: Use `error(message, statusCode)` from `src/modules/utils/response.ts`.
+- **No silent catches**: Always log errors in catch blocks, even if gracefully handled.
+
+### ID Generation
+- **Use `crypto.randomUUID()`** instead of `Date.now().toString(36)` to prevent collision under concurrent requests.
+- **ID format**: Keep prefix convention (e.g., `CLT-`, `SR-`, `TECH-`, `INV-`).
+
+### Router Registration
+- **Register once**: The router is rebuilt per-request in `src/index.ts`. For optimization, consider module-scope initialization.
+- **Route ordering**: Register specific routes (e.g., `/api/jobs/active`) before parameterized routes (e.g., `/api/jobs/:id`).
+
+### Rate Limiting
+- **Current implementation**: In-memory per-isolate (`src/modules/utils/rate-limit.ts`).
+- **Limitations**: Not shared across Worker isolates. For distributed rate limiting, use D1 or KV.
+- **Endpoint-specific limits**: Login: 5 attempts/15min, AI endpoints: 10-20 requests/min, Default: 30 requests/min.
+
+### TypeScript Strictness
+- **Env interface**: Define `Env` type with `DB`, `GEMINI_API_KEY`, `TELEGRAM_BOT_TOKEN`, etc.
+- **Route handler types**: Type `register(router: Router, env: Env)` parameters.
+- **Avoid `any`**: Use specific types for database results and API responses.
+
 # AI Agents System Documentation
 
 ## 🏗 Overview
@@ -45,11 +93,18 @@ This project uses AI agents to provide intelligent assistance for field service 
 
 **Utility Modules** (`src/modules/utils/`):
 
-- `router.ts` - Lightweight request router
-- `cors.ts`, `response.ts` - HTTP helpers
-- `jwt.ts` - JWT token management
-- `telegram.ts`, `viber.ts`, `google.ts`, `gemini.ts` - External service integrations
-- `rate-limit.ts`, `sql-validator.ts` - Security utilities
+- `router.ts` - Lightweight request router with param extraction
+- `cors.ts` - CORS headers and preflight handling
+- `response.ts` - Standardized success/error response builders
+- `jwt.ts` - HMAC-SHA256 JWT sign/verify (custom implementation)
+- `csrf.ts` - CSRF token generation and validation (15min expiry)
+- `auth-middleware.ts` - Shared `authenticate()` and `requireCsrf()` helpers
+- `rate-limit.ts` - In-memory rate limiter with TTL eviction
+- `sql-validator.ts` - SQL injection prevention for AI-generated queries
+- `telegram.ts` - Telegram Bot API integration
+- `viber.ts` - Viber messaging integration
+- `google.ts` - Google OAuth and Drive API helpers
+- `gemini.ts` - Gemini AI API with dual-gateway fallback
 
 ### 2. **Main UI (Technician Mobile Console)**
 
@@ -131,50 +186,56 @@ Deploy to Cloudflare Workers: `npx wrangler deploy`
 ```
 cctv-service-system/
 ├── .dev.vars                # Local environment variables (secrets)
+├── .env.example             # Environment variable template
 ├── wrangler.toml            # Cloudflare Worker configuration
 ├── src/
 │   ├── index.ts             # Main Worker entry point
+│   ├── middleware/           # Middleware (reserved for future use)
 │   ├── modules/
-│   │   ├── routes/          # Route modules (auth, technicians, clients, jobs, etc.)
-│   │   └── utils/           # Utilities (router, cors, jwt, telegram, google, etc.)
-│   └── types/
-│       └── schema.ts        # TypeScript types for database schema
+│   │   ├── routes/          # Route modules (20 domain modules)
+│   │   └── utils/           # Utilities (12 utility modules)
+│   ├── types/
+│   │   └── schema.ts        # TypeScript types for database schema
+│   ├── utils/               # Additional utilities
+│   └── __tests__/           # Unit tests (6 test files)
 ├── public/
-│   ├── app.html             # Technician UI
+│   ├── app.html             # Technician mobile UI
 │   ├── app.js               # Technician UI logic
 │   ├── admin.html           # Admin dashboard
 │   ├── admin.js             # Admin dashboard logic
+│   ├── portal.html          # Public portal
 │   ├── tailwind.css         # Compiled Tailwind CSS
 │   ├── input.css            # Tailwind input CSS
+│   ├── tailwind.config.js   # Tailwind configuration
 │   ├── manifest.json        # PWA manifest
 │   ├── sw.js                # Service worker
 │   └── views/               # Admin view partials (dashboard, jobs, inventory, etc.)
+├── web/
+│   ├── admin.html           # Alternative admin entry
+│   ├── admin.js             # Alternative admin logic
+│   ├── app.html             # Alternative app entry
+│   ├── portal.html          # Alternative portal entry
+│   ├── electron-main.js     # Electron desktop wrapper
+│   ├── local-nas-bridge.js  # Local NAS integration
+│   └── tailwind.config.js   # Web Tailwind config
 ├── db/
 │   ├── migrations/          # SQL migrations (schema.sql, mock_data.sql, etc.)
+│   ├── backups/             # Database backups
 │   └── seeds/               # Seed data files
 ├── functions/
 │   └── api/
 │       └── [[path]].js      # Cloudflare Pages API proxy
-├── schema.sql               # Legacy schema (use db/migrations/schema.sql)
-├── AGENTS.md                # AI agent configuration
-├── .agents/
-│   ├── AGENTS.md            # Project rules
-│   └── skills/
-│       ├── telegram-bot/
-│       │   └── SKILL.md     # Telegram bot integration
-│       ├── cloudflare-polling-limits/
-│       │   └── SKILL.md     # Cloudflare usage limits
-│       ├── cloudflare-local-first/
-│       │   └── SKILL.md     # Local-first development
-│       ├── cms-assistant/
-│       │   └── SKILL.md     # Client management assistant
-│       └── ui-layout-guidance/
-│           └── SKILL.md     # UI layout guidelines
-├── exchange_token.js        # Google OAuth callback helper
-├── package.json             # Project dependencies
-├── design.md                # Design system documentation
+├── scripts/                 # Build/utility scripts
 ├── docs/                    # Additional documentation
-└── src-tauri/               # Tauri desktop app config
+├── src-tauri/               # Tauri desktop app config
+├── android/                 # Tauri Android config
+├── .agents/
+│   ├── AGENTS.md            # Project rules (this file)
+│   └── skills/              # AI agent skills (5 skills)
+├── package.json             # Project dependencies
+├── tsconfig.json            # TypeScript configuration
+├── design.md                # Design system documentation
+└── README.md                # Project readme
 ```
 
 ## ⚙️ API Endpoints
@@ -192,6 +253,18 @@ cctv-service-system/
 - `POST /api/auth/logout`: Logout
 - `GET /api/auth/profile`: Get current user profile
 - `PUT /api/technicians/:id/pin`: Change technician PIN
+
+### Site Surveys & Quotations Management
+
+- `GET /api/surveys`: List site surveys (filters: status, client_id)
+- `POST /api/surveys`: Create new site survey record (`SURV-xxx`)
+- `GET /api/quotations`: List price quotations
+- `POST /api/quotations`: Create price quotation (`QUO-xxx`)
+- `POST /api/ai/estimate-quotation`: Gemini AI automated Bill of Materials (BOM) & cable length estimator
+- `POST /api/quotations/:id/convert-job`: 1-click convert quotation to active field service job (`JOB-xxx`)
+- `POST /api/quotations/:id/convert-invoice`: 1-click convert quotation to POS pending invoice (`INV-xxx`)
+- `GET /api/portal/quotation/:id`: Public client portal quotation view
+- `POST /api/portal/quotation/:id/approve`: Client digital signature & approval submit
 
 ### Job Management
 

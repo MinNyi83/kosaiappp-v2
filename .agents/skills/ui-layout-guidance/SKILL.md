@@ -9,58 +9,176 @@ This skill documents and enforces layout design decisions for the KosAI service 
 
 ## 1. Admin Dashboard (`admin.html`)
 
-- **Preferred Layout**: **2-Column Tabbed Layout** for resource management (e.g. Clients, Technicians, Service Fees).
-  - **Left Column**: Search/filter inputs and list of records (e.g., list of clients).
-  - **Right Column**: Detail panel showing selected item details, statistics, edit forms, and action buttons.
-- **Benefits**: High density, quick side-by-side editing, no need to navigate away from the list context.
-- **Responsiveness**: Collapse left column into a drawer/overlay menu or stack columns on mobile screens (`md` Tailwind breakpoint).
+### Primary Layout: 2-Column Tabbed
+
+- **Left Column**: Navigation sidebar panel for high-speed module switching.
+  - Width: 240px (collapsible to 64px icon-only on tablet)
+  - Contains: Module icons, search, filter controls
+- **Right Column**: Main content area with data-grid display
+  - Contains: Tables, forms, detail panels, drawer-style sub-elements
+
+### Module Views
+
+| View | Layout | Key Features |
+|------|--------|--------------|
+| Dashboard | Stat cards grid | 4-column responsive grid |
+| Jobs | Table + detail panel | Filterable by status, tech, date |
+| Clients | 2-column tabbed | List + edit form side-by-side |
+| Inventory | Sidebar + table | Module-based sub-navigation |
+| Reports | Chart + table | Dynamic report builder |
+
+### Inventory Management Layout (`#view-inventory`)
+
+**Preferred Layout**: Left Module-Based Sidebar Navigation + Full Width Tabular Workspace.
+
+#### Left Sidebar (48px width)
+```
+┌─────────┐
+│ [icon]  │  Stock Batches
+│ [icon]  │  Sales Pricing
+│ [icon]  │  Device Catalog
+│ [icon]  │  Add Item
+│ [icon]  │  Categories
+│ [icon]  │  Brands
+└─────────┘
+```
+
+- High contrast icon badges
+- System overview cards
+- Module switching via `switchInvModule()`
+
+#### Main Workspace
+- Dynamic tables with accordion drawers
+- Expandable serial number grids
+- Quick action forms in workspace area
+- Visual input grouping
+- Live count indicators
+
+### High-Density Tables
+
+```css
+/* Table styling */
+.data-table th {
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.data-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+```
+
+---
 
 ## 2. Technician Mobile UI (`app.html`)
 
 ### Navigation
-- **Bottom Navigation Bar**: Fixed at bottom, 4 tabs (Jobs, Checklist, History, Settings)
+
+- **Bottom Navigation Bar**: Fixed at bottom, 4 tabs
+  - Jobs | Checklist | History | Settings
 - **Safe Area**: Use `env(safe-area-inset-top/bottom)` for notch and home indicator
 - **Max Width**: 448px (28rem) centered on screen
 
 ### Tab Views
-- **Jobs**: Single column list of active/pending job cards
-- **Checklist**: Scrollable form with collapsible sections
-- **History**: Single column list of completed jobs
-- **Settings**: Profile, ID card, PIN change, logout
+
+| Tab | Content | Layout |
+|-----|---------|--------|
+| Jobs | Active/pending job cards | Single column list |
+| Checklist | Scrollable form | Collapsible sections |
+| History | Completed jobs | Single column list |
+| Settings | Profile, ID card, PIN | Single column list |
 
 ### Checklist Layout
-- **Collapsible Sections**: Each section has a numbered badge, title, and chevron arrow
-- **Section Content**: Hidden by default, expands on tap with smooth transition
+
+```
+┌─────────────────────────────────────┐
+│ [1] Pre-Service Checks      [▼]    │
+│ ┌─────────────────────────────────┐ │
+│ │ ☐ Arrived on time              │ │
+│ │ ☐ Checked equipment            │ │
+│ │ ☐ Verified client details      │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ [2] Installation Steps      [▼]    │
+│ ┌─────────────────────────────────┐ │
+│ │ ☐ Mounted cameras              │ │
+│ │ ☐ Ran cables                   │ │
+│ │ ☐ Configured NVR               │ │
+│ └─────────────────────────────────┘ │
+│                                     │
+│ Progress: ████████░░ 80%           │
+└─────────────────────────────────────┘
+```
+
+- **Collapsible Sections**: Numbered badge, title, chevron arrow
+- **Section Content**: Hidden by default, expands on tap
 - **Checkboxes**: Large tap targets (p-3), accent-indigo-500 color
 - **Progress Bar**: Gradient from indigo to emerald, updates live
 
 ### Photo Capture
+
+```
+┌─────────────────────────────────────┐
+│         BEFORE          AFTER       │
+│  ┌──────────────┐  ┌──────────────┐│
+│  │              │  │              ││
+│  │   📷         │  │   📷         ││
+│  │   Add Photo  │  │   Add Photo  ││
+│  │              │  │              ││
+│  └──────────────┘  └──────────────┘│
+└─────────────────────────────────────┘
+```
+
 - **Layout**: 2-column grid (Before / After)
 - **Tap Target**: Entire card is clickable (button element)
 - **Preview**: Shows image after capture with "Remove" button below
 - **No Nested Buttons**: Use single button wrapping the entire area
 
 ### Hardware Section
-- **Action Toggle**: Install New / Replace Existing dropdown
-- **Replace Flow**: Shows old serial number input + warranty lookup button
-- **Warranty Lookup**: Displays device name, client, installed date, warranty status (active/expired), days remaining
-- **New Item**: Searchable inventory dropdown with stock info
-- **Warranty Selection**: 12 / 24 / 48 months dropdown
+
+```
+┌─────────────────────────────────────┐
+│ Action: [Install New ▼]            │
+│                                     │
+│ Serial Number: [_______________]   │
+│ [🔍 Check Warranty]                │
+│                                     │
+│ ┌─ Warranty Status ──────────────┐ │
+│ │ Device: Hikvision DS-2CD2143  │ │
+│ │ Client: Omega Logistics        │ │
+│ │ Installed: 2024-01-15         │ │
+│ │ Status: ✅ Active (245 days)  │ │
+│ └────────────────────────────────┘ │
+│                                     │
+│ New Device: [Search inventory...]  │
+│ Stock: 12 units | $45.00 / MMK    │
+│ Warranty: [12] [24] [48] months   │
+└─────────────────────────────────────┘
+```
 
 ### Signature Pad
+
 - **Canvas-based**: HTML5 Canvas with touch support
 - **Drawing**: Indigo stroke (#818cf8), 2.5px width, round caps
 - **Clear Button**: Top-right corner, text button
 - **Hint Text**: "Draw signature above" when empty
 
 ### Completion Flow
+
 1. **Confirmation Modal**: Fixed overlay with glass-panel card
    - Checklist progress bar
-   - Photo status indicators (✅/📷)
+   - Photo status indicators (checkmark/camera icon)
    - Hardware list
    - Signature preview
    - Notes
    - Back / Confirm buttons
+
 2. **Receipt Modal**: Shows after submission
    - Job info (ID, client, type, technician, date)
    - Checklist count
@@ -70,27 +188,75 @@ This skill documents and enforces layout design decisions for the KosAI service 
    - Done button
 
 ### ID Card
+
 - **Front**: Photo, name, role, ID, mini QR, phone, status bar
 - **Back**: Security header, magnetic strip, notice text, large QR, website, email
 - **Flip Animation**: Scale + fade (0.35s ease), not 3D transform
 - **QR Codes**: Generated via QRCode.js into div containers (not img elements)
 
 ### Theme Toggle
+
 - **Position**: Header right side
 - **Icons**: Moon (dark) / Sun (light)
 - **Persistence**: localStorage key `am-theme`
 
-## 3. Inventory Management View (`admin.html` -> `#view-inventory`)
+---
 
-- **Preferred Layout**: **Left Module-Based Sidebar Navigation** + **Full Width Tabular Workspace** layout.
-  - **Left Sidebar**: 48px width navigation containing high contrast icon badges and system overview cards.
-  - **Main Area**: Houses dynamic tables with accordion drawers (e.g. Stock Batches with expandable Serial number grids).
-  - **Form Panels**: Opens quick forms in the main workspace featuring visual input grouping, live count indicators, and clean action buttons.
-- **Benefits**: Modular architecture allows managing catalog data, batch costs, and serial numbers inside a unified tab.
+## 3. Responsive Patterns
+
+### Mobile Breakpoints
+
+```css
+/* Mobile first */
+.container {
+  padding: 16px;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .container {
+    padding: 24px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .container {
+    padding: 32px;
+  }
+}
+```
+
+### Grid Systems
+
+```css
+/* Stat cards - responsive grid */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Inventory modules - sidebar + content */
+.inventory-layout {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 16px;
+}
+```
+
+---
 
 ## 4. Design System
 
 ### Colors
+
 ```javascript
 const COLORS = {
   primary: '#f59e0b',    // Amber (primary accent)
@@ -105,6 +271,7 @@ const COLORS = {
 ```
 
 ### Glass Morphism
+
 ```css
 .glass-panel {
   background: var(--bg-card);
@@ -115,6 +282,7 @@ const COLORS = {
 ```
 
 ### Theme Variables
+
 ```css
 :root, [data-theme="dark"] {
   --bg-body: #09090b;
@@ -130,6 +298,7 @@ const COLORS = {
 ```
 
 ### Input Styles
+
 ```css
 .input-dark {
   background-color: var(--bg-input);
@@ -144,6 +313,8 @@ const COLORS = {
 }
 ```
 
+---
+
 ## 5. Rules
 
 - **Mobile**: Never use 2-column layout on technician app
@@ -153,3 +324,5 @@ const COLORS = {
 - **Accessibility**: Use semantic HTML, proper labels, and ARIA attributes
 - **Performance**: Lazy load images, debounce search inputs
 - **Offline**: Cache critical assets, queue offline actions
+- **Animations**: Use CSS transitions, avoid heavy JS animations
+- **Touch**: Ensure touch events work alongside mouse events

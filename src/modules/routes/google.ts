@@ -126,17 +126,28 @@ function register(router, env) {
       const { username, password } = (await request.json()) as any;
       if (!username || !password) return error('Missing username or password', 400);
 
-      const tech = await db
-        .prepare(
-          'SELECT * FROM technicians WHERE (LOWER(email) = LOWER(?) OR LOWER(id) = LOWER(?) OR LOWER(username) = LOWER(?)) AND active = 1'
-        )
-        .bind(username, username, username)
+      // Prefer exact ID match first, fallback to email or username match
+      let tech = await db
+        .prepare('SELECT * FROM technicians WHERE LOWER(id) = LOWER(?) AND active = 1')
+        .bind(username)
         .first();
+
+      if (!tech) {
+        tech = await db
+          .prepare(
+            'SELECT * FROM technicians WHERE (LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?)) AND active = 1'
+          )
+          .bind(username, username)
+          .first();
+      }
 
       if (!tech) return error('Invalid credentials', 401);
 
-      // Verify PIN using SHA-256 hash comparison (never plain-text)
-      const pinValid = tech.pin ? await verifyPin(password, tech.pin) : false;
+      // Verify password against both pin and password fields
+      const pinValid =
+        (tech.pin ? await verifyPin(password, tech.pin) : false) ||
+        (tech.password ? await verifyPin(password, tech.password) : false);
+
       if (!pinValid) return error('Invalid credentials', 401);
 
       const token = await signToken({

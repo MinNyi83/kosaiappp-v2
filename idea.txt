@@ -1,13 +1,47 @@
 cd D:\kosai-project\v2\
+python .\hexstrike_server.py --port 8888
+python hexstrike_mcp.py
 
+{
+  "servers": {
+    "hexstrike": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [
+        "D:\hexstrike-ai\hexstrike_mcp.py",
+        "--server",
+        "http://localhost:8888"
+      ]
+    }
+  },
+  "inputs": []
+}
+
+mimo -s ses_06b1c496cffeaz7YEf7UHGYBuD
 npx @mimo-ai/cli
+
+
+To rebuild:
+# Windows
+cargo tauri build
+# Android debug
+cd android && .\gradlew.bat assembleDebug
+
 
 **Toast Notifications** - Replaced 80+ browser alerts with non-blocking toast messages " make show in center"
 
-Warranty & RMA Claims change the function and style as you like 
+Modular Monolith Architecture 📦
+
+HARDWARE USED / REPLACED Replace Existing can show old item / serial number warranty status ( expire or active )and new item with warranty (12 / 24 / 48 Months) and save in Customer Product Warranties list
+
+can you review the codebase and suggest improvement
+
+# System Settings
+# Warranty & RMA Claims change the function and style as you like 
 Ai-copilot change the function and style as you like
+Attendance change the function and style as you like
 pos change the function and style as you like
-reports change the function and style as you like
+# reports change the function and style as you like and i want all possible report and export excel
 
 Dashboard change the function and style as you like
 user authentication and role-based access control

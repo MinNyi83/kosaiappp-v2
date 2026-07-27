@@ -731,6 +731,32 @@
           <a
             href="#"
             onclick="
+              switchTab('surveys');
+              closeSidebar();
+            "
+            class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg hover:bg-white/5 transition-all"
+            style="color: var(--text-muted);"
+            title="Surveys & Quotations"
+          >
+            <svg
+              class="w-4 h-4 shrink-0 text-teal-400"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <span class="tab-label" style="color: inherit;">Surveys & Quotations</span>
+          </a>
+
+          <a
+            href="#"
+            onclick="
               switchTab('jobs');
               closeSidebar();
             "
@@ -1394,6 +1420,16 @@
 
     <!-- OS Theme Preference Detection -->
     <script>
+      function updateThemeIcons(theme) {
+        const darkIcon = document.getElementById('theme-icon-dark');
+        const lightIcon = document.getElementById('theme-icon-light');
+        if (darkIcon && lightIcon) {
+          if (theme === 'light') { darkIcon.classList.add('hidden'); lightIcon.classList.remove('hidden'); }
+          else { darkIcon.classList.remove('hidden'); lightIcon.classList.add('hidden'); }
+        }
+      }
+      window.updateThemeIcons = updateThemeIcons;
+
       // Auto-detect OS theme preference on first visit
       (function() {
         if (!localStorage.getItem('am-theme')) {

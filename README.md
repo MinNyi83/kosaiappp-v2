@@ -98,7 +98,8 @@ Complete redesign of all admin dashboard sections with modern, glass-morphism st
 │   │   │   ├── distributors.ts  # Distributor management
 │   │   │   ├── cashsafe.ts      # Cash safe ledger
 │   │   │   ├── servicefees.ts   # Service fee management
-│   │   │   └── landing.ts       # Landing page content
+│   │   │   ├── landing.ts       # Landing page content
+│   │   │   └── surveys.ts       # Site surveys, AI quotation estimator & customer portal
 │   │   └── utils/               # Shared utilities
 │   │       ├── router.ts        # Lightweight request router
 │   │       ├── cors.ts          # CORS headers

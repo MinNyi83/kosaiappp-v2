@@ -24,23 +24,25 @@ Incoming webhook requests are handled via a `POST` handler at `/api/telegram/web
 
 ### Slash Commands (15+ commands)
 
-- `/start` - Welcome message
-- `/help` - Show all available commands
-- `/clock` - Quick clock status summary
-- `/checkin` or `/clockin` - Clock in for today
-- `/checkout` or `/clockout` - Clock out
-- `/status` - Check clock-in status & active jobs
-- `/report` - Weekly attendance summary
-- `/team` - See who is currently clocked in
-- `/leaderboard` - Weekly hours leaderboard
-- `/history` - My clock-in/out history this week
-- `/jobs` - List your active jobs
-- `/completed` - List your completed jobs
-- `/today` - Show today's jobs & attendance
-- `/ticket JOB-xxx` - View job details
-- `/accept JOB-xxx` - Accept a job assignment
-- `/assign JOB-xxx TechName` - Assign technician
-- `/cancel JOB-xxx` - Cancel a job
+| Command | Description | Access |
+|---------|-------------|--------|
+| `/start` | Welcome message | All |
+| `/help` | Show all available commands | All |
+| `/clock` | Quick clock status summary | All |
+| `/checkin` or `/clockin` | Clock in for today | All |
+| `/checkout` or `/clockout` | Clock out | All |
+| `/status` | Check clock-in status & active jobs | All |
+| `/report` | Weekly attendance summary | All |
+| `/team` | See who is currently clocked in | All |
+| `/leaderboard` | Weekly hours leaderboard | All |
+| `/history` | My clock-in/out history this week | All |
+| `/jobs` | List your active jobs | All |
+| `/completed` | List your completed jobs | All |
+| `/today` | Show today's jobs & attendance | All |
+| `/ticket JOB-xxx` | View job details | All |
+| `/accept JOB-xxx` | Accept a job assignment | All |
+| `/assign JOB-xxx TechName` | Assign technician | Admin only |
+| `/cancel JOB-xxx` | Cancel a job | Admin only |
 
 ### AI Voice Transcription & Auto-Dispatch
 
@@ -54,7 +56,7 @@ Incoming webhook requests are handled via a `POST` handler at `/api/telegram/web
 
 - **Trigger**: Photo message received (`update.message.photo`)
 - **Processing**: Downloads highest-res photo, uploads to Google Drive via `uploadFileToGoogleDrive`
-- **Storage**: Organized in `Awesome Myanmar - Service Records / {Client} / {JobID}/`
+- **Storage**: Organized in `AWESOME Myanmar / {Client} / {JobID}/`
 - **Creates**: Job record with `before_photo` pointing to Drive link
 - **Confirms**: Sends Job ID back to Telegram chat
 
@@ -108,8 +110,34 @@ The `sendTelegramPhotoNotification` function handles photo delivery:
 
 ### System Notifications
 
-- **Database Backups**: Sends backup logs on cron events
+- **Database Backups**: Sends backup logs on cron events (midnight schedule)
 - **Job Assignment**: Notifies technicians when assigned via `/assign` or `accept_job`
+- **Inventory Alerts**: Low stock alerts when inventory falls below threshold
+
+### Notification Templates
+
+```typescript
+// Status change notification
+const statusNotification = `${emoji} *Job ${status}*\n\n` +
+  `📋 *Job:* ${jobId}\n` +
+  `👤 *Client:* ${clientName}\n` +
+  `🔧 *Type:* ${serviceType}\n` +
+  `👨‍💼 *Technician:* ${techName}\n` +
+  (notes ? `\n📝 ${notes}` : '');
+
+// Photo notification caption
+const photoCaption = `📸 ${typeLabel} Photo — ${jobId}`;
+// typeLabel: 'Before', 'After', or 'Signature'
+
+// Backup notification
+const backupNotification = `📊 *Database Auto-Backup Report*\n\n` +
+  `📅 *Date:* ${dateStr}\n` +
+  `📂 *Backup File:* \`${filename}\`\n` +
+  `✅ *Google Drive Upload:* Successful\n` +
+  `🔑 *File ID:* \`${driveFileId}\`\n` +
+  `\n📦 *Record Summaries:*` +
+  `\n• \`service_records\`: ${count} records`;
+```
 
 ---
 
@@ -124,11 +152,11 @@ The `sendTelegramPhotoNotification` function handles photo delivery:
 ### Utility Functions
 
 ```typescript
-// Send text notification
+// Send text notification to default chat
 sendTelegramNotification(env, text)
 
-// Send photo notification
-sendTelegramPhotoNotification(env, photoSource, caption)
+// Send photo notification with caption
+sendTelegramPhotoNotification(env, photoBase64, caption)
 
 // Send message to specific chat
 sendTelegramMessage(env, chatId, text)
@@ -143,3 +171,4 @@ sendTelegramMessage(env, chatId, text)
 - Remove `parse_mode: 'Markdown'` from photo captions (emoji can break parsing)
 - Status notifications include emoji prefix for quick visual scanning
 - All notifications are non-blocking (errors logged but don't fail the request)
+- Quote user names and job IDs with backticks to prevent Markdown injection

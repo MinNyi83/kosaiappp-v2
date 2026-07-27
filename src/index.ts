@@ -40,6 +40,7 @@ import * as distributorsRoutes from './modules/routes/distributors.js';
 import * as cashsafeRoutes from './modules/routes/cashsafe.js';
 import * as servicefeesRoutes from './modules/routes/servicefees.js';
 import * as landingRoutes from './modules/routes/landing.js';
+import * as surveysRoutes from './modules/routes/surveys.js';
 
 const routeModules = [
   authRoutes,
@@ -62,6 +63,7 @@ const routeModules = [
   cashsafeRoutes,
   servicefeesRoutes,
   landingRoutes,
+  surveysRoutes,
 ];
 
 export default {

@@ -130,6 +130,11 @@ async function handleCommand(chatId, command, from, db, env) {
   const cmds = {
     '/start': 'Welcome to Awesome Myanmar Bot! Use /help to see available commands.',
     '/help': getHelpText(),
+    '/survey': async () => {
+      const tech = await resolveTech(from, db);
+      if (!tech) return 'You are not registered as a technician. Contact your admin.';
+      return `📋 *Site Survey Instructions*:\nTo record a site survey via Telegram, send a voice message describing the site conditions (e.g. "Survey for client ABC, 8 CCTV cameras, 200m Cat6 cable"). AI will transcribe and create a survey ticket automatically!`;
+    },
     '/clock': async () => {
       const tech = await resolveTech(from, db);
       if (!tech) return 'You are not registered as a technician. Contact your admin.';

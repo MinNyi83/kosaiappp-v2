@@ -439,7 +439,7 @@ function register(router, env) {
       if (!user) return error('Unauthorized', 401);
 
       const [totalJobs, activeJobs, totalClients, totalTechs, totalExpenses, totalRevenue] =
-        await Promise.all([
+        (await Promise.all([
           db.prepare('SELECT COUNT(*) as count FROM service_records').first(),
           db
             .prepare(
@@ -453,15 +453,20 @@ function register(router, env) {
               "SELECT COALESCE(SUM(amount), 0) as total FROM cash_transactions WHERE transaction_type = 'Withdrawal'"
             )
             .first(),
-        ]);
+          db
+            .prepare(
+              "SELECT COALESCE(SUM(amount), 0) as total FROM cash_transactions WHERE transaction_type = 'Deposit'"
+            )
+            .first(),
+        ])) as Array<{ count?: number; total?: number } | null>;
 
       return success({
-        total_jobs: totalJobs.count,
-        active_jobs: activeJobs.count,
-        total_clients: totalClients.count,
-        active_technicians: totalTechs.count,
-        total_expenses: totalExpenses.total,
-        total_revenue: totalRevenue.total,
+        total_jobs: totalJobs?.count ?? 0,
+        active_jobs: activeJobs?.count ?? 0,
+        total_clients: totalClients?.count ?? 0,
+        active_technicians: totalTechs?.count ?? 0,
+        total_expenses: totalExpenses?.total ?? 0,
+        total_revenue: totalRevenue?.total ?? 0,
       });
     } catch (err) {
       console.error('Fetch stats error:', err.message);

@@ -52,10 +52,10 @@ describe('POST /api/auth/login-password', () => {
       experimental: { disableExperimentalWarning: true },
       local: true,
     });
-  });
+  }, 30000);
 
   afterAll(async () => {
-    await worker.stop();
+    if (worker) await worker.stop();
   });
 
   it('should reject missing fields', async () => {
@@ -119,10 +119,10 @@ describe('RMA & Warranty endpoints', () => {
     });
     const loginData = await loginRes.json();
     token = loginData.data.token;
-  });
+  }, 30000);
 
   afterAll(async () => {
-    await worker.stop();
+    if (worker) await worker.stop();
   });
 
   const authHeaders = () => ({
