@@ -501,6 +501,7 @@ function switchTab(tabId) {
   }
 
   if (tabId === 'surveys') {
+    window.populateSurveyClientDropdown();
     window.loadSurveysData();
     window.loadQuotationsData();
   }
@@ -511,18 +512,47 @@ function switchTab(tabId) {
 }
 
 // ── Surveys & Quotations Tab Functions ──────────────────────────────────────
-async function loadSurveysData() {
+let cachedSurveysList = [];
+let cachedQuotationsList = [];
+
+async function populateSurveyClientDropdown() {
+  const selectEl = document.getElementById('survey-client-filter');
+  if (!selectEl) return;
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  try {
+    const res = await fetch(`${baseUrl}/api/clients`);
+    const clients = await res.json();
+    const list = Array.isArray(clients) ? clients : (clients.data || []);
+    
+    selectEl.innerHTML = `<option value="">All Clients</option>` + list.map(c => `
+      <option value="${escapeHTML(c.id)}">${escapeHTML(c.company_name)} (${escapeHTML(c.id)})</option>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to populate survey client dropdown:', err);
+  }
+}
+window.populateSurveyClientDropdown = populateSurveyClientDropdown;
+
+function filterSurveysByClient(clientId) {
+  loadSurveysData(clientId);
+  loadQuotationsData(clientId);
+}
+window.filterSurveysByClient = filterSurveysByClient;
+
+async function loadSurveysData(filterClientId = '') {
   const baseUrl = document.getElementById('api-base')?.value || '';
   const token = localStorage.getItem('admin_token');
   const bodyEl = document.getElementById('surveys-table-body');
   if (!bodyEl) return;
 
   try {
-    const res = await fetch(`${baseUrl}/api/surveys`, {
+    const url = filterClientId ? `${baseUrl}/api/surveys?client_id=${encodeURIComponent(filterClientId)}` : `${baseUrl}/api/surveys`;
+    const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
     const surveys = Array.isArray(data) ? data : (data.data || []);
+    cachedSurveysList = surveys;
     
     document.getElementById('surveys-count-total').textContent = surveys.length;
 
@@ -551,18 +581,23 @@ async function loadSurveysData() {
 }
 window.loadSurveysData = loadSurveysData;
 
-async function loadQuotationsData() {
+async function loadQuotationsData(filterClientId = '') {
   const baseUrl = document.getElementById('api-base')?.value || '';
   const token = localStorage.getItem('admin_token');
   const bodyEl = document.getElementById('quotations-table-body');
   if (!bodyEl) return;
 
   try {
-    const res = await fetch(`${baseUrl}/api/quotations`, {
+    const url = filterClientId ? `${baseUrl}/api/quotations?client_id=${encodeURIComponent(filterClientId)}` : `${baseUrl}/api/quotations`;
+    const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
-    const quotations = Array.isArray(data) ? data : (data.data || []);
+    let quotations = Array.isArray(data) ? data : (data.data || []);
+    if (filterClientId) {
+      quotations = quotations.filter(q => q.client_id === filterClientId);
+    }
+    cachedQuotationsList = quotations;
 
     const activeCount = quotations.filter(q => q.status === 'Draft' || q.status === 'Sent').length;
     const approvedCount = quotations.filter(q => q.status === 'Approved').length;
