@@ -639,6 +639,87 @@ async function convertQuotationToInvoice(quotationId) {
 }
 window.convertQuotationToInvoice = convertQuotationToInvoice;
 
+function openNewSurveyModal() {
+  const clientId = prompt('Enter Client ID (or Company Name) for this Site Survey:');
+  if (!clientId) return;
+  const cameraCountStr = prompt('Number of Cameras estimated:', '8');
+  if (cameraCountStr === null) return;
+  const cableMetersStr = prompt('Estimated Cable Distance (in meters):', '150');
+
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+
+  fetch(`${baseUrl}/api/surveys`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      client_id: clientId,
+      camera_count: parseInt(cameraCountStr) || 0,
+      estimated_cable_meters: parseFloat(cableMetersStr) || 0,
+      survey_type: 'CCTV',
+      status: 'Draft',
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      showToast(data.message || 'Site Survey logged!', 'success');
+      loadSurveysData();
+    })
+    .catch((err) => showToast('Failed to create survey: ' + err.message, 'error'));
+}
+window.openNewSurveyModal = openNewSurveyModal;
+
+function openNewQuotationModal() {
+  const clientId = prompt('Enter Client ID for this Price Quotation:');
+  if (!clientId) return;
+  const amountStr = prompt('Total Quotation Amount (USD):', '450.00');
+  if (!amountStr) return;
+
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+
+  fetch(`${baseUrl}/api/quotations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      client_id: clientId,
+      subtotal: parseFloat(amountStr) || 0,
+      total_amount: parseFloat(amountStr) || 0,
+      currency: 'USD',
+      valid_days: 14,
+      status: 'Draft',
+    }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      showToast(data.message || 'Quotation created!', 'success');
+      loadQuotationsData();
+    })
+    .catch((err) => showToast('Failed to create quotation: ' + err.message, 'error'));
+}
+window.openNewQuotationModal = openNewQuotationModal;
+
+async function estimateQuotationForSurvey(surveyId) {
+  showToast('🤖 AI Estimating Bill of Materials...', 'info', 3000);
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+
+  try {
+    const res = await fetch(`${baseUrl}/api/ai/estimate-quotation`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ survey_id: surveyId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'AI estimation failed');
+    const items = data.data?.recommended_items || data.recommended_items || [];
+    alert(`🤖 AI Quotation Recommendation for ${surveyId}:\n\n` + JSON.stringify(items, null, 2));
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+window.estimateQuotationForSurvey = estimateQuotationForSurvey;
+
 async function initializeAdminDesk() {
   const workspace = document.getElementById('app-workspace');
   workspace.innerHTML =
