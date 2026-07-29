@@ -13,6 +13,15 @@ vi.mock('../modules/utils/jwt.js', () => ({
   signToken: vi.fn(),
 }));
 
+// Mock auth-middleware (authenticate uses verifyToken, requireCsrf always passes in tests)
+vi.mock('../modules/utils/auth-middleware.js', async (importOriginal) => {
+  const orig = await importOriginal<any>();
+  return {
+    ...orig,
+    requireCsrf: vi.fn().mockResolvedValue(true),
+  };
+});
+
 // Mock the google utility for photo upload
 vi.mock('../modules/utils/google.js', () => ({
   uploadFileToGoogleDrive: vi.fn().mockResolvedValue('mock-file-id'),
@@ -112,7 +121,7 @@ describe('Telegram Routes', () => {
       expect(sendTelegramMessage).toHaveBeenCalledWith(
         mockEnv,
         99999,
-        expect.stringContaining('Awesome Myanmar Bot')
+        expect.stringContaining('KOSAI FIELD OPS')
       );
     });
 

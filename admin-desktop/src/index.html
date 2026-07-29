@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KosAI Admin</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <img src="logo.svg" alt="KosAI" class="logo" />
+        <h1>KosAI Admin</h1>
+      </div>
+      <ul class="nav-menu">
+        <li class="active" data-view="dashboard"><span class="icon">📊</span> Dashboard</li>
+        <li data-view="tickets"><span class="icon">🎫</span> Tickets</li>
+        <li data-view="clients"><span class="icon">👥</span> Clients</li>
+        <li data-view="inventory"><span class="icon">📦</span> Inventory</li>
+        <li data-view="reports"><span class="icon">📈</span> Reports</li>
+        <li data-view="sync"><span class="icon">🔄</span> Sync</li>
+      </ul>
+      <div class="sidebar-footer">
+        <div id="sync-status" class="sync-indicator offline">
+          <span class="dot"></span>
+          <span class="text">Offline</span>
+        </div>
+        <button id="btn-sync" class="btn-sync">Sync Now</button>
+      </div>
+    </nav>
+
+    <main id="content">
+      <div id="view-dashboard" class="view active"></div>
+      <div id="view-tickets" class="view"></div>
+      <div id="view-clients" class="view"></div>
+      <div id="view-inventory" class="view"></div>
+      <div id="view-reports" class="view"></div>
+      <div id="view-sync" class="view"></div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

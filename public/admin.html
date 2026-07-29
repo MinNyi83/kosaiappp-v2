@@ -3,10 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AwesomeMyanmar - HQ Dispatch Console</title>
+    <title>KosAI - HQ Dispatch Console</title>
     <link rel="shortcut icon" type="image/svg+xml" href="./logo.svg" />
     <!-- Tailwind CSS -->
     <link rel="stylesheet" href="tailwind.css" />
+    <!-- Tauri Compatibility -->
+    <script>
+      // Detect Tauri environment and expose window.__TAURI__
+      (function() {
+        if (window.__TAURI__) return;
+        window.__TAURI__ = null;
+        window.__TAURI_ENV__ = { isTauri: false };
+      })();
+    </script>
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
@@ -516,6 +525,26 @@
           font-size: 11px !important;
         }
       }
+
+      /* ── Service Fee Catalog Chips ── */
+      .sf-chip {
+        background: rgba(255,255,255,0.04);
+        color: #94a3b8;
+        border: 1px solid rgba(255,255,255,0.06);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+      .sf-chip:hover {
+        background: rgba(255,255,255,0.08);
+        color: #e2e8f0;
+      }
+      .sf-chip.active {
+        background: rgba(245,158,11,0.15);
+        color: #fbbf24;
+        border-color: rgba(245,158,11,0.3);
+        font-weight: 700;
+      }
     </style>
   </head>
   <body class="min-h-screen flex overflow-x-hidden" style="color: var(--text-secondary);">
@@ -538,10 +567,9 @@
         <p class="text-xs text-amber-500 uppercase font-bold tracking-widest">Secure Sign-In</p>
         <!-- Password Login Container -->
         <form
-          method="POST"
           id="login-password-container"
           class="space-y-4 text-left py-2"
-          onsubmit="handlePasswordLogin(event)"
+          onsubmit="event.preventDefault(); if (typeof window.handlePasswordLogin === 'function') window.handlePasswordLogin(event);"
         >
           <div>
             <label class="block text-[9px] font-bold uppercase tracking-widest mb-1" style="color: var(--text-muted);"
@@ -582,6 +610,17 @@
     <!-- Hidden Configuration Fields to bind existing scripts -->
     <input name="api-base" type="hidden" id="api-base" value="" />
     <input name="admin-secret" type="hidden" id="admin-secret" value="" />
+
+    <!-- Load Core App Logic Early -->
+    <script src="./searchable-select.js"></script>
+    <script src="./admin-core.js?v=2.8"></script>
+    <script src="./admin-surveys.js?v=2.8"></script>
+    <script src="./admin-receipt.js?v=2.8"></script>
+    <script src="./admin-service-fees.js?v=2.8"></script>
+    <script src="./admin-clients.js?v=2.8"></script>
+    <script src="./admin-dashboard.js?v=2.8"></script>
+    <script src="./admin-tickets.js?v=2.8"></script>
+    <script src="./admin.js?v=2.8"></script>
 
     <!-- Mobile Sidebar Overlay -->
     <div id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -757,15 +796,15 @@
           <a
             href="#"
             onclick="
-              switchTab('jobs');
+              switchTab('receipt-builder');
               closeSidebar();
             "
             class="tab-link flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold rounded-lg hover:bg-white/5 transition-all"
             style="color: var(--text-muted);"
-            title="Jobs Dashboard"
+            title="Receipt Builder"
           >
             <svg
-              class="w-4 h-4 shrink-0 text-cyan-400"
+              class="w-4 h-4 shrink-0 text-rose-400"
               fill="none"
               stroke="currentColor"
               stroke-width="2"
@@ -774,11 +813,12 @@
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
               />
             </svg>
-            <span class="tab-label" style="color: inherit;">Jobs</span>
+            <span class="tab-label" style="color: inherit;">Receipt Builder</span>
           </a>
+
 
           <a
             href="#"
@@ -1311,10 +1351,7 @@
       </nav>
     </div>
 
-    <!-- Searchable Select Universal Library -->
-    <script src="./searchable-select.js"></script>
-    <!-- Core App Logic & Scripts (Separated to admin.js) -->
-    <script src="./admin.js?v=2.6"></script>
+        <!-- searchable-select.js and admin modules already loaded early (lines 586-590) -->
 
     <!-- Theme Toggle Script -->
     <script>

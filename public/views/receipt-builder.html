@@ -1,0 +1,191 @@
+<!-- Receipt Builder — Customizable Receipt/Invoice/Quotation Templates -->
+<div id="view-receipt-builder" class="tab-view space-y-6 hidden">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-2xl border border-white/5">
+    <div>
+      <h2 class="text-xl font-bold text-white flex items-center gap-2"><span>🧾</span> Receipt Builder</h2>
+      <p class="text-xs text-slate-400 mt-1">Customize & generate professional receipts, quotations, and invoices</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <select id="rb-doc-type" onchange="rbLoadTemplate(this.value)" class="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+        <option value="quotation">📄 Quotation</option>
+        <option value="invoice">💰 Invoice</option>
+        <option value="receipt">🧾 Job Receipt</option>
+      </select>
+      <button onclick="rbPreview()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2">👁 Preview</button>
+      <button onclick="rbPrint()" class="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2">🖨 Print</button>
+      <button onclick="rbExportPDF()" class="bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2">📥 PDF</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Left: Template Settings -->
+    <div class="space-y-4">
+      <!-- Company Header -->
+      <div class="glass-panel p-5 rounded-2xl border border-white/5">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Company Header</h3>
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Logo URL</label>
+            <div class="flex gap-2">
+              <input type="text" id="rb-company-logo" placeholder="https://..." class="flex-1 bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+              <label class="bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold px-3 py-2 rounded-xl cursor-pointer transition">🖼️ Upload<input type="file" accept="image/*" class="hidden" onchange="rbUploadLogo(this)" /></label>
+            </div>
+          </div>
+          <div><label class="block text-slate-400 mb-1">Company Name</label><input type="text" id="rb-company-name" value="Awesome Myanmar CCTV" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+          <div><label class="block text-slate-400 mb-1">Tagline</label><input type="text" id="rb-company-tagline" value="Field Service Management" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-slate-400 mb-1">Phone</label><input type="text" id="rb-company-phone" value="+95 9 XXX XXX XXX" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+            <div><label class="block text-slate-400 mb-1">Email</label><input type="text" id="rb-company-email" value="info@awesomemyanmar.com" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+          </div>
+          <div><label class="block text-slate-400 mb-1">Address</label><input type="text" id="rb-company-address" value="Yangon, Myanmar" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+          <div><label class="block text-slate-400 mb-1">Website</label><input type="text" id="rb-company-website" value="www.awesomemyanmar.com" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+          <div>
+            <label class="block text-slate-400 mb-1">Header Alignment</label>
+            <div class="flex gap-2">
+              <button onclick="rbSetAlignment('left')" id="rb-align-left" class="flex-1 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-bold py-2 rounded-xl transition">⬅ Left</button>
+              <button onclick="rbSetAlignment('center')" id="rb-align-center" class="flex-1 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold py-2 rounded-xl transition">⬌ Center</button>
+              <button onclick="rbSetAlignment('right')" id="rb-align-right" class="flex-1 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold py-2 rounded-xl transition">➡ Right</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paper & Layout -->
+      <div class="glass-panel p-5 rounded-2xl border border-white/5">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-cyan-400"></span> Paper & Layout</h3>
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Paper Size</label>
+            <select id="rb-paper-size" onchange="rbPreview()" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+              <option value="a4">A4 (210 × 297 mm)</option>
+              <option value="a5">A5 (148 × 210 mm)</option>
+              <option value="letter">Letter (8.5 × 11 in)</option>
+              <option value="legal">Legal (8.5 × 14 in)</option>
+              <option value="thermal">Thermal (80mm receipt)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Font Family</label>
+            <select id="rb-font-family" onchange="rbPreview()" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+              <option value="'Segoe UI', system-ui, sans-serif">Segoe UI (Default)</option>
+              <option value="'Inter', sans-serif">Inter</option>
+              <option value="'Roboto', sans-serif">Roboto</option>
+              <option value="'Open Sans', sans-serif">Open Sans</option>
+              <option value="'Poppins', sans-serif">Poppins</option>
+              <option value="'Playfair Display', serif">Playfair Display</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="'Courier New', monospace">Courier New (Mono)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Font Size</label>
+            <select id="rb-font-size" onchange="rbPreview()" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+              <option value="10">Small (10px)</option>
+              <option value="11">Medium (11px)</option>
+              <option value="12" selected>Default (12px)</option>
+              <option value="13">Large (13px)</option>
+              <option value="14">X-Large (14px)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Table Style</label>
+            <div class="flex gap-2">
+              <button onclick="rbSetTableStyle('striped')" id="rb-table-striped" class="flex-1 bg-amber-500/20 border border-amber-500/40 text-amber-400 text-xs font-bold py-2 rounded-xl transition">Striped</button>
+              <button onclick="rbSetTableStyle('bordered')" id="rb-table-bordered" class="flex-1 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold py-2 rounded-xl transition">Bordered</button>
+              <button onclick="rbSetTableStyle('minimal')" id="rb-table-minimal" class="flex-1 bg-white/5 border border-white/10 text-slate-400 text-xs font-bold py-2 rounded-xl transition">Minimal</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Color Theme -->
+      <div class="glass-panel p-5 rounded-2xl border border-white/5">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-400"></span> Color Theme</h3>
+        <div class="grid grid-cols-6 gap-2">
+          <button onclick="rbSetTheme('#f59e0b')" class="w-full h-8 rounded-lg bg-amber-500 border-2 border-transparent hover:border-white transition" title="Amber"></button>
+          <button onclick="rbSetTheme('#10b981')" class="w-full h-8 rounded-lg bg-emerald-500 border-2 border-transparent hover:border-white transition" title="Emerald"></button>
+          <button onclick="rbSetTheme('#3b82f6')" class="w-full h-8 rounded-lg bg-blue-500 border-2 border-transparent hover:border-white transition" title="Blue"></button>
+          <button onclick="rbSetTheme('#8b5cf6')" class="w-full h-8 rounded-lg bg-violet-500 border-2 border-transparent hover:border-white transition" title="Violet"></button>
+          <button onclick="rbSetTheme('#ef4444')" class="w-full h-8 rounded-lg bg-rose-500 border-2 border-transparent hover:border-white transition" title="Rose"></button>
+          <button onclick="rbSetTheme('#06b6d4')" class="w-full h-8 rounded-lg bg-cyan-500 border-2 border-transparent hover:border-white transition" title="Cyan"></button>
+          <button onclick="rbSetTheme('#ec4899')" class="w-full h-8 rounded-lg bg-pink-500 border-2 border-transparent hover:border-white transition" title="Pink"></button>
+          <button onclick="rbSetTheme('#14b8a6')" class="w-full h-8 rounded-lg bg-teal-500 border-2 border-transparent hover:border-white transition" title="Teal"></button>
+          <button onclick="rbSetTheme('#f97316')" class="w-full h-8 rounded-lg bg-orange-500 border-2 border-transparent hover:border-white transition" title="Orange"></button>
+          <button onclick="rbSetTheme('#000000')" class="w-full h-8 rounded-lg bg-black border-2 border-transparent hover:border-white transition" title="Black"></button>
+          <button onclick="rbSetTheme('#374151')" class="w-full h-8 rounded-lg bg-gray-700 border-2 border-transparent hover:border-white transition" title="Gray"></button>
+          <button onclick="rbSetTheme('#7c3aed')" class="w-full h-8 rounded-lg bg-purple-700 border-2 border-transparent hover:border-white transition" title="Purple"></button>
+        </div>
+        <div class="mt-3 flex items-center gap-2">
+          <label class="text-slate-400 text-xs">Custom:</label>
+          <input type="color" id="rb-custom-color" value="#f59e0b" onchange="rbSetTheme(this.value)" class="w-8 h-8 rounded cursor-pointer border-0" />
+          <span id="rb-color-hex" class="text-slate-500 text-xs">#f59e0b</span>
+        </div>
+      </div>
+
+      <!-- Visibility Toggles -->
+      <div class="glass-panel p-5 rounded-2xl border border-white/5">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Show / Hide</h3>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-logo" checked onchange="rbPreview()" class="rounded border-white/20" /> Logo</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-tagline" checked onchange="rbPreview()" class="rounded border-white/20" /> Tagline</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-contact" checked onchange="rbPreview()" class="rounded border-white/20" /> Contact Info</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-website" checked onchange="rbPreview()" class="rounded border-white/20" /> Website</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-meta" checked onchange="rbPreview()" class="rounded border-white/20" /> Bill To / Meta</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-items" checked onchange="rbPreview()" class="rounded border-white/20" /> Line Items</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-totals" checked onchange="rbPreview()" class="rounded border-white/20" /> Totals</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-notes" checked onchange="rbPreview()" class="rounded border-white/20" /> Notes</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-terms" checked onchange="rbPreview()" class="rounded border-white/20" /> Terms</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-warranty" checked onchange="rbPreview()" class="rounded border-white/20" /> Warranty</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-signature" checked onchange="rbPreview()" class="rounded border-white/20" /> Signature</label>
+          <label class="flex items-center gap-2 text-slate-300 cursor-pointer"><input type="checkbox" id="rb-show-footer" checked onchange="rbPreview()" class="rounded border-white/20" /> Footer</label>
+        </div>
+      </div>
+
+      <!-- Footer Settings -->
+      <div class="glass-panel p-5 rounded-2xl border border-white/5">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Footer</h3>
+        <div class="space-y-3 text-xs">
+          <div><label class="block text-slate-400 mb-1">Thank You Message</label><input type="text" id="rb-footer-thanks" value="Thank you for your business!" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+          <div><label class="block text-slate-400 mb-1">Payment Terms</label><textarea id="rb-footer-terms" rows="2" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">Payment due within 30 days. Late payments subject to 1.5% monthly interest.</textarea></div>
+          <div><label class="block text-slate-400 mb-1">Warranty Note</label><input type="text" id="rb-footer-warranty" value="All hardware includes 12-month manufacturer warranty." class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+          <div><label class="block text-slate-400 mb-1">Custom Note</label><input type="text" id="rb-footer-note" placeholder="Any additional notes..." class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+        </div>
+      </div>
+
+      <!-- Load from Existing -->
+      <div class="glass-panel p-5 rounded-2xl border border-white/5">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-sky-400"></span> Load from Existing</h3>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Quotation ID</label>
+            <select id="rb-load-quotation" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+              <option value="">Select...</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Job ID</label>
+            <select id="rb-load-job" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+              <option value="">Select...</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="rbLoadDocumentData()" class="mt-3 w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold py-2 rounded-xl transition">Load Selected Document</button>
+      </div>
+    </div>
+
+    <!-- Right: Live Preview -->
+    <div class="glass-panel p-5 rounded-2xl border border-white/5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-400"></span> Live Preview</h3>
+        <span id="rb-paper-label" class="text-[10px] text-slate-500 bg-white/5 px-2 py-1 rounded-lg">A4</span>
+      </div>
+      <div id="rb-preview-container" class="bg-white rounded-xl overflow-hidden shadow-2xl" style="min-height:600px">
+        <!-- Preview renders here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Print Container (hidden, used for printing) -->
+<div id="rb-print-container" class="hidden"></div>

@@ -1,203 +1,274 @@
-<!-- Surveys & Quotations Management View -->
+<!-- Site Surveys & Quotations v2 — Pipeline + Detail Panels -->
 <div id="view-surveys" class="tab-view space-y-6 hidden">
-  <!-- Top Control Bar & Stats -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-2xl border border-white/5 relative z-10">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-2xl border border-white/5">
     <div>
-      <h2 class="text-xl font-bold text-white flex items-center gap-2">
-        <span>📋</span> Site Surveys & Quotations
-      </h2>
-      <p class="text-xs text-slate-400 mt-1">Manage field site assessments, AI estimated price quotations, and client approvals.</p>
+      <h2 class="text-xl font-bold text-white flex items-center gap-2"><span>📋</span> Site Surveys & Quotations</h2>
+      <p class="text-xs text-slate-400 mt-1">Schedule Visit → Field Inspection → Review & Price → Send to Client</p>
     </div>
     <div class="flex items-center gap-3">
-      <button type="button" onclick="openNewSurveyModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-lg flex items-center gap-2 cursor-pointer active:scale-95">
-        <span>➕</span> New Site Survey
+      <button type="button" onclick="openNewSurveyModal()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2 active:scale-95">
+        <span>➕</span> New Survey
       </button>
-      <button type="button" onclick="openNewQuotationModal()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-lg flex items-center gap-2 cursor-pointer active:scale-95">
-        <span>💰</span> Create Quotation
+      <button type="button" onclick="openNewQuotationModal()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2 active:scale-95">
+        <span>💰</span> New Quotation
       </button>
     </div>
   </div>
 
-  <!-- Metric Overview Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-2">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-slate-400">Total Surveys</span>
-        <span class="p-2 rounded-xl bg-teal-500/10 text-teal-400 text-base">🔍</span>
+  <!-- Pipeline Status Bar -->
+  <div class="glass-panel p-4 rounded-2xl border border-white/5">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="flex items-center gap-3 bg-zinc-900/80 p-3 rounded-xl border border-teal-500/30">
+        <div class="w-8 h-8 rounded-full bg-teal-500/20 text-teal-400 font-extrabold text-sm flex items-center justify-center flex-shrink-0" id="survey-count-draft">0</div>
+        <div><h3 class="text-[11px] font-bold text-white">Draft</h3><p class="text-[10px] text-slate-400">Scheduled</p></div>
       </div>
-      <div class="text-2xl font-extrabold text-white" id="surveys-count-total">0</div>
-      <div class="text-[10px] text-slate-500">Site assessments logged</div>
-    </div>
-    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-2">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-slate-400">Active Quotations</span>
-        <span class="p-2 rounded-xl bg-amber-500/10 text-amber-400 text-base">📄</span>
+      <div class="flex items-center gap-3 bg-zinc-900/80 p-3 rounded-xl border border-amber-500/30">
+        <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 font-extrabold text-sm flex items-center justify-center flex-shrink-0" id="survey-count-completed">0</div>
+        <div><h3 class="text-[11px] font-bold text-white">Inspected</h3><p class="text-[10px] text-slate-400">Field Done</p></div>
       </div>
-      <div class="text-2xl font-extrabold text-amber-400" id="quotations-count-active">0</div>
-      <div class="text-[10px] text-slate-500">Draft / Sent to clients</div>
-    </div>
-    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-2">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-slate-400">Approved Quotes</span>
-        <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-base">✅</span>
+      <div class="flex items-center gap-3 bg-zinc-900/80 p-3 rounded-xl border border-indigo-500/30">
+        <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 font-extrabold text-sm flex items-center justify-center flex-shrink-0" id="quote-count-active">0</div>
+        <div><h3 class="text-[11px] font-bold text-white">Quotes Active</h3><p class="text-[10px] text-slate-400">Draft/Sent</p></div>
       </div>
-      <div class="text-2xl font-extrabold text-emerald-400" id="quotations-count-approved">0</div>
-      <div class="text-[10px] text-slate-500">Signed & client accepted</div>
-    </div>
-    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-2">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-semibold text-slate-400">Converted Jobs/Invoices</span>
-        <span class="p-2 rounded-xl bg-sky-500/10 text-sky-400 text-base">🚀</span>
+      <div class="flex items-center gap-3 bg-zinc-900/80 p-3 rounded-xl border border-emerald-500/30">
+        <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold text-sm flex items-center justify-center flex-shrink-0" id="quote-count-approved">0</div>
+        <div><h3 class="text-[11px] font-bold text-white">Approved</h3><p class="text-[10px] text-slate-400">Ready to Convert</p></div>
       </div>
-      <div class="text-2xl font-extrabold text-sky-400" id="quotations-count-converted">0</div>
-      <div class="text-[10px] text-slate-500">Converted to active work</div>
     </div>
   </div>
 
-  <!-- Client Filter & Search Bar -->
-  <div class="glass-panel p-4 rounded-2xl border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-    <div class="w-full sm:w-72">
-      <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filter by Client</label>
-      <select id="survey-client-filter" onchange="filterSurveysByClient(this.value)" class="w-full bg-zinc-900 border border-white/10 text-white text-xs rounded-xl px-3 py-2 focus:border-amber-500 focus:outline-none">
-        <option value="">All Clients</option>
-      </select>
-    </div>
-    <div class="text-xs text-slate-400 italic">
-      Auto-filters site surveys and price quotations for the selected client.
-    </div>
+  <!-- Tab Switcher -->
+  <div class="flex gap-2 border-b border-white/5 pb-2">
+    <button onclick="switchSurveyTab('surveys')" id="stab-surveys" class="px-4 py-2 text-xs font-bold text-white bg-white/10 rounded-xl transition">📋 Surveys</button>
+    <button onclick="switchSurveyTab('quotations')" id="stab-quotations" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl transition">💰 Quotations</button>
   </div>
 
-  <!-- Main Tables Container -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Site Surveys Table -->
-    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-teal-400"></span> Site Surveys
-        </h3>
+  <!-- Surveys Panel -->
+  <div id="survey-tab-surveys" class="space-y-4">
+    <div class="glass-panel p-5 rounded-2xl border border-white/5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span> Site Surveys</h3>
         <button onclick="loadSurveysData()" class="text-xs text-amber-400 hover:underline">Refresh</button>
       </div>
       <div class="table-scroll-container">
         <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Client</th>
-              <th>Type</th>
-              <th>Cameras</th>
-              <th>Cable</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="surveys-table-body">
-            <tr>
-              <td colspan="7" class="text-center py-6 text-slate-500 italic">Loading site surveys...</td>
-            </tr>
-          </tbody>
+          <thead><tr><th>ID</th><th>Client</th><th>Type</th><th>Cameras</th><th>Cable</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="surveys-table-body"><tr><td colspan="7" class="text-center py-6 text-slate-500 italic">Loading surveys...</td></tr></tbody>
         </table>
       </div>
     </div>
+  </div>
 
-    <!-- Quotations Table -->
-    <div class="glass-panel p-5 rounded-2xl border border-white/5 space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-amber-400"></span> Price Quotations
-        </h3>
+  <!-- Quotations Panel -->
+  <div id="survey-tab-quotations" class="space-y-4 hidden">
+    <div class="glass-panel p-5 rounded-2xl border border-white/5">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Price Quotations</h3>
         <button onclick="loadQuotationsData()" class="text-xs text-amber-400 hover:underline">Refresh</button>
       </div>
       <div class="table-scroll-container">
         <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Client</th>
-              <th>Total</th>
-              <th>Valid Until</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="quotations-table-body">
-            <tr>
-              <td colspan="6" class="text-center py-6 text-slate-500 italic">Loading quotations...</td>
-            </tr>
-          </tbody>
+          <thead><tr><th class="w-8"></th><th>ID</th><th>Client</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="quotations-table-body"><tr><td colspan="7" class="text-center py-6 text-slate-500 italic">Loading quotations...</td></tr></tbody>
         </table>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- MODALS -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+
 <!-- Modal: New Site Survey -->
 <div id="modal-new-survey" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
-  <div class="glass-panel w-full max-w-lg p-6 rounded-2xl border border-white/10 space-y-4 shadow-2xl">
+  <div class="glass-panel w-full max-w-lg p-6 rounded-2xl border border-white/10 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between border-b border-white/10 pb-3">
-      <h3 class="text-base font-bold text-white flex items-center gap-2">
-        <span>📋</span> Log New Site Survey
-      </h3>
+      <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>📋</span> New Site Survey</h3>
       <button onclick="closeModal('modal-new-survey')" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
     </div>
-    <form onsubmit="submitNewSurvey(event)" class="space-y-4">
-      <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1">Select or Enter Client</label>
-        <input type="text" id="modal-survey-client-input" placeholder="e.g. Grand Royal or CLI-001" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
-      </div>
-      <div class="grid grid-cols-2 gap-4">
+    <form onsubmit="submitNewSurvey(event)" class="space-y-3 text-xs">
+      <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">Survey Type</label>
-          <select id="modal-survey-type" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
-            <option value="CCTV">CCTV Installation</option>
-            <option value="Networking">Networking / Structured Cabling</option>
-            <option value="WiFi">WiFi Coverage Survey</option>
-            <option value="NAS">NAS Storage Setup</option>
+          <label class="block font-semibold text-slate-300 mb-1">Client</label>
+          <select id="modal-survey-client-select" onchange="toggleSurveyClientNewInput(this.value)" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+            <option value="">-- Select Client --</option><option value="__NEW__">➕ Create New...</option>
+          </select>
+          <div id="modal-survey-client-new-fields" class="hidden mt-2 space-y-2">
+            <input type="text" id="modal-survey-client-new-name" placeholder="Company Name *" class="w-full bg-zinc-900 border border-amber-500/50 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" id="modal-survey-client-new-contact" placeholder="Contact Person" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+              <input type="text" id="modal-survey-client-new-phone" placeholder="Phone" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+            </div>
+            <input type="text" id="modal-survey-client-new-address" placeholder="Address" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+            <select id="modal-survey-client-new-amc" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+              <option value="Individual">Individual</option><option value="No AMC">No AMC</option><option value="Active">Active AMC</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Technician</label>
+          <select id="modal-survey-technician" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none"><option value="">Select...</option></select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Survey Type</label>
+          <select id="modal-survey-type" onchange="updateSurveyTypeFields(this.value)" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+            <option value="CCTV">CCTV Security</option><option value="Networking">IT Networking</option><option value="WiFi">WiFi / Access Point</option><option value="NAS">NAS / Storage</option><option value="Access Control">Access Control</option><option value="General">General</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">Estimated Cameras</label>
-          <input type="number" id="modal-survey-cameras" value="8" min="0" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+          <label class="block font-semibold text-slate-300 mb-1">Visit Date & Time</label>
+          <input type="datetime-local" id="modal-survey-scheduled-date" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
         </div>
       </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1">Estimated Cable Distance (Meters)</label>
-        <input type="number" id="modal-survey-cable-meters" value="150" min="0" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+      <!-- Dynamic fields based on survey type -->
+      <div id="survey-type-fields-cctv" class="grid grid-cols-2 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Est. Cameras</label><input type="number" id="modal-survey-cameras" value="8" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Est. Cable (m)</label><input type="number" id="modal-survey-cable-meters" value="150" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
       </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <button type="button" onclick="closeModal('modal-new-survey')" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl">Cancel</button>
-        <button type="submit" class="btn-primary text-xs px-5 py-2 rounded-xl font-bold">Save Survey</button>
+      <div id="survey-type-fields-networking" class="hidden grid grid-cols-2 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Est. Switches</label><input type="number" id="modal-survey-switches" value="0" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Est. Cable (m)</label><input type="number" id="modal-survey-net-cable" value="0" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+      </div>
+      <div id="survey-type-fields-wifi" class="hidden grid grid-cols-2 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Est. Access Points</label><input type="number" id="modal-survey-access-points" value="0" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Coverage Area (sqm)</label><input type="number" id="modal-survey-coverage-area" value="0" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+      </div>
+      <div id="survey-type-fields-nas" class="hidden grid grid-cols-2 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Storage Capacity (TB)</label><input type="number" id="modal-survey-storage-tb" value="0" min="0" step="0.5" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Est. Drives</label><input type="number" id="modal-survey-drives" value="0" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+      </div>
+      <div id="survey-type-fields-access-control" class="hidden grid grid-cols-2 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Est. Doors</label><input type="number" id="modal-survey-doors" value="0" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Est. Readers</label><input type="number" id="modal-survey-readers" value="0" min="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+      </div>
+      <div id="survey-type-fields-general" class="hidden">
+        <div><label class="block font-semibold text-slate-300 mb-1">Project Description</label><textarea id="modal-survey-general-desc" rows="2" placeholder="Describe the project scope..." class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none"></textarea></div>
+      </div>
+      <div><label class="block font-semibold text-slate-300 mb-1">Site Address</label><input type="text" id="modal-survey-address" placeholder="Full site address" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Contact Name</label><input type="text" id="modal-survey-contact-name" placeholder="On-site contact" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Contact Phone</label><input type="text" id="modal-survey-contact-phone" placeholder="Phone number" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+      </div>
+      <div><label class="block font-semibold text-slate-300 mb-1">Existing Infrastructure</label><input type="text" id="modal-survey-existing-infra" placeholder="e.g. Existing Cat5e cabling, old NVR" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+      <div><label class="block font-semibold text-slate-300 mb-1">Special Requirements</label><input type="text" id="modal-survey-special-req" placeholder="e.g. After-hours install, phased rollout" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" /></div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('modal-new-survey')" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl">Cancel</button>
+        <button type="submit" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs px-5 py-2 rounded-xl transition shadow-lg">Schedule & Notify</button>
       </div>
     </form>
   </div>
 </div>
 
+<!-- Modal: Survey Detail Panel -->
+<div id="modal-survey-detail" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
+  <div class="glass-panel w-full max-w-2xl p-6 rounded-2xl border border-white/10 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>📋</span> <span id="survey-detail-id">SURV-XXXX</span></h3>
+      <button onclick="closeModal('modal-survey-detail')" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+    </div>
+    <div id="survey-detail-content" class="space-y-4 text-xs"></div>
+  </div>
+</div>
+
 <!-- Modal: New Quotation -->
 <div id="modal-new-quotation" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
-  <div class="glass-panel w-full max-w-lg p-6 rounded-2xl border border-white/10 space-y-4 shadow-2xl">
+  <div class="glass-panel w-full max-w-lg p-6 rounded-2xl border border-white/10 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between border-b border-white/10 pb-3">
-      <h3 class="text-base font-bold text-white flex items-center gap-2">
-        <span>💰</span> Create Price Quotation
-      </h3>
+      <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>💰</span> New Quotation</h3>
       <button onclick="closeModal('modal-new-quotation')" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
     </div>
-    <form onsubmit="submitNewQuotation(event)" class="space-y-4">
+    <form onsubmit="submitNewQuotation(event)" class="space-y-3 text-xs">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Client</label>
+          <select id="modal-quote-client-select" onchange="toggleQuoteClientNewInput(this.value)" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+            <option value="">-- Select Client --</option><option value="__NEW__">➕ Create New...</option>
+          </select>
+          <div id="modal-quote-client-new-fields" class="hidden mt-2 space-y-2">
+            <input type="text" id="modal-quote-client-new-name" placeholder="Company Name *" class="w-full bg-zinc-900 border border-emerald-500/50 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" id="modal-quote-client-new-contact" placeholder="Contact Person" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+              <input type="text" id="modal-quote-client-new-phone" placeholder="Phone" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+            </div>
+            <input type="text" id="modal-quote-client-new-address" placeholder="Address" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" />
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-300 mb-1">Link to Survey (optional)</label>
+          <select id="modal-quote-survey-link" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"><option value="">None</option></select>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Valid (Days)</label><input type="number" id="modal-quote-valid-days" value="14" min="1" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Discount %</label><input type="number" id="modal-quote-discount-pct" value="0" min="0" max="100" step="0.5" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Discount $</label><input type="number" id="modal-quote-discount-amt" value="0" min="0" step="0.01" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Tax %</label><input type="number" id="modal-quote-tax-pct" value="0" min="0" max="100" step="0.5" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+        <div></div>
+      </div>
+      <div><label class="block font-semibold text-slate-300 mb-1">Terms & Conditions</label><textarea id="modal-quote-terms" rows="2" placeholder="Payment terms, warranty, etc." class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"></textarea></div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('modal-new-quotation')" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl">Cancel</button>
+        <button type="submit" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-5 py-2 rounded-xl transition shadow-lg">Create Quotation</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Quotation Detail Panel (with Line Items) -->
+<div id="modal-quotation-detail" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
+  <div class="glass-panel w-full max-w-3xl p-6 rounded-2xl border border-white/10 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>💰</span> <span id="quote-detail-id">QUO-XXXX</span> — <span id="quote-detail-status" class="text-[10px] px-2 py-0.5 rounded-full border"></span></h3>
+      <div class="flex items-center gap-2">
+        <button onclick="downloadQuotationPDF()" class="text-[11px] text-rose-400 hover:underline font-bold" title="Download PDF">📄 PDF</button>
+        <button onclick="downloadQuotationExcel()" class="text-[11px] text-emerald-400 hover:underline font-bold" title="Download Excel">📊 Excel</button>
+        <button onclick="closeModal('modal-quotation-detail')" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+    </div>
+    <div id="quote-detail-content" class="space-y-4 text-xs"></div>
+  </div>
+</div>
+
+<!-- Modal: Add/Edit Line Item -->
+<div id="modal-line-item" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black/60 backdrop-blur-sm p-4">
+  <div class="glass-panel w-full max-w-md p-6 rounded-2xl border border-white/10 space-y-4 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-white/10 pb-3">
+      <h3 class="text-sm font-bold text-white" id="line-item-modal-title">Add Line Item</h3>
+      <button onclick="closeModal('modal-line-item')" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+    </div>
+    <form onsubmit="submitLineItem(event)" class="space-y-3 text-xs">
+      <input type="hidden" id="line-item-quotation-id" />
+      <input type="hidden" id="line-item-edit-id" value="" />
       <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1">Client ID / Company Name</label>
-        <input type="text" id="modal-quote-client-input" placeholder="e.g. Grand Royal or CLI-001" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+        <label class="block font-semibold text-slate-300 mb-1">Select from Inventory</label>
+        <select id="line-item-inventory-select" onchange="fillFromInventory(this.value)" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+          <option value="">-- Type manually or select from inventory --</option>
+        </select>
       </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">Total Amount ($ USD)</label>
-          <input type="number" step="0.01" id="modal-quote-amount" value="450.00" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-300 mb-1">Validity Period (Days)</label>
-          <input type="number" id="modal-quote-valid-days" value="14" min="1" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+      <div><label class="block font-semibold text-slate-300 mb-1">Item Name</label><input type="text" id="line-item-name" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Item Code</label><input type="text" id="line-item-code" placeholder="e.g. CAM-1080P" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Category</label>
+          <select id="line-item-category" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+            <option value="hardware">Hardware</option><option value="cable">Cable</option><option value="labor">Labor</option><option value="software">Software</option><option value="other">Other</option>
+          </select>
         </div>
       </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <button type="button" onclick="closeModal('modal-new-quotation')" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl">Cancel</button>
-        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2 rounded-xl transition shadow-lg">Generate Quotation</button>
+      <div class="grid grid-cols-3 gap-3">
+        <div><label class="block font-semibold text-slate-300 mb-1">Qty</label><input type="number" id="line-item-qty" value="1" min="0.01" step="0.01" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Unit Price ($)</label><input type="number" id="line-item-price" value="0" min="0" step="0.01" required class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+        <div><label class="block font-semibold text-slate-300 mb-1">Unit</label><input type="text" id="line-item-unit" value="pc" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+      </div>
+      <div><label class="block font-semibold text-slate-300 mb-1">Notes</label><input type="text" id="line-item-notes" placeholder="Optional notes" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none" /></div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal('modal-line-item')" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-xl">Cancel</button>
+        <button type="submit" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-5 py-2 rounded-xl transition shadow-lg">Save Item</button>
       </div>
     </form>
   </div>

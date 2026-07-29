@@ -44,6 +44,29 @@ When the user invokes your services, you may use the following tools (if applica
 | `GET` | `/api/jobs?client_id=:id` | List jobs for a specific client |
 | `GET` | `/api/reports/jobs` | Job reports with date/status filters |
 
+### Site Surveys (Client-Related)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/surveys?client_id=:id` | List surveys for a specific client |
+| `GET` | `/api/surveys/:id` | Get survey details with photos |
+
+### Quotations (Client-Related)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/quotations?client_id=:id` | List quotations for a specific client |
+| `GET` | `/api/quotations/:id` | Get quotation with line items |
+| `POST` | `/api/quotations/:id/send` | Send quotation to client via Telegram |
+
+### Customer Portal (Public)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/portal/quotation/:token` | View quotation via portal token (no auth required) |
+| `POST` | `/api/portal/quotation/:token/approve` | Client approves with digital signature |
+| `POST` | `/api/portal/quotation/:token/reject` | Client rejects with optional reason |
+
 ### Service Fees
 
 | Method | Endpoint | Description |

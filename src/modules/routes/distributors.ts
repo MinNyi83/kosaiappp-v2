@@ -3,7 +3,7 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { authenticate } from '../utils/auth-middleware.js';
+import { authenticate, requireCsrf } from '../utils/auth-middleware.js';
 
 function register(router, env) {
   const db = env.DB;
@@ -42,6 +42,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { name, contact_person, phone, email, notes } = (await request.json()) as any;
       if (!name) return error('Missing distributor name', 400);
@@ -70,6 +71,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       const allowed = ['name', 'contact_person', 'phone', 'email', 'product_lines'];
@@ -102,6 +104,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       await db.prepare('DELETE FROM distributors WHERE id = ?').bind(params.id).run();
       return success({ message: 'Distributor deleted' });
@@ -126,6 +129,8 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
       const { name, contact_person, phone, email, notes } = (await request.json()) as any;
       if (!name) return error('Missing distributor name', 400);
       const result = await db.prepare('INSERT INTO distributors (name, contact_person, phone, email, product_lines) VALUES (?, ?, ?, ?, ?)').bind(name, contact_person || null, phone || null, email || null, notes || null).run();
@@ -142,6 +147,8 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
       await db.prepare('DELETE FROM distributors WHERE id = ?').bind(id).run();
       return success({ message: 'Distributor deleted' });
     } catch (err) {

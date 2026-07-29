@@ -6,6 +6,7 @@ import { success, error } from '../utils/response.js';
 import { verifyToken } from '../utils/jwt.js';
 import { fetchGeminiWithFallback } from '../utils/gemini.js';
 import { validateSql, ALLOWED_TABLES } from '../utils/sql-validator.js';
+import { requireCsrf } from '../utils/auth-middleware.js';
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -37,6 +38,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       if (!checkRateLimit(`polish:${user.id}`, 15)) {
         return error('Rate limit exceeded. Try again in a minute.', 429);
@@ -57,6 +59,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       if (!checkRateLimit(`dispatch:${user.id}`, 10)) {
         return error('Rate limit exceeded. Try again in a minute.', 429);
@@ -115,6 +118,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { technician_id, date } = (await request.json()) as any;
       if (!technician_id || !date) return error('Missing technician_id or date', 400);
@@ -142,6 +146,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       if (!checkRateLimit(`copilot:${user.id}`, 10)) {
         return error('Rate limit exceeded. Try again in a minute.', 429);
@@ -180,6 +185,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       if (!checkRateLimit(`transcribe:${user.id}`, 5)) {
         return error('Rate limit exceeded. Try again in a minute.', 429);

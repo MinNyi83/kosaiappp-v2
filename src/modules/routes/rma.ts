@@ -3,7 +3,7 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { authenticate } from '../utils/auth-middleware.js';
+import { authenticate, requireCsrf } from '../utils/auth-middleware.js';
 
 function register(router, env) {
   const db = env.DB;
@@ -47,6 +47,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { client_id, serial_number, item_id, issue_description, notes } =
         (await request.json()) as any;
@@ -90,6 +91,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { status, resolution_notes } = (await request.json()) as any;
       const validStatuses = [
@@ -129,6 +131,9 @@ function register(router, env) {
   // ── GET /api/warranty/check ───────────────────────────────────────────
   router.get('/api/warranty/check', async (request) => {
     try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
       const url = new URL(request.url);
       const serial = url.searchParams.get('serial');
 

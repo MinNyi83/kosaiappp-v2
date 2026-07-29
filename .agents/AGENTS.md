@@ -8,6 +8,12 @@
 
 ## Code Quality & Security Standards
 
+### Service Layer Pattern
+- **Thin route handlers**: Routes handle auth, CSRF, request parsing, and response formatting only. Business logic lives in service classes.
+- **Service constructor**: Each service accepts `D1Database` via constructor for testability.
+- **No HTTP concerns in services**: Services return plain objects, never `Response` objects.
+- **Testability**: Services can be unit tested with a mock D1 database.
+
 ### Authentication & Authorization
 - **Never duplicate auth logic**: Use `authenticate()` from `src/modules/utils/auth-middleware.ts` — do not reimplement Bearer token extraction inline.
 - **Require admin role consistently**: Use pattern `if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);` on all admin-only endpoints.
@@ -64,7 +70,7 @@ This project uses AI agents to provide intelligent assistance for field service 
 
 ### 1. **Field Service Worker Backend**
 
-**Location**: `src/index.ts`, `src/modules/routes/`, `wrangler.toml`
+**Location**: `src/index.ts`, `src/modules/routes/`, `src/modules/services/`, `wrangler.toml`
 
 **Features**:
 
@@ -74,6 +80,7 @@ This project uses AI agents to provide intelligent assistance for field service 
 - Telegram bot webhook integration (`/api/telegram-webhook`)
 - **Google Drive Storage Integration (OAuth User Consent - Option B)**: Automated upload of site photos (`before_photo` and `after_photo`) into organized subfolders on the admin's personal Google Drive without requiring technicians to have Gmail accounts.
 - **Modular Route Architecture**: Each domain (auth, technicians, clients, jobs, inventory, invoices, etc.) registers routes via a `register(router, env)` function in `src/modules/routes/`
+- **Service Layer**: Business logic extracted to `src/modules/services/` — 5 service classes handle CRUD, validation, and calculations. Route handlers are thin HTTP adapters.
 
 **Key Modules** (`src/modules/routes/`):
 
@@ -90,6 +97,14 @@ This project uses AI agents to provide intelligent assistance for field service 
 - `ai.ts` - AI dispatch & diagnostics
 - `telegram.ts` - Telegram bot webhook
 - `batches.ts`, `rma.ts`, `distributors.ts`, `cashsafe.ts`, `servicefees.ts`, `landing.ts`
+
+**Service Layer** (`src/modules/services/`):
+
+- `survey.service.ts` — `SurveyService`: Survey CRUD, photos, status counts
+- `quotation.service.ts` — `QuotationService`: Quotation CRUD, line items, totals, portal, revisions, stock deduction
+- `job.service.ts` — `JobService`: Job CRUD, status changes, calendar, receipt
+- `client.service.ts` — `ClientService`: Client CRUD, search, AMC status
+- `inventory.service.ts` — `InventoryService`: Inventory CRUD, stock tracking, batches, warranty, RMA
 
 **Utility Modules** (`src/modules/utils/`):
 
@@ -192,12 +207,13 @@ cctv-service-system/
 │   ├── index.ts             # Main Worker entry point
 │   ├── middleware/           # Middleware (reserved for future use)
 │   ├── modules/
-│   │   ├── routes/          # Route modules (20 domain modules)
+│   │   ├── routes/          # Route modules (20 domain modules) — thin HTTP handlers
+│   │   ├── services/        # Service layer (5 service classes) — business logic
 │   │   └── utils/           # Utilities (12 utility modules)
 │   ├── types/
 │   │   └── schema.ts        # TypeScript types for database schema
 │   ├── utils/               # Additional utilities
-│   └── __tests__/           # Unit tests (6 test files)
+│   └── __tests__/           # Tests (7 test files, 143 tests)
 ├── public/
 │   ├── app.html             # Technician mobile UI
 │   ├── app.js               # Technician UI logic
@@ -256,15 +272,31 @@ cctv-service-system/
 
 ### Site Surveys & Quotations Management
 
-- `GET /api/surveys`: List site surveys (filters: status, client_id)
+- `GET /api/surveys`: List site surveys (filters: status, client_id) — includes pipeline counts
+- `GET /api/surveys/:id`: Get survey with details and photos
 - `POST /api/surveys`: Create new site survey record (`SURV-xxx`)
-- `GET /api/quotations`: List price quotations
+- `PUT /api/surveys/:id/complete`: Mark survey as completed with field data
+- `POST /api/surveys/:id/approve`: Admin approve survey (admin only)
+- `POST /api/surveys/:id/photos`: Upload site photo to `survey_photos` table
+- `DELETE /api/surveys/:id/photos/:photoId`: Remove a site photo
+- `POST /api/surveys/:id/generate-quotation`: AI-generate quotation from survey data
+- `GET /api/quotations`: List quotations (filters: status, client_id)
+- `GET /api/quotations/:id`: Get quotation with line items
 - `POST /api/quotations`: Create price quotation (`QUO-xxx`)
-- `POST /api/ai/estimate-quotation`: Gemini AI automated Bill of Materials (BOM) & cable length estimator
+- `POST /api/quotations/:id/items`: Add line item to quotation
+- `PUT /api/quotations/:id/items/:itemId`: Update line item
+- `DELETE /api/quotations/:id/items/:itemId`: Remove line item
+- `POST /api/quotations/:id/recalculate`: Recalculate totals from line items
+- `POST /api/quotations/:id/send`: Send quotation via Telegram, generate portal token
 - `POST /api/quotations/:id/convert-job`: 1-click convert quotation to active field service job (`JOB-xxx`)
 - `POST /api/quotations/:id/convert-invoice`: 1-click convert quotation to POS pending invoice (`INV-xxx`)
-- `GET /api/portal/quotation/:id`: Public client portal quotation view
-- `POST /api/portal/quotation/:id/approve`: Client digital signature & approval submit
+- `POST /api/ai/estimate-quotation`: Gemini AI automated Bill of Materials (BOM) & cable length estimator
+
+### Customer Portal (Quotation Approval)
+
+- `GET /api/portal/quotation/:token`: Public quotation view via `portal_token` UUID
+- `POST /api/portal/quotation/:token/approve`: Client digital signature & approval
+- `POST /api/portal/quotation/:token/reject`: Client rejection with optional reason
 
 ### Job Management
 
@@ -551,6 +583,22 @@ CREATE TABLE service_records (
 - **Cash Management**: `cash_safes`, `cash_transactions`
 - **Configuration**: `service_fees`, `system_config` (columns: `config_key`, `config_value`, `description`, `updated_by`, `updated_at`)
 
+### Site Surveys & Quotations Tables
+
+- **`site_surveys`**: Site survey records with pipeline status (Draft → Completed → Quoted → Cancelled)
+  - Columns: `id`, `client_id`, `technician_id`, `survey_type`, `status`, `building_type`, `camera_count`, `cable_type`, `estimated_cable_meters`, `power_source_notes`, `mounting_type`, `site_photos`, `notes`, `scheduled_date`, `checklist_data`, `approval_status`, `approved_by`, `site_type`, `site_address`, `contact_name`, `contact_phone`, `existing_infrastructure`, `special_requirements`
+- **`survey_photos`**: Site photos linked to surveys (server_room, cable_path, power_source, camera_fov, exterior, general)
+  - Columns: `id`, `survey_id`, `photo_url`, `photo_type`, `caption`, `uploaded_by`, `created_at`
+- **`quotations`**: Price quotations with portal approval workflow
+  - Columns: `id`, `survey_id`, `client_id`, `prepared_by`, `quotation_date`, `valid_until`, `status`, `items` (JSON), `subtotal`, `discount`, `tax`, `total_amount`, `currency`, `exchange_rate`, `terms_conditions`, `drive_file_id`, `drive_url`, `converted_job_id`, `converted_invoice_id`, `approval_status`, `approved_by`, `margin_notes`, `survey_id_link`, `discount_pct`, `tax_pct`, `client_signature`, `client_signature_url`, `portal_token` (UNIQUE), `quotation_notes`, `sent_at`, `viewed_at`, `approved_at`, `rejected_at`, `rejection_reason`
+- **`quotation_items`**: Line items for quotations (hardware, cable, labor, software, other)
+  - Columns: `id`, `quotation_id`, `item_code`, `name`, `category`, `quantity`, `unit_price`, `unit`, `notes`, `sort_order`, `created_at`
+- **`server_rooms`**: Server room structural data (dimensions, rack, power, cooling)
+- **`camera_placements`**: Per-camera placement specs (resolution, mounting, retention, cable run)
+- **`core_projects`**: Enterprise project pipeline tracking
+- **`target_camera_locations`**: Camera location engineering specs (cable spec, resolution, mount)
+- **`cost_quotations_enterprise`**: Enterprise quotation with margin multiplier and labor rates
+
 ## 🤖 Telegram Bot System
 
 The project integrates a Telegram bot dispatcher engine (`/api/telegram/webhook`) that interfaces with active technicians and dispatch coordinators.
@@ -637,9 +685,17 @@ To bypass local country geo-blocks (e.g. running from Myanmar) during local deve
 
 To maintain consistent user experience:
 
-1. **Admin Console (`admin.html`)**: Recommended to use a **2-Column Tabbed Layout** for dashboard components like Client Management and Technician Management.
+1. **Admin Console (`admin.html`)**: Uses a **2-Column Tabbed Layout** for dashboard components. All modules follow consistent patterns:
+   - **Header**: Flex layout with icon badge (w-10 h-10 rounded-xl with color accent), title (2xl/3xl font-black), subtitle (sm text-slate-400)
+   - **Stat Cards**: Glass panels with colored left accent bar (w-1 h-full gradient), icon badge, value (3xl font-black), label (text-[10px] uppercase)
+   - **Tables**: divide-y divide-white/5, hover:bg-white/[0.02], px-5 py-3.5 cells
+   - **Buttons**: Rounded-xl px-4 py-2.5 text-xs font-bold with SVG icons (no emojis)
+   - **Search**: bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs with search SVG icon
+   - Color palette: amber (primary), emerald (success), indigo (info), cyan (technician), violet (admin), rose (danger)
 2. **Technician Mobile View (`app.html`)**: Avoid 2-column designs. Use a mobile-first single-column design with a bottom navigation bar.
 3. **Inventory Management (`admin.html` -> `#view-inventory`)**: Uses a split sidebar layout featuring a left-hand module navigation (Stock Batches, Sales Pricing, Device Catalog, and Add forms) paired with compact, high-density data tables and detailed sliding drawer-style sub-elements (e.g. Serial grids).
+4. **Dispatch Form (`#view-tickets`)**: Supports Corporate vs Individual client toggle. Corporate shows clients from Clients Directory with `client_type = 'Corporate'`. Individual shows `client_type = 'Individual'` with "Create New Client" option that creates a new client record before dispatch.
+5. **Public Landing Page (`index.html`)**: Single-page marketing with glass morphism. Sections: Header (sticky nav, SVG logo, theme toggle), Hero (typing effect, parallax, gradient orbs), Services (3-column glass cards), Why Choose Us (4-column glass cards), Stats (4-column colored values), Price List (real-time catalog table), Quotation Form (glass panel), CTA Banner (gradient glass panel), Footer (4-column link grid, social icons, copyright). All emoji icons replaced with SVGs.
 
 ## 📦 Stock & Sales Inventory System
 

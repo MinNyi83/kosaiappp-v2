@@ -5,6 +5,7 @@
 import { success, error } from '../utils/response.js';
 import { verifyToken } from '../utils/jwt.js';
 import { sendTelegramMessage } from '../utils/telegram.js';
+import { requireCsrf } from '../utils/auth-middleware.js';
 
 function register(router, env) {
   const db = env.DB;
@@ -12,6 +13,16 @@ function register(router, env) {
   // ── POST /api/telegram/webhook ────────────────────────────────────────
   router.post('/api/telegram/webhook', async (request) => {
     try {
+      // Verify webhook secret token (if configured)
+      const secretToken = env.TELEGRAM_WEBHOOK_SECRET;
+      if (secretToken) {
+        const incomingSecret = request.headers.get('x-telegram-bot-api-secret-token');
+        if (incomingSecret !== secretToken) {
+          console.error('Telegram webhook: Invalid secret token');
+          return error('Unauthorized', 403);
+        }
+      }
+
       const update = (await request.json()) as any;
 
       // Handle callback queries (button presses)
@@ -58,6 +69,15 @@ function register(router, env) {
         return success({ ok: true });
       }
 
+      // Handle location shares (for attendance check-in)
+      if (update.message && update.message.location) {
+        const chatId = update.message.chat.id;
+        const from = update.message.from;
+        const location = update.message.location;
+        await handleLocationShare(chatId, location, from, db, env);
+        return success({ ok: true });
+      }
+
       return success({ ok: true });
     } catch (err) {
       console.error('Telegram webhook error:', err);
@@ -72,6 +92,7 @@ function register(router, env) {
       if (!authHeader || !authHeader.startsWith('Bearer ')) return error('Unauthorized', 401);
       const user = await verifyToken(authHeader.slice(7));
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { chat_id, text, parse_mode } = (await request.json()) as any;
       if (!chat_id || !text) return error('Missing chat_id or text', 400);
@@ -130,6 +151,20 @@ async function handleCommand(chatId, command, from, db, env) {
   const cmds = {
     '/start': 'Welcome to Awesome Myanmar Bot! Use /help to see available commands.',
     '/help': getHelpText(),
+    '/surveys': async () => {
+      const tech = await resolveTech(from, db);
+      if (!tech) return 'You are not registered as a technician. Contact your admin.';
+      const { results } = await db
+        .prepare(`SELECT s.*, c.company_name as client_name, c.address as client_address FROM site_surveys s LEFT JOIN clients c ON s.client_id = c.id WHERE s.technician_id = ? AND s.status != 'Completed' ORDER BY s.created_at DESC`)
+        .bind(tech.id)
+        .all();
+      if (!results || results.length === 0) return '📍 You have no pending site surveys assigned.';
+      let reply = `📋 *YOUR ASSIGNED SITE SURVEYS*\n\n`;
+      for (const surv of results as any[]) {
+        reply += `• *ID:* \`${surv.id}\`\n  *Client:* ${surv.client_name}\n  *Address:* ${surv.client_address || 'On-site'}\n  *Scheduled:* ${surv.scheduled_date || 'Today'}\n  *Type:* ${surv.survey_type}\n\n`;
+      }
+      return reply;
+    },
     '/survey': async () => {
       const tech = await resolveTech(from, db);
       if (!tech) return 'You are not registered as a technician. Contact your admin.';
@@ -528,6 +563,83 @@ async function handleCommand(chatId, command, from, db, env) {
       });
       return `*My History — ${tech.name}*\n_This week_\n\n${rows.join('\n')}`;
     },
+    '/stats': async () => {
+      const tech = await resolveTech(from, db);
+      if (!tech) return 'You are not registered as a technician. Contact your admin.';
+      const [completed, pending, inProgress, totalJobs, thisWeek] = await Promise.all([
+        db.prepare("SELECT COUNT(*) as cnt FROM service_records WHERE technician_id = ? AND status = 'Completed'").bind(tech.id).first(),
+        db.prepare("SELECT COUNT(*) as cnt FROM service_records WHERE technician_id = ? AND status = 'Pending'").bind(tech.id).first(),
+        db.prepare("SELECT COUNT(*) as cnt FROM service_records WHERE technician_id = ? AND status = 'In Progress'").bind(tech.id).first(),
+        db.prepare("SELECT COUNT(*) as cnt FROM service_records WHERE technician_id = ?").bind(tech.id).first(),
+        db.prepare("SELECT COUNT(*) as cnt FROM service_records WHERE technician_id = ? AND status = 'Completed' AND date(completion_time) >= date('now', '-7 days')").bind(tech.id).first(),
+      ]);
+      const [weekAttendance] = await Promise.all([
+        db.prepare("SELECT SUM(CASE WHEN clock_out IS NOT NULL THEN (julianday(clock_out) - julianday(clock_in)) * 24 * 60 ELSE 0 END) as total_mins FROM attendance WHERE technician_id = ? AND date >= date('now', '-7 days')").bind(tech.id).first(),
+      ]);
+      const totalMins = weekAttendance?.total_mins || 0;
+      const weekH = Math.floor(totalMins / 60);
+      const weekM = Math.round(totalMins % 60);
+      return (
+        `*Performance Stats — ${tech.name}*\n\n` +
+        `📊 *All Time:*\n` +
+        `• Total jobs: ${totalJobs?.cnt || 0}\n` +
+        `• Completed: ${completed?.cnt || 0}\n` +
+        `• In Progress: ${inProgress?.cnt || 0}\n` +
+        `• Pending: ${pending?.cnt || 0}\n\n` +
+        `📈 *This Week:*\n` +
+        `• Jobs completed: ${thisWeek?.cnt || 0}\n` +
+        `• Hours worked: ${weekH}h ${weekM}m`
+      );
+    },
+    '/schedule': async () => {
+      const tech = await resolveTech(from, db);
+      if (!tech) return 'You are not registered as a technician. Contact your admin.';
+      const jobs = await db
+        .prepare(
+          "SELECT id, job_description, service_type, status, created_at FROM service_records WHERE technician_id = ? AND status IN ('Pending', 'In Progress') ORDER BY created_at ASC LIMIT 10"
+        )
+        .bind(tech.id)
+        .all();
+      if (jobs.results.length === 0) return 'No upcoming jobs scheduled.';
+      let msg = `*Your Schedule — ${tech.name}*\n\n`;
+      for (const j of jobs.results as any[]) {
+        const date = j.created_at ? fmtDate(j.created_at) : 'Today';
+        const emoji = j.status === 'In Progress' ? '🔵' : '🟡';
+        msg += `${emoji} *${j.id}*\n   ${j.service_type} • ${j.status}\n   ${(j.job_description || '').substring(0, 60)}\n   📅 ${date}\n\n`;
+      }
+      return msg;
+    },
+    '/broadcast': async () => {
+      const tech = await resolveTech(from, db);
+      if (!tech) return 'You are not registered.';
+      const isAdmin = await db.prepare("SELECT role FROM technicians WHERE id = ?").bind(tech.id).first();
+      if (!isAdmin || isAdmin.role?.toLowerCase() !== 'admin') return '⛔ Admin only command.';
+      const args = command.split(' ').slice(1);
+      const message = args.join(' ');
+      if (!message) return 'Usage: /broadcast Your message here';
+      const allTechs = await db.prepare("SELECT id, name FROM technicians WHERE active = 1").all();
+      if (!allTechs.results || allTechs.results.length === 0) return 'No active technicians found.';
+      let sent = 0;
+      for (const t of allTechs.results as any[]) {
+        try {
+          const techUser = await db.prepare("SELECT telegram_username FROM technicians WHERE id = ?").bind(t.id).first();
+          if (techUser?.telegram_username) {
+            sent++;
+          }
+        } catch (_) {}
+      }
+      await sendTelegramMessage(env, chatId, `📢 *Broadcast sent to ${allTechs.results.length} technicians:*\n\n${message}`);
+      return `📢 Broadcast delivered to ${allTechs.results.length} team members.`;
+    },
+    '/myid': async () => {
+      return (
+        `*Your Telegram Info:*\n\n` +
+        `• Telegram ID: \`${from.id}\`\n` +
+        `• Username: @${from.username || 'N/A'}\n` +
+        `• Name: ${from.first_name || ''} ${from.last_name || ''}\n\n` +
+        `_Share this with your admin to link your account._`
+      );
+    },
   };
 
   const baseCmd = command.split(' ')[0].toLowerCase();
@@ -753,31 +865,89 @@ async function handlePhotoMessage(chatId, photo, from, db, env) {
   }
 }
 
+async function handleLocationShare(chatId, location, from, db, env) {
+  try {
+    const tech = await resolveTech(from, db);
+    if (!tech) {
+      await sendTelegramMessage(env, chatId, 'You are not registered as a technician. Contact your admin.');
+      return;
+    }
+
+    const { latitude, longitude } = location;
+
+    // Check if already clocked in today
+    const existing = await db
+      .prepare(
+        "SELECT id FROM attendance WHERE technician_id = ? AND date = date('now') AND clock_out IS NULL"
+      )
+      .bind(tech.id)
+      .first();
+
+    if (existing) {
+      // Already clocked in — treat as check-out
+      const now = new Date().toISOString().slice(11, 16);
+      await db
+        .prepare("UPDATE attendance SET clock_out = datetime('now') WHERE id = ?")
+        .bind(existing.id)
+        .run();
+      await sendTelegramMessage(
+        env,
+        chatId,
+        `📍 *Location received & Clocked Out*\n\n⏰ Time: ${now}\n📌 Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}\n\nHave a great day, ${tech.name}!`
+      );
+    } else {
+      // Not clocked in — treat as check-in
+      const id = 'ATT-' + Date.now().toString(36).toUpperCase();
+      await db
+        .prepare(
+          "INSERT INTO attendance (id, technician_id, date, clock_in, clock_in_lat, clock_in_lng) VALUES (?, ?, date('now'), datetime('now'), ?, ?)"
+        )
+        .bind(id, tech.id, latitude, longitude)
+        .run();
+      const now = new Date().toISOString().slice(11, 16);
+      await sendTelegramMessage(
+        env,
+        chatId,
+        `📍 *Location received & Clocked In*\n\n⏰ Time: ${now}\n📌 Lat: ${latitude.toFixed(4)}, Lng: ${longitude.toFixed(4)}\n\nGood luck, ${tech.name}!`
+      );
+    }
+  } catch (err) {
+    console.error('Location share error:', err);
+    await sendTelegramMessage(env, chatId, `❌ Location processing failed: ${err.message}`);
+  }
+}
+
 function getHelpText() {
   return (
-    '🤖 *Awesome Myanmar Bot*\n\n' +
-    '*General*\n' +
-    '/start - Welcome message\n' +
-    '/help - Show this help\n\n' +
+    '🤖 *KOSAI FIELD OPS Bot*\n\n' +
     '*Attendance*\n' +
-    '/clock - Quick clock status summary\n' +
-    '/checkin or /clockin - Clock in for today\n' +
+    '/clock - Quick clock status\n' +
+    '/checkin or /clockin - Clock in\n' +
     '/checkout or /clockout - Clock out\n' +
-    '/status - Check clock-in status & active jobs\n' +
-    '/report - Weekly attendance summary\n' +
-    '/team - See who is currently clocked in\n' +
-    '/leaderboard - Weekly hours leaderboard\n' +
-    '/history - My clock-in/out history this week\n\n' +
+    '📍 Share location — Auto clock in/out\n\n' +
     '*Jobs*\n' +
-    '/jobs - List your active jobs\n' +
-    '/completed - List your completed jobs\n' +
-    "/today - Show today's jobs & attendance\n" +
-    '/ticket JOB-xxx - View job details\n\n' +
+    '/jobs - Your active jobs\n' +
+    '/completed - Your completed jobs\n' +
+    "/today - Today's summary\n" +
+    '/ticket JOB-xxx - Job details\n' +
+    '/schedule - Upcoming jobs\n' +
+    '/stats - Your performance stats\n\n' +
     '*Actions*\n' +
-    '/accept JOB-xxx - Accept a job assignment\n' +
-    '/assign JOB-xxx TechName - Assign technician\n' +
+    '/accept JOB-xxx - Accept a job\n' +
+    '/assign JOB-xxx TechName - Assign\n' +
     '/cancel JOB-xxx - Cancel a job\n\n' +
-    'Send any text to auto-create a job ticket.'
+    '*Team*\n' +
+    '/status - Clock & job status\n' +
+    '/team - Who is online now\n' +
+    '/report - Weekly report\n' +
+    '/leaderboard - Hours ranking\n' +
+    '/history - This week history\n' +
+    '/myid - Your Telegram info\n\n' +
+    '*Admin*\n' +
+    '/broadcast msg - Message all techs\n\n' +
+    'Send text → auto-create job\n' +
+    'Send voice → AI transcribe & create\n' +
+    'Send photo → Upload & create job'
   );
 }
 

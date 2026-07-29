@@ -14,6 +14,15 @@ vi.mock('../modules/utils/jwt.js', () => ({
   signToken: vi.fn(),
 }));
 
+// Mock auth-middleware (authenticate uses verifyToken, requireCsrf always passes in tests)
+vi.mock('../modules/utils/auth-middleware.js', async (importOriginal) => {
+  const orig = await importOriginal<any>();
+  return {
+    ...orig,
+    requireCsrf: vi.fn().mockResolvedValue(true),
+  };
+});
+
 import { register } from '../modules/routes/google.js';
 import {
   getGoogleAccessToken,

@@ -1,71 +1,29 @@
 /**
- * Inventory Routes — CRUD for inventory items, stock tracking, low-stock alerts
+ * Inventory Routes — Thin handlers delegating to InventoryService
  */
 
 import { success, error } from '../utils/response.js';
-import { authenticate } from '../utils/auth-middleware.js';
-
-// Constants
-const LOW_STOCK_THRESHOLD = 5;
-const DEFAULT_PAGE_LIMIT = 200;
+import { authenticate, requireCsrf } from '../utils/auth-middleware.js';
+import { InventoryService } from '../services/inventory.service.js';
 
 function register(router, env) {
   const db = env.DB;
+  const inventoryService = new InventoryService(db);
 
   // ── GET /api/inventory ────────────────────────────────────────────────
   router.get('/api/inventory', async (request) => {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-
       const url = new URL(request.url);
-      const search = url.searchParams.get('search');
-      const category = url.searchParams.get('category');
-      const page = parseInt(url.searchParams.get('page') || '1');
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || String(DEFAULT_PAGE_LIMIT)), 500);
-      const offset = (page - 1) * limit;
-
-      let query = 'SELECT * FROM inventory_stock WHERE 1=1';
-      const params: any[] = [];
-      let countQuery = 'SELECT COUNT(*) as total FROM inventory_stock WHERE 1=1';
-      const countParams: any[] = [];
-
-      if (search) {
-        const like = `%${search}%`;
-        query += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
-        params.push(like, like, like);
-        countQuery += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
-        countParams.push(like, like, like);
-      }
-      if (category) {
-        query += ' AND category = ?';
-        params.push(category);
-        countQuery += ' AND category = ?';
-        countParams.push(category);
-      }
-
-      query += ' ORDER BY item_name ASC LIMIT ? OFFSET ?';
-      params.push(limit, offset);
-
-      const [itemsResult, countResult] = await Promise.all([
-        db
-          .prepare(query)
-          .bind(...params)
-          .all(),
-        db
-          .prepare(countQuery)
-          .bind(...countParams)
-          .first(),
-      ]);
-
-      return success({
-        items: itemsResult.results,
-        total: countResult?.total ?? 0,
-        page,
-        limit,
-        totalPages: Math.ceil((countResult?.total ?? 0) / limit),
+      const result = await inventoryService.list({
+        search: url.searchParams.get('search') || undefined,
+        category: url.searchParams.get('category') || undefined,
+        page: parseInt(url.searchParams.get('page') || '1'),
+        limit: parseInt(url.searchParams.get('limit') || '200'),
       });
-    } catch (err) {
+      return success(result);
+    } catch (err: any) {
       console.error('Fetch inventory error:', err.message);
       return error('Failed to fetch inventory', 500);
     }
@@ -76,11 +34,8 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const items = await db
-        .prepare(`SELECT * FROM inventory_stock WHERE stock_qty <= ? ORDER BY stock_qty ASC`)
-        .bind(LOW_STOCK_THRESHOLD)
-        .all();
-      return success(items.results);
+      const items = await inventoryService.getLowStock();
+      return success(items);
     } catch (err: any) {
       console.error('Fetch low stock error:', err.message);
       return error('Failed to fetch low stock items', 500);
@@ -92,11 +47,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db
-        .prepare('SELECT DISTINCT category FROM inventory_stock WHERE category IS NOT NULL ORDER BY category ASC')
-        .all();
-      return success(result.results.map((r) => r.category));
-    } catch (err) {
+      const categories = await inventoryService.getCategories();
+      return success(categories);
+    } catch (err: any) {
       console.error('Fetch categories error:', err.message);
       return error('Failed to fetch categories', 500);
     }
@@ -107,12 +60,10 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-
-      const item = await db.prepare('SELECT * FROM inventory_stock WHERE item_code = ?').bind(params.id).first();
+      const item = await inventoryService.getById(params.id);
       if (!item) return error('Inventory item not found', 404);
-
       return success(item);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Fetch item error:', err.message);
       return error('Failed to fetch item', 500);
     }
@@ -123,72 +74,28 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
-      const item_code = (body.item_code || body.sku || '').toUpperCase();
-      const item_name = body.item_name || body.name || '';
-      const category = body.category || '';
-      const sub_category_id = body.sub_category_id || null;
-      const brand_id = body.brand_id || null;
-      const stocking_um = body.stocking_um || body.unit || 'pcs';
-      const stock_qty = body.stock_qty || body.quantity || 0;
-      const unit_price = body.unit_price || body.selling_price || 0;
-      const unit_price_mmk = body.unit_price_mmk || 0;
-      const buying_price = body.buying_price || body.cost_price || 0;
-      const batch_code = body.batch_code || null;
-
-      if (!item_code || !item_name) {
+      if (!body.item_code && !body.sku || !body.item_name && !body.name) {
         return error('Missing required fields: item_code (sku), item_name (name)', 400);
       }
 
-      // Check if item_code already exists
-      const existing = await db
-        .prepare('SELECT item_code FROM inventory_stock WHERE item_code = ?')
-        .bind(item_code)
-        .first();
-
-      if (existing) {
-        await db
-          .prepare(
-            `UPDATE inventory_stock 
-             SET item_name = ?, category = ?, sub_category_id = ?, brand_id = ?, stocking_um = ?, stock_qty = ?, unit_price = ?, unit_price_mmk = ?, buying_price = ?, batch_code = ?
-             WHERE item_code = ?`
-          )
-          .bind(
-            item_name,
-            category,
-            sub_category_id,
-            brand_id,
-            stocking_um,
-            stock_qty,
-            unit_price,
-            unit_price_mmk,
-            buying_price,
-            batch_code,
-            item_code
-          )
-          .run();
-      } else {
-        await db
-          .prepare(
-            `INSERT INTO inventory_stock (item_code, item_name, category, stock_qty, unit_price, unit_price_mmk, buying_price, batch_code)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-          )
-          .bind(
-            item_code,
-            item_name,
-            category,
-            stock_qty,
-            unit_price,
-            unit_price_mmk,
-            buying_price,
-            batch_code
-          )
-          .run();
-      }
-
-      return success({ item_code, item_name }, 201);
+      const result = await inventoryService.create({
+        item_code: body.item_code || body.sku || '',
+        item_name: body.item_name || body.name || '',
+        category: body.category || '',
+        sub_category_id: body.sub_category_id,
+        brand_id: body.brand_id,
+        stocking_um: body.stocking_um || body.unit,
+        stock_qty: body.stock_qty || body.quantity,
+        unit_price: body.unit_price || body.selling_price,
+        unit_price_mmk: body.unit_price_mmk,
+        buying_price: body.buying_price || body.cost_price,
+        batch_code: body.batch_code,
+      });
+      return success(result, 201);
     } catch (err: any) {
       console.error('Save inventory error:', err.message);
       return error('Failed to save inventory item', 500);
@@ -203,42 +110,14 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
-      const body = (await request.json()) as any;
-      const existing = await db
-        .prepare('SELECT item_code FROM inventory_stock WHERE item_code = ?')
-        .bind(params.id)
-        .first();
+      const existing = await inventoryService.getById(params.id);
       if (!existing) return error('Inventory item not found', 404);
 
-      const allowed = [
-        'item_name',
-        'category',
-        'stock_qty',
-        'unit_price',
-        'unit_price_mmk',
-        'buying_price',
-        'batch_code',
-      ];
-      const updates = [];
-      const values = [];
-
-      for (const field of allowed) {
-        if (body[field] !== undefined) {
-          updates.push(`${field} = ?`);
-          values.push(body[field]);
-        }
-      }
-
-      if (updates.length === 0) return error('No fields to update', 400);
-
-      values.push(params.id);
-
-      await db
-        .prepare(`UPDATE inventory_stock SET ${updates.join(', ')} WHERE item_code = ?`)
-        .bind(...values)
-        .run();
-
+      const body = (await request.json()) as any;
+      const updated = await inventoryService.update(params.id, body);
+      if (!updated) return error('No fields to update', 400);
       return success({ message: 'Inventory item updated' });
     } catch (err: any) {
       console.error('Update inventory error:', err.message);
@@ -251,9 +130,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
-
-      await db.prepare('DELETE FROM inventory_stock WHERE item_code = ?').bind(params.id).run();
+      await inventoryService.delete(params.id);
       return success({ message: 'Inventory item deleted' });
     } catch (err: any) {
       console.error('Delete inventory error:', err.message);
@@ -265,12 +144,12 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const { item_code } = (await request.json()) as any;
       if (!item_code) return error('Missing item_code', 400);
-
-      await db.prepare('DELETE FROM inventory_stock WHERE item_code = ?').bind(item_code).run();
+      await inventoryService.delete(item_code);
       return success({ message: 'Inventory item deleted' });
     } catch (err: any) {
       console.error('Delete inventory error:', err.message);
@@ -283,113 +162,37 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const { quantity_change, reason } = (await request.json()) as any;
-      if (quantity_change === undefined) {
-        return error('Missing quantity_change', 400);
-      }
+      if (quantity_change === undefined) return error('Missing quantity_change', 400);
 
-      // Validate quantity is an integer
-      if (!Number.isInteger(quantity_change)) {
-        return error('quantity_change must be an integer', 400);
-      }
-
-      const item = await db
-        .prepare('SELECT * FROM inventory_stock WHERE item_code = ?')
-        .bind(params.id)
-        .first();
-      if (!item) return error('Inventory item not found', 404);
-
-      const newQuantity = (item.stock_qty || 0) + quantity_change;
-      if (newQuantity < 0) return error('Insufficient stock', 400);
-
-      await db
-        .prepare('UPDATE inventory_stock SET stock_qty = ? WHERE item_code = ?')
-        .bind(newQuantity, params.id)
-        .run();
-
-      // Log the adjustment (catch gracefully if inventory_log table doesn't exist)
-      try {
-        await db
-          .prepare(
-            'INSERT INTO inventory_log (item_id, previous_quantity, new_quantity, change_amount, reason, changed_by) VALUES (?, ?, ?, ?, ?, ?)'
-          )
-          .bind(
-            params.id,
-            item.stock_qty || 0,
-            newQuantity,
-            quantity_change,
-            reason || 'manual adjustment',
-            user.id
-          )
-          .run();
-      } catch (_) {}
-
-      return success({
-        id: params.id,
-        previous_quantity: item.stock_qty || 0,
-        new_quantity: newQuantity,
-      });
+      const result = await inventoryService.adjustStock(params.id, quantity_change, user.id, reason);
+      if (result.error === 'not_found') return error('Inventory item not found', 404);
+      if (result.error === 'insufficient_stock') return error('Insufficient stock', 400);
+      if (result.error) return error(result.error, 400);
+      return success(result);
     } catch (err: any) {
       console.error('Adjust inventory error:', err.message);
       return error('Failed to adjust inventory', 500);
     }
   });
 
-  // ── GET /api/admin/inventory/list (paginated) ────────────────────────
+  // ── GET /api/admin/inventory/list ────────────────────────────────────
   router.get('/api/admin/inventory/list', async (request) => {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-
       const url = new URL(request.url);
-      const search = url.searchParams.get('search') || '';
-      const category = url.searchParams.get('category') || '';
-      const page = parseInt(url.searchParams.get('page') || '1');
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 500);
-      const offset = (page - 1) * limit;
-
-      let query = 'SELECT * FROM inventory_stock WHERE 1=1';
-      let countQuery = 'SELECT COUNT(*) as total FROM inventory_stock WHERE 1=1';
-      const params: any[] = [];
-      const countParams: any[] = [];
-
-      if (search) {
-        const like = `%${search}%`;
-        query += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
-        params.push(like, like, like);
-        countQuery += ' AND (item_name LIKE ? OR item_code LIKE ? OR category LIKE ?)';
-        countParams.push(like, like, like);
-      }
-      if (category) {
-        query += ' AND category = ?';
-        params.push(category);
-        countQuery += ' AND category = ?';
-        countParams.push(category);
-      }
-
-      const totalResult = await db
-        .prepare(countQuery)
-        .bind(...countParams)
-        .first();
-      const total = totalResult?.total || 0;
-
-      query += ' ORDER BY item_name ASC LIMIT ? OFFSET ?';
-      params.push(limit, offset);
-
-      const result = await db
-        .prepare(query)
-        .bind(...params)
-        .all();
-      return success({
-        items: result.results,
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+      const result = await inventoryService.list({
+        search: url.searchParams.get('search') || undefined,
+        category: url.searchParams.get('category') || undefined,
+        page: parseInt(url.searchParams.get('page') || '1'),
+        limit: parseInt(url.searchParams.get('limit') || '50'),
       });
-    } catch (err) {
+      return success(result);
+    } catch (err: any) {
       console.error('Fetch inventory list error:', err.message);
       return error('Failed to fetch inventory list', 500);
     }
@@ -400,16 +203,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db
-        .prepare(
-          `SELECT ib.*, is2.item_name, is2.category
-         FROM inventory_batches ib
-         LEFT JOIN inventory_stock is2 ON ib.item_code = is2.item_code
-         ORDER BY ib.created_at DESC LIMIT 200`
-        )
-        .all();
-      return success(result.results);
-    } catch (err) {
+      const batches = await inventoryService.getBatches();
+      return success(batches);
+    } catch (err: any) {
       console.error('Fetch batches error:', err.message);
       return error('Failed to fetch batches', 500);
     }
@@ -420,9 +216,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db.prepare('SELECT * FROM inv_categories ORDER BY name ASC').all();
-      return success(result.results);
-    } catch (err) {
+      const categories = await inventoryService.getInventoryCategories();
+      return success(categories);
+    } catch (err: any) {
       console.error('Fetch categories error:', err.message);
       return error('Failed to fetch categories', 500);
     }
@@ -433,18 +229,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db
-        .prepare(
-          `
-        SELECT s.*, c.name as category_name
-        FROM inv_sub_categories s
-        LEFT JOIN inv_categories c ON s.category_id = c.id
-        ORDER BY s.name ASC
-      `
-        )
-        .all();
-      return success(result.results);
-    } catch (err) {
+      const subCategories = await inventoryService.getSubCategories();
+      return success(subCategories);
+    } catch (err: any) {
       console.error('Fetch sub-categories error:', err.message);
       return error('Failed to fetch sub-categories', 500);
     }
@@ -455,9 +242,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db.prepare('SELECT * FROM inv_brands ORDER BY name ASC').all();
-      return success(result.results);
-    } catch (err) {
+      const brands = await inventoryService.getBrands();
+      return success(brands);
+    } catch (err: any) {
       console.error('Fetch brands error:', err.message);
       return error('Failed to fetch brands', 500);
     }
@@ -468,9 +255,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db.prepare('SELECT * FROM inv_stock_units ORDER BY name ASC').all();
-      return success(result.results);
-    } catch (err) {
+      const units = await inventoryService.getUnits();
+      return success(units);
+    } catch (err: any) {
       console.error('Fetch units error:', err.message);
       return error('Failed to fetch units', 500);
     }
@@ -481,11 +268,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db
-        .prepare('SELECT i.*, c.company_name FROM inventory_items i LEFT JOIN clients c ON i.client_id = c.id ORDER BY i.installed_date DESC LIMIT 100')
-        .all();
-      return success(result.results);
-    } catch (err) {
+      const warranties = await inventoryService.getWarrantyList();
+      return success(warranties);
+    } catch (err: any) {
       console.error('Fetch warranties error:', err.message);
       return error('Failed to fetch warranties', 500);
     }
@@ -496,6 +281,8 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
       const { serial_number, device_name, client_id, installed_date, warranty_months } = body;
@@ -503,31 +290,10 @@ function register(router, env) {
         return error('Missing required fields: serial_number, device_name', 400);
       }
 
-      // Check if warranty already exists
-      const existing = await db
-        .prepare('SELECT serial_number, status FROM inventory_items WHERE serial_number = ?')
-        .bind(serial_number)
-        .first();
-      if (existing) {
-        return error('Warranty already registered for this serial number', 409);
-      }
-
-      await db
-        .prepare(
-          'INSERT OR REPLACE INTO inventory_items (serial_number, device_name, client_id, installed_date, warranty_months, status) VALUES (?, ?, ?, ?, ?, ?)'
-        )
-        .bind(
-          serial_number,
-          device_name,
-          client_id || null,
-          installed_date || new Date().toISOString().split('T')[0],
-          warranty_months || 12,
-          'Active'
-        )
-        .run();
-
-      return success({ serial_number, status: 'Active' }, 201);
-    } catch (err) {
+      const result = await inventoryService.registerWarranty({ serial_number, device_name, client_id, installed_date, warranty_months });
+      if (result.error === 'already_registered') return error('Warranty already registered for this serial number', 409);
+      return success(result, 201);
+    } catch (err: any) {
       console.error('Register warranty error:', err.message);
       return error('Failed to register warranty', 500);
     }
@@ -538,29 +304,10 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-
-      const item = await db
-        .prepare('SELECT i.*, c.company_name FROM inventory_items i LEFT JOIN clients c ON i.client_id = c.id WHERE i.serial_number = ?')
-        .bind(params.serial)
-        .first();
-
+      const item = await inventoryService.lookupWarranty(params.serial);
       if (!item) return error('Serial number not found', 404);
-
-      // Calculate warranty status
-      const installed = new Date(item.installed_date);
-      const warrantyEnd = new Date(installed);
-      warrantyEnd.setMonth(warrantyEnd.getMonth() + (item.warranty_months || 12));
-      const now = new Date();
-      const isActive = now <= warrantyEnd && item.status === 'Active';
-      const daysLeft = Math.ceil((warrantyEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-      return success({
-        ...item,
-        warranty_end: warrantyEnd.toISOString().split('T')[0],
-        warranty_active: isActive,
-        warranty_days_left: daysLeft,
-      });
-    } catch (err) {
+      return success(item);
+    } catch (err: any) {
       console.error('Lookup warranty error:', err.message);
       return error('Failed to lookup warranty', 500);
     }
@@ -571,6 +318,8 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
       const { serial_number, device_name, client_id, job_id, warranty_months } = body;
@@ -578,32 +327,10 @@ function register(router, env) {
         return error('Missing required fields: serial_number, device_name', 400);
       }
 
-      // Check if warranty already exists
-      const existing = await db
-        .prepare('SELECT serial_number, status FROM inventory_items WHERE serial_number = ?')
-        .bind(serial_number)
-        .first();
-      if (existing) {
-        return error('Warranty already registered for this serial number', 409);
-      }
-
-      await db
-        .prepare(
-          'INSERT OR REPLACE INTO inventory_items (serial_number, device_name, client_id, installed_date, warranty_months, status, job_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
-        )
-        .bind(
-          serial_number,
-          device_name,
-          client_id || null,
-          new Date().toISOString().split('T')[0],
-          warranty_months || 12,
-          'Active',
-          job_id || null
-        )
-        .run();
-
-      return success({ serial_number, status: 'Active', warranty_months: warranty_months || 12 }, 201);
-    } catch (err) {
+      const result = await inventoryService.registerWarranty({ serial_number, device_name, client_id, job_id, warranty_months });
+      if (result.error === 'already_registered') return error('Warranty already registered for this serial number', 409);
+      return success(result, 201);
+    } catch (err: any) {
       console.error('Register warranty error:', err.message);
       return error('Failed to register warranty', 500);
     }
@@ -614,11 +341,9 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
-      const result = await db
-        .prepare("SELECT * FROM inventory_items WHERE status IN ('RMA Sent', 'RMA Completed') ORDER BY installed_date DESC LIMIT 100")
-        .all();
-      return success(result.results);
-    } catch (err) {
+      const rmaList = await inventoryService.getRmaList();
+      return success(rmaList);
+    } catch (err: any) {
       console.error('Fetch RMA error:', err.message);
       return error('Failed to fetch RMA records', 500);
     }
@@ -629,28 +354,17 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
       const { serial_number, distributor, rma_id, sent_date } = body;
-      if (!serial_number) {
-        return error('Missing required field: serial_number', 400);
-      }
+      if (!serial_number) return error('Missing required field: serial_number', 400);
 
-      const existing = await db
-        .prepare('SELECT serial_number, status FROM inventory_items WHERE serial_number = ?')
-        .bind(serial_number)
-        .first();
-      if (!existing) return error('Serial number not found in inventory', 404);
-
-      await db
-        .prepare(
-          "UPDATE inventory_items SET status = 'RMA Sent', distributor = ?, rma_tracking_id = ?, installed_date = COALESCE(?, installed_date) WHERE serial_number = ?"
-        )
-        .bind(distributor || null, rma_id || null, sent_date || null, serial_number)
-        .run();
-
-      return success({ serial_number, status: 'RMA Sent' });
-    } catch (err) {
+      const result = await inventoryService.raiseRma(serial_number, distributor, rma_id, sent_date);
+      if (result.error === 'not_found') return error('Serial number not found in inventory', 404);
+      return success(result);
+    } catch (err: any) {
       console.error('Raise RMA error:', err.message);
       return error('Failed to raise RMA claim', 500);
     }
@@ -661,28 +375,17 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
       const { serial_number, status, distributor, rma_tracking_id } = body;
-      if (!serial_number) {
-        return error('Missing required field: serial_number', 400);
-      }
+      if (!serial_number) return error('Missing required field: serial_number', 400);
 
-      // Validate status if provided
-      const validStatuses = ['Active', 'Defective', 'RMA Sent', 'RMA Completed', 'Replaced'];
-      if (status && !validStatuses.includes(status)) {
-        return error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`, 400);
-      }
-
-      await db
-        .prepare(
-          'UPDATE inventory_items SET status = ?, distributor = ?, rma_tracking_id = ? WHERE serial_number = ?'
-        )
-        .bind(status || 'RMA Completed', distributor || null, rma_tracking_id || null, serial_number)
-        .run();
-
-      return success({ serial_number, status: status || 'RMA Completed' });
-    } catch (err) {
+      const result = await inventoryService.updateRma(serial_number, status, distributor, rma_tracking_id);
+      if (result.error) return error(result.error, 400);
+      return success(result);
+    } catch (err: any) {
       console.error('Update RMA error:', err.message);
       return error('Failed to update RMA', 500);
     }
@@ -693,19 +396,15 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
       const { item_code, unit_price, unit_price_mmk } = body;
       if (!item_code) return error('Missing item_code', 400);
 
-      await db
-        .prepare(
-          'UPDATE inventory_stock SET unit_price = ?, unit_price_mmk = ? WHERE item_code = ?'
-        )
-        .bind(unit_price || 0, unit_price_mmk || 0, item_code)
-        .run();
-
-      return success({ message: 'Price updated successfully', item_code });
+      const result = await inventoryService.updatePrice(item_code, unit_price, unit_price_mmk);
+      return success(result);
     } catch (err: any) {
       console.error('Update price error:', err.message);
       return error('Failed to update price', 500);
@@ -717,84 +416,20 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
-      const { batch_code, item_code, buying_price, supplier, serials } = body;
-      const quantity = body.quantity || body.manual_qty || 0;
-
-      if (!batch_code || !item_code || !quantity) {
-        return error('Missing required fields: batch_code, item_code, quantity', 400);
-      }
-
-      // Check item details
-      const item = await db
-        .prepare('SELECT item_name FROM inventory_stock WHERE item_code = ?')
-        .bind(item_code)
-        .first();
-      const deviceName = item ? item.item_name : 'Unknown Device';
-
-      // Insert/Upsert batch
-      const existingBatch = await db
-        .prepare('SELECT batch_code FROM inventory_batches WHERE batch_code = ?')
-        .bind(batch_code)
-        .first();
-
-      if (existingBatch) {
-        await db
-          .prepare(
-            `UPDATE inventory_batches 
-             SET item_code = ?, quantity = ?, remaining_qty = ?, buying_price = ?, supplier = ?
-             WHERE batch_code = ?`
-          )
-          .bind(item_code, quantity, quantity, buying_price || 0, supplier || '', batch_code)
-          .run();
-      } else {
-        await db
-          .prepare(
-            `INSERT INTO inventory_batches (batch_code, item_code, quantity, remaining_qty, buying_price, supplier)
-             VALUES (?, ?, ?, ?, ?, ?)`
-          )
-          .bind(batch_code, item_code, quantity, quantity, buying_price || 0, supplier || '')
-          .run();
-      }
-
-      // Insert Serials if provided
-      if (Array.isArray(serials) && serials.length > 0) {
-        for (const sn of serials) {
-          if (!sn) continue;
-          // Check if serial exists
-          const existingSn = await db
-            .prepare('SELECT serial_number FROM inventory_items WHERE serial_number = ?')
-            .bind(sn)
-            .first();
-
-          if (!existingSn) {
-            await db
-              .prepare(
-                `INSERT INTO inventory_items (serial_number, device_name, batch_code, status)
-                 VALUES (?, ?, ?, 'Active')`
-              )
-              .bind(sn, deviceName, batch_code)
-              .run();
-          }
-        }
-      }
-
-      // Recalculate inventory stock level
-      const totalQty = await db
-        .prepare(
-          'SELECT COALESCE(SUM(remaining_qty), 0) as total FROM inventory_batches WHERE item_code = ?'
-        )
-        .bind(item_code)
-        .first();
-      const newStockQty = totalQty ? totalQty.total : 0;
-
-      await db
-        .prepare('UPDATE inventory_stock SET stock_qty = ? WHERE item_code = ?')
-        .bind(newStockQty, item_code)
-        .run();
-
-      return success({ message: 'Batch registered successfully', batch_code, item_code });
+      const result = await inventoryService.createBatch({
+        batch_code: body.batch_code,
+        item_code: body.item_code,
+        buying_price: body.buying_price,
+        supplier: body.supplier,
+        serials: body.serials,
+        quantity: body.quantity || body.manual_qty,
+      });
+      if (result.error) return error(result.error, 400);
+      return success(result);
     } catch (err: any) {
       console.error('Register batch error:', err.message);
       return error('Failed to register batch', 500);
@@ -806,31 +441,18 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
+      if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
 
       const body = (await request.json()) as any;
-      const { batch_code, buying_price, supplier, quantity } = body;
-      if (!batch_code) return error('Missing batch_code', 400);
-
-      // Only update remaining_qty if quantity is explicitly provided
-      const updates: string[] = [];
-      const values: any[] = [];
-      if (buying_price !== undefined) { updates.push('buying_price = ?'); values.push(buying_price); }
-      if (supplier !== undefined) { updates.push('supplier = ?'); values.push(supplier); }
-      if (quantity !== undefined) {
-        updates.push('quantity = ?');
-        updates.push('remaining_qty = ?');
-        values.push(quantity, quantity);
-      }
-
-      if (updates.length === 0) return error('No fields to update', 400);
-      values.push(batch_code);
-
-      await db
-        .prepare(`UPDATE inventory_batches SET ${updates.join(', ')} WHERE batch_code = ?`)
-        .bind(...values)
-        .run();
-
-      return success({ message: 'Batch updated successfully', batch_code });
+      const result = await inventoryService.editBatch({
+        batch_code: body.batch_code,
+        buying_price: body.buying_price,
+        supplier: body.supplier,
+        quantity: body.quantity,
+      });
+      if (result.error) return error(result.error, 400);
+      return success(result);
     } catch (err: any) {
       console.error('Edit batch error:', err.message);
       return error('Failed to edit batch', 500);

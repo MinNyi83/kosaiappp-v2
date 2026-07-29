@@ -3,7 +3,7 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { authenticate } from '../utils/auth-middleware.js';
+import { authenticate, requireCsrf } from '../utils/auth-middleware.js';
 import { uploadFileToGoogleDrive } from '../utils/google.js';
 
 function register(router, env) {
@@ -53,6 +53,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       const { client_id, items, amount, due_date, notes } = body;
@@ -88,6 +89,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { payment_method, payment_ref, amount_paid } = (await request.json()) as any;
 
@@ -122,6 +124,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const invoice = await db
         .prepare(
@@ -184,6 +187,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       // Frontend sends: { client_id, cart: [{item_code, qty}], discount, exchange_rate, ... }

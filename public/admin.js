@@ -1,788 +1,3 @@
-function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-window.escapeHTML = escapeHTML;
-
-// Intercept global fetch to automatically inject Authorization token
-const apiInput = document.getElementById('api-base');
-if (apiInput && !apiInput.value) {
-  const hostname = window.location.hostname;
-  if (
-    hostname.includes('pages.dev') ||
-    hostname === 'tauri.localhost' ||
-    (hostname === 'localhost' && window.location.port === '')
-  ) {
-    // Cloudflare Pages or Tauri desktop app -> use remote Worker
-    apiInput.value = 'https://cctv-service-system.nyinyimin2007.workers.dev';
-  } else {
-    // Local dev (127.0.0.1:8787) -> use local origin
-    apiInput.value = window.location.origin;
-  }
-}
-
-const originalFetch = window.fetch;
-window.fetch = async function (url, options = {}) {
-  let finalUrl = url;
-  if (finalUrl) {
-    if (finalUrl.includes('/api/admin/inventory/list'))
-      finalUrl = finalUrl.replace('/api/admin/inventory/list', '/api/inventory');
-    if (finalUrl.includes('/api/admin/clients/list'))
-      finalUrl = finalUrl.replace('/api/admin/clients/list', '/api/clients');
-
-    if (finalUrl.includes('/api/')) {
-      options.headers = options.headers || {};
-      const token = localStorage.getItem('admin_token');
-      if (token) {
-        options.headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-  }
-
-  const res = await originalFetch(finalUrl, options);
-  if (res.status === 401) {
-    handleLogout();
-  }
-
-  if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
-    const originalJson = res.json.bind(res);
-    res.json = async function () {
-      const data = await originalJson();
-      if (data && typeof data === 'object' && data.success === true && 'data' in data) {
-        if (finalUrl.includes('/api/jobs') && data.data && Array.isArray(data.data.jobs))
-          return data.data.jobs;
-        if (finalUrl.includes('/api/clients') && data.data && Array.isArray(data.data.clients))
-          return data.data.clients;
-        if (finalUrl.includes('/api/inventory') && data.data && Array.isArray(data.data.items))
-          return data.data.items;
-        return data.data;
-      }
-      return data;
-    };
-  }
-
-  return res;
-};
-
-let map;
-let mapMarkers = [];
-let statusChartInstance;
-let categoryChartInstance;
-let calendarInstance = null;
-
-let cashTransactions = [];
-let cashPage = 1;
-const cashPerPage = 10;
-
-let inventoryItems = [];
-let stockPage = 1;
-const stockPerPage = 10;
-let catalogPage = 1;
-let catalogTotalPages = 1;
-let catalogTotal = 0;
-const catalogPerPage = 100;
-let pricingPage = 1;
-let pricingTotalPages = 1;
-let pricingTotal = 0;
-const pricingPerPage = 100;
-let clientsList = [];
-
-// Mobile sidebar controls
-function openSidebar() {
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('sidebar-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function toggleSidebarCollapse() {
-  const sidebar = document.getElementById('sidebar');
-  sidebar.classList.toggle('collapsed');
-  localStorage.setItem('sidebar_collapsed', sidebar.classList.contains('collapsed'));
-}
-function initAdmin() {
-  const sidebar = document.getElementById('sidebar');
-  if (sidebar && localStorage.getItem('sidebar_collapsed') === 'true') {
-    sidebar.classList.add('collapsed');
-  }
-
-  // Touch swipe support for mobile sidebar
-  let touchStartX = 0;
-  let touchCurrentX = 0;
-  const overlay = document.getElementById('sidebar-overlay');
-
-  if (sidebar && overlay) {
-    document.addEventListener('touchstart', (e) => {
-      touchStartX = e.touches[0].clientX;
-    }, { passive: true });
-
-    document.addEventListener('touchmove', (e) => {
-      touchCurrentX = e.touches[0].clientX;
-      const diff = touchStartX - touchCurrentX;
-
-      // Swipe left to close
-      if (sidebar.classList.contains('open') && diff > 50) {
-        closeSidebar();
-      }
-    }, { passive: true });
-
-    // Close sidebar on overlay click
-    overlay.addEventListener('click', closeSidebar);
-  }
-
-  const loginForm = document.getElementById('login-password-container');
-  if (loginForm) {
-    loginForm.addEventListener('submit', handlePasswordLogin);
-  }
-}
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initAdmin);
-} else {
-  initAdmin();
-}
-// Login view tabs switcher
-function setLoginTab(tab) {
-  const googleBtn = document.getElementById('tab-google');
-  const passBtn = document.getElementById('tab-password');
-  const googleContainer = document.getElementById('login-google-container');
-  const passContainer = document.getElementById('login-password-container');
-
-  if (tab === 'google') {
-    googleBtn.classList.add('text-white', 'font-bold', 'border-b-2', 'border-amber-500');
-    googleBtn.classList.remove('text-slate-400');
-    passBtn.classList.remove('text-white', 'font-bold', 'border-b-2', 'border-amber-500');
-    passBtn.classList.add('text-slate-400');
-    googleContainer.classList.remove('hidden');
-    passContainer.classList.add('hidden');
-  } else {
-    passBtn.classList.add('text-white', 'font-bold', 'border-b-2', 'border-amber-500');
-    passBtn.classList.remove('text-slate-400');
-    googleBtn.classList.remove('text-white', 'font-bold', 'border-b-2', 'border-amber-500');
-    googleBtn.classList.add('text-slate-400');
-    passContainer.classList.remove('hidden');
-    googleContainer.classList.add('hidden');
-  }
-}
-
-async function handlePasswordLogin(e) {
-  e.preventDefault();
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value.trim();
-  const baseUrl = document.getElementById('api-base').value;
-
-  try {
-    const res = await fetch(`${baseUrl}/api/auth/login-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Authentication failed');
-
-    const responseData = data.data || data;
-    const user = responseData.user || responseData.technician;
-    if (!user || user.role !== 'Admin') {
-      throw new Error('Your account does not have Admin privileges.');
-    }
-
-    localStorage.setItem('admin_user', JSON.stringify(user));
-    localStorage.setItem('admin_token', responseData.token);
-    const authScreen = document.getElementById('auth-screen');
-    authScreen.classList.remove('flex');
-    authScreen.classList.add('hidden');
-    initializeAdminDesk();
-  } catch (err) {
-    console.error('Login failed:', err);
-    showToast(err.message || 'Error', 'error');
-  }
-}
-
-async function submitNewUser(e) {
-  e.preventDefault();
-  const id = document.getElementById('new-user-id').value.trim();
-  const username = document.getElementById('new-user-username').value.trim();
-  const password = document.getElementById('new-user-password').value.trim();
-  const name = document.getElementById('new-user-name').value.trim();
-  const nickname = document.getElementById('new-user-nickname').value.trim();
-  const role = document.getElementById('new-user-role').value;
-  const phone = document.getElementById('new-user-phone').value.trim();
-  const email = document.getElementById('new-user-email').value.trim();
-  const pin = document.getElementById('new-user-pin').value.trim();
-  const telegram_username =
-    document.getElementById('new-user-telegram-username')?.value?.trim() || '';
-
-  const baseUrl = document.getElementById('api-base').value;
-  const secret = document.getElementById('admin-secret').value;
-
-  try {
-    const res = await fetch(`${baseUrl}/api/admin/technicians/create`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': secret },
-      body: JSON.stringify({
-        id,
-        username,
-        password,
-        name,
-        nickname,
-        role,
-        phone,
-        email,
-        pin,
-        telegram_username,
-      }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      showToast('User account created successfully!', 'success');
-      e.target.reset();
-      refreshDashboardData();
-    } else {
-      showToast('Error: ' + data.error, 'error');
-    }
-  } catch (err) {
-    showToast('Connection error', 'error');
-  }
-}
-
-window.addEventListener('load', () => {
-  google.accounts.id.initialize({
-    client_id: '609507528219-2foc0ch65rkqkgdlvlihqagb6dqbmpcm.apps.googleusercontent.com', // Google OAuth Client ID binding
-    callback: handleGoogleLogin,
-  });
-  google.accounts.id.renderButton(document.getElementById('g-signin-btn'), {
-    theme: 'dark',
-    size: 'large',
-    type: 'standard',
-    shape: 'rectangular',
-  });
-
-  const cachedUser = localStorage.getItem('admin_user');
-  const cachedToken = localStorage.getItem('admin_token');
-  if (cachedUser && cachedToken && cachedToken.split('.').length === 3) {
-    const user = JSON.parse(cachedUser);
-    if (user.role === 'Admin') {
-      document.getElementById('auth-screen').classList.add('hidden');
-      initializeAdminDesk();
-    }
-  } else {
-    handleLogout();
-  }
-});
-
-async function handleGoogleLogin(response) {
-  const baseUrl = document.getElementById('api-base').value;
-  try {
-    const res = await fetch(`${baseUrl}/api/auth/google`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: response.credential }),
-    });
-
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.error || 'Google auth rejected');
-
-    if (result.data.technician.role !== 'Admin') {
-      throw new Error('Your account does not have Admin privileges.');
-    }
-
-    localStorage.setItem('admin_user', JSON.stringify(result.data.technician));
-    localStorage.setItem('admin_token', result.data.token);
-    document.getElementById('auth-screen').classList.add('hidden');
-    initializeAdminDesk();
-  } catch (err) {
-    showToast('Access Denied', 'error');
-  }
-}
-
-function handleLogout() {
-  localStorage.removeItem('admin_user');
-  localStorage.removeItem('admin_token');
-  const authScreen = document.getElementById('auth-screen');
-  authScreen.classList.remove('hidden');
-  authScreen.classList.add('flex');
-}
-
-async function triggerBackup() {
-  const baseUrl = document.getElementById('api-base').value;
-  const token = localStorage.getItem('admin_token');
-  try {
-    showToast('Creating backup...', 'info');
-    const res = await fetch(`${baseUrl}/api/admin/backup`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) throw new Error('Could not download backup file.');
-    const resp = await res.json();
-    const data = resp.data || resp;
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `kosai_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('Backup downloaded successfully!', 'success');
-  } catch (e) {
-    showToast('Backup failed: ' + e.message, 'error');
-  }
-}
-
-function triggerRestore() {
-  document.getElementById('restore-file-input').click();
-}
-
-async function handleRestoreFile(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const confirmRestore = confirm(
-    'CRITICAL WARNING: This action will completely erase all current client profiles, technician registries, tickets, ledger entries, and transaction histories, replacing them with the backup state. Do you want to proceed?'
-  );
-  if (!confirmRestore) {
-    event.target.value = '';
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = async function (e) {
-    const baseUrl = document.getElementById('api-base').value;
-    const token = localStorage.getItem('admin_token');
-    try {
-      const parsed = JSON.parse(e.target.result);
-      // Unwrap if wrapped in {success, data} envelope
-      const backupData = parsed.data || parsed;
-      if (!backupData._exported_at) throw new Error('Invalid backup file structure.');
-
-      const res = await fetch(`${baseUrl}/api/admin/restore`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(backupData),
-      });
-      const resData = await res.json();
-      if (res.ok) {
-        showToast('Database restored successfully!', 'success');
-        refreshDashboardData();
-      } else {
-        throw new Error(resData.error || 'Restoration failed.');
-      }
-    } catch (err) {
-      showToast('Restore failed: ' + err.message, 'error');
-    } finally {
-      event.target.value = '';
-    }
-  };
-  reader.readAsText(file);
-}
-
-function syncExchangeRate(val) {
-  const globalRate = document.getElementById('cash-rate-global');
-  if (globalRate) globalRate.value = val;
-  const cashRate = document.getElementById('cash-rate');
-  if (cashRate) cashRate.value = val;
-  document.getElementById('cash-rate-local').value = val;
-}
-
-function switchTab(tabId) {
-  // Hide all views
-  document.querySelectorAll('.tab-view').forEach((view) => {
-    view.classList.add('hidden');
-  });
-  // Show selected view
-  const selectedView = document.getElementById(`view-${tabId}`);
-  if (selectedView) selectedView.classList.remove('hidden');
-
-  // Update path display
-  const pathName =
-    tabId === 'system-settings'
-      ? 'System Settings'
-      : tabId === 'user-management'
-        ? 'User Management'
-        : tabId.charAt(0).toUpperCase() + tabId.slice(1);
-  document.getElementById('current-path-display').textContent =
-    pathName === 'Dashboard' ? 'Dashboard' : `Dashboard / ${pathName}`;
-
-  // Highlight sidebar tab
-  document.querySelectorAll('.tab-link').forEach((link) => {
-    link.classList.remove('bg-amber-500/10', 'text-amber-500');
-    link.classList.add('text-slate-400');
-  });
-  // Find clicking source link (simplified matching)
-  const activeLink = Array.from(document.querySelectorAll('.tab-link')).find((link) => {
-    const onclickAttr = link.getAttribute('onclick');
-    return onclickAttr && onclickAttr.includes(tabId);
-  });
-  if (activeLink) {
-    activeLink.classList.remove('text-slate-400');
-    activeLink.classList.add('bg-amber-500/10', 'text-amber-500');
-  }
-
-  // Update mobile bottom nav
-  document.querySelectorAll('.mobile-nav-btn').forEach((btn) => {
-    btn.classList.remove('active-mobile-nav');
-    if (btn.dataset.tab === tabId) {
-      btn.classList.add('active-mobile-nav');
-    }
-  });
-
-  // Fix Leaflet rendering delay when opening a previously hidden container
-  if (tabId === 'dispatch-map') {
-    initLeafletMap();
-    setTimeout(() => {
-      if (map) {
-        map.invalidateSize(true);
-        // Also trigger redraw of markers
-        loadJobsData();
-      }
-    }, 100);
-  }
-
-  if (tabId === 'jobs') {
-    loadJobsDashboardData();
-  }
-
-  if (tabId === 'attendance' && typeof window.loadAttendance === 'function') {
-    window.loadAttendance();
-  }
-
-  if (tabId === 'portfolio' && typeof loadPortfolioProjects === 'function') {
-    loadPortfolioProjects();
-  }
-
-  if (tabId === 'landing-page' && typeof loadLandingPageContent === 'function') {
-    loadLandingPageContent();
-  }
-
-  if (tabId === 'pos') {
-    window.loadPosData();
-    setTimeout(() => {
-      const searchInput = document.getElementById('pos-stock-search');
-      if (searchInput) {
-        searchInput.focus();
-        searchInput.select();
-      }
-    }, 150);
-  }
-
-  if (tabId === 'inventory') {
-    window.loadInventoryData();
-  }
-
-  if (tabId === 'currency') {
-    window.loadCashSafeData();
-  }
-
-  if (tabId === 'amc') {
-    window.loadClientsData();
-  }
-
-  if (tabId === 'distributors') {
-    window.loadDistributorsData();
-  }
-
-  if (tabId === 'warranty') {
-    window.loadRMAData();
-  }
-
-  if (tabId === 'service-fees') {
-    window.loadServiceFeesData();
-  }
-
-  if (tabId === 'surveys') {
-    window.populateSurveyClientDropdown();
-    window.loadSurveysData();
-    window.loadQuotationsData();
-  }
-
-  if (tabId === 'system-settings') {
-    window.loadPdfBuilderConfig();
-  }
-}
-
-// ── Surveys & Quotations Tab Functions ──────────────────────────────────────
-let cachedSurveysList = [];
-let cachedQuotationsList = [];
-
-async function populateSurveyClientDropdown() {
-  const selectEl = document.getElementById('survey-client-filter');
-  if (!selectEl) return;
-  const baseUrl = document.getElementById('api-base')?.value || '';
-  try {
-    const res = await fetch(`${baseUrl}/api/clients`);
-    const clients = await res.json();
-    const list = Array.isArray(clients) ? clients : (clients.data || []);
-    
-    selectEl.innerHTML = `<option value="">All Clients</option>` + list.map(c => `
-      <option value="${escapeHTML(c.id)}">${escapeHTML(c.company_name)} (${escapeHTML(c.id)})</option>
-    `).join('');
-  } catch (err) {
-    console.error('Failed to populate survey client dropdown:', err);
-  }
-}
-window.populateSurveyClientDropdown = populateSurveyClientDropdown;
-
-function filterSurveysByClient(clientId) {
-  loadSurveysData(clientId);
-  loadQuotationsData(clientId);
-}
-window.filterSurveysByClient = filterSurveysByClient;
-
-async function loadSurveysData(filterClientId = '') {
-  const baseUrl = document.getElementById('api-base')?.value || '';
-  const token = localStorage.getItem('admin_token');
-  const bodyEl = document.getElementById('surveys-table-body');
-  if (!bodyEl) return;
-
-  try {
-    const url = filterClientId ? `${baseUrl}/api/surveys?client_id=${encodeURIComponent(filterClientId)}` : `${baseUrl}/api/surveys`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    const surveys = Array.isArray(data) ? data : (data.data || []);
-    cachedSurveysList = surveys;
-    
-    document.getElementById('surveys-count-total').textContent = surveys.length;
-
-    if (surveys.length === 0) {
-      bodyEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 italic">No site surveys logged yet.</td></tr>`;
-      return;
-    }
-
-    bodyEl.innerHTML = surveys.map(s => `
-      <tr class="hover:bg-white/5 transition-all">
-        <td class="font-mono font-bold text-teal-400">${escapeHTML(s.id)}</td>
-        <td>${escapeHTML(s.client_name || s.client_id || 'Unknown')}</td>
-        <td><span class="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-800 text-slate-300">${escapeHTML(s.survey_type || 'CCTV')}</span></td>
-        <td class="font-mono text-center">${s.camera_count || 0}</td>
-        <td>${escapeHTML(s.cable_type || 'Cat6')} (${s.estimated_cable_meters || 0}m)</td>
-        <td><span class="badge badge-quoted">${escapeHTML(s.status || 'Draft')}</span></td>
-        <td>
-          <button onclick="estimateQuotationForSurvey('${s.id}')" class="text-xs text-amber-400 hover:underline font-bold">🤖 AI Quote</button>
-        </td>
-      </tr>
-    `).join('');
-  } catch (err) {
-    console.error('Failed to load surveys:', err);
-    bodyEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-rose-400 font-bold">Error loading surveys</td></tr>`;
-  }
-}
-window.loadSurveysData = loadSurveysData;
-
-async function loadQuotationsData(filterClientId = '') {
-  const baseUrl = document.getElementById('api-base')?.value || '';
-  const token = localStorage.getItem('admin_token');
-  const bodyEl = document.getElementById('quotations-table-body');
-  if (!bodyEl) return;
-
-  try {
-    const url = filterClientId ? `${baseUrl}/api/quotations?client_id=${encodeURIComponent(filterClientId)}` : `${baseUrl}/api/quotations`;
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    let quotations = Array.isArray(data) ? data : (data.data || []);
-    if (filterClientId) {
-      quotations = quotations.filter(q => q.client_id === filterClientId);
-    }
-    cachedQuotationsList = quotations;
-
-    const activeCount = quotations.filter(q => q.status === 'Draft' || q.status === 'Sent').length;
-    const approvedCount = quotations.filter(q => q.status === 'Approved').length;
-    const convertedCount = quotations.filter(q => q.status === 'Converted').length;
-
-    if (document.getElementById('quotations-count-active')) document.getElementById('quotations-count-active').textContent = activeCount;
-    if (document.getElementById('quotations-count-approved')) document.getElementById('quotations-count-approved').textContent = approvedCount;
-    if (document.getElementById('quotations-count-converted')) document.getElementById('quotations-count-converted').textContent = convertedCount;
-
-    if (quotations.length === 0) {
-      bodyEl.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 italic">No price quotations created yet.</td></tr>`;
-      return;
-    }
-
-    bodyEl.innerHTML = quotations.map(q => `
-      <tr class="hover:bg-white/5 transition-all">
-        <td class="font-mono font-bold text-amber-400">${escapeHTML(q.id)}</td>
-        <td>${escapeHTML(q.client_name || q.client_id || 'Unknown')}</td>
-        <td class="font-mono font-bold text-white">$${(q.total_amount || 0).toFixed(2)}</td>
-        <td class="text-xs text-slate-400">${escapeHTML(q.valid_until || '--')}</td>
-        <td><span class="badge ${q.status === 'Approved' ? 'badge-approved' : q.status === 'Converted' ? 'badge-converted' : 'badge-pending'}">${escapeHTML(q.status || 'Draft')}</span></td>
-        <td class="space-x-2">
-          ${q.status !== 'Converted' ? `
-            <button onclick="convertQuotationToJob('${q.id}')" class="text-[11px] text-sky-400 hover:underline font-bold">🚀 Job</button>
-            <button onclick="convertQuotationToInvoice('${q.id}')" class="text-[11px] text-emerald-400 hover:underline font-bold">💰 Invoice</button>
-          ` : `<span class="text-xs text-slate-500 font-semibold">Converted</span>`}
-        </td>
-      </tr>
-    `).join('');
-  } catch (err) {
-    console.error('Failed to load quotations:', err.message);
-    bodyEl.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-rose-400 font-bold">Error loading quotations</td></tr>`;
-  }
-}
-window.loadQuotationsData = loadQuotationsData;
-
-async function convertQuotationToJob(quotationId) {
-  if (!confirm(`Convert Quotation ${quotationId} into an active Service Job?`)) return;
-  const baseUrl = document.getElementById('api-base')?.value || '';
-  const token = localStorage.getItem('admin_token');
-
-  try {
-    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/convert-job`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Conversion failed');
-    showToast(data.message || 'Converted to Job!', 'success');
-    loadQuotationsData();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
-}
-window.convertQuotationToJob = convertQuotationToJob;
-
-async function convertQuotationToInvoice(quotationId) {
-  if (!confirm(`Convert Quotation ${quotationId} into a POS Invoice?`)) return;
-  const baseUrl = document.getElementById('api-base')?.value || '';
-  const token = localStorage.getItem('admin_token');
-
-  try {
-    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/convert-invoice`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Conversion failed');
-    showToast(data.message || 'Converted to POS Invoice!', 'success');
-    loadQuotationsData();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
-}
-window.convertQuotationToInvoice = convertQuotationToInvoice;
-
-function openModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove('hidden');
-}
-window.openModal = openModal;
-
-function closeModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('hidden');
-}
-window.closeModal = closeModal;
-
-function openNewSurveyModal() {
-  openModal('modal-new-survey');
-}
-window.openNewSurveyModal = openNewSurveyModal;
-
-function openNewQuotationModal() {
-  openModal('modal-new-quotation');
-}
-window.openNewQuotationModal = openNewQuotationModal;
-
-function submitNewSurvey(e) {
-  e.preventDefault();
-  const clientId = document.getElementById('modal-survey-client-input')?.value?.trim();
-  const surveyType = document.getElementById('modal-survey-type')?.value;
-  const cameraCount = parseInt(document.getElementById('modal-survey-cameras')?.value) || 0;
-  const cableMeters = parseFloat(document.getElementById('modal-survey-cable-meters')?.value) || 0;
-
-  if (!clientId) return showToast('Please enter a Client ID or Company Name', 'warning');
-
-  const baseUrl = document.getElementById('api-base')?.value || '';
-  const token = localStorage.getItem('admin_token');
-
-  fetch(`${baseUrl}/api/surveys`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      client_id: clientId,
-      survey_type: surveyType,
-      camera_count: cameraCount,
-      estimated_cable_meters: cableMeters,
-      status: 'Draft',
-    }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      showToast(data.message || 'Site Survey logged successfully!', 'success');
-      closeModal('modal-new-survey');
-      loadSurveysData();
-    })
-    .catch((err) => showToast('Failed to create survey: ' + err.message, 'error'));
-}
-window.submitNewSurvey = submitNewSurvey;
-
-function submitNewQuotation(e) {
-  e.preventDefault();
-  const clientId = document.getElementById('modal-quote-client-input')?.value?.trim();
-  const totalAmount = parseFloat(document.getElementById('modal-quote-amount')?.value) || 0;
-  const validDays = parseInt(document.getElementById('modal-quote-valid-days')?.value) || 14;
-
-  if (!clientId) return showToast('Please enter a Client ID or Company Name', 'warning');
-
-  const baseUrl = document.getElementById('api-base')?.value || '';
-  const token = localStorage.getItem('admin_token');
-
-  fetch(`${baseUrl}/api/quotations`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      client_id: clientId,
-      subtotal: totalAmount,
-      total_amount: totalAmount,
-      currency: 'USD',
-      valid_days: validDays,
-      status: 'Draft',
-    }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      showToast(data.message || 'Quotation generated successfully!', 'success');
-      closeModal('modal-new-quotation');
-      loadQuotationsData();
-    })
-    .catch((err) => showToast('Failed to create quotation: ' + err.message, 'error'));
-}
-window.submitNewQuotation = submitNewQuotation;
-
-async function estimateQuotationForSurvey(surveyId) {
-  showToast('🤖 AI Estimating Bill of Materials...', 'info', 3000);
-  const baseUrl = document.getElementById('api-base')?.value || '';
-  const token = localStorage.getItem('admin_token');
-
-  try {
-    const res = await fetch(`${baseUrl}/api/ai/estimate-quotation`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ survey_id: surveyId }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'AI estimation failed');
-    const items = data.data?.recommended_items || data.recommended_items || [];
-    alert(`🤖 AI Quotation Recommendation for ${surveyId}:\n\n` + JSON.stringify(items, null, 2));
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
-}
-window.estimateQuotationForSurvey = estimateQuotationForSurvey;
-
 async function initializeAdminDesk() {
   const workspace = document.getElementById('app-workspace');
   workspace.innerHTML =
@@ -794,6 +9,7 @@ async function initializeAdminDesk() {
     { name: 'ai-copilot', file: 'ai-copilot.html' },
     { name: 'tickets', file: 'tickets.html' },
     { name: 'surveys', file: 'surveys.html' },
+    { name: 'receipt-builder', file: 'receipt-builder.html' },
     { name: 'amc', file: 'amc.html' },
     { name: 'currency', file: 'currency.html' },
     { name: 'reports', file: 'reports.html' },
@@ -806,7 +22,6 @@ async function initializeAdminDesk() {
     { name: 'pos', file: 'pos.html' },
     { name: 'landing-page', file: 'landing-page.html' },
     { name: 'portfolio', file: 'portfolio.html' },
-    { name: 'jobs', file: 'jobs.html' },
     { name: 'attendance', file: 'attendance.html' },
   ];
 
@@ -1411,9 +626,10 @@ async function refreshDashboardData() {
     loadRMAData,
     loadCashSafeData,
     loadTechniciansData,
-    loadServiceFeesData,
+    sfInitServiceFees,
     loadClientsData,
     populateReports,
+    dbInitDashboard,
   ];
 
   for (const task of tasks) {
@@ -1553,10 +769,12 @@ async function populateLookupDropdowns() {
         });
     }
 
-    techSelect.innerHTML = '';
-    data.technicians.forEach((t) => {
-      techSelect.innerHTML += `<option value="${t.id}" class="bg-slate-900">${t.name} [${t.id}]</option>`;
-    });
+    if (techSelect) {
+      techSelect.innerHTML = '';
+      data.technicians.forEach((t) => {
+        techSelect.innerHTML += `<option value="${t.id}" class="bg-slate-900">${t.name} [${t.id}]</option>`;
+      });
+    }
   } catch (err) {
     console.error('Error populating lookups:', err);
   }
@@ -3242,7 +2460,7 @@ window.submitNewCatalogItem = async function (e) {
   }
 };
 
-async function deleteInventoryItem(item_code) {
+window.deleteInventoryItem = async function deleteInventoryItem(item_code) {
   if (!confirm(`Remove "${item_code}" from the catalog? This cannot be undone.`)) return;
   const baseUrl = document.getElementById('api-base').value;
   const secret = document.getElementById('admin-secret').value;
@@ -3263,7 +2481,7 @@ async function deleteInventoryItem(item_code) {
   }
 }
 
-function openRegisterWarrantyModal() {
+window.openRegisterWarrantyModal = function openRegisterWarrantyModal() {
   document.getElementById('modal-register-warranty').classList.remove('hidden');
   const baseUrl = document.getElementById('api-base').value;
   fetch(`${baseUrl}/api/admin/lookups`)
@@ -3373,7 +2591,7 @@ async function submitRaiseRMA(e) {
   }
 }
 
-async function loadRMAData() {
+window.loadRMAData = async function loadRMAData() {
   const baseUrl = document.getElementById('api-base').value;
   const warrantyBody = document.getElementById('warranty-list-body');
   const rmaBody = document.getElementById('rma-list-body');
@@ -3508,7 +2726,7 @@ function filterRMATable() {
   });
 }
 
-async function resolveRMAClaim(serialNumber) {
+window.resolveRMAClaim = async function resolveRMAClaim(serialNumber) {
   if (!confirm('Are you sure this distributor RMA claim has been resolved / replaced?')) return;
   const baseUrl = document.getElementById('api-base').value;
   try {
@@ -3531,11 +2749,11 @@ async function resolveRMAClaim(serialNumber) {
 
 let distributorsList = [];
 
-function openAddDistributorModal() {
+window.openAddDistributorModal = function openAddDistributorModal() {
   document.getElementById('modal-add-distributor').classList.remove('hidden');
 }
 
-function closeAddDistributorModal() {
+window.closeAddDistributorModal = function closeAddDistributorModal() {
   document.getElementById('modal-add-distributor').classList.add('hidden');
 }
 
@@ -3571,13 +2789,28 @@ async function submitAddDistributor(e) {
   }
 }
 
-async function loadDistributorsData() {
+window.loadDistributorsData = async function loadDistributorsData() {
   const baseUrl = document.getElementById('api-base').value;
   try {
     const res = await fetch(`${baseUrl}/api/admin/distributors/list`);
     if (!res.ok) throw new Error();
     distributorsList = await res.json();
     renderDistributorsTable(distributorsList);
+    // Update stats cards
+    const totalEl = document.getElementById('dist-total');
+    const activeEl = document.getElementById('dist-active');
+    const productsEl = document.getElementById('dist-products');
+    const contactEl = document.getElementById('dist-with-contact');
+    if (totalEl) totalEl.textContent = distributorsList.length;
+    if (activeEl) activeEl.textContent = distributorsList.length; // All loaded are active
+    if (productsEl) {
+      const allProducts = distributorsList.reduce((acc, d) => acc + (d.product_lines ? d.product_lines.split(',').length : 0), 0);
+      productsEl.textContent = allProducts;
+    }
+    if (contactEl) {
+      const withContact = distributorsList.filter(d => d.phone || d.email).length;
+      contactEl.textContent = withContact;
+    }
   } catch (err) {
     console.error('Failed to load distributors list', err);
   }
@@ -3588,28 +2821,27 @@ function renderDistributorsTable(list) {
   tbody.innerHTML = '';
   if (list.length === 0) {
     tbody.innerHTML =
-      '<tr><td colspan="6" class="py-4 text-center text-slate-600">No distributors registered.</td></tr>';
+      '<tr><td colspan="6" class="py-12 text-center text-slate-500">No distributors registered.</td></tr>';
     return;
   }
   list.forEach((d) => {
     tbody.innerHTML += `
-                    <tr class="border-b border-white/5 hover:bg-white/5 transition-all text-slate-300">
-                        <td class="py-2.5 font-bold text-amber-500">${d.name}</td>
-                        <td class="py-2.5 font-semibold text-white">${d.contact_person}</td>
-                        <td class="py-2.5 font-mono">${d.phone}</td>
-                        <td class="py-2.5 font-mono text-slate-400">${d.email}</td>
-                        <td class="py-2.5 text-slate-400">${d.product_lines}</td>
-                        <td class="py-2.5 text-right">
-                            <button onclick="deleteDistributor(${d.id})" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-1 text-xs">
-                                🗑️
-                            </button>
-                        </td>
-                    </tr>
-                `;
+      <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-all group">
+        <td class="px-5 py-3.5 font-bold text-amber-400">${d.name}</td>
+        <td class="px-5 py-3.5 font-semibold text-white">${d.contact_person}</td>
+        <td class="px-5 py-3.5 font-mono text-slate-300">${d.phone}</td>
+        <td class="px-5 py-3.5 font-mono text-slate-400">${d.email}</td>
+        <td class="px-5 py-3.5 text-slate-400">${d.product_lines}</td>
+        <td class="px-5 py-3.5 text-right">
+          <button onclick="deleteDistributor(${d.id})" class="text-rose-400/60 hover:text-rose-300 transition p-1 rounded-lg hover:bg-rose-500/10">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+          </button>
+        </td>
+      </tr>`;
   });
 }
 
-async function deleteDistributor(id) {
+window.deleteDistributor = async function deleteDistributor(id) {
   if (!confirm('Are you sure you want to delete this distributor?')) return;
   const baseUrl = document.getElementById('api-base').value;
   try {
@@ -3634,7 +2866,7 @@ function filterDistributors() {
   renderDistributorsTable(filtered);
 }
 
-async function loadCashSafeData() {
+window.loadCashSafeData = async function loadCashSafeData() {
   const baseUrl = document.getElementById('api-base').value;
   try {
     // Balance
@@ -3665,7 +2897,7 @@ async function loadCashSafeData() {
   } catch (e) {}
 }
 
-function changeCashPage(delta) {
+window.changeCashPage = function changeCashPage(delta) {
   cashPage += delta;
   renderCashTable();
 }
@@ -3823,7 +3055,7 @@ async function loadTechniciansData() {
   }
 }
 
-async function updateTechnicianStatus(id, active) {
+window.updateTechnicianStatus = async function updateTechnicianStatus(id, active) {
   const baseUrl = document.getElementById('api-base').value;
   const token = localStorage.getItem('admin_token');
   const role = document.getElementById(`role-${id}`).value;
@@ -3846,7 +3078,7 @@ async function updateTechnicianStatus(id, active) {
   }
 }
 
-async function saveTechnicianRole(id) {
+window.saveTechnicianRole = async function saveTechnicianRole(id) {
   const baseUrl = document.getElementById('api-base').value;
   const token = localStorage.getItem('admin_token');
   const role = document.getElementById(`role-${id}`).value;
@@ -4430,28 +3662,30 @@ async function loadJobsData() {
 }
 
 function calculateStats(jobs) {
-  // Stats counts
+  // Stats counts — only update if old dashboard elements exist
+  const activeEl = document.getElementById('stat-active-tickets');
+  const techsEl = document.getElementById('stat-techs-onsite');
+  const revenueEl = document.getElementById('stat-total-revenue');
+
+  if (!activeEl && !techsEl && !revenueEl) return; // New dashboard — skip
+
   const activeTickets = jobs.filter(
     (j) => j.status === 'Pending' || j.status === 'In Progress'
   ).length;
-  const pendingTickets = jobs.filter((j) => j.status === 'Pending').length;
-  document.getElementById('stat-active-tickets').textContent = activeTickets;
+  if (activeEl) activeEl.textContent = activeTickets;
 
-  // Assume 4 total engineers for mock display
   const activeTechs = new Set(
     jobs.filter((j) => j.status === 'In Progress').map((j) => j.technician_id)
   ).size;
-  document.getElementById('stat-techs-onsite').textContent = activeTechs;
+  if (techsEl) techsEl.textContent = activeTechs;
 
-  // Total revenue mock aggregation (could parse USD service receipts)
   let totalUSD = 0;
   jobs.forEach((j) => {
     if (j.status === 'Completed') {
-      // Try to extract some service charge (mock values for now)
       totalUSD += j.service_type === 'CCTV' ? 1380 : j.service_type === 'Networking' ? 120 : 250;
     }
   });
-  document.getElementById('stat-total-revenue').textContent = `$${totalUSD.toLocaleString()}`;
+  if (revenueEl) revenueEl.textContent = `$${totalUSD.toLocaleString()}`;
 }
 
 function updateDashboardGreeting() {
@@ -4498,7 +3732,7 @@ function renderDashboardJobs(jobs) {
   });
 }
 
-async function aiPolishJobNotes(jobId) {
+window.aiPolishJobNotes = async function aiPolishJobNotes(jobId) {
   if (!confirm(`Run Gemini AI to polish shorthand notes for ${jobId}?`)) return;
   try {
     const res = await fetch(`/api/admin/jobs/ai-polish`, {
@@ -4829,7 +4063,7 @@ function renderFullJobsTable(jobs) {
 let activeMapFilter = 'all';
 let currentMapTheme = 'dark';
 
-function setMapTheme(theme) {
+window.setMapTheme = function setMapTheme(theme) {
   currentMapTheme = theme;
   const btnDark = document.getElementById('map-theme-dark');
   const btnLight = document.getElementById('map-theme-light');
@@ -4854,21 +4088,21 @@ function setMapTheme(theme) {
   }
 }
 
-function mapCenterToHQ() {
+window.mapCenterToHQ = function mapCenterToHQ() {
   const hq = loadHQConfig();
   if (map) {
     map.setView([hq.lat, hq.lng], 13);
   }
 }
 
-function filterMapMarkers(status) {
+window.filterMapMarkers = function filterMapMarkers(status) {
   activeMapFilter = status;
 
   // Re-render markers with filter applied
   loadJobsData();
 }
 
-function centerToCrew(lat, lng) {
+window.centerToCrew = function centerToCrew(lat, lng) {
   if (map) {
     map.setView([lat, lng], 15);
     mapMarkers.forEach((m) => {
@@ -5016,6 +4250,10 @@ function renderAnalytics(jobs) {
     return;
   }
 
+  const statusCanvas = document.getElementById('chart-status');
+  const categoryCanvas = document.getElementById('chart-category');
+  if (!statusCanvas && !categoryCanvas) return; // Charts not in DOM (new dashboard)
+
   // Status counts
   const statuses = { Completed: 0, 'In Progress': 0, Pending: 0 };
   const categories = { CCTV: 0, Networking: 0, WiFi: 0, NAS: 0, 'General Maintenance': 0 };
@@ -5026,57 +4264,61 @@ function renderAnalytics(jobs) {
   });
 
   // 1. Status Chart
-  const ctxStatus = document.getElementById('chart-status').getContext('2d');
-  if (statusChartInstance) statusChartInstance.destroy();
-  statusChartInstance = new Chart(ctxStatus, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(statuses),
-      datasets: [
-        {
-          data: Object.values(statuses),
-          backgroundColor: ['#10b981', '#6366f1', '#f59e0b'],
-          borderWidth: 1,
-          borderColor: '#1e1b4b',
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
-    },
-  });
+  if (statusCanvas) {
+    const ctxStatus = statusCanvas.getContext('2d');
+    if (statusChartInstance) statusChartInstance.destroy();
+    statusChartInstance = new Chart(ctxStatus, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(statuses),
+        datasets: [
+          {
+            data: Object.values(statuses),
+            backgroundColor: ['#10b981', '#6366f1', '#f59e0b'],
+            borderWidth: 1,
+            borderColor: '#1e1b4b',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+      },
+    });
+  }
 
   // 2. Category Chart
-  const ctxCategory = document.getElementById('chart-category').getContext('2d');
-  if (categoryChartInstance) categoryChartInstance.destroy();
-  categoryChartInstance = new Chart(ctxCategory, {
-    type: 'bar',
-    data: {
-      labels: Object.keys(categories),
-      datasets: [
-        {
-          label: 'Tickets Deployed',
-          data: Object.values(categories),
-          backgroundColor: '#f59e0b',
-          borderRadius: 6,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
-        y: {
-          grid: { color: 'rgba(255,255,255,0.05)' },
-          ticks: { color: '#94a3b8', font: { size: 9 } },
-        },
+  if (categoryCanvas) {
+    const ctxCategory = categoryCanvas.getContext('2d');
+    if (categoryChartInstance) categoryChartInstance.destroy();
+    categoryChartInstance = new Chart(ctxCategory, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(categories),
+        datasets: [
+          {
+            label: 'Tickets Deployed',
+            data: Object.values(categories),
+            backgroundColor: '#f59e0b',
+            borderRadius: 6,
+          },
+        ],
       },
-      plugins: { legend: { display: false } },
-    },
-  });
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+          y: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#94a3b8', font: { size: 9 } },
+          },
+        },
+        plugins: { legend: { display: false } },
+      },
+    });
+  }
 }
 
 async function sendAdminRequest(endpoint, payload) {
@@ -5104,7 +4346,7 @@ async function sendAdminRequest(endpoint, payload) {
 let activeCardFilter = 'all';
 let activeClientDirectoryTab = 'corporate';
 
-async function loadClientsData() {
+window.loadClientsData = async function loadClientsData() {
   const baseUrl = document.getElementById('api-base').value;
   const token = localStorage.getItem('admin_token');
   try {
@@ -5581,6 +4823,30 @@ window.openAdminPhoto = function (event, jobId, fieldName) {
     });
 };
 
+// ── Clients Directory: new module (admin-clients.js) ─────────────────────────
+window.cdLoadData = cdLoadData;
+window.cdOpenAddForm = cdOpenAddForm;
+window.cdEdit = cdEdit;
+window.cdDelete = cdDelete;
+window.cdSubmit = cdSubmit;
+window.cdResetForm = cdResetForm;
+window.cdFilterType = cdFilterType;
+window.cdFilterStatus = cdFilterStatus;
+window.cdFilterPriority = cdFilterPriority;
+window.cdFilterTag = cdFilterTag;
+window.cdDebouncedSearch = cdDebouncedSearch;
+window.cdSetView = cdSetView;
+window.cdToggleSelect = cdToggleSelect;
+window.cdToggleSelectAll = cdToggleSelectAll;
+window.cdBulkDelete = cdBulkDelete;
+window.cdExportExcel = cdExportExcel;
+window.cdShowDetail = cdShowDetail;
+window.cdCloseDetail = cdCloseDetail;
+window.cdEditFromDetail = cdEditFromDetail;
+window.cdDeleteFromDetail = cdDeleteFromDetail;
+window.cdCloseForm = cdCloseForm;
+window.cdInitClients = cdInitClients;
+
 function submitJob(e) {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target));
@@ -5588,7 +4854,7 @@ function submitJob(e) {
   e.target.reset();
 }
 
-async function generateServiceReceiptPDF() {
+window.generateServiceReceiptPDF = async function generateServiceReceiptPDF() {
   const jobId = document.getElementById('pdf-target-job-id').value.trim();
   const baseUrl = document.getElementById('api-base').value;
 
@@ -6139,7 +5405,7 @@ let lastSuggestedTechId = '';
 let copilotMap = null;
 let copilotMarkers = [];
 
-function setCopilotTab(tab) {
+window.setCopilotTab = function setCopilotTab(tab) {
   // Toggles between dispatcher, routes, and chat
   ['dispatcher', 'routes', 'chat'].forEach((t) => {
     const btn = document.getElementById(`copilot-tab-${t}`);
@@ -6162,7 +5428,7 @@ function setCopilotTab(tab) {
 }
 
 // 1. Auto-Dispatcher
-async function runAIDispatcher() {
+window.runAIDispatcher = async function runAIDispatcher() {
   const rawText = document.getElementById('ai-dispatch-input').value.trim();
   if (!rawText) return showToast('Please enter a description', 'warning');
 
@@ -6202,7 +5468,7 @@ async function runAIDispatcher() {
   }
 }
 
-function applyAIDispatchSuggestions() {
+window.applyAIDispatchSuggestions = function applyAIDispatchSuggestions() {
   // Fill in the Service Tickets dispatch form
   const form = document.getElementById('job-form');
   if (form) {
@@ -6260,7 +5526,7 @@ async function populateRouteTechSelector() {
   } catch (e) {}
 }
 
-async function optimizeTechRoute() {
+window.optimizeTechRoute = async function optimizeTechRoute() {
   const techId = document.getElementById('ai-route-tech').value;
   const routeContainer = document.getElementById('ai-route-order');
 
@@ -6324,12 +5590,12 @@ async function optimizeTechRoute() {
 }
 
 // 3. Database Chat Copilot
-async function askCopilot(question) {
+window.askCopilot = async function askCopilot(question) {
   document.getElementById('copilot-chat-input').value = question;
   sendCopilotChat();
 }
 
-async function sendCopilotChat() {
+window.sendCopilotChat = async function sendCopilotChat() {
   const inputEl = document.getElementById('copilot-chat-input');
   const question = inputEl.value.trim();
   if (!question) return;
@@ -6443,7 +5709,7 @@ let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
 
-async function toggleVoiceRecording() {
+window.toggleVoiceRecording = async function toggleVoiceRecording() {
   const btn = document.getElementById('btn-record-voice');
   const icon = document.getElementById('record-icon');
   const text = document.getElementById('record-text');
@@ -6507,112 +5773,22 @@ async function toggleVoiceRecording() {
   }
 }
 
-async function loadServiceFeesData() {
-  const tbody = document.getElementById('service-fees-body');
-  if (!tbody) return;
-  const baseUrl = document.getElementById('api-base').value;
-
-  try {
-    const res = await fetch(`${baseUrl}/api/service-fees`);
-    const fees = await res.json();
-
-    tbody.innerHTML = '';
-    if (fees.length === 0) {
-      tbody.innerHTML =
-        '<tr><td colspan="4" class="py-4 text-center text-slate-600">No service rates configured yet.</td></tr>';
-      return;
-    }
-
-    fees.forEach((f) => {
-      tbody.innerHTML += `
-                        <tr class="border-b border-white/5 hover:bg-white/5 transition-all align-middle text-slate-300">
-                            <td class="py-2.5 font-bold">${f.service_type}</td>
-                            <td class="py-2.5 font-mono text-emerald-400 font-bold">${f.currency} ${f.fee_amount.toFixed(2)}</td>
-                            <td class="py-2.5 text-slate-400">${f.description || '-'}</td>
-                            <td class="py-2.5 text-right space-x-1">
-                                <button onclick="editServiceFee(${f.id}, '${f.service_type}', ${f.fee_amount}, '${f.currency}', '${(f.description || '').replace(/'/g, "\\'")}')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg">Edit</button>
-                                <button onclick="deleteServiceFee(${f.id})" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg">Delete</button>
-                            </td>
-                        </tr>
-                    `;
-    });
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-rose-400">Failed to load rates: ${err.message}</td></tr>`;
-  }
-}
-
-window.editServiceFee = function (id, serviceType, amount, currency, desc) {
-  document.getElementById('fee-id').value = id;
-  document.getElementById('fee-service-type').value = serviceType;
-  document.getElementById('fee-amount').value = amount;
-  document.getElementById('fee-currency').value = currency;
-  document.getElementById('fee-desc').value = desc;
-
-  document.getElementById('fee-form-title').innerHTML = '<span>💵</span> Edit Service Rate';
-  document.getElementById('btn-fee-reset').classList.remove('hidden');
-};
-
-window.resetFeeForm = function () {
-  document.getElementById('fee-id').value = '';
-  document.getElementById('service-fee-form').reset();
-  document.getElementById('fee-form-title').innerHTML = '<span>💵</span> Add Service Rate';
-  document.getElementById('btn-fee-reset').classList.add('hidden');
-};
-
-window.submitServiceFee = async function (e) {
-  e.preventDefault();
-  const id = document.getElementById('fee-id').value;
-  const service_type = document.getElementById('fee-service-type').value;
-  const fee_amount = parseFloat(document.getElementById('fee-amount').value);
-  const currency = document.getElementById('fee-currency').value;
-  const description = document.getElementById('fee-desc').value.trim();
-
-  const baseUrl = document.getElementById('api-base').value;
-  const token = localStorage.getItem('admin_token');
-  const action = id ? 'update' : 'create';
-
-  try {
-    const res = await fetch(`${baseUrl}/api/admin/service-fees/manage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ action, id, service_type, fee_amount, currency, description }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      alert(data.message || 'Service rate saved successfully.');
-      resetFeeForm();
-      refreshDashboardData();
-    } else {
-      showToast('Error: ' + data.error, 'error');
-    }
-  } catch (err) {
-    showToast('Connection error', 'error');
-  }
-};
-
-window.deleteServiceFee = async function (id) {
-  if (!confirm('Are you sure you want to delete this service rate?')) return;
-
-  const baseUrl = document.getElementById('api-base').value;
-  const token = localStorage.getItem('admin_token');
-
-  try {
-    const res = await fetch(`${baseUrl}/api/admin/service-fees/manage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ action: 'delete', id }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      showToast('Rate deleted!', 'success');
-      refreshDashboardData();
-    } else {
-      showToast('Error: ' + data.error, 'error');
-    }
-  } catch (err) {
-    showToast('Connection error', 'error');
-  }
-};
+// ── Service Fees: delegated to admin-service-fees.js ──────────────────────
+window.sfLoadData = sfLoadData;
+window.sfOpenAddForm = sfOpenAddForm;
+window.sfEdit = sfEdit;
+window.sfDelete = sfDelete;
+window.sfSubmit = sfSubmit;
+window.sfResetForm = sfResetForm;
+window.sfFilterCategory = sfFilterCategory;
+window.sfDebouncedSearch = sfDebouncedSearch;
+window.sfToggleSelect = sfToggleSelect;
+window.sfToggleSelectAll = sfToggleSelectAll;
+window.sfBulkDelete = sfBulkDelete;
+window.sfExportExcel = sfExportExcel;
+window.sfToggleActive = sfToggleActive;
+window.sfToggleForm = sfToggleForm;
+window.sfInitServiceFees = sfInitServiceFees;
 
 window.handlePasswordLogin = handlePasswordLogin;
 window.setLoginTab = setLoginTab;
@@ -9107,6 +8283,527 @@ function generateExcelWorkbook(jobs, lookups, safe, style, selectedReports) {
 
   return wb;
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// SITE SURVEY & QUOTATION WORKFLOW HANDLERS v2
+// ─────────────────────────────────────────────────────────────────────
+
+// Tab switching
+window.switchSurveyTab = function(tab) {
+  document.getElementById('survey-tab-surveys').classList.toggle('hidden', tab !== 'surveys');
+  document.getElementById('survey-tab-quotations').classList.toggle('hidden', tab !== 'quotations');
+  document.getElementById('stab-surveys').className = tab === 'surveys' ? 'px-4 py-2 text-xs font-bold text-white bg-white/10 rounded-xl transition' : 'px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl transition';
+  document.getElementById('stab-quotations').className = tab === 'quotations' ? 'px-4 py-2 text-xs font-bold text-white bg-white/10 rounded-xl transition' : 'px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl transition';
+  if (tab === 'surveys') loadSurveysData();
+  else loadQuotationsData();
+};
+
+// ── Surveys ─────────────────────────────────────────────────────────────────
+window.loadSurveysData = async function() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/surveys`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const json = await res.json();
+    const payload = json.data || json;
+    const surveys = payload.surveys || [];
+    const counts = payload.counts || {};
+
+    // Update pipeline counts
+    const dEl = document.getElementById('survey-count-draft');
+    const cEl = document.getElementById('survey-count-completed');
+    if (dEl) dEl.textContent = counts.Draft || counts.draft || 0;
+    if (cEl) cEl.textContent = counts.Completed || counts.completed || 0;
+
+    const tbody = document.getElementById('surveys-table-body');
+    if (!tbody) return;
+    if (!surveys || surveys.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-500 italic">No site surveys found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = surveys.map(s => {
+      const statusColors = { Draft: 'bg-teal-500/10 text-teal-400 border-teal-500/20', Completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', Quoted: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20', Cancelled: 'bg-slate-500/10 text-slate-400 border-slate-500/20' };
+      const badge = statusColors[s.status] || statusColors.Draft;
+      return `
+        <tr class="hover:bg-white/5 border-b border-white/5 cursor-pointer" onclick="openSurveyDetail('${s.id}')">
+          <td class="font-mono text-xs font-bold text-amber-400">${s.id}</td>
+          <td class="font-semibold text-white text-xs">${escapeHTML(s.client_name || s.client_id)}</td>
+          <td class="text-xs text-slate-300">${s.survey_type}</td>
+          <td class="font-mono text-xs text-center text-slate-300">${s.camera_count || 0}</td>
+          <td class="font-mono text-xs text-center text-slate-300">${s.estimated_cable_meters || 0}m</td>
+          <td><span class="px-2 py-0.5 rounded-full text-[10px] border ${badge}">${s.status}</span>${s.approval_status === 'Approved' ? ' <span class="text-[10px] text-emerald-400 font-bold ml-1">✓</span>' : ''}</td>
+          <td onclick="event.stopPropagation()">
+            <div class="flex items-center gap-1">
+              <button onclick="openSurveyDetail('${s.id}')" class="px-2 py-1 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-bold rounded-lg transition">View</button>
+              <button onclick="generateBOMAndCreateQuote('${s.id}')" class="px-2 py-1 bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-bold rounded-lg transition">BOM → Quote</button>
+              ${s.approval_status !== 'Approved' && s.status === 'Completed' ? `<button onclick="approveSurvey('${s.id}')" class="px-2 py-1 bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition">Approve</button>` : ''}
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  } catch (e) { console.error('Load surveys error:', e); }
+};
+
+window.openSurveyDetail = async function(surveyId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/surveys/${surveyId}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const s = await res.json();
+    document.getElementById('survey-detail-id').textContent = s.id;
+
+    const statusColors = { Draft: 'bg-teal-500/10 text-teal-400', Completed: 'bg-emerald-500/10 text-emerald-400', Quoted: 'bg-indigo-500/10 text-indigo-400' };
+    const photos = s.photos || [];
+    const checklist = typeof s.checklist_data === 'string' ? JSON.parse(s.checklist_data || '{}') : (s.checklist_data || {});
+
+    document.getElementById('survey-detail-content').innerHTML = `
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <div><span class="text-[10px] text-slate-400 uppercase">Client</span><p class="text-white font-semibold">${escapeHTML(s.client_name || s.client_id)}</p></div>
+          <div><span class="text-[10px] text-slate-400 uppercase">Technician</span><p class="text-white">${escapeHTML(s.technician_name || 'Unassigned')}</p></div>
+          <div><span class="text-[10px] text-slate-400 uppercase">Type</span><p class="text-white">${s.survey_type}</p></div>
+          <div><span class="text-[10px] text-slate-400 uppercase">Status</span><p><span class="px-2 py-0.5 rounded-full text-[10px] border ${statusColors[s.status] || ''}">${s.status}</span></p></div>
+        </div>
+        <div class="space-y-2">
+          <div><span class="text-[10px] text-slate-400 uppercase">Cameras</span><p class="text-white font-mono font-bold">${s.camera_count || 0}</p></div>
+          <div><span class="text-[10px] text-slate-400 uppercase">Cable</span><p class="text-white font-mono">${s.estimated_cable_meters || 0}m ${s.cable_type || ''}</p></div>
+          <div><span class="text-[10px] text-slate-400 uppercase">Building</span><p class="text-white">${escapeHTML(s.building_type || 'N/A')}</p></div>
+          <div><span class="text-[10px] text-slate-400 uppercase">Mounting</span><p class="text-white">${escapeHTML(s.mounting_type || 'N/A')}</p></div>
+        </div>
+      </div>
+      ${s.site_address ? `<div><span class="text-[10px] text-slate-400 uppercase">Address</span><p class="text-white">${escapeHTML(s.site_address)}</p></div>` : ''}
+      ${s.contact_name ? `<div class="grid grid-cols-2 gap-4"><div><span class="text-[10px] text-slate-400 uppercase">Contact</span><p class="text-white">${escapeHTML(s.contact_name)}</p></div><div><span class="text-[10px] text-slate-400 uppercase">Phone</span><p class="text-white">${escapeHTML(s.contact_phone || '')}</p></div></div>` : ''}
+      ${s.power_source_notes ? `<div><span class="text-[10px] text-slate-400 uppercase">Power</span><p class="text-white">${escapeHTML(s.power_source_notes)}</p></div>` : ''}
+      ${s.notes ? `<div><span class="text-[10px] text-slate-400 uppercase">Notes</span><p class="text-white">${escapeHTML(s.notes)}</p></div>` : ''}
+      <div class="pt-2 border-t border-white/5">
+        <span class="text-[10px] text-slate-400 uppercase block mb-2">Technical Checklist</span>
+        <div class="grid grid-cols-2 gap-1 text-[11px]">
+          ${Object.entries(checklist).map(([k, v]) => `<div class="${v ? 'text-emerald-400' : 'text-slate-500'}">${v ? '✓' : '✗'} ${k.replace(/_/g, ' ')}</div>`).join('')}
+        </div>
+      </div>
+      <div class="pt-2 border-t border-white/5">
+        <span class="text-[10px] text-slate-400 uppercase block mb-2">Site Photos (${photos.length})</span>
+        ${photos.length > 0 ? `<div class="flex gap-2 overflow-x-auto pb-2">${photos.map(p => `<img src="${p.photo_url}" class="h-20 rounded-lg border border-white/10 object-cover flex-shrink-0" title="${p.photo_type}" />`).join('')}</div>` : '<p class="text-slate-500 text-[11px] italic">No photos uploaded yet</p>'}
+      </div>
+      <div class="flex gap-2 pt-3 border-t border-white/5">
+        <button onclick="generateBOMAndCreateQuote('${s.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">Generate BOM → Create Quote</button>
+        ${s.status !== 'Completed' ? '' : s.approval_status !== 'Approved' ? `<button onclick="approveSurvey('${s.id}'); closeModal('modal-survey-detail');" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">Approve Survey</button>` : ''}
+      </div>
+    `;
+    document.getElementById('modal-survey-detail').classList.remove('hidden');
+  } catch (e) { console.error('Survey detail error:', e); }
+};
+
+window.toggleSurveyClientNewInput = function(val) {
+  const el = document.getElementById('modal-survey-client-new-input');
+  if (!el) return;
+  if (val === '__NEW__') { el.classList.remove('hidden'); el.required = true; el.focus(); }
+  else { el.classList.add('hidden'); el.required = false; }
+};
+
+window.openNewSurveyModal = async function() {
+  const modal = document.getElementById('modal-new-survey');
+  if (!modal) return;
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/lookups`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const data = await res.json();
+      const techSel = document.getElementById('modal-survey-technician');
+      if (techSel && data.technicians) techSel.innerHTML = '<option value="">Select Tech...</option>' + data.technicians.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+      const clientSel = document.getElementById('modal-survey-client-select');
+      if (clientSel && data.clients) clientSel.innerHTML = '<option value="">-- Select Client --</option>' + data.clients.map(c => `<option value="${c.id}">${c.company_name}</option>`).join('') + '<option value="__NEW__">➕ Create New...</option>';
+    }
+  } catch (e) {}
+  toggleSurveyClientNewInput('');
+  const dt = document.getElementById('modal-survey-scheduled-date');
+  if (dt) { const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); dt.value = now.toISOString().slice(0, 16); }
+  modal.classList.remove('hidden');
+};
+
+window.submitNewSurvey = async function(e) {
+  e.preventDefault();
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  const clientVal = document.getElementById('modal-survey-client-select').value;
+  const newClient = document.getElementById('modal-survey-client-new-input').value.trim();
+  let clientId = clientVal === '__NEW__' ? newClient : clientVal;
+  if (!clientId) { if (typeof showToast === 'function') showToast('Please select a client', 'warning'); return; }
+  try {
+    const res = await fetch(`${baseUrl}/api/surveys`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        client_id: clientId, technician_id: document.getElementById('modal-survey-technician').value,
+        scheduled_date: document.getElementById('modal-survey-scheduled-date').value,
+        survey_type: document.getElementById('modal-survey-type').value,
+        camera_count: parseInt(document.getElementById('modal-survey-cameras').value || '0'),
+        estimated_cable_meters: parseFloat(document.getElementById('modal-survey-cable-meters').value || '0'),
+        site_address: document.getElementById('modal-survey-address')?.value || null,
+        contact_name: document.getElementById('modal-survey-contact-name')?.value || null,
+        contact_phone: document.getElementById('modal-survey-contact-phone')?.value || null
+      })
+    });
+    if (res.ok) {
+      if (typeof showToast === 'function') showToast('Survey created & technician dispatched!', 'success');
+      closeModal('modal-new-survey'); loadSurveysData();
+    } else { const d = await res.json(); if (typeof showToast === 'function') showToast(d.error || 'Failed', 'error'); }
+  } catch (err) { console.error('Submit survey error:', err); }
+};
+
+window.approveSurvey = async function(surveyId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/surveys/${surveyId}/approve`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { if (typeof showToast === 'function') showToast('Survey approved!', 'success'); loadSurveysData(); }
+  } catch (e) { console.error('Approve error:', e); }
+};
+
+window.generateBOMAndCreateQuote = async function(surveyId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  if (typeof showToast === 'function') showToast('Generating BOM...', 'info', 2000);
+  try {
+    // Get BOM
+    const bomRes = await fetch(`${baseUrl}/api/surveys/${surveyId}/generate-bom`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
+    const bomData = await bomRes.json();
+    if (!bomRes.ok) { if (typeof showToast === 'function') showToast(bomData.error || 'BOM failed', 'error'); return; }
+    const bom = bomData.data || bomData;
+
+    // Get survey for client
+    const survRes = await fetch(`${baseUrl}/api/surveys/${surveyId}`, { headers: { Authorization: `Bearer ${token}` } });
+    const survey = await survRes.json();
+
+    // Create quotation with items
+    const items = (bom.items || []).map(i => ({ name: i.name, item_code: i.item_code, category: i.category, quantity: i.quantity, unit_price: i.unit_price, unit: i.unit }));
+    const createRes = await fetch(`${baseUrl}/api/quotations`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ client_id: survey.client_id, survey_id: surveyId, items, valid_days: 14 })
+    });
+    const createData = await createRes.json();
+    if (createRes.ok) {
+      if (typeof showToast === 'function') showToast(`Quotation ${createData.id} created with ${items.length} items!`, 'success');
+      closeModal('modal-survey-detail');
+      switchSurveyTab('quotations');
+      // Open detail
+      setTimeout(() => openQuotationDetail(createData.id), 300);
+    } else { if (typeof showToast === 'function') showToast(createData.error || 'Failed to create quotation', 'error'); }
+  } catch (e) { console.error('BOM→Quote error:', e); }
+};
+
+// ── Quotations ──────────────────────────────────────────────────────────────
+window.loadQuotationsData = async function() {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const json = await res.json();
+    const payload = json.data || json;
+    const quotes = payload.quotations || [];
+    const counts = payload.counts || {};
+
+    const aEl = document.getElementById('quote-count-active');
+    const apEl = document.getElementById('quote-count-approved');
+    if (aEl) aEl.textContent = (counts.active || counts.Active || 0);
+    if (apEl) apEl.textContent = (counts.approved || counts.Approved || 0);
+
+    const tbody = document.getElementById('quotations-table-body');
+    if (!tbody) return;
+    if (!quotes || quotes.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-500 italic">No quotations found.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = quotes.map(q => {
+      const sc = { Draft: 'bg-amber-500/10 text-amber-400 border-amber-500/20', Sent: 'bg-sky-500/10 text-sky-400 border-sky-500/20', Approved: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', Rejected: 'bg-rose-500/10 text-rose-400 border-rose-500/20', Converted: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' };
+      return `
+        <tr class="hover:bg-white/5 border-b border-white/5 cursor-pointer" onclick="openQuotationDetail('${q.id}')">
+          <td class="font-mono text-xs font-bold text-emerald-400">${q.id}</td>
+          <td class="font-semibold text-white text-xs">${escapeHTML(q.client_name || q.client_id)}</td>
+          <td class="text-xs text-slate-400">${q.survey_id_link ? '🔗' : '—'}</td>
+          <td class="font-mono text-xs font-bold text-white">$${(q.total_amount || 0).toFixed(2)}</td>
+          <td><span class="px-2 py-0.5 rounded-full text-[10px] border ${sc[q.status] || sc.Draft}">${q.status}</span></td>
+          <td onclick="event.stopPropagation()">
+            <div class="flex items-center gap-1">
+              <button onclick="openQuotationDetail('${q.id}')" class="px-2 py-1 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-bold rounded-lg transition">View</button>
+              ${q.status === 'Draft' ? `<button onclick="sendQuotation('${q.id}')" class="px-2 py-1 bg-sky-600/80 hover:bg-sky-500 text-white text-[10px] font-bold rounded-lg transition">Send</button>` : ''}
+              ${q.status === 'Approved' ? `<button onclick="convertQuotationToJob('${q.id}')" class="px-2 py-1 bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition">→ Job</button>` : ''}
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  } catch (e) { console.error('Load quotations error:', e); }
+};
+
+window.openQuotationDetail = async function(quotationId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const q = await res.json();
+    document.getElementById('quote-detail-id').textContent = q.id;
+    const statusEl = document.getElementById('quote-detail-status');
+    statusEl.textContent = q.status;
+    statusEl.className = `text-[10px] px-2 py-0.5 rounded-full border ${{ Draft: 'bg-amber-500/10 text-amber-400 border-amber-500/20', Sent: 'bg-sky-500/10 text-sky-400 border-sky-500/20', Approved: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', Converted: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' }[q.status] || ''}`;
+
+    const items = q.line_items || [];
+    const itemsHtml = items.length > 0 ? items.map(i => `
+      <tr class="border-b border-white/5">
+        <td class="py-2 text-white">${escapeHTML(i.name)}${i.item_code ? `<span class="text-[10px] text-slate-500 ml-1">${i.item_code}</span>` : ''}</td>
+        <td class="py-2 text-center text-slate-300">${i.quantity}</td>
+        <td class="py-2 text-center text-slate-400">${i.unit}</td>
+        <td class="py-2 text-right text-slate-300">$${i.unit_price.toFixed(2)}</td>
+        <td class="py-2 text-right text-white font-semibold">$${(i.quantity * i.unit_price).toFixed(2)}</td>
+        <td class="py-2 text-right" onclick="event.stopPropagation()">
+          <div class="flex items-center justify-end gap-1">
+            <button onclick="editLineItem('${q.id}','${i.id}')" class="text-[10px] text-indigo-400 hover:underline">Edit</button>
+            <button onclick="deleteLineItem('${q.id}','${i.id}')" class="text-[10px] text-rose-400 hover:underline">Del</button>
+          </div>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="6" class="py-4 text-center text-slate-500 italic">No line items. Add items or generate from survey BOM.</td></tr>';
+
+    document.getElementById('quote-detail-content').innerHTML = `
+      <div class="grid grid-cols-2 gap-4 text-xs">
+        <div class="space-y-1"><span class="text-[10px] text-slate-400 uppercase">Client</span><p class="text-white font-semibold">${escapeHTML(q.client_name || q.client_id)}</p></div>
+        <div class="space-y-1"><span class="text-[10px] text-slate-400 uppercase">Prepared By</span><p class="text-white">${escapeHTML(q.prepared_by_name || 'N/A')}</p></div>
+        <div class="space-y-1"><span class="text-[10px] text-slate-400 uppercase">Valid Until</span><p class="text-white">${q.valid_until || '14 days'}</p></div>
+        <div class="space-y-1"><span class="text-[10px] text-slate-400 uppercase">Currency</span><p class="text-white">${q.currency || 'USD'}</p></div>
+      </div>
+      ${q.survey_id_link ? `<div class="text-xs"><span class="text-[10px] text-slate-400 uppercase">Linked Survey</span><p class="text-amber-400 font-mono">${q.survey_id_link}</p></div>` : ''}
+
+      <div class="pt-3 border-t border-white/5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10px] text-slate-400 uppercase font-bold">Line Items</span>
+          ${q.status !== 'Converted' ? `<button onclick="openAddLineItem('${q.id}')" class="text-[10px] text-emerald-400 hover:underline font-bold">+ Add Item</button>` : ''}
+        </div>
+        <table class="w-full text-xs">
+          <thead><tr class="text-[10px] text-slate-400 uppercase border-b border-white/5">
+            <th class="text-left py-1">Item</th><th class="text-center py-1">Qty</th><th class="text-center py-1">Unit</th><th class="text-right py-1">Price</th><th class="text-right py-1">Total</th><th class="w-16"></th>
+          </tr></thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+      </div>
+
+      <div class="pt-3 border-t border-white/5 grid grid-cols-2 gap-4">
+        <div class="space-y-1">
+          ${q.terms_conditions ? `<div><span class="text-[10px] text-slate-400 uppercase">Terms</span><p class="text-slate-300">${escapeHTML(q.terms_conditions)}</p></div>` : ''}
+          ${q.quotation_notes ? `<div><span class="text-[10px] text-slate-400 uppercase">Notes</span><p class="text-slate-300">${escapeHTML(q.quotation_notes)}</p></div>` : ''}
+        </div>
+        <div class="bg-white/5 rounded-xl p-3 space-y-1 text-right">
+          <div class="flex justify-between text-xs"><span class="text-slate-400">Subtotal</span><span class="text-white">$${(q.subtotal || 0).toFixed(2)}</span></div>
+          <div class="flex justify-between text-xs"><span class="text-slate-400">Discount ${q.discount_pct ? `(${q.discount_pct}%)` : ''}</span><span class="text-rose-400">-$${(q.discount || 0).toFixed(2)}</span></div>
+          <div class="flex justify-between text-xs"><span class="text-slate-400">Tax ${q.tax_pct ? `(${q.tax_pct}%)` : ''}</span><span class="text-white">$${(q.tax || 0).toFixed(2)}</span></div>
+          <div class="flex justify-between text-sm font-bold border-t border-white/10 pt-1 mt-1"><span class="text-white">Total</span><span class="text-emerald-400">$${(q.total_amount || 0).toFixed(2)}</span></div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-3 border-t border-white/5 flex-wrap">
+        ${q.status === 'Draft' ? `<button onclick="sendQuotation('${q.id}')" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">Send to Client</button>` : ''}
+        ${q.status === 'Draft' ? `<button onclick="saveQuotationDrive('${q.id}')" class="bg-amber-600/80 hover:bg-amber-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">Save to Drive</button>` : ''}
+        ${q.status === 'Approved' ? `<button onclick="convertQuotationToJob('${q.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">Convert to Job</button>` : ''}
+        ${q.status === 'Approved' ? `<button onclick="convertQuotationToInvoice('${q.id}')" class="bg-indigo-600/80 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition">Convert to Invoice</button>` : ''}
+        ${q.status !== 'Converted' && q.status !== 'Approved' && q.survey_id_link ? `<button onclick="populateFromSurvey('${q.id}')" class="bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold px-4 py-2 rounded-xl border border-white/10 transition">Populate from Survey BOM</button>` : ''}
+      </div>
+    `;
+    document.getElementById('modal-quotation-detail').classList.remove('hidden');
+  } catch (e) { console.error('Quotation detail error:', e); }
+};
+
+window.toggleQuoteClientNewInput = function(val) {
+  const el = document.getElementById('modal-quote-client-new-input');
+  if (!el) return;
+  if (val === '__NEW__') { el.classList.remove('hidden'); el.required = true; el.focus(); }
+  else { el.classList.add('hidden'); el.required = false; }
+};
+
+window.openNewQuotationModal = async function() {
+  const modal = document.getElementById('modal-new-quotation');
+  if (!modal) return;
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/lookups`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const data = await res.json();
+      const clientSel = document.getElementById('modal-quote-client-select');
+      if (clientSel && data.clients) clientSel.innerHTML = '<option value="">-- Select Client --</option>' + data.clients.map(c => `<option value="${c.id}">${c.company_name}</option>`).join('') + '<option value="__NEW__">➕ Create New...</option>';
+      // Populate survey link dropdown
+      const survSel = document.getElementById('modal-quote-survey-link');
+      if (survSel) {
+        const sRes = await fetch(`${baseUrl}/api/surveys`, { headers: { Authorization: `Bearer ${token}` } });
+        const sData = await sRes.json();
+        const surveys = sData.surveys || sData || [];
+        survSel.innerHTML = '<option value="">None</option>' + surveys.filter(s => s.status === 'Completed').map(s => `<option value="${s.id}">${s.id} - ${s.client_name || s.client_id}</option>`).join('');
+      }
+    }
+  } catch (e) {}
+  toggleQuoteClientNewInput('');
+  modal.classList.remove('hidden');
+};
+
+window.submitNewQuotation = async function(e) {
+  e.preventDefault();
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  const clientVal = document.getElementById('modal-quote-client-select').value;
+  const newClient = document.getElementById('modal-quote-client-new-input').value.trim();
+  let clientId = clientVal === '__NEW__' ? newClient : clientVal;
+  if (!clientId) { if (typeof showToast === 'function') showToast('Please select a client', 'warning'); return; }
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        client_id: clientId,
+        survey_id: document.getElementById('modal-quote-survey-link')?.value || null,
+        valid_days: parseInt(document.getElementById('modal-quote-valid-days').value || '14'),
+        discount_pct: parseFloat(document.getElementById('modal-quote-discount-pct')?.value || '0'),
+        tax_pct: parseFloat(document.getElementById('modal-quote-tax-pct')?.value || '0'),
+        terms_conditions: document.getElementById('modal-quote-terms')?.value || null
+      })
+    });
+    if (res.ok) {
+      const d = await res.json();
+      if (typeof showToast === 'function') showToast(`Quotation ${d.id} created!`, 'success');
+      closeModal('modal-new-quotation');
+      switchSurveyTab('quotations');
+      setTimeout(() => openQuotationDetail(d.id), 300);
+    } else { const d = await res.json(); if (typeof showToast === 'function') showToast(d.error || 'Failed', 'error'); }
+  } catch (err) { console.error('Submit quotation error:', err); }
+};
+
+// ── Line Items ──────────────────────────────────────────────────────────────
+window.openAddLineItem = function(quotationId) {
+  document.getElementById('line-item-quotation-id').value = quotationId;
+  document.getElementById('line-item-edit-id').value = '';
+  document.getElementById('line-item-modal-title').textContent = 'Add Line Item';
+  document.getElementById('line-item-name').value = '';
+  document.getElementById('line-item-code').value = '';
+  document.getElementById('line-item-category').value = 'hardware';
+  document.getElementById('line-item-qty').value = '1';
+  document.getElementById('line-item-price').value = '0';
+  document.getElementById('line-item-unit').value = 'pc';
+  document.getElementById('modal-line-item').classList.remove('hidden');
+};
+
+window.editLineItem = async function(quotationId, itemId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}`, { headers: { Authorization: `Bearer ${token}` } });
+    const q = await res.json();
+    const item = (q.line_items || []).find(i => i.id === itemId);
+    if (!item) return;
+    document.getElementById('line-item-quotation-id').value = quotationId;
+    document.getElementById('line-item-edit-id').value = itemId;
+    document.getElementById('line-item-modal-title').textContent = 'Edit Line Item';
+    document.getElementById('line-item-name').value = item.name;
+    document.getElementById('line-item-code').value = item.item_code || '';
+    document.getElementById('line-item-category').value = item.category || 'hardware';
+    document.getElementById('line-item-qty').value = item.quantity;
+    document.getElementById('line-item-price').value = item.unit_price;
+    document.getElementById('line-item-unit').value = item.unit || 'pc';
+    document.getElementById('modal-line-item').classList.remove('hidden');
+  } catch (e) { console.error('Edit item error:', e); }
+};
+
+window.submitLineItem = async function(e) {
+  e.preventDefault();
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  const qId = document.getElementById('line-item-quotation-id').value;
+  const editId = document.getElementById('line-item-edit-id').value;
+  const body = {
+    name: document.getElementById('line-item-name').value,
+    item_code: document.getElementById('line-item-code').value || null,
+    category: document.getElementById('line-item-category').value,
+    quantity: parseFloat(document.getElementById('line-item-qty').value || '1'),
+    unit_price: parseFloat(document.getElementById('line-item-price').value || '0'),
+    unit: document.getElementById('line-item-unit').value || 'pc'
+  };
+  try {
+    const url = editId ? `${baseUrl}/api/quotations/${qId}/items/${editId}` : `${baseUrl}/api/quotations/${qId}/items`;
+    const method = editId ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
+    if (res.ok) {
+      if (typeof showToast === 'function') showToast(editId ? 'Item updated' : 'Item added', 'success');
+      closeModal('modal-line-item');
+      openQuotationDetail(qId);
+    } else { const d = await res.json(); if (typeof showToast === 'function') showToast(d.error || 'Failed', 'error'); }
+  } catch (e) { console.error('Submit item error:', e); }
+};
+
+window.deleteLineItem = async function(quotationId, itemId) {
+  if (!confirm('Remove this line item?')) return;
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/items/${itemId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { if (typeof showToast === 'function') showToast('Item removed', 'success'); openQuotationDetail(quotationId); }
+  } catch (e) { console.error('Delete item error:', e); }
+};
+
+window.populateFromSurvey = async function(quotationId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  if (typeof showToast === 'function') showToast('Populating from survey BOM...', 'info', 2000);
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/generate-from-survey`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (res.ok) { if (typeof showToast === 'function') showToast(`Populated ${data.items_count} items from BOM`, 'success'); openQuotationDetail(quotationId); }
+    else { if (typeof showToast === 'function') showToast(data.error || 'Failed', 'error'); }
+  } catch (e) { console.error('Populate error:', e); }
+};
+
+// ── Quotation Actions ───────────────────────────────────────────────────────
+window.sendQuotation = async function(quotationId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/send`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (res.ok) { if (typeof showToast === 'function') showToast('Sent via Telegram!', 'success'); loadQuotationsData(); openQuotationDetail(quotationId); }
+    else { if (typeof showToast === 'function') showToast(data.error || 'Failed', 'error'); }
+  } catch (e) { console.error('Send error:', e); }
+};
+
+window.saveQuotationDrive = async function(quotationId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  if (typeof showToast === 'function') showToast('Saving to Drive...', 'info');
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/save-drive`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (res.ok) { if (typeof showToast === 'function') showToast('Saved to Drive!', 'success'); if (data.drive_url) window.open(data.drive_url, '_blank'); }
+    else { if (typeof showToast === 'function') showToast(data.error || 'Failed', 'error'); }
+  } catch (e) { console.error('Drive error:', e); }
+};
+
+window.convertQuotationToJob = async function(quotationId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/convert-job`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (res.ok) { if (typeof showToast === 'function') showToast(`Converted to ${data.job_id}!`, 'success'); closeModal('modal-quotation-detail'); loadQuotationsData(); }
+    else { if (typeof showToast === 'function') showToast(data.error || 'Failed', 'error'); }
+  } catch (e) { console.error('Convert error:', e); }
+};
+
+window.convertQuotationToInvoice = async function(quotationId) {
+  const baseUrl = document.getElementById('api-base')?.value || '';
+  const token = localStorage.getItem('admin_token');
+  try {
+    const res = await fetch(`${baseUrl}/api/quotations/${quotationId}/convert-invoice`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (res.ok) { if (typeof showToast === 'function') showToast(`Converted to ${data.invoice_id}!`, 'success'); closeModal('modal-quotation-detail'); loadQuotationsData(); }
+    else { if (typeof showToast === 'function') showToast(data.error || 'Failed', 'error'); }
+  } catch (e) { console.error('Convert error:', e); }
+};
+
 
 function downloadWorkbook(wb) {
   // Generate CSV from workbook sheets

@@ -100,8 +100,11 @@ async function handleLogin(e) {
   const id = document.getElementById('auth-uid').value.trim().toUpperCase();
   const pin = document.getElementById('auth-pin').value.trim();
   const btn = document.getElementById('auth-btn');
+  const btnText = document.getElementById('auth-btn-text');
+  const btnSpinner = document.getElementById('auth-btn-spinner');
   btn.disabled = true;
-  btn.textContent = 'Checking Credentials...';
+  if (btnText) btnText.textContent = 'Verifying...';
+  if (btnSpinner) btnSpinner.classList.remove('hidden');
   try {
     if (!navigator.onLine) {
       showToast('Running offline. Login bypassed using cached operator ID.', 'warning');
@@ -122,12 +125,14 @@ async function handleLogin(e) {
     showApp();
     fetchJobs();
     setTimeout(renderMyIdCard, 400);
+    checkAttendanceStatus();
   } catch (err) {
     showToast('Access Denied: ' + err.message, 'error');
     document.getElementById('auth-pin').value = '';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Verify Gate Pass';
+    if (btnText) btnText.textContent = 'Sign In';
+    if (btnSpinner) btnSpinner.classList.add('hidden');
   }
 }
 
@@ -169,18 +174,26 @@ function switchMobileTab(tab) {
   if (tab === 'setting') renderMyIdCard();
 }
 
-// ── Jobs ─────────────────────────────────────────────────────────────────
+// ── Jobs & Site Surveys ───────────────────────────────────────────────────
 async function fetchJobs() {
   const container = document.getElementById('view-job');
   if (container && container.children.length === 0) {
-    container.innerHTML = '<div class="glass-panel p-8 rounded-3xl text-center"><div class="animate-spin w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full mx-auto mb-3"></div><p class="text-sm text-slate-400">Loading jobs...</p></div>';
+    container.innerHTML = '<div class="glass-panel p-8 rounded-3xl text-center"><div class="animate-spin w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full mx-auto mb-3"></div><p class="text-sm text-slate-400">Loading jobs & site surveys...</p></div>';
   }
   try {
-    const res = await fetch(`${API_BASE_URL}/api/jobs?limit=100`, { headers: authHeaders() });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch jobs');
-    const jobs = data.data?.jobs || data.data || data.jobs || [];
-    renderJobList(jobs);
+    const [jobsRes, surveysRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/api/jobs?limit=100`, { headers: authHeaders() }),
+      fetch(`${API_BASE_URL}/api/surveys`, { headers: authHeaders() })
+    ]);
+
+    const jobsData = await jobsRes.json();
+    const surveysData = surveysRes.ok ? await surveysRes.json() : [];
+
+    const jobs = jobsData.data?.jobs || jobsData.data || jobsData.jobs || [];
+    const surveysRaw = Array.isArray(surveysData) ? surveysData : (surveysData.data || []);
+    const surveys = Array.isArray(surveysRaw) ? surveysRaw : (surveysRaw.surveys || []);
+
+    renderJobList(jobs, surveys);
     if (navigator.onLine) cacheJobs(jobs);
   } catch (err) {
     showToast('Error pulling remote data: ' + err.message, 'error');
@@ -188,23 +201,71 @@ async function fetchJobs() {
   }
 }
 
-function renderJobList(jobs) {
+function renderJobList(jobs, surveys = []) {
   const container = document.getElementById('view-job');
   if (!container) return;
-  // Filter to active jobs only (Pending, In Progress)
+  
+  // Filter active service jobs
   const activeStatuses = ['Pending', 'In Progress', 'Scheduled', 'Assigned'];
   const activeJobs = (jobs || []).filter(j => activeStatuses.includes(j.status));
+
+  // Filter pending site surveys assigned to technician or draft/pending
+  const activeSurveys = (surveys || []).filter(s => s.status !== 'Completed');
+
   container.innerHTML = '';
-  if (activeJobs.length === 0) {
-    container.innerHTML = '<div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm"><span class="text-3xl block mb-2">📭</span>No active jobs assigned.</div>';
+
+  if (activeJobs.length === 0 && activeSurveys.length === 0) {
+    container.innerHTML = '<div class="glass-panel p-8 rounded-3xl text-center text-slate-500 text-sm"><span class="text-3xl block mb-2">📭</span>No active jobs or site surveys assigned.</div>';
     return;
   }
+
+  // Render Site Surveys Section first if any
+  if (activeSurveys.length > 0) {
+    const surveyHeader = document.createElement('div');
+    surveyHeader.className = 'text-xs font-bold text-amber-400 uppercase tracking-wider mb-2 flex items-center gap-1.5';
+    surveyHeader.innerHTML = `<span>📋</span> Assigned On-Site Surveys (${activeSurveys.length})`;
+    container.appendChild(surveyHeader);
+
+    activeSurveys.forEach((surv) => {
+      const card = document.createElement('div');
+      card.className = 'glass-panel p-4 rounded-2xl border border-amber-500/20 bg-amber-950/10 space-y-3 mb-4';
+      card.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="font-bold text-amber-400 text-sm flex items-center gap-1.5">
+              <span>🔍</span> ${escapeHTML(surv.id)}
+            </h3>
+            <p class="text-xs text-slate-300 mt-0.5 font-semibold">${escapeHTML(surv.client_name || surv.client_id || 'On-Site Client')}</p>
+          </div>
+          <span class="px-2.5 py-1 text-[10px] rounded-full font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">${escapeHTML(surv.status)}</span>
+        </div>
+        <div class="text-xs text-slate-300 space-y-1">
+          <p>📅 <b>Scheduled:</b> ${escapeHTML(surv.scheduled_date || 'Today')}</p>
+          <p>🎥 <b>Type:</b> ${escapeHTML(surv.survey_type)} | <b>Est. Cameras:</b> ${surv.camera_count} | <b>Est. Cable:</b> ${surv.estimated_cable_meters}m</p>
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button onclick="completeOnsiteSurvey('${escapeHTML(surv.id)}')" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white text-xs py-2.5 rounded-xl font-bold transition active:scale-95 shadow-md flex items-center justify-center gap-1.5">
+            <span>📝</span> Complete On-Site Survey Checklist
+          </button>
+        </div>`;
+      container.appendChild(card);
+    });
+
+    if (activeJobs.length > 0) {
+      const jobHeader = document.createElement('div');
+      jobHeader.className = 'text-xs font-bold text-indigo-400 uppercase tracking-wider my-3 flex items-center gap-1.5';
+      jobHeader.innerHTML = `<span>🛠️</span> Active Service Jobs (${activeJobs.length})`;
+      container.appendChild(jobHeader);
+    }
+  }
+
+  // Render Service Jobs
   activeJobs.forEach((job) => {
     const statusColor = job.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400'
       : job.status === 'In Progress' ? 'bg-amber-500/20 text-amber-400'
       : 'bg-blue-500/20 text-blue-400';
     const card = document.createElement('div');
-    card.className = 'glass-panel p-4 rounded-2xl border border-white/5 space-y-3';
+    card.className = 'glass-panel p-4 rounded-2xl border border-white/5 space-y-3 mb-3';
     card.innerHTML = `
       <div class="flex justify-between items-start">
         <div>
@@ -225,6 +286,139 @@ function renderJobList(jobs) {
       </div>`;
     container.appendChild(card);
   });
+}
+
+function openTechSurveyModal(surveyId) {
+  const modal = document.getElementById('tech-survey-modal');
+  if (!modal) return;
+  document.getElementById('tech-survey-id').value = surveyId;
+  modal.classList.remove('hidden');
+}
+
+function closeTechSurveyModal() {
+  const modal = document.getElementById('tech-survey-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function submitTechSurveyChecklist(e) {
+  e.preventDefault();
+  const surveyId = document.getElementById('tech-survey-id').value;
+  const cameraCount = parseInt(document.getElementById('tech-survey-cameras').value || '0', 10);
+  const cableMeters = parseFloat(document.getElementById('tech-survey-cable').value || '0');
+  const retentionDays = parseInt(document.getElementById('tech-survey-retention')?.value || '30', 10);
+  const networkDrops = parseInt(document.getElementById('tech-survey-drops')?.value || '0', 10);
+  const buildingType = document.getElementById('tech-survey-building').value.trim();
+  const powerNotes = document.getElementById('tech-survey-power').value.trim();
+  const mountingType = document.getElementById('tech-survey-mounting').value.trim();
+  const notes = document.getElementById('tech-survey-notes').value.trim();
+  const siteType = document.getElementById('tech-survey-site-type')?.value || null;
+  const siteAddress = document.getElementById('tech-survey-address')?.value?.trim() || null;
+  const contactName = document.getElementById('tech-survey-contact-name')?.value?.trim() || null;
+  const contactPhone = document.getElementById('tech-survey-contact-phone')?.value?.trim() || null;
+  const existingInfra = document.getElementById('tech-survey-existing-infra')?.value?.trim() || null;
+
+  const checklist = {
+    poe_switch: document.getElementById('chk-poe')?.checked || false,
+    ups_backup: document.getElementById('chk-ups')?.checked || false,
+    limit_100m_copper: document.getElementById('chk-limit100m')?.checked || false,
+    isp_demarc_verified: document.getElementById('chk-isp')?.checked || false,
+    conduit_ducting: document.getElementById('chk-conduit')?.checked || false,
+    fiber_uplink: document.getElementById('chk-fiber')?.checked || false,
+    fire_stop: document.getElementById('chk-firestop')?.checked || false,
+    night_vision: document.getElementById('chk-nightvision')?.checked || false,
+    retention_days: retentionDays,
+    network_drops: networkDrops
+  };
+
+  // Collect captured photos (base64 data URLs)
+  const capturedPhotos = {};
+  document.querySelectorAll('.photo-input').forEach(input => {
+    if (input.files && input.files[0]) {
+      const type = input.dataset.type;
+      // Photos will be uploaded separately after survey completion
+      capturedPhotos[type] = true;
+    }
+  });
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/surveys/${surveyId}/complete`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        camera_count: cameraCount,
+        estimated_cable_meters: cableMeters,
+        building_type: buildingType,
+        power_source_notes: powerNotes,
+        mounting_type: mountingType,
+        checklist_data: checklist,
+        notes: notes,
+        site_type: siteType,
+        site_address: siteAddress,
+        contact_name: contactName,
+        contact_phone: contactPhone,
+        existing_infrastructure: existingInfra
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to submit site survey');
+
+    // Upload photos sequentially
+    let uploadedCount = 0;
+    for (const input of document.querySelectorAll('.photo-input')) {
+      if (input.files && input.files[0]) {
+        const photoType = input.dataset.type;
+        try {
+          const formData = new FormData();
+          formData.append('photo', input.files[0]);
+          // Upload to a photo hosting endpoint or Google Drive
+          // For now, convert to base64 and store via API
+          const reader = new FileReader();
+          const base64 = await new Promise((resolve) => {
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(input.files[0]);
+          });
+
+          await fetch(`${API_BASE_URL}/api/surveys/${surveyId}/photos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({
+              photo_url: base64,
+              photo_type: photoType,
+              caption: `${photoType.replace(/_/g, ' ')} photo`
+            })
+          });
+          uploadedCount++;
+        } catch (photoErr) {
+          console.warn(`Failed to upload ${photoType} photo:`, photoErr);
+        }
+      }
+    }
+
+    const msg = uploadedCount > 0
+      ? `Survey completed! ${uploadedCount} photo(s) uploaded.`
+      : 'Site survey checklist completed successfully!';
+    showToast(msg, 'success');
+    closeTechSurveyModal();
+    fetchJobs();
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+// Handle photo capture preview
+window.handleSurveyPhoto = function(event, photoType) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const statusEl = document.querySelector(`.photo-status[data-type="${photoType}"]`);
+  if (statusEl) {
+    statusEl.textContent = '✅ Captured';
+    statusEl.classList.remove('text-slate-500');
+    statusEl.classList.add('text-emerald-400');
+  }
+};
+
+async function completeOnsiteSurvey(surveyId) {
+  openTechSurveyModal(surveyId);
 }
 
 async function updateJobStatus(jobId, status) {
@@ -435,7 +629,7 @@ async function loadChecklist() {
                 <span class="text-[10px] text-slate-400 font-bold uppercase">Before Photo</span>
               </div>
             </button>
-            <input type="file" accept="image/*" capture="environment" id="photo-before-input" class="hidden" onchange="handlePhotoCapture(this, 'before')">
+            <input type="file" accept="image/*" id="photo-before-input" class="hidden" onchange="handlePhotoCapture(this, 'before')">
             <button onclick="removePhoto('before')" id="photo-before-remove" class="hidden w-full mt-1 text-[10px] text-rose-400 font-bold py-1">Remove</button>
           </div>
           <!-- After Photo -->
@@ -447,7 +641,7 @@ async function loadChecklist() {
                 <span class="text-[10px] text-slate-400 font-bold uppercase">After Photo</span>
               </div>
             </button>
-            <input type="file" accept="image/*" capture="environment" id="photo-after-input" class="hidden" onchange="handlePhotoCapture(this, 'after')">
+            <input type="file" accept="image/*" id="photo-after-input" class="hidden" onchange="handlePhotoCapture(this, 'after')">
             <button onclick="removePhoto('after')" id="photo-after-remove" class="hidden w-full mt-1 text-[10px] text-rose-400 font-bold py-1">Remove</button>
           </div>
         </div>
@@ -1222,6 +1416,72 @@ function loadCachedJobs() {
   if (cached) renderJobList(JSON.parse(cached));
 }
 
+// ── Attendance ────────────────────────────────────────────────────────────
+let attendanceClockedIn = false;
+
+async function toggleAttendance() {
+  if (!activeSessionToken) return;
+  const baseUrl = API_BASE_URL;
+  const endpoint = attendanceClockedIn ? '/api/attendance/clock-out' : '/api/attendance/clock-in';
+  try {
+    let body = {};
+    try {
+      const pos = await getGeoLocation();
+      body = { lat: pos.lat, lng: pos.lng };
+    } catch (_) {}
+
+    const res = await fetch(`${baseUrl}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed');
+    }
+    attendanceClockedIn = !attendanceClockedIn;
+    updateAttendanceUI();
+    showToast(attendanceClockedIn ? 'Clocked In — Have a great day!' : 'Clocked Out — See you tomorrow!', 'success');
+  } catch (err) {
+    showToast(err.message || 'Attendance failed', 'error');
+  }
+}
+
+function updateAttendanceUI() {
+  const bar = document.getElementById('attendance-bar');
+  const label = document.getElementById('attendance-label');
+  const icon = document.getElementById('clock-out-icon');
+  const since = document.getElementById('attendance-since');
+  if (bar) bar.classList.toggle('hidden', !attendanceClockedIn);
+  if (label) {
+    label.textContent = attendanceClockedIn ? 'Out' : 'In';
+    label.className = attendanceClockedIn
+      ? 'text-[9px] font-bold text-rose-400 uppercase tracking-wider hidden md:inline'
+      : 'text-[9px] font-bold text-emerald-400 uppercase tracking-wider hidden md:inline';
+  }
+  if (icon) {
+    icon.className = attendanceClockedIn
+      ? 'w-4 h-4 text-rose-400'
+      : 'w-4 h-4 text-emerald-400';
+  }
+  if (since && attendanceClockedIn) {
+    since.textContent = 'since ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+}
+
+async function checkAttendanceStatus() {
+  if (!activeSessionToken) return;
+  try {
+    const baseUrl = API_BASE_URL;
+    const res = await fetch(`${baseUrl}/api/attendance/status`, { headers: authHeaders() });
+    if (res.ok) {
+      const data = await res.json();
+      attendanceClockedIn = data.clocked_in || false;
+      updateAttendanceUI();
+    }
+  } catch (_) {}
+}
+
 // ── Theme Toggle ─────────────────────────────────────────────────────────
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme');
@@ -1248,5 +1508,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showApp();
     fetchJobs();
     setTimeout(renderMyIdCard, 400);
+    checkAttendanceStatus();
   }
 });

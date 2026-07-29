@@ -1,6 +1,6 @@
-# Awesome Myanmar CCTV & Infrastructure Platform
+# KosAI CCTV & Infrastructure Platform
 
-A **field service management system** for CCTV, networking, and storage infrastructure in Myanmar. Built on Cloudflare Workers with a dark-themed, glass-morphism UI.
+A **field service management system** for CCTV, networking, and storage infrastructure in Myanmar. Built on Cloudflare Workers with a dark-themed, glass-morphism UI. Supports native desktop and mobile apps with offline-first sync.
 
 ## Tech Stack
 
@@ -11,7 +11,9 @@ A **field service management system** for CCTV, networking, and storage infrastr
 | **Frontend** | Vanilla HTML/CSS/JS + Tailwind CSS v4      |
 | **Design**   | Dark/Light theme, glass morphism, amber accent |
 | **Auth**     | Google OAuth, PIN-based, username/password |
-| **Desktop**  | Tauri (Rust)                               |
+| **Desktop**  | Tauri 2.0 (Rust + local SQLite)            |
+| **Mobile**   | Kotlin + Jetpack Compose (Room + Retrofit) |
+| **Sync**     | REST API + WebSocket + offline queue       |
 | **CI/CD**    | Wrangler CLI                               |
 
 ## Recent Updates (v2.0)
@@ -27,13 +29,14 @@ Complete redesign of all admin dashboard sections with modern, glass-morphism st
 - **Live Map & Calendar** - Dispatch tracking
 
 #### Service Tickets
-- **Status Tabs** - All, Pending, In Progress, Completed, Cancelled with counts
-- **Job Cards** - Visual card layout with status badges
-- **Search & Filter** - By ID, client, technician, status, type
-- **Collapsible Form** - New ticket creation
+- **Pipeline Status Bar** - Pending/In Progress/Completed/Cancelled counts
+- **Dual View** - Cards (visual) + Table (data-dense) with toggle
+- **Smart Filters** - Search, domain, status, tech with clear button
+- **Pagination** - Page numbers for large datasets
+- **Ticket Detail Modal** - Info grid, timeline, description, notes, photos, equipment, checklist
 
 #### Clients & Partners
-- **Card View** - Visual client cards with company initials
+- **Directory View** - Visual client cards with company initials
 - **AMC Status Badges** - Color-coded contract status
 - **Quick Actions** - View Jobs, Edit
 - **Tabbed Interface** - Clients / Distributors
@@ -44,27 +47,41 @@ Complete redesign of all admin dashboard sections with modern, glass-morphism st
 - **Search & Filter** - By code, name, category, stock level
 - **Import/Export Excel** - Bulk data operations
 
-#### POS Terminal
-- **Split Payments** - Method A + Method B
-- **Custom Exchange Rate** - USD/MMK conversion
-- **Customer Selector** - Autocomplete from client database
-- **Receipt Generation** - PDF-ready receipts
-- **Credit Tracking** - Outstanding balances
+#### Receipt Builder
+- **Template Selection** - Modern, Classic, Minimal designs
+- **Paper Size** - A4, A5, Letter options
+- **Theme** - Dark/Light mode
+- **Alignment** - Left, Center, Right
+- **Live Preview** - Real-time receipt preview
 
-#### Reports & Analytics
-- **Tabbed Interface** - Overview, Jobs, Clients, Inventory, Financial, Technicians
-- **Export Options** - Excel, CSV, Print, Customize
-- **Date Range Filter** - Filter by date period
-- **Chart Integration** - Visual analytics
+### Native Apps (v2.0)
 
-#### Settings & Configuration
-- **Company Profile** - Business information
-- **Exchange Rate** - USD/MMK configuration
-- **Tax & Fees** - Tax rate, service fees
-- **Notifications** - SMS, Email, Telegram, Low Stock alerts
-- **Appearance** - Theme, accent color, sidebar position
+#### Tauri Desktop (Windows)
+- **Local SQLite** - Full offline access to jobs, clients, inventory
+- **Auto-sync** - Every 5 minutes when online
+- **Native notifications** - Job assignments, completions, messages
+- **System tray** - Background monitoring
+- **~5MB install** - Lightweight Rust backend
+
+#### Android Technician App
+- **Room database** - Offline job management
+- **GPS clock in/out** - Location-stamped attendance
+- **Material 3 UI** - Modern Compose design
+- **Offline queue** - Changes sync when online
+- **Dark/Light theme** - Follows system preference
+
+### Sync Infrastructure
+- **Bidirectional sync** - Cloud D1 ↔ local SQLite
+- **Conflict resolution** - Last-write-wins (LWW)
+- **Delta sync** - Only changed records transferred
+- **Offline queue** - Operations queued for sync
+- **WebSocket** - Real-time updates for connected clients
 
 ### Technical Improvements
+- **Modular Architecture** - Service layer extraction with 6 service classes
+- **143 Tests Passing** - Unit tests for all service classes
+- **CSRF Protection** - HMAC-SHA256 token verification on all state-changing endpoints
+- **Input Validation** - Parameterized queries, field allowlists, type checking
 - **SheetJS Integration** - Client-side Excel generation
 - **Chart.js Charts** - 5 chart types (doughnut, bar, line, horizontal bar, area)
 - **Camera API** - Barcode scanning with WebRTC
@@ -72,13 +89,35 @@ Complete redesign of all admin dashboard sections with modern, glass-morphism st
 - **Toast Notification System** - Non-blocking alerts
 - **Glass Morphism Design** - Modern UI with blur effects
 
+### Admin Module Upgrades (v2.1)
+- **Attendance** - Icon header, 4 glass stat cards with colored accent bars, search, pagination, export CSV, GPS coordinates
+- **Distributors** - Icon header, 4 stat cards (Total, Active, Product Lines, With Contact), SVG delete buttons
+- **Dispatch Map** - SVG icons replacing emojis, theme selector, filter buttons with colored dots, active crews panel
+- **Landing Page (Admin)** - SVG section icons (Hero, Stats, Services, Contact, Footer), consistent form styling
+- **Portfolio** - SVG icons, View Live link, Add Project button, live preview with filter buttons
+- **Reports** - 6 report tabs, KPI cards, date range filter, Chart.js integration
+- **System Settings** - Company profile, users, system, receipt builder, database tabs
+- **User Management** - Sidebar navigation, registered accounts, create user, roles
+- **Currency** - Vault ledger, log transaction, sales ledger sidebar modules
+- **POS** - Terminal checkout, credits, invoices sidebar modules
+- **Inventory** - Batch management, pricing, catalog, add item, categories, brands sidebar
+
+### Public Landing Page Upgrade (v2.1)
+- **SVG Icons** - Replaced all emoji icons with SVG throughout header, footer, and sections
+- **Why Choose Us** - New 4-column section: Licensed & Insured, 24/7 Support, AI-Powered, Myanmar Local
+- **CTA Banner** - New gradient glass panel with dual action buttons before footer
+- **Footer Upgrade** - 4-column link grid (Services, Company, Clients, System), Telegram + Facebook social links
+- **Typing Effect** - Animated headline cycling through 4 phrases with gradient text highlight
+- **Parallax** - Floating particles and gradient orbs with scroll-based movement
+- **Scroll Reveal** - IntersectionObserver animations with stagger delays on all sections
+
 ## Project Structure
 
 ```
 ├── src/
 │   ├── index.ts                 # Cloudflare Worker — main API entry
 │   ├── modules/
-│   │   ├── routes/              # Route modules (18+ domain modules)
+│   │   ├── routes/              # Route modules (22 domain modules)
 │   │   │   ├── auth.ts          # Authentication (PIN, Google, password)
 │   │   │   ├── technicians.ts   # Technician CRUD
 │   │   │   ├── clients.ts       # Client CRUD & AMC tracking
@@ -99,24 +138,36 @@ Complete redesign of all admin dashboard sections with modern, glass-morphism st
 │   │   │   ├── cashsafe.ts      # Cash safe ledger
 │   │   │   ├── servicefees.ts   # Service fee management
 │   │   │   ├── landing.ts       # Landing page content
-│   │   │   └── surveys.ts       # Site surveys, AI quotation estimator & customer portal
+│   │   │   ├── surveys.ts       # Site surveys, AI quotation estimator & customer portal
+│   │   │   ├── portal.ts        # Customer portal endpoints
+│   │   │   └── sync.ts          # Offline-first sync API
+│   │   ├── services/            # Business logic layer
+│   │   │   ├── survey.service.ts      # Survey CRUD, photos, status counts
+│   │   │   ├── quotation.service.ts   # Quotation CRUD, line items, totals
+│   │   │   ├── job.service.ts         # Job CRUD, status changes, calendar
+│   │   │   ├── client.service.ts      # Client CRUD, search, AMC status
+│   │   │   ├── inventory.service.ts   # Inventory CRUD, stock tracking
+│   │   │   └── sync.service.ts        # Sync push/pull/conflict resolution
 │   │   └── utils/               # Shared utilities
 │   │       ├── router.ts        # Lightweight request router
 │   │       ├── cors.ts          # CORS headers
 │   │       ├── response.ts      # Response helpers
 │   │       ├── jwt.ts           # JWT auth
+│   │       ├── csrf.ts          # CSRF protection
+│   │       ├── auth-middleware.ts # Authentication middleware
 │   │       ├── telegram.ts      # Telegram bot API
 │   │       ├── viber.ts         # Viber bot API
 │   │       ├── google.ts        # Google OAuth/Drive
 │   │       ├── gemini.ts        # Gemini AI integration
+│   │       ├── websocket.ts     # WebSocket real-time updates
 │   │       ├── rate-limit.ts    # Rate limiting
 │   │       └── sql-validator.ts # SQL injection protection
 │   └── types/
 │       └── schema.ts            # TypeScript DB types
 ├── public/
 │   ├── index.html               # Landing page
-│   ├── admin.html               # Admin dashboard
-│   ├── app.html                 # Technician mobile app (web)
+│   ├── admin.html               # Admin dashboard (Tauri compatible)
+│   ├── app.html                 # Technician mobile app (web PWA)
 │   ├── portal.html              # Client portal
 │   ├── jobs.html                # Job management
 │   ├── portfolio.html           # Portfolio showcase
@@ -141,6 +192,8 @@ Complete redesign of all admin dashboard sections with modern, glass-morphism st
 │   │   ├── warranty.html
 │   │   ├── distributors.html
 │   │   ├── service-fees.html
+│   │   ├── receipt-builder.html
+│   │   ├── surveys.html
 │   │   ├── user-management.html
 │   │   └── system-settings.html
 │   └── _headers                 # Cloudflare headers config
@@ -150,16 +203,48 @@ Complete redesign of all admin dashboard sections with modern, glass-morphism st
 ├── db/
 │   ├── migrations/              # SQL migrations
 │   │   ├── schema.sql           # Main schema (14 tables)
-│   │   ├── mock_data.sql        # Test data
-│   │   ├── roles_config_sync.sql
-│   │   ├── inventory_sync.sql
-│   │   ├── create_roles_table.sql
-│   │   └── create_credits_table.sql
-│   └── seeds/                   # Seed data files
-├── src-tauri/                   # Tauri desktop app (Rust)
-│   ├── tauri.conf.json
-│   ├── src/
-│   └── icons/
+│   │   ├── 0006_survey_quotation_redesign.sql
+│   │   ├── 0007_quotation_improvements.sql
+│   │   ├── 0008_service_fees_upgrade.sql
+│   │   ├── 0009_clients_directory_upgrade.sql
+│   │   ├── 0010_sync_infrastructure.sql   # Sync tables
+│   │   └── mock_data.sql        # Test data
+├── admin-desktop/               # Tauri desktop app (Windows)
+│   ├── src-tauri/
+│   │   ├── Cargo.toml           # Rust dependencies
+│   │   ├── tauri.conf.json      # App config
+│   │   └── src/
+│   │       ├── main.rs          # Entry point
+│   │       ├── lib.rs           # Tauri commands (12 commands)
+│   │       ├── db.rs            # Local SQLite (rusqlite)
+│   │       ├── sync.rs          # Cloud ↔ Local sync
+│   │       └── notifications.rs # Native notifications
+│   └── src/
+│       ├── index.html           # Desktop UI
+│       ├── css/admin.css        # Dark theme
+│       └── js/app.js            # View switching
+├── technician-android/          # Android app (Kotlin)
+│   ├── app/src/main/java/com/kosai/tech/
+│   │   ├── MainActivity.kt
+│   │   ├── KosaiApp.kt
+│   │   ├── data/
+│   │   │   ├── model/Models.kt  # 7 Room entities
+│   │   │   ├── local/
+│   │   │   │   ├── AppDatabase.kt
+│   │   │   │   └── Daos.kt      # 6 DAOs
+│   │   │   ├── remote/
+│   │   │   │   ├── ApiService.kt # Retrofit (14 endpoints)
+│   │   │   │   └── ApiClient.kt
+│   │   │   └── SyncManager.kt   # Offline queue
+│   │   └── ui/
+│   │       ├── KosaiApp.kt
+│   │       ├── theme/Theme.kt
+│   │       ├── jobs/JobListScreen.kt
+│   │       ├── attendance/AttendanceScreen.kt
+│   │       └── settings/SettingsScreen.kt
+│   ├── app/build.gradle.kts
+│   ├── build.gradle.kts
+│   └── settings.gradle.kts
 ├── docs/                        # Documentation
 ├── .agents/                     # AI agent configuration
 │   ├── AGENTS.md                # Project rules
@@ -236,6 +321,36 @@ npx wrangler d1 export cctv-fsm-db --local --output=local_dump.sql
 ```
 
 _(Note: To sync data successfully, replace any large base64 photo strings in the SQL file with `NULL` to avoid the 100KB SQLITE_TOOBIG query constraint limit on D1.)_
+
+### Tauri Desktop App Setup
+
+```bash
+cd admin-desktop
+
+# Install dependencies
+npm install
+
+# Run in development mode
+npm run tauri dev
+
+# Build for production (~5MB installer)
+npm run tauri build
+```
+
+### Android App Setup
+
+```bash
+cd technician-android
+
+# Build debug APK
+./gradlew assembleDebug
+
+# Build release APK
+./gradlew assembleRelease
+
+# Install on connected device
+./gradlew installDebug
+```
 
 ## Available Scripts
 
@@ -327,6 +442,17 @@ All endpoints served from Cloudflare Worker at `/api/...`:
 - `POST /api/ai/route-optimize` — Route optimization
 - `POST /api/ai/copilot` — AI chat
 - `POST /api/ai/transcribe` — Transcribe audio
+
+### Sync (Offline-First)
+
+- `POST /api/sync/push` — Push client changes to server
+- `GET /api/sync/pull` — Pull server changes to client
+- `GET /api/sync/changes` — Get changes since timestamp (admin)
+- `GET /api/sync/status` — Get sync status for client
+
+### WebSocket
+
+- `wss://your-worker/ws` — Real-time updates for connected clients
 
 ### Admin
 

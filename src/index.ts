@@ -18,6 +18,7 @@ import { getCorsHeaders } from './modules/utils/cors.js';
 import { error } from './modules/utils/response.js';
 import { uploadBackupToGoogleDrive, getGoogleAccessToken } from './modules/utils/google.js';
 import { sendTelegramNotification } from './modules/utils/telegram.js';
+import { handleWebSocketUpgrade, broadcastJobUpdate, broadcastAttendanceUpdate } from './modules/utils/websocket.js';
 
 // ── Route module registry ────────────────────────────────────────────────
 import * as authRoutes from './modules/routes/auth.js';
@@ -41,6 +42,7 @@ import * as cashsafeRoutes from './modules/routes/cashsafe.js';
 import * as servicefeesRoutes from './modules/routes/servicefees.js';
 import * as landingRoutes from './modules/routes/landing.js';
 import * as surveysRoutes from './modules/routes/surveys.js';
+import * as syncRoutes from './modules/routes/sync.js';
 
 const routeModules = [
   authRoutes,
@@ -64,6 +66,7 @@ const routeModules = [
   servicefeesRoutes,
   landingRoutes,
   surveysRoutes,
+  syncRoutes,
 ];
 
 export default {
@@ -75,6 +78,11 @@ export default {
     if (method === 'OPTIONS') {
       const origin = request.headers.get('Origin') || undefined;
       return new Response(null, { headers: getCorsHeaders(origin) });
+    }
+
+    // ── WebSocket upgrade ────────────────────────────────────────────────
+    if (url.pathname === '/ws') {
+      return handleWebSocketUpgrade(request, env);
     }
 
     // ── Build router and register all modules ───────────────────────────

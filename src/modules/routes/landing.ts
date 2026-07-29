@@ -4,6 +4,7 @@
 
 import { success, error } from '../utils/response.js';
 import { verifyToken } from '../utils/jwt.js';
+import { requireCsrf } from '../utils/auth-middleware.js';
 
 function register(router, env) {
   const db = env.DB;
@@ -37,6 +38,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { section_key, title, subtitle, content, image_url, sort_order, active } =
         (await request.json()) as any;
@@ -70,6 +72,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       const allowed = [
@@ -110,6 +113,7 @@ function register(router, env) {
     try {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       await db.prepare('DELETE FROM landing_page_content WHERE id = ?').bind(params.id).run();
       return success({ message: 'Section deleted' });

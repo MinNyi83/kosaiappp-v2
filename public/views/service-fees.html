@@ -1,143 +1,168 @@
-<div id="view-service-fees" class="space-y-8 tab-view">
-  <div>
-    <h1 class="text-2xl font-black text-white uppercase tracking-tight">Service Fee Catalog</h1>
-    <p class="text-xs text-slate-400 mt-1">
-      Configure standard service rates for different services (CCTV, Networking, etc.).
-    </p>
+<!-- Service Fee Catalog — Upgraded -->
+<div id="view-service-fees" class="space-y-6 tab-view hidden">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-6 rounded-2xl border border-white/5">
+    <div>
+      <h2 class="text-xl font-bold text-white flex items-center gap-2"><span>💲</span> Service Fee Catalog</h2>
+      <p class="text-xs text-slate-400 mt-1">Manage service rates, pricing tiers, and categories</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="sfExportExcel()" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Excel
+      </button>
+      <button onclick="sfBulkDelete()" id="sf-bulk-delete-btn" class="hidden bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+        🗑 Delete Selected (<span id="sf-selected-count">0</span>)
+      </button>
+      <button onclick="sfOpenAddForm()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-2">
+        + Add Service Rate
+      </button>
+    </div>
   </div>
 
-  <div class="grid md:grid-cols-3 gap-8">
-    <!-- Left Panel: Add / Update Service Fee -->
-    <div class="glass-panel rounded-2xl overflow-hidden space-y-4 md:col-span-1">
-      <h2
-        class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"
-        id="fee-form-title"
-      >
-        <span>💵</span> Add Service Rate
-      </h2>
-      <form
-        method="POST"
-        id="service-fee-form"
-        onsubmit="submitServiceFee(event)"
-        class="space-y-3"
-      >
-        <input name="fee-id" type="hidden" id="fee-id" value="" />
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Service Type</label
-          >
-          <select
-            name="fee-service-type"
-            id="fee-service-type"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          >
-            <option value="CCTV">CCTV Surveillance Array</option>
-            <option value="Networking">Core Infrastructure Networking</option>
-            <option value="WiFi">WiFi Mesh Deployment</option>
-            <option value="NAS">NAS Storage Cluster</option>
-            <option value="General Maintenance">General Maintenance</option>
-          </select>
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="sf-stats-container">
+    <div class="glass-panel p-4 rounded-2xl border border-white/5 text-center">
+      <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Total Rates</p>
+      <p class="text-2xl font-black text-white" id="sf-stat-total">—</p>
+    </div>
+    <div class="glass-panel p-4 rounded-2xl border border-emerald-500/20 text-center">
+      <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Active</p>
+      <p class="text-2xl font-black text-emerald-400" id="sf-stat-active">—</p>
+    </div>
+    <div class="glass-panel p-4 rounded-2xl border border-white/5 text-center">
+      <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Categories</p>
+      <p class="text-2xl font-black text-sky-400" id="sf-stat-categories">—</p>
+    </div>
+    <div class="glass-panel p-4 rounded-2xl border border-white/5 text-center">
+      <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Avg Rate</p>
+      <p class="text-2xl font-black text-amber-400" id="sf-stat-avg">—</p>
+    </div>
+  </div>
+
+  <!-- Category Filter Chips + Search -->
+  <div class="glass-panel p-4 rounded-2xl border border-white/5">
+    <div class="flex flex-col md:flex-row md:items-center gap-3">
+      <div class="flex flex-wrap gap-2 flex-1" id="sf-category-chips">
+        <button onclick="sfFilterCategory('')" class="sf-chip active text-[10px] font-bold px-3 py-1.5 rounded-lg transition">All</button>
+      </div>
+      <div class="relative">
+        <input type="text" id="sf-search" placeholder="Search rates..." oninput="sfDebouncedSearch()" class="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 pl-8 text-xs text-white focus:border-amber-500 focus:outline-none w-full md:w-56" />
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="flex items-center gap-2 text-[10px]">
+        <label class="flex items-center gap-1.5 text-slate-400 cursor-pointer"><input type="checkbox" id="sf-show-inactive" onchange="sfLoadData()" class="rounded border-white/20" /> Show inactive</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid: Form + Table -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Left: Add/Edit Form (collapsible) -->
+    <div class="lg:col-span-1">
+      <div class="glass-panel rounded-2xl border border-white/5 overflow-hidden" id="sf-form-panel">
+        <div class="flex items-center justify-between p-4 border-b border-white/5">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2" id="sf-form-title">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span> Add Service Rate
+          </h3>
+          <button onclick="sfToggleForm()" class="text-slate-400 hover:text-white transition text-lg leading-none" id="sf-form-toggle">−</button>
         </div>
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Rate Amount</label
-          >
-          <input
-            name="fee-amount"
-            type="number"
-            step="0.01"
-            id="fee-amount"
-            required
-            placeholder="e.g. 150.00"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
-          />
+        <div class="p-4 space-y-3" id="sf-form-body">
+          <input type="hidden" id="sf-id" value="" />
+
+          <div>
+            <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Service Name</label>
+            <input type="text" id="sf-service-type" required placeholder="e.g. CCTV Installation" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Category</label>
+              <select id="sf-category" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                <option value="CCTV">CCTV</option>
+                <option value="Networking">Networking</option>
+                <option value="WiFi">WiFi</option>
+                <option value="NAS">NAS</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Unit</label>
+              <select id="sf-unit" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                <option value="per job">Per Job</option>
+                <option value="per hour">Per Hour</option>
+                <option value="per device">Per Device</option>
+                <option value="per meter">Per Meter</option>
+                <option value="per trip">Per Trip</option>
+                <option value="fixed">Fixed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Rate Amount</label>
+              <input type="number" step="0.01" id="sf-amount" required placeholder="0.00" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none font-mono" />
+            </div>
+            <div>
+              <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Currency</label>
+              <select id="sf-currency" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none">
+                <option value="MMK">MMK (K)</option>
+                <option value="USD">USD ($)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Min Charge</label>
+            <input type="number" step="0.01" id="sf-min-charge" placeholder="0" class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none font-mono" />
+          </div>
+
+          <div>
+            <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold mb-1">Description</label>
+            <textarea id="sf-desc" rows="2" placeholder="What this service covers..." class="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-amber-500 focus:outline-none resize-none"></textarea>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-2 text-slate-300 cursor-pointer text-xs">
+              <input type="checkbox" id="sf-active" checked class="rounded border-white/20" /> Active
+            </label>
+            <div class="flex-1 text-right">
+              <label class="text-[9px] text-slate-400 uppercase tracking-widest font-bold mr-2">Sort</label>
+              <input type="number" id="sf-sort-order" value="0" class="w-16 bg-zinc-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:border-amber-500 focus:outline-none font-mono text-center" />
+            </div>
+          </div>
+
+          <div class="flex gap-2 pt-1">
+            <button type="button" onclick="sfResetForm()" id="sf-cancel-btn" class="flex-1 bg-white/5 hover:bg-white/10 py-2.5 rounded-xl text-xs font-bold text-white uppercase tracking-wider transition hidden">Cancel</button>
+            <button type="button" onclick="sfSubmit()" id="sf-submit-btn" class="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-lg">Save Rate</button>
+          </div>
         </div>
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Currency</label
-          >
-          <select
-            name="fee-currency"
-            id="fee-currency"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          >
-            <option value="USD">USD ($)</option>
-            <option value="MMK">MMK (K)</option>
-          </select>
-        </div>
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Description / Scope Details</label
-          >
-          <textarea
-            name="fee-desc"
-            id="fee-desc"
-            placeholder="Details of what this service fee covers..."
-            rows="3"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500 resize-none"
-          ></textarea>
-        </div>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            id="btn-fee-reset"
-            onclick="resetFeeForm()"
-            class="flex-1 bg-white/5 hover:bg-white/10 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition hidden"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            id="btn-fee-submit"
-            class="flex-1 bg-amber-600 hover:bg-amber-500 py-2.5 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition"
-          >
-            Save Rate
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
 
-    <!-- Right Panel: Service Rates List -->
-    <div class="glass-panel rounded-2xl overflow-hidden space-y-4 md:col-span-2">
-      <div class="flex justify-between items-center border-b border-white/5 pb-2">
-        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <span>📋</span> Configured Service Rates
-        </h2>
-        <button
-          type="button"
-          onclick="exportTableToExcel('service-fees-table', 'Service_Rates')"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
-        >
-          <svg
-            class="w-3 h-3"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-          >
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          Excel
-        </button>
-      </div>
-      <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
-        <table id="service-fees-table" class="w-full text-xs text-left">
-          <thead>
-            <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
-              <th class="pb-3 pt-2 font-semibold">Service Type</th>
-              <th class="pb-3 pt-2 font-semibold">Rate Amount</th>
-              <th class="pb-3 pt-2 font-semibold">Description</th>
-              <th class="pb-2 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-white/5">
-            <tr>
-              <td colspan="4" class="py-4 text-center text-slate-600">Loading service rates...</td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- Right: Service Rates Table -->
+    <div class="lg:col-span-2">
+      <div class="glass-panel rounded-2xl border border-white/5 overflow-hidden">
+        <div class="p-4 border-b border-white/5 flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-sky-400"></span> Service Rates
+            <span class="text-[10px] text-slate-500 font-normal" id="sf-count-label"></span>
+          </h3>
+          <div class="flex items-center gap-2">
+            <label class="text-[10px] text-slate-400 flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" id="sf-select-all" onchange="sfToggleSelectAll()" class="rounded border-white/20" /> All
+            </label>
+          </div>
+        </div>
+
+        <!-- Category sub-headers rendered here -->
+        <div id="sf-table-container" class="divide-y divide-white/5">
+          <div class="p-8 text-center text-slate-600 text-xs">Loading service rates...</div>
+        </div>
       </div>
     </div>
   </div>

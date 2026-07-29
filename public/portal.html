@@ -157,20 +157,27 @@
         </div>
       </header>
 
-      <!-- Dynamic Logs Feed Container -->
-      <main id="portal-feed" class="space-y-6">
-        <div id="portal-summary-container"></div>
-        <div id="portal-logs-container" class="space-y-6">
-          <div
-            class="glass-panel text-center py-16 text-slate-500 rounded-3xl border border-white/5 shadow-2xl"
-          >
-            <span class="text-4xl block mb-3">🔍</span>
-            <p class="text-sm font-medium">
-              Enter your Client Key Identifier code above to request operational field records.
-            </p>
-          </div>
+    <!-- Quotation Approval View (shown when ?quote=TOKEN is present) -->
+    <main id="portal-quote-view" class="space-y-6 hidden">
+      <div id="quote-loading" class="text-center py-16 text-indigo-400 animate-pulse font-mono text-xs uppercase font-bold">Loading quotation...</div>
+      <div id="quote-content" class="hidden space-y-6"></div>
+      <div id="quote-result" class="hidden text-center py-16 rounded-3xl border border-white/5 shadow-2xl"></div>
+    </main>
+
+    <!-- Normal Portal View (client history) -->
+    <main id="portal-feed" class="space-y-6">
+      <div id="portal-summary-container"></div>
+      <div id="portal-logs-container" class="space-y-6">
+        <div
+          class="glass-panel text-center py-16 text-slate-500 rounded-3xl border border-white/5 shadow-2xl"
+        >
+          <span class="text-4xl block mb-3">🔍</span>
+          <p class="text-sm font-medium">
+            Enter your Client Key Identifier code above to request operational field records.
+          </p>
         </div>
-      </main>
+      </div>
+    </main>
 
       <!-- Pagination Controls -->
       <div id="feed-pagination" class="flex justify-between items-center text-xs pt-4 hidden">
@@ -196,6 +203,220 @@
 
     <script>
       const API_BASE_URL = window.location.origin;
+
+      // ── Quotation Portal View ─────────────────────────────────────────────────
+      (function initQuoteView() {
+        const params = new URLSearchParams(window.location.search);
+        const quoteToken = params.get('quote');
+        if (!quoteToken) return;
+
+        // Hide normal portal, show quote view
+        document.getElementById('portal-feed').classList.add('hidden');
+        document.getElementById('feed-pagination').classList.add('hidden');
+        document.querySelector('header .flex.gap-2')?.classList.add('hidden');
+        document.getElementById('portal-quote-view').classList.remove('hidden');
+
+        loadQuotationByToken(quoteToken);
+      })();
+
+      async function loadQuotationByToken(token) {
+        const loading = document.getElementById('quote-loading');
+        const content = document.getElementById('quote-content');
+        const result = document.getElementById('quote-result');
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/portal/quote/${token}`);
+          if (!res.ok) throw new Error('Quotation not found or link expired');
+          const q = await res.json();
+
+          loading.classList.add('hidden');
+          if (q.status === 'Approved' || q.status === 'Converted') {
+            result.classList.remove('hidden');
+            result.className = 'text-center py-16 rounded-3xl border border-emerald-500/20 shadow-2xl bg-emerald-950/10';
+            result.innerHTML = `
+              <span class="text-5xl block mb-4">✅</span>
+              <h2 class="text-xl font-bold text-emerald-400 mb-2">Quotation Already ${q.status}</h2>
+              <p class="text-sm text-slate-400">This quotation has been ${q.status.toLowerCase()} by the client.</p>
+              ${q.client_signature ? '<div class="mt-4"><span class="text-[10px] text-slate-400 uppercase">Digital Signature</span><div class="mt-2 inline-block bg-white/10 rounded-xl p-2"><img src="' + q.client_signature + '" class="max-h-16 invert opacity-80" alt="Signature" /></div></div>' : ''}
+            `;
+            return;
+          }
+          if (q.status === 'Rejected') {
+            result.classList.remove('hidden');
+            result.className = 'text-center py-16 rounded-3xl border border-rose-500/20 shadow-2xl bg-rose-950/10';
+            result.innerHTML = '<span class="text-5xl block mb-4">❌</span><h2 class="text-xl font-bold text-rose-400 mb-2">Quotation Rejected</h2><p class="text-sm text-slate-400">This quotation has been declined.</p>';
+            return;
+          }
+
+          const items = q.line_items || [];
+          const itemsHtml = items.map(i => `
+            <tr class="border-b border-white/5">
+              <td class="py-2.5 text-white text-sm">${escapeHTML(i.name)}${i.item_code ? `<span class="text-[10px] text-slate-500 ml-1">${escapeHTML(i.item_code)}</span>` : ''}</td>
+              <td class="py-2.5 text-center text-slate-300">${i.quantity} ${i.unit || ''}</td>
+              <td class="py-2.5 text-right text-slate-300">$${i.unit_price.toFixed(2)}</td>
+              <td class="py-2.5 text-right text-white font-semibold">$${(i.quantity * i.unit_price).toFixed(2)}</td>
+            </tr>`).join('');
+
+          content.classList.remove('hidden');
+          content.innerHTML = `
+            <div class="glass-panel p-6 rounded-3xl border border-white/5 space-y-5">
+              <div class="text-center border-b border-white/5 pb-4">
+                <div class="flex items-center justify-center gap-2 mb-1"><span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span><span class="text-xs font-semibold tracking-widest text-emerald-400 uppercase">Price Quotation</span></div>
+                <h1 class="text-2xl font-extrabold text-white bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">${q.id}</h1>
+              </div>
+
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                <div><span class="text-[10px] text-slate-400 uppercase block">Client</span><p class="text-white font-semibold">${escapeHTML(q.client_name || 'Valued Client')}</p></div>
+                <div><span class="text-[10px] text-slate-400 uppercase block">Prepared By</span><p class="text-white">${escapeHTML(q.prepared_by_name || 'KosAI Team')}</p></div>
+                <div><span class="text-[10px] text-slate-400 uppercase block">Date</span><p class="text-white">${q.created_at ? new Date(q.created_at).toLocaleDateString() : 'Today'}</p></div>
+                <div><span class="text-[10px] text-slate-400 uppercase block">Valid Until</span><p class="text-white font-bold">${q.valid_until || '14 days'}</p></div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead><tr class="text-[10px] text-slate-400 uppercase border-b border-white/10">
+                    <th class="text-left py-2">Item Description</th><th class="text-center py-2">Qty</th><th class="text-right py-2">Unit Price</th><th class="text-right py-2">Total</th>
+                  </tr></thead>
+                  <tbody>${itemsHtml || '<tr><td colspan="4" class="py-4 text-center text-slate-500 italic">Custom solution</td></tr>'}</tbody>
+                </table>
+              </div>
+
+              <div class="flex justify-end">
+                <div class="w-64 bg-white/5 rounded-xl p-4 space-y-2">
+                  <div class="flex justify-between text-xs"><span class="text-slate-400">Subtotal</span><span class="text-white">$${(q.subtotal || 0).toFixed(2)}</span></div>
+                  ${(q.discount || 0) > 0 ? `<div class="flex justify-between text-xs"><span class="text-slate-400">Discount</span><span class="text-rose-400">-$${q.discount.toFixed(2)}</span></div>` : ''}
+                  ${(q.tax || 0) > 0 ? `<div class="flex justify-between text-xs"><span class="text-slate-400">Tax</span><span class="text-white">$${q.tax.toFixed(2)}</span></div>` : ''}
+                  <div class="flex justify-between text-lg font-extrabold border-t border-white/10 pt-2"><span class="text-white">TOTAL</span><span class="text-emerald-400">$${(q.total_amount || 0).toFixed(2)} ${q.currency || 'USD'}</span></div>
+                </div>
+              </div>
+
+              ${q.terms_conditions ? `<div class="pt-3 border-t border-white/5"><span class="text-[10px] text-slate-400 uppercase block mb-1">Terms & Conditions</span><p class="text-xs text-slate-300 whitespace-pre-line">${escapeHTML(q.terms_conditions)}</p></div>` : ''}
+              ${q.quotation_notes ? `<div class="pt-3 border-t border-white/5"><span class="text-[10px] text-slate-400 uppercase block mb-1">Notes</span><p class="text-xs text-slate-300 whitespace-pre-line">${escapeHTML(q.quotation_notes)}</p></div>` : ''}
+
+              <!-- PDF / Excel Download -->
+              <div class="flex gap-3 pt-3 border-t border-white/5">
+                <button onclick="portalDownloadPDF('${escapeHTML(q.id)}')" class="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-white/10 transition flex items-center justify-center gap-1.5">
+                  📄 Download PDF
+                </button>
+                <button onclick="portalDownloadExcel('${escapeHTML(q.id)}')" class="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-white/10 transition flex items-center justify-center gap-1.5">
+                  📊 Download Excel
+                </button>
+              </div>
+            </div>
+
+            <!-- Approval Section -->
+            <div class="glass-panel p-6 rounded-3xl border border-white/5 space-y-5" id="approval-section">
+              <h3 class="text-sm font-bold text-white text-center uppercase tracking-widest">Your Decision</h3>
+
+              <!-- Signature Pad -->
+              <div class="space-y-2">
+                <label class="text-[10px] text-slate-400 uppercase font-bold">Digital Signature (optional for approval)</label>
+                <div class="bg-white/5 rounded-xl border border-white/10 p-2 inline-block">
+                  <canvas id="signature-pad" width="350" height="120" class="rounded-lg cursor-crosshair bg-white/5"></canvas>
+                </div>
+                <div class="flex gap-2">
+                  <button type="button" onclick="clearSignature()" class="text-[10px] text-slate-400 hover:text-white underline">Clear Signature</button>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="grid grid-cols-2 gap-4 pt-2">
+                <button onclick="approveQuotation('${token}')" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm active:scale-95">
+                  ✓ APPROVE QUOTATION
+                </button>
+                <button onclick="rejectQuotation('${token}')" class="bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-bold py-3 rounded-xl transition shadow-lg text-sm active:scale-95">
+                  ✗ REJECT
+                </button>
+              </div>
+            </div>
+
+            <p class="text-center text-[10px] text-slate-500">Powered by <span class="font-bold text-indigo-400">KosAI Myanmar</span></p>
+          `;
+
+          // Init signature pad
+          initSignaturePad();
+        } catch (err) {
+          loading.classList.add('hidden');
+          result.classList.remove('hidden');
+          result.className = 'text-center py-16 rounded-3xl border border-rose-500/20 shadow-2xl bg-rose-950/10';
+          result.innerHTML = `<span class="text-5xl block mb-4">⚠️</span><h2 class="text-xl font-bold text-rose-400 mb-2">Unable to Load Quotation</h2><p class="text-sm text-slate-400">${escapeHTML(err.message)}</p>`;
+        }
+      }
+
+      // ── Signature Pad ──────────────────────────────────────────────────────
+      let sigCanvas, sigCtx, sigDrawing = false;
+      function initSignaturePad() {
+        sigCanvas = document.getElementById('signature-pad');
+        if (!sigCanvas) return;
+        sigCtx = sigCanvas.getContext('2d');
+        sigCtx.strokeStyle = '#e2e8f0';
+        sigCtx.lineWidth = 2;
+        sigCtx.lineCap = 'round';
+        sigCtx.lineJoin = 'round';
+
+        const getPos = (e) => {
+          const r = sigCanvas.getBoundingClientRect();
+          const touch = e.touches?.[0];
+          return { x: (touch || e).clientX - r.left, y: (touch || e).clientY - r.top };
+        };
+        sigCanvas.addEventListener('mousedown', (e) => { sigDrawing = true; sigCtx.beginPath(); const p = getPos(e); sigCtx.moveTo(p.x, p.y); });
+        sigCanvas.addEventListener('mousemove', (e) => { if (!sigDrawing) return; const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); });
+        sigCanvas.addEventListener('mouseup', () => { sigDrawing = false; });
+        sigCanvas.addEventListener('mouseleave', () => { sigDrawing = false; });
+        sigCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); sigDrawing = true; sigCtx.beginPath(); const p = getPos(e); sigCtx.moveTo(p.x, p.y); });
+        sigCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (!sigDrawing) return; const p = getPos(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); });
+        sigCanvas.addEventListener('touchend', () => { sigDrawing = false; });
+      }
+
+      function clearSignature() {
+        if (sigCtx && sigCanvas) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+      }
+
+      function getSignatureData() {
+        if (!sigCanvas) return null;
+        const blank = document.createElement('canvas');
+        blank.width = sigCanvas.width; blank.height = sigCanvas.height;
+        if (sigCanvas.toDataURL() === blank.toDataURL()) return null;
+        return sigCanvas.toDataURL('image/png');
+      }
+
+      async function approveQuotation(token) {
+        const btn = event.target;
+        btn.disabled = true; btn.textContent = 'Approving...';
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/portal/quote/${token}/approve`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ signature: getSignatureData() })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            document.getElementById('approval-section').classList.add('hidden');
+            const result = document.getElementById('quote-result');
+            result.classList.remove('hidden');
+            result.className = 'text-center py-16 rounded-3xl border border-emerald-500/20 shadow-2xl bg-emerald-950/10';
+            result.innerHTML = '<span class="text-5xl block mb-4">✅</span><h2 class="text-xl font-bold text-emerald-400 mb-2">Quotation Approved!</h2><p class="text-sm text-slate-400">Thank you. Our team will proceed with the project.</p>';
+          } else { alert(data.error || 'Failed to approve'); btn.disabled = false; btn.textContent = '✓ APPROVE QUOTATION'; }
+        } catch (e) { alert('Error: ' + e.message); btn.disabled = false; btn.textContent = '✓ APPROVE QUOTATION'; }
+      }
+
+      async function rejectQuotation(token) {
+        const reason = prompt('Reason for rejection (optional):');
+        if (reason === null) return;
+        const btn = event.target;
+        btn.disabled = true; btn.textContent = 'Rejecting...';
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/portal/quote/${token}/reject`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason })
+          });
+          if (res.ok) {
+            document.getElementById('approval-section').classList.add('hidden');
+            const result = document.getElementById('quote-result');
+            result.classList.remove('hidden');
+            result.className = 'text-center py-16 rounded-3xl border border-rose-500/20 shadow-2xl bg-rose-950/10';
+            result.innerHTML = '<span class="text-5xl block mb-4">❌</span><h2 class="text-xl font-bold text-rose-400 mb-2">Quotation Rejected</h2><p class="text-sm text-slate-400">We have noted your decision. Please contact us if you have questions.</p>';
+          } else { alert('Failed to reject'); btn.disabled = false; btn.textContent = '✗ REJECT'; }
+        } catch (e) { alert('Error: ' + e.message); btn.disabled = false; btn.textContent = '✗ REJECT'; }
+      }
 
       function escapeHTML(str) {
         if (str === null || str === undefined) return '';
@@ -544,6 +765,34 @@
         } catch (e) {
           alert('Error compiling PDF: ' + e.message);
         }
+      }
+    </script>
+
+    <!-- Portal PDF/Excel Download -->
+    <script>
+      function portalDownloadPDF(quotationId) {
+        window.open(`${API_BASE_URL}/api/quotations/${quotationId}/pdf`, '_blank');
+      }
+      function portalDownloadExcel(quotationId) {
+        // Build a simple CSV from the page data
+        const rows = [['Item', 'Qty', 'Unit Price', 'Total']];
+        document.querySelectorAll('#quote-content tbody tr').forEach(tr => {
+          const cells = tr.querySelectorAll('td');
+          if (cells.length >= 4) {
+            rows.push([
+              cells[0].textContent.trim(),
+              cells[1].textContent.trim(),
+              cells[2].textContent.trim(),
+              cells[3].textContent.trim()
+            ]);
+          }
+        });
+        const csv = rows.map(r => r.map(c => '"' + c.replace(/"/g, '""') + '"').join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `Quotation_${quotationId}.csv`; a.click();
+        URL.revokeObjectURL(url);
       }
     </script>
 

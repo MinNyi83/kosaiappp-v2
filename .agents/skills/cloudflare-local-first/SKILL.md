@@ -100,9 +100,18 @@ npx wrangler d1 export cctv-fsm-db --remote > remote_backup.sql
 2. **Foreign Key Dependencies**: Drop and recreate tables in order:
    ```sql
    -- Drop in reverse dependency order
+   DROP TABLE IF EXISTS quotation_items;
+   DROP TABLE IF EXISTS survey_photos;
+   DROP TABLE IF EXISTS cost_quotations_enterprise;
+   DROP TABLE IF EXISTS target_camera_locations;
+   DROP TABLE IF EXISTS core_projects;
+   DROP TABLE IF EXISTS camera_placements;
+   DROP TABLE IF EXISTS server_rooms;
    DROP TABLE IF EXISTS cash_transactions;
    DROP TABLE IF EXISTS inventory_items;
    DROP TABLE IF EXISTS service_records;
+   DROP TABLE IF EXISTS quotations;
+   DROP TABLE IF EXISTS site_surveys;
    DROP TABLE IF EXISTS inventory_stock;
    DROP TABLE IF EXISTS inventory_batches;
    DROP TABLE IF EXISTS clients;
@@ -111,12 +120,24 @@ npx wrangler d1 export cctv-fsm-db --remote > remote_backup.sql
    -- Create in dependency order
    CREATE TABLE technicians (...);
    CREATE TABLE clients (...);
-   CREATE TABLE service_records (...);
+   CREATE TABLE site_surveys (...);
+   CREATE TABLE quotations (...);
+   CREATE TABLE survey_photos (...);
+   CREATE TABLE quotation_items (...);
    ```
 
 3. **Missing Column Alignments**: Always cross-reference table column structures between local SQLite and remote D1 schemas. Run `ALTER TABLE` to align if missing.
 
 4. **Schema File Location**: Use `db/migrations/schema.sql` as the source of truth (not the legacy `schema.sql` in root).
+
+5. **Migration Files**: Use numbered migration files in `db/migrations/` (e.g., `0006_survey_quotation_redesign.sql`). Apply in order:
+   ```bash
+   # Apply specific migration locally
+   npx wrangler d1 execute cctv-fsm-db --local --file=db/migrations/0006_survey_quotation_redesign.sql
+   
+   # Apply specific migration remotely
+   npx wrangler d1 execute cctv-fsm-db --remote --file=db/migrations/0006_survey_quotation_redesign.sql
+   ```
 
 ## Testing Workflow
 

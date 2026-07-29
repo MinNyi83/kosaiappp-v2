@@ -1,21 +1,28 @@
 <div id="view-landing-page" class="space-y-6 tab-view">
-  <div class="flex items-center justify-between">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
     <div>
-      <h2 class="text-xl font-extrabold text-white tracking-tight">Landing Page Editor</h2>
-      <p class="text-xs text-slate-400 mt-1">Manage content displayed on the public landing page</p>
+      <h2 class="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        Landing Page
+      </h2>
+      <p class="text-sm text-slate-400 mt-1">Manage content displayed on the public landing page</p>
     </div>
-    <button
-      onclick="saveLandingPage()"
-      class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold px-4 py-2 rounded-lg transition"
-    >
+    <button onclick="saveLandingPage()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       Save Changes
     </button>
   </div>
 
   <!-- Hero Section -->
-  <div class="glass-panel rounded-xl p-5 space-y-4">
+  <div class="glass-panel rounded-2xl p-6 space-y-4">
     <h3 class="text-sm font-bold text-white flex items-center gap-2">
-      <span class="text-amber-500">🎯</span> Hero Section
+      <div class="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
+        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+      </div>
+      Hero Section
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="space-y-1">
@@ -86,7 +93,7 @@
   <!-- Stats Section -->
   <div class="glass-panel rounded-xl p-5 space-y-4">
     <h3 class="text-sm font-bold text-white flex items-center gap-2">
-      <span class="text-amber-500">📊</span> Stats Section
+      <span class="text-amber-500"><svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span> Stats Section
     </h3>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="space-y-1">
@@ -189,9 +196,12 @@
   </div>
 
   <!-- Services Section -->
-  <div class="glass-panel rounded-xl p-5 space-y-4">
+  <div class="glass-panel rounded-2xl p-6 space-y-4">
     <h3 class="text-sm font-bold text-white flex items-center gap-2">
-      <span class="text-amber-500">🔧</span> Services Section
+      <div class="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+        <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+      </div>
+      Services Section
     </h3>
     <div class="space-y-1">
       <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest"
@@ -266,7 +276,7 @@
   <!-- Contact Info -->
   <div class="glass-panel rounded-xl p-5 space-y-4">
     <h3 class="text-sm font-bold text-white flex items-center gap-2">
-      <span class="text-amber-500">📍</span> Contact Information
+      <span class="text-amber-500"><svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span> Contact Information
     </h3>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="space-y-1">
@@ -349,7 +359,7 @@
   <!-- Footer -->
   <div class="glass-panel rounded-xl p-5 space-y-4">
     <h3 class="text-sm font-bold text-white flex items-center gap-2">
-      <span class="text-amber-500">📄</span> Footer
+      <span class="text-amber-500"><svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span> Footer
     </h3>
     <div class="space-y-1">
       <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest"

@@ -119,15 +119,24 @@ describe('RMA & Warranty endpoints', () => {
     });
     const loginData = await loginRes.json();
     token = loginData.data.token;
+
+    // Get CSRF token
+    const csrfRes = await worker.fetch('/api/auth/csrf-token', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const csrfData = await csrfRes.json();
+    csrfToken = csrfData.data?.csrf_token || '';
   }, 30000);
 
   afterAll(async () => {
     if (worker) await worker.stop();
   });
 
+  let csrfToken = '';
   const authHeaders = () => ({
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
+    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
   });
 
   it('GET /api/admin/warranty/list should return array (not 500)', async () => {

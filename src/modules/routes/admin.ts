@@ -312,6 +312,7 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       await db.prepare('DELETE FROM roles WHERE id = ?').bind(params.id).run();
       return success({ message: 'Role deleted' });
@@ -491,6 +492,7 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       const fields = Object.keys(body);
@@ -527,6 +529,7 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const hq = (await request.json()) as any;
       if (!hq) return error('Missing configuration data', 400);
@@ -611,6 +614,7 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { key, value } = (await request.json()) as any;
       if (!key) return error('Missing key', 400);
@@ -646,6 +650,7 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { text, notes, job_id } = (await request.json()) as any;
       const raw = text || notes || '';
@@ -686,6 +691,7 @@ function register(router, env) {
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { message, query, question, history } = (await request.json()) as any;
       const userMsg = message || query || question || '';
@@ -857,6 +863,7 @@ ${schema}`;
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const url = new URL(request.url);
       const technician_id =
@@ -889,6 +896,7 @@ ${schema}`;
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { text, job_type, priority } = (await request.json()) as any;
 
@@ -955,6 +963,7 @@ ${schema}`;
     try {
       const user = await requireAdmin(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
       return success({ transcription: '', message: 'Transcription endpoint active.' });
     } catch (err) {
       console.error('Transcribe error:', err.message);

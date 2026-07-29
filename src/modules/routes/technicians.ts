@@ -3,7 +3,7 @@
  */
 
 import { success, error } from '../utils/response.js';
-import { authenticate } from '../utils/auth-middleware.js';
+import { authenticate, requireCsrf } from '../utils/auth-middleware.js';
 
 /**
  * @param {import("../utils/router").Router} router
@@ -77,6 +77,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       const { name, email, phone, pin, role, specialties } = body;
@@ -134,6 +135,7 @@ function register(router, env) {
       if (user.role?.toLowerCase() !== 'admin' && user.id !== params.id) {
         return error('Forbidden', 403);
       }
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const body = (await request.json()) as any;
       const { name, email, phone, role, specialties, active } = body;
@@ -192,6 +194,7 @@ function register(router, env) {
       const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
       if (user.role?.toLowerCase() !== 'admin') return error('Forbidden: admin only', 403);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const existing = await db
         .prepare('SELECT id FROM technicians WHERE id = ?')
@@ -216,6 +219,7 @@ function register(router, env) {
       if (user.id !== params.id && user.role?.toLowerCase() !== 'admin') {
         return error('Forbidden', 403);
       }
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { currentPin, newPin } = (await request.json()) as any;
       if (!currentPin || !newPin) {

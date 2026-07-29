@@ -1,68 +1,95 @@
-<div id="view-distributors" class="space-y-8 tab-view">
-  <div class="flex justify-between items-center">
+<div id="view-distributors" class="space-y-6 tab-view">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
     <div>
-      <h1 class="text-2xl font-black text-white uppercase tracking-tight">
-        Distributors Directory
+      <h1 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-cyan-500/15 flex items-center justify-center">
+          <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        Distributors
       </h1>
-      <p class="text-xs text-slate-400 mt-1">
-        Procurement channels for spare parts, network switches, CCTV kits, and storage arrays.
-      </p>
+      <p class="text-sm text-slate-400 mt-1">Manage procurement channels for spare parts & equipment</p>
     </div>
-    <button
-      onclick="openAddDistributorModal()"
-      class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-1.5"
-    >
-      <span>+</span> Add Distributor
+    <button onclick="openAddDistributorModal()" class="bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Distributor
     </button>
   </div>
 
-  <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
-    <div class="flex justify-between items-center gap-4 flex-wrap">
-      <div class="max-w-xs flex-1">
-        <input
-          name="distributor-search-input"
-          type="text"
-          id="distributor-search-input"
-          onkeyup="filterDistributors()"
-          placeholder="Search distributor or product lines..."
-          class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
-        />
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-cyan-500/30 transition-all">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-cyan-400 to-cyan-600 rounded-l-2xl"></div>
+      <div class="flex justify-between items-start mb-3">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Distributors</span>
+        <div class="w-9 h-9 rounded-xl bg-cyan-500/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        </div>
       </div>
-      <button
-        type="button"
-        onclick="exportTableToExcel('distributors-table', 'Distributors')"
-        class="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
-      >
-        <svg
-          class="w-3 h-3"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
-        Excel
-      </button>
+      <span class="text-3xl font-black text-cyan-400" id="dist-total">0</span>
     </div>
-    <div class="overflow-x-auto bg-black/30 rounded-xl border border-white/5 p-4">
+    <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-amber-500/30 transition-all">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-amber-400 to-amber-600 rounded-l-2xl"></div>
+      <div class="flex justify-between items-start mb-3">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active This Month</span>
+        <div class="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+      </div>
+      <span class="text-3xl font-black text-amber-400" id="dist-active">0</span>
+    </div>
+    <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-l-2xl"></div>
+      <div class="flex justify-between items-start mb-3">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Product Lines</span>
+        <div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+        </div>
+      </div>
+      <span class="text-3xl font-black text-emerald-400" id="dist-products">0</span>
+    </div>
+    <div class="glass-panel rounded-2xl p-5 relative overflow-hidden group hover:border-violet-500/30 transition-all">
+      <div class="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-violet-400 to-violet-600 rounded-l-2xl"></div>
+      <div class="flex justify-between items-start mb-3">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">With Contact Info</span>
+        <div class="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72"/></svg>
+        </div>
+      </div>
+      <span class="text-3xl font-black text-violet-400" id="dist-with-contact">0</span>
+    </div>
+  </div>
+
+  <!-- Search & Export -->
+  <div class="glass-panel rounded-2xl overflow-hidden">
+    <div class="p-5 pb-3 flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+        <div class="relative flex-1 max-w-xs">
+          <svg class="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="distributor-search-input" onkeyup="filterDistributors()" placeholder="Search distributors..." class="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-all"/>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="exportTableToExcel('distributors-table', 'Distributors')" class="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all">
+          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Excel
+        </button>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
       <table id="distributors-table" class="w-full text-xs text-left">
         <thead>
           <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
-            <th class="pb-3 pt-2 font-semibold">DISTRIBUTOR NAME</th>
-            <th class="pb-3 pt-2 font-semibold">CONTACT PERSON</th>
-            <th class="pb-3 pt-2 font-semibold">PHONE</th>
-            <th class="pb-3 pt-2 font-semibold">EMAIL</th>
-            <th class="pb-3 pt-2 font-semibold">PRODUCT LINES SUPPLIED</th>
-            <th class="pb-2 text-right">ACTIONS</th>
+            <th class="px-5 py-3 font-semibold">Distributor</th>
+            <th class="px-5 py-3 font-semibold">Contact</th>
+            <th class="px-5 py-3 font-semibold">Phone</th>
+            <th class="px-5 py-3 font-semibold">Email</th>
+            <th class="px-5 py-3 font-semibold">Product Lines</th>
+            <th class="px-5 py-3 font-semibold text-right">Actions</th>
           </tr>
         </thead>
         <tbody id="distributors-list-body" class="divide-y divide-white/5">
-          <tr>
-            <td colspan="6" class="py-4 text-center text-slate-600">Loading distributors...</td>
-          </tr>
+          <tr><td colspan="6" class="py-12 text-center text-slate-500">Loading...</td></tr>
         </tbody>
       </table>
     </div>

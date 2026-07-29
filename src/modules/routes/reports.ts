@@ -20,6 +20,7 @@ function register(router, env) {
         .toISOString()
         .split('T')[0];
 
+      // Core queries (required)
       const [
         todayJobs,
         pendingJobs,
@@ -29,34 +30,28 @@ function register(router, env) {
         recentJobs,
         statusBreakdown,
       ] = await Promise.all([
-        db
-          .prepare("SELECT COUNT(*) as count FROM service_records WHERE date(created_at) = ?")
-          .bind(today)
-          .first(),
+        db.prepare("SELECT COUNT(*) as count FROM service_records WHERE date(created_at) = ?").bind(today).first(),
         db.prepare("SELECT COUNT(*) as count FROM service_records WHERE status = 'Pending'").first(),
-        db
-          .prepare('SELECT COUNT(*) as count FROM service_records WHERE created_at >= ?')
-          .bind(startOfMonth)
-          .first(),
-        db
-          .prepare(
-            "SELECT COALESCE(SUM(amount), 0) as total FROM cash_transactions WHERE transaction_type = 'Deposit' AND created_at >= ?"
-          )
-          .bind(startOfMonth)
-          .first(),
-        db
-          .prepare(
-            "SELECT t.name, COUNT(j.id) as job_count FROM service_records j JOIN technicians t ON j.technician_id = t.id WHERE j.status = 'Completed' AND j.updated_at >= ? GROUP BY j.technician_id ORDER BY job_count DESC LIMIT 5"
-          )
-          .bind(startOfMonth)
-          .all(),
-        db
-          .prepare(
-            'SELECT j.*, c.company_name as client_name FROM service_records j LEFT JOIN clients c ON j.client_id = c.id ORDER BY j.created_at DESC LIMIT 10'
-          )
-          .all(),
+        db.prepare('SELECT COUNT(*) as count FROM service_records WHERE created_at >= ?').bind(startOfMonth).first(),
+        db.prepare("SELECT COALESCE(SUM(amount), 0) as total FROM cash_transactions WHERE transaction_type = 'Deposit' AND created_at >= ?").bind(startOfMonth).first(),
+        db.prepare("SELECT t.name, COUNT(j.id) as job_count FROM service_records j JOIN technicians t ON j.technician_id = t.id WHERE j.status = 'Completed' AND j.updated_at >= ? GROUP BY j.technician_id ORDER BY job_count DESC LIMIT 5").bind(startOfMonth).all(),
+        db.prepare('SELECT j.*, c.company_name as client_name FROM service_records j LEFT JOIN clients c ON j.client_id = c.id ORDER BY j.created_at DESC LIMIT 10').all(),
         db.prepare('SELECT status, COUNT(*) as count FROM service_records GROUP BY status').all(),
       ]);
+
+      // Extended queries (optional — don't fail if table/column missing)
+      let totalClients = { count: 0 }, activeClients = { count: 0 }, expiringClients = { count: 0 };
+      let totalInventory = { count: 0 }, lowStock = { count: 0 }, activeTechs = { count: 0 };
+      let todayJobsList = { results: [] }, recentActivity = { results: [] };
+
+      try { totalClients = await db.prepare('SELECT COUNT(*) as count FROM clients').first() || totalClients; } catch (_) {}
+      try { activeClients = await db.prepare("SELECT COUNT(*) as count FROM clients WHERE amc_status = 'Active'").first() || activeClients; } catch (_) {}
+      try { expiringClients = await db.prepare("SELECT COUNT(*) as count FROM clients WHERE amc_status = 'Active' AND amc_end IS NOT NULL AND amc_end <= date('now', '+30 days') AND amc_end >= date('now')").first() || expiringClients; } catch (_) {}
+      try { totalInventory = await db.prepare('SELECT COUNT(*) as count FROM inventory_stock').first() || totalInventory; } catch (_) {}
+      try { lowStock = await db.prepare('SELECT COUNT(*) as count FROM inventory_stock WHERE stock_qty <= 3').first() || lowStock; } catch (_) {}
+      try { activeTechs = await db.prepare("SELECT COUNT(DISTINCT technician_id) as count FROM service_records WHERE status = 'In Progress'").first() || activeTechs; } catch (_) {}
+      try { todayJobsList = await db.prepare("SELECT j.id, j.service_type, j.status, c.company_name as client_name, j.created_at FROM service_records j LEFT JOIN clients c ON j.client_id = c.id WHERE date(j.created_at) = date('now') ORDER BY j.created_at DESC LIMIT 5").all(); } catch (_) {}
+      try { recentActivity = await db.prepare("SELECT 'job' as type, j.id as ref_id, j.service_type as detail, j.status, j.created_at FROM service_records j UNION ALL SELECT 'client' as type, c.id as ref_id, c.company_name as detail, c.amc_status as status, c.created_at FROM clients c WHERE c.created_at IS NOT NULL ORDER BY created_at DESC LIMIT 15").all(); } catch (_) {}
 
       return success({
         today_jobs: todayJobs.count,
@@ -66,6 +61,14 @@ function register(router, env) {
         top_technicians: topTechnicians.results,
         recent_jobs: recentJobs.results,
         status_breakdown: statusBreakdown.results,
+        total_clients: totalClients?.count ?? 0,
+        active_clients: activeClients?.count ?? 0,
+        expiring_clients: expiringClients?.count ?? 0,
+        total_inventory: totalInventory?.count ?? 0,
+        low_stock: lowStock?.count ?? 0,
+        active_techs: activeTechs?.count ?? 0,
+        today_jobs_list: todayJobsList.results,
+        recent_activity: recentActivity.results,
       });
     } catch (err) {
       return error('Failed to fetch dashboard: ' + err.message, 500);

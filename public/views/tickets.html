@@ -1,620 +1,407 @@
-<div
-  id="view-tickets"
-  class="tab-view flex gap-0 -mx-4 -mt-4"
-  style="min-height: calc(100vh - 120px)"
->
-  <!-- ═══ LEFT SIDEBAR ═══ -->
-  <div
-    class="w-48 shrink-0 flex flex-col py-4 px-2.5 gap-0.5"
-    style="
-      background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%);
-      border-right: 1px solid rgba(255, 255, 255, 0.05);
-    "
-  >
-    <p class="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] px-2 mb-2 mt-1">
-      Ticket Modules
-    </p>
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- Service Tickets & Dispatch — Command Center                              -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="view-tickets" class="tab-view space-y-6 hidden">
 
-    <!-- Module Buttons -->
-    <button
-      onclick="switchTicketModule('logs')"
-      id="ticket-mod-logs"
-      class="ticket-mod-btn active-ticket-mod group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200"
-    >
-      <div
-        class="ticket-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 transition-all duration-200"
-        style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.3)"
-      >
-        <svg
-          class="w-3.5 h-3.5 text-emerald-400"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10 9 9 9 8 9" />
-        </svg>
+  <!-- Header -->
+  <div class="glass-panel rounded-2xl p-5 relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-blue-500/8 to-transparent rounded-full -mr-32 -mt-32"></div>
+    <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <div>
+        <h2 class="text-xl font-black text-white tracking-tight flex items-center gap-2">
+          <span class="text-2xl">🎫</span> Service Tickets
+        </h2>
+        <p class="text-xs text-slate-400 mt-0.5">Dispatch → Track → Complete → Invoice</p>
       </div>
-      <span class="ticket-mod-label text-emerald-400">Ticket Logs</span>
-    </button>
-
-    <button
-      onclick="switchTicketModule('create')"
-      id="ticket-mod-create"
-      class="ticket-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
-    >
-      <div
-        class="ticket-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200"
-      >
-        <svg
-          class="w-3.5 h-3.5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+      <div class="flex items-center gap-2">
+        <button onclick="tkExportExcel()" class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 font-bold text-[10px] px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Export
+        </button>
+        <button onclick="switchTicketModule('create')" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2">
+          <span class="text-base">+</span> New Ticket
+        </button>
       </div>
-      <span class="ticket-mod-label">Dispatch Ticket</span>
-    </button>
-
-    <button
-      onclick="switchTicketModule('pdf')"
-      id="ticket-mod-pdf"
-      class="ticket-mod-btn group flex items-center gap-2.5 px-3 py-2 rounded-lg text-[11px] font-semibold text-left w-full transition-all duration-200 text-slate-400 hover:text-white"
-    >
-      <div
-        class="ticket-mod-icon w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-white/5 border border-white/5 transition-all duration-200"
-      >
-        <svg
-          class="w-3.5 h-3.5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10 9 9 9 8 9" />
-        </svg>
-      </div>
-      <span class="ticket-mod-label">Generate Receipts</span>
-    </button>
-
-    <!-- Divider -->
-    <div class="mx-2 my-3 border-t border-white/5"></div>
-
-    <p class="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] px-2 mb-1.5">
-      Quick Actions
-    </p>
-
-    <button
-      onclick="switchTicketModule('create')"
-      class="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] text-slate-500 hover:text-emerald-400 transition-all duration-200 w-full text-left"
-    >
-      <div
-        class="w-5 h-5 rounded flex items-center justify-center bg-emerald-500/5 border border-emerald-500/10 group-hover:bg-emerald-500/15 group-hover:border-emerald-500/25 transition-all"
-      >
-        <svg
-          class="w-2.5 h-2.5 text-emerald-500"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="3"
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </div>
-      New Ticket ID
-    </button>
-
-    <!-- Bottom spacer -->
-    <div class="flex-1"></div>
-    <div class="px-3 py-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 mx-0.5">
-      <p class="text-[8px] text-emerald-600 font-bold uppercase tracking-wider">System</p>
-      <p class="text-[9px] text-slate-500 mt-0.5">Tickets · Dispatch · PDF</p>
     </div>
   </div>
 
-  <!-- ═══ MAIN CONTENT ═══ -->
-  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
-    <!-- ── TICKET LOGS PANEL ── -->
-    <div id="ticket-panel-logs" class="flex-1 flex flex-col overflow-hidden">
-      <!-- Header Bar -->
-      <div
-        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5"
-        style="background: rgba(0, 0, 0, 0.15)"
-      >
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            </svg>
+  <!-- Pipeline Status Bar -->
+  <div class="glass-panel p-4 rounded-2xl border border-white/5">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="flex items-center gap-3 bg-zinc-900/80 p-3 rounded-xl border border-amber-500/30 cursor-pointer hover:border-amber-400/50 transition" onclick="tkFilterByStatus('Pending')">
+        <div class="w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 font-extrabold text-sm flex items-center justify-center flex-shrink-0" id="tk-count-pending">0</div>
+        <div>
+          <h3 class="text-[11px] font-bold text-white">Pending</h3>
+          <p class="text-[10px] text-slate-400">Awaiting Dispatch</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 bg-zinc-900/80 p-3 rounded-xl border border-blue-500/30 cursor-pointer hover:border-blue-400/50 transition" onclick="tkFilterByStatus('In Progress')">
+        <div class="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 font-extrabold text-sm flex items-center justify-center flex-shrink-0" id="tk-count-progress">0</div>
+        <div>
+          <h3 class="text-[11px] font-bold text-white">In Progress</h3>
+          <p class="text-[10px] text-slate-400">Field Active</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 bg-zinc-900/80 p-3 rounded-xl border border-emerald-500/30 cursor-pointer hover:border-emerald-400/50 transition" onclick="tkFilterByStatus('Completed')">
+        <div class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 font-extrabold text-sm flex items-center justify-center flex-shrink-0" id="tk-count-completed">0</div>
+        <div>
+          <h3 class="text-[11px] font-bold text-white">Completed</h3>
+          <p class="text-[10px] text-slate-400">Done & Billed</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 bg-zinc-900/80 p-3 rounded-xl border border-rose-500/30 cursor-pointer hover:border-rose-400/50 transition" onclick="tkFilterByStatus('Cancelled')">
+        <div class="w-9 h-9 rounded-full bg-rose-500/20 text-rose-400 font-extrabold text-sm flex items-center justify-center flex-shrink-0" id="tk-count-cancelled">0</div>
+        <div>
+          <h3 class="text-[11px] font-bold text-white">Cancelled</h3>
+          <p class="text-[10px] text-slate-400">Closed</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module Tabs -->
+  <div class="flex gap-2 border-b border-white/5 pb-2">
+    <button onclick="switchTicketModule('logs')" id="ticket-mod-logs" class="px-4 py-2 text-xs font-bold text-white bg-white/10 rounded-xl transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Ticket Logs
+    </button>
+    <button onclick="switchTicketModule('create')" id="ticket-mod-create" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+      Dispatch
+    </button>
+    <button onclick="switchTicketModule('pdf')" id="ticket-mod-pdf" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Receipts
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- PANEL: Ticket Logs                                                    -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="ticket-panel-logs" class="space-y-4">
+    <!-- Filters Bar -->
+    <div class="glass-panel p-4 rounded-2xl border border-white/5">
+      <div class="flex flex-col md:flex-row gap-3">
+        <div class="flex-1 relative">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="tk-search" type="text" placeholder="Search tickets, clients, techs..." class="w-full bg-white/5 border border-white/10 text-white text-xs pl-9 pr-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition" oninput="tkApplyFilters()">
+        </div>
+        <select id="tk-filter-domain" class="bg-white/5 border border-white/10 text-white text-xs px-3 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition" onchange="tkApplyFilters()">
+          <option value="">All Domains</option>
+          <option value="CCTV">CCTV</option>
+          <option value="Networking">Networking</option>
+          <option value="WiFi">WiFi</option>
+          <option value="NAS">NAS</option>
+          <option value="General Maintenance">General</option>
+        </select>
+        <select id="tk-filter-status" class="bg-white/5 border border-white/10 text-white text-xs px-3 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition" onchange="tkApplyFilters()">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <select id="tk-filter-tech" class="bg-white/5 border border-white/10 text-white text-xs px-3 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition" onchange="tkApplyFilters()">
+          <option value="">All Technicians</option>
+        </select>
+        <div class="flex gap-2">
+          <button onclick="tkToggleView()" id="tk-view-toggle" class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 px-3 py-2.5 rounded-xl transition" title="Toggle view">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          </button>
+          <button onclick="tkClearFilters()" class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 text-[10px] font-bold px-3 py-2.5 rounded-xl transition">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card View -->
+    <div id="tk-view-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Table View -->
+    <div id="tk-view-table" class="glass-panel rounded-2xl overflow-hidden hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full" id="tk-table">
+          <thead>
+            <tr class="border-b border-white/5">
+              <th class="text-left py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">ID</th>
+              <th class="text-left py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Client</th>
+              <th class="text-left py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Technician</th>
+              <th class="text-left py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Domain</th>
+              <th class="text-left py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
+              <th class="text-left py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Created</th>
+              <th class="text-right py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tk-table-body">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination -->
+      <div class="flex items-center justify-between p-4 border-t border-white/5">
+        <span class="text-[10px] text-slate-500" id="tk-page-info">Showing 0 tickets</span>
+        <div class="flex gap-2" id="tk-pagination"></div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="tk-empty-state" class="hidden glass-panel rounded-2xl p-12 text-center">
+      <div class="text-4xl mb-3">🎫</div>
+      <h3 class="text-sm font-bold text-white mb-1">No tickets found</h3>
+      <p class="text-xs text-slate-400">Create your first dispatch ticket to get started.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- PANEL: Dispatch Ticket                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="ticket-panel-create" class="hidden">
+    <div class="glass-panel rounded-2xl p-6 border border-white/5">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"/></svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Dispatch New Ticket</h3>
+          <p class="text-[10px] text-slate-400">Assign a technician and schedule service</p>
+        </div>
+      </div>
+
+      <form id="tk-dispatch-form" onsubmit="tkSubmitDispatch(event)" class="space-y-5">
+        <!-- Row 1: ID + Domain -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Ticket ID</label>
+            <input name="id" type="text" placeholder="Auto-generated if empty" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition font-mono">
           </div>
           <div>
-            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Ticket Logs</h2>
-            <p class="text-[10px] text-slate-500 mt-0.5">Track active dispatches and operational details</p>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Service Domain *</label>
+            <select name="service_type" required class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+              <option value="">Select domain...</option>
+              <option value="CCTV">🎥 CCTV</option>
+              <option value="Networking">🌐 Networking</option>
+              <option value="WiFi">📡 WiFi</option>
+              <option value="NAS">💾 NAS</option>
+              <option value="General Maintenance">🔧 General Maintenance</option>
+            </select>
           </div>
         </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <div class="relative">
-            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <circle cx="11" cy="11" r="8" />
-              <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
-            </svg>
-            <input
-              name="ticket-search-input"
-              type="text"
-              id="ticket-search-input"
-              onkeyup="filterTicketTable()"
-              placeholder="Search client or tech..."
-              class="bg-black/30 border border-white/10 rounded-xl pl-7 pr-3 py-2 text-[11px] text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all w-52"
-            />
+
+        <!-- Row 2: Client Type -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Customer Type</label>
+          <div class="flex gap-3">
+            <label class="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 cursor-pointer hover:bg-white/[0.07] transition has-[:checked]:border-blue-500/50 has-[:checked]:bg-blue-500/10">
+              <input type="radio" name="customer_type" value="Annual" checked onchange="tkToggleCustomerType('Annual')" class="accent-blue-500">
+              <span class="text-xs text-white font-bold">Annual / AMC</span>
+            </label>
+            <label class="flex-1 flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 cursor-pointer hover:bg-white/[0.07] transition has-[:checked]:border-blue-500/50 has-[:checked]:bg-blue-500/10">
+              <input type="radio" name="customer_type" value="Individual" onchange="tkToggleCustomerType('Individual')" class="accent-blue-500">
+              <span class="text-xs text-white font-bold">Individual</span>
+            </label>
           </div>
-          <select
-            name="ticket-filter-domain"
-            onchange="filterTicketByDomain(this.value)"
-            id="ticket-filter-domain"
-            class="bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-[11px] text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all"
-          >
-            <option value="All">All Domains</option>
+        </div>
+
+        <!-- Corporate Client -->
+        <div id="tk-corp-client-field">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Corporate Client *</label>
+          <input id="tk-client-search" list="tk-clients-datalist" name="client_id" required placeholder="Search client..." autocomplete="off" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+          <datalist id="tk-clients-datalist"></datalist>
+        </div>
+
+        <!-- Individual Fields -->
+        <div id="tk-individual-fields" class="hidden space-y-4">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Customer Name *</label>
+            <input id="tk-individual-search" list="tk-individual-clients-datalist" name="individual_client_id" placeholder="Search individual client..." autocomplete="off" oninput="tkToggleIndividualNewFields(this.value)" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+            <datalist id="tk-individual-clients-datalist"></datalist>
+            <p class="text-[10px] text-slate-500 mt-1">Or type "__NEW__" or select "Create New Client" to add new</p>
+          </div>
+          <div id="tk-individual-new-fields" class="hidden space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">New Client Name *</label>
+                <input name="individual_name" type="text" placeholder="Full name" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phone *</label>
+                <input name="individual_phone" type="tel" placeholder="09..." class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Address</label>
+              <input name="individual_address" type="text" placeholder="Service address" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Technician -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Assign Technician *</label>
+          <select id="tk-dispatch-tech" name="technician_id" required class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+            <option value="">Select technician...</option>
+          </select>
+        </div>
+
+        <!-- Row 4: Maps URL -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Location (Google Maps URL)</label>
+          <div class="flex gap-2">
+            <input id="tk-maps-url" name="maps_url" type="url" placeholder="https://maps.app.goo.gl/..." oninput="tkResolveMapUrl(this.value)" class="flex-1 bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+            <span id="tk-resolve-status" class="text-[10px] text-slate-500 self-center"></span>
+          </div>
+          <input type="hidden" name="arrival_lat">
+          <input type="hidden" name="arrival_lng">
+        </div>
+
+        <!-- Row 5: Description -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Job Description *</label>
+          <textarea name="job_description" required rows="3" placeholder="Scope of work, requirements, notes..." class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition resize-none"></textarea>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs px-8 py-3 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-wider">
+            Commit Dispatch
+          </button>
+          <button type="reset" class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 font-bold text-xs px-6 py-3 rounded-xl transition">
+            Clear Form
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- PANEL: Receipt Generator                                              -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="ticket-panel-pdf" class="hidden">
+    <div class="glass-panel rounded-2xl p-6 border border-white/5">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Service Receipt Generator</h3>
+          <p class="text-[10px] text-slate-400">Generate PDF receipts for completed tickets</p>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <input id="tk-pdf-job-id" type="text" placeholder="Enter Ticket ID (e.g. SR-abc123)" class="flex-1 bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition font-mono">
+        <button onclick="tkGenerateReceipt()" class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all active:scale-95">
+          Generate PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- Ticket Detail Modal                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tk-detail-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target===this)tkCloseDetail()">
+  <div class="glass-panel rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/10">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-5 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <span class="font-mono text-sm font-bold text-amber-400" id="tk-detail-id"></span>
+        <span id="tk-detail-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold border"></span>
+      </div>
+      <button onclick="tkCloseDetail()" class="text-slate-400 hover:text-white transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <!-- Body -->
+    <div class="p-5 space-y-4" id="tk-detail-body">
+      <!-- Populated by JS -->
+    </div>
+    <!-- Footer -->
+    <div class="flex items-center justify-between p-5 border-t border-white/5">
+      <div class="flex gap-2">
+        <select id="tk-detail-status-select" class="bg-white/5 border border-white/10 text-white text-[10px] px-3 py-2 rounded-xl focus:border-blue-500/50 focus:outline-none transition" onchange="tkQuickStatusUpdate(this.value)">
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <button onclick="tkOpenEditFromDetail()" class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-[10px] font-bold px-3 py-2 rounded-xl transition">Edit</button>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="tkPolishNotes()" class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 text-[10px] font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">
+          <span>✨</span> AI Polish
+        </button>
+        <button onclick="tkNotifyTelegram()" class="bg-sky-600/80 hover:bg-sky-500 text-white text-[10px] font-bold px-3 py-2 rounded-xl transition flex items-center gap-1">
+          <span>📱</span> Notify
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<!-- Edit Ticket Modal                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════════════════ -->
+<div id="tk-edit-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target===this)tkCloseEdit()">
+  <div class="glass-panel rounded-2xl w-full max-w-lg border border-white/10">
+    <div class="flex items-center justify-between p-5 border-b border-white/5">
+      <h3 class="text-sm font-bold text-white">Edit Ticket</h3>
+      <button onclick="tkCloseEdit()" class="text-slate-400 hover:text-white transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="tk-edit-form" onsubmit="tkSubmitEdit(event)" class="p-5 space-y-4">
+      <input type="hidden" id="tk-edit-id">
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Client</label>
+        <input id="tk-edit-client" list="tk-edit-clients-datalist" type="text" placeholder="Search client..." class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+        <datalist id="tk-edit-clients-datalist"></datalist>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Technician</label>
+          <select id="tk-edit-tech" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition"></select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Domain</label>
+          <select id="tk-edit-domain" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
             <option value="CCTV">CCTV</option>
             <option value="Networking">Networking</option>
             <option value="WiFi">WiFi</option>
             <option value="NAS">NAS</option>
             <option value="General Maintenance">General Maintenance</option>
           </select>
-          <button
-            type="button"
-            onclick="exportTableToExcel('tickets-table', 'Ticket_Logs')"
-            class="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/10 rounded-xl transition-all"
-          >
-            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Excel
-          </button>
         </div>
       </div>
-
-      <!-- Table View -->
-      <div class="flex-1 overflow-y-auto p-5 flex flex-col">
-        <div class="glass-panel rounded-2xl overflow-hidden flex flex-col flex-1" style="min-height: 0">
-          <div class="table-scroll-container overflow-x-auto overflow-y-auto p-4 flex-1" style="min-height: 420px">
-            <table id="tickets-table" class="w-full text-xs text-left text-slate-300 align-middle">
-              <thead>
-                <tr class="text-slate-500 border-b border-white/5 uppercase tracking-widest text-[9px]">
-                  <th class="pb-3 pt-2 font-semibold">ID</th>
-                  <th class="pb-3 pt-2 font-semibold">Client</th>
-                  <th class="pb-3 pt-2 font-semibold">Tech</th>
-                  <th class="pb-3 pt-2 font-semibold">Service</th>
-                  <th class="pb-3 pt-2 font-semibold">Status</th>
-                  <th class="pb-3 pt-2 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="full-jobs-body" class="divide-y divide-white/5">
-                <!-- Loaded dynamically -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
+        <select id="tk-edit-status" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
       </div>
-    </div>
-
-    <!-- ── DISPATCH TICKET PANEL ── -->
-    <div id="ticket-panel-create" class="flex-1 flex flex-col overflow-hidden hidden">
-      <!-- Header Bar -->
-      <div
-        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5"
-        style="background: rgba(0, 0, 0, 0.15)"
-      >
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </div>
-          <div>
-            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Dispatch Service Ticket</h2>
-            <p class="text-[10px] text-slate-500 mt-0.5">Assign technician to client site job order</p>
-          </div>
-        </div>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Location URL</label>
+        <input id="tk-edit-maps" type="url" placeholder="https://maps.app.goo.gl/..." class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition">
+        <input type="hidden" id="tk-edit-lat">
+        <input type="hidden" id="tk-edit-lng">
       </div>
-
-      <!-- Form View -->
-      <div class="flex-1 overflow-y-auto p-5 max-w-xl">
-        <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
-          <form method="POST" id="job-form" class="space-y-4" onsubmit="submitJob(event)">
-            <div class="space-y-1">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                >New Ticket ID</label
-              >
-              <input
-                type="text"
-                name="id"
-                placeholder="e.g., JOB-203"
-                required
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono"
-              />
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                >Service Domain</label
-              >
-              <select
-                name="service_type"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
-              >
-                <option value="CCTV">CCTV Surveillance Array</option>
-                <option value="Networking">Core Infrastructure Networking</option>
-                <option value="WiFi">WiFi Mesh Deployment</option>
-                <option value="NAS">NAS Storage Cluster</option>
-                <option value="General Maintenance">General Maintenance</option>
-              </select>
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                >Service Type Category</label
-              >
-              <select
-                name="customer_type"
-                onchange="toggleCustomerTypeFields(this.value)"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
-              >
-                <option value="Annual">Annual Member (AMC Contract)</option>
-                <option value="Individual">Individual Service (One-off Client)</option>
-              </select>
-            </div>
-            <div id="corporate-client-field" class="space-y-1">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                >Target Client Corporate Account</label
-              >
-              <input
-                name="lookup-client-search"
-                type="text"
-                id="lookup-client-search"
-                placeholder="Type to search corporate account..."
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
-                list="corporate-clients-datalist"
-                autocomplete="off"
-              />
-              <input type="hidden" id="lookup-client" name="client_id" />
-              <datalist id="corporate-clients-datalist"></datalist>
-            </div>
-            <div
-              id="individual-customer-fields"
-              class="space-y-3 hidden border-l-2 border-amber-500/50 pl-3"
-            >
-              <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                  >Customer / Contact Name</label
-                >
-                <input
-                  type="text"
-                  id="lookup-individual-search"
-                  name="customer_name"
-                  placeholder="Type to search or enter new name..."
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
-                  list="individual-clients-datalist"
-                  autocomplete="off"
-                />
-                <datalist id="individual-clients-datalist"></datalist>
-              </div>
-              <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                  >Contact Phone</label
-                >
-                <input
-                  type="text"
-                  name="customer_phone"
-                  placeholder="Mobile number"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all font-mono"
-                />
-              </div>
-              <div class="space-y-1">
-                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                  >Service Site Address</label
-                >
-                <input
-                  type="text"
-                  name="customer_address"
-                  placeholder="Physical location of service"
-                  class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
-                />
-              </div>
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                >Service Location Google Maps Share Link</label
-              >
-              <input
-                type="text"
-                id="job-maps-url"
-                name="maps_url"
-                placeholder="https://maps.app.goo.gl/..."
-                oninput="resolveJobMapsUrlToCoords(this.value)"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all"
-              />
-              <span id="job-resolve-status" class="block text-[8px] text-slate-500 mt-1"
-                >Coordinates: Not resolved yet</span
-              >
-            </div>
-            <input type="hidden" name="arrival_lat" id="job-lat" value="" />
-            <input type="hidden" name="arrival_lng" id="job-lng" value="" />
-            <div class="space-y-1">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                >Assigned Operational Engineer</label
-              >
-              <select
-                id="lookup-tech"
-                name="technician_id"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500 transition-all"
-              ></select>
-            </div>
-            <div class="space-y-1">
-              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest"
-                >Statement of Scope</label
-              >
-              <textarea
-                name="job_description"
-                placeholder="Technical instructions & specific service scope metrics..."
-                required
-                rows="3"
-                class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all resize-none"
-              ></textarea>
-            </div>
-            <button
-              type="submit"
-              class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 py-3 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition-all shadow-lg hover:shadow-amber-500/10"
-            >
-              Commit Ticket
-            </button>
-          </form>
-        </div>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Description</label>
+        <textarea id="tk-edit-desc" rows="3" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition resize-none"></textarea>
       </div>
-    </div>
-
-    <!-- ── PDF GENERATOR PANEL ── -->
-    <div id="ticket-panel-pdf" class="flex-1 flex flex-col overflow-hidden hidden">
-      <!-- Header Bar -->
-      <div
-        class="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5"
-        style="background: rgba(0, 0, 0, 0.15)"
-      >
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg>
-          </div>
-          <div>
-            <h2 class="text-sm font-bold text-white leading-none uppercase tracking-wider">Generate Service Receipts</h2>
-            <p class="text-[10px] text-slate-500 mt-0.5">Compile and print compliant PDF service reports</p>
-          </div>
-        </div>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Technician Notes</label>
+        <textarea id="tk-edit-notes" rows="2" class="w-full bg-white/5 border border-white/10 text-white text-xs px-4 py-2.5 rounded-xl focus:border-blue-500/50 focus:outline-none transition resize-none"></textarea>
       </div>
-
-      <div class="p-5 max-w-xl">
-        <div class="glass-panel rounded-2xl overflow-hidden space-y-4">
-          <h2 class="text-sm font-bold text-white uppercase tracking-wider">
-            📄 Generate Compliant PDF Service Receipts
-          </h2>
-          <div class="flex gap-2">
-            <input
-              name="pdf-target-job-id"
-              type="text"
-              id="pdf-target-job-id"
-              placeholder="Target Ticket ID (e.g., JOB-201)"
-              class="bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white font-mono placeholder-slate-600 focus:outline-none focus:border-amber-500 flex-1"
-            />
-            <button
-              onclick="generateServiceReceiptPDF()"
-              class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl whitespace-nowrap transition-all uppercase tracking-wider"
-            >
-              Compile & Print
-            </button>
-          </div>
-        </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all active:scale-95">Save Changes</button>
+        <button type="button" onclick="tkCloseEdit()" class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 font-bold text-xs px-6 py-2.5 rounded-xl transition">Cancel</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Edit Ticket Modal -->
-  <div
-    id="edit-ticket-modal"
-    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
-  >
-    <div class="glass-panel rounded-2xl overflow-hidden max-w-md w-full space-y-4">
-      <h2 class="text-sm font-bold text-white uppercase tracking-wider">Edit Service Ticket</h2>
-      <form
-        method="POST"
-        id="edit-ticket-form"
-        onsubmit="submitEditTicket(event)"
-        class="space-y-3"
-      >
-        <input name="edit-ticket-id" type="hidden" id="edit-ticket-id" />
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Ticket ID</label
-          >
-          <input
-            name="edit-ticket-id-display"
-            type="text"
-            id="edit-ticket-id-display"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-mono"
-          />
-        </div>
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Client</label
-          >
-          <input
-            name="edit-ticket-client-search"
-            type="text"
-            id="edit-ticket-client-search"
-            placeholder="Type to search corporate or individual account..."
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-            list="edit-clients-datalist"
-            autocomplete="off"
-            required
-          />
-          <input type="hidden" id="edit-ticket-client" name="client_id" />
-          <datalist id="edit-clients-datalist"></datalist>
-        </div>
-        <div
-          id="edit-ticket-new-client-fields"
-          class="space-y-2 hidden border-l-2 border-amber-500/50 pl-3 pt-1"
-        >
-          <span class="block text-[8px] text-amber-500 uppercase font-extrabold tracking-wider"
-            >New Individual Client Info</span
-          >
-          <div class="space-y-1">
-            <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-              >Contact Phone</label
-            >
-            <input
-              type="text"
-              id="edit-ticket-client-phone"
-              placeholder="Mobile number"
-              class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono"
-            />
-          </div>
-          <div class="space-y-1">
-            <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-              >Site Address</label
-            >
-            <input
-              type="text"
-              id="edit-ticket-client-address"
-              placeholder="Physical location of service"
-              class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white"
-            />
-          </div>
-        </div>
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Technician</label
-          >
-          <select
-            name="edit-ticket-tech"
-            id="edit-ticket-tech"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-          ></select>
-        </div>
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Service Type</label
-          >
-          <select
-            name="edit-ticket-service-type"
-            id="edit-ticket-service-type"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white"
-          >
-            <option value="CCTV">CCTV Surveillance Array</option>
-            <option value="Networking">Core Infrastructure Networking</option>
-            <option value="WiFi">WiFi Mesh Deployment</option>
-            <option value="NAS">NAS Storage Cluster</option>
-            <option value="General Maintenance">General Maintenance</option>
-          </select>
-        </div>
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Status</label
-          >
-          <select
-            name="edit-ticket-status"
-            id="edit-ticket-status"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white font-semibold"
-          >
-            <option value="Pending">Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-        </div>
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Service Location Google Maps Share Link (optional)</label
-          >
-          <input
-            name="edit-ticket-maps-url"
-            type="text"
-            id="edit-ticket-maps-url"
-            placeholder="https://maps.app.goo.gl/..."
-            oninput="resolveEditJobMapsUrlToCoords(this.value)"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
-          />
-          <span id="edit-job-resolve-status" class="block text-[8px] text-slate-500 mt-1"
-            >Coordinates: Not resolved yet</span
-          >
-        </div>
-        <input name="edit-job-lat" type="hidden" id="edit-job-lat" />
-        <input name="edit-job-lng" type="hidden" id="edit-job-lng" />
-
-        <div class="space-y-1">
-          <label class="block text-[9px] text-slate-400 uppercase tracking-widest font-bold"
-            >Statement of Scope</label
-          >
-          <textarea
-            name="edit-ticket-desc"
-            id="edit-ticket-desc"
-            required
-            rows="3"
-            class="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-white resize-none"
-          ></textarea>
-        </div>
-        <div class="flex gap-2 pt-2">
-          <button
-            type="button"
-            onclick="closeEditTicketModal()"
-            class="flex-1 bg-white/5 hover:bg-white/10 py-2 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="flex-1 bg-amber-600 hover:bg-amber-500 py-2 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition"
-          >
-            Save Changes
-          </button>
-        </div>
-      </form>
-    </div>
+    </form>
   </div>
 </div>
-
-<style>
-  .active-ticket-mod {
-    background: linear-gradient(
-      135deg,
-      rgba(16, 185, 129, 0.12),
-      rgba(16, 185, 129, 0.05)
-    ) !important;
-    border: 1px solid rgba(16, 185, 129, 0.2) !important;
-  }
-  .active-ticket-mod .ticket-mod-label {
-    color: #34d399 !important;
-  }
-  .ticket-mod-btn {
-    border: 1px solid transparent;
-  }
-</style>

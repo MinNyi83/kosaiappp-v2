@@ -5,6 +5,7 @@
 import { success, error } from '../utils/response.js';
 import { verifyToken, signToken } from '../utils/jwt.js';
 import { checkRateLimit } from '../utils/rate-limit.js';
+import { authenticate, requireCsrf } from '../utils/auth-middleware.js';
 
 /**
  * Verify PIN against stored hash.
@@ -240,6 +241,9 @@ function register(router, env) {
   // ── GET /api/admin/resolve-coords ──────────────────────────────────────
   router.get('/api/admin/resolve-coords', async (request) => {
     try {
+      const user = await authenticate(request);
+      if (!user) return error('Unauthorized', 401);
+
       const urlObj = new URL(request.url);
       const url = urlObj.searchParams.get('url');
       if (!url) {
@@ -319,10 +323,9 @@ function register(router, env) {
   // ── POST /api/resolve-maps-url ────────────────────────────────────────
   router.post('/api/resolve-maps-url', async (request) => {
     try {
-      const authHeader = request.headers.get('Authorization');
-      if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-      const user = await verifyToken(authHeader.slice(7));
+      const user = await authenticate(request);
       if (!user) return error('Unauthorized', 401);
+      if (!await requireCsrf(request, user.id)) return error('Invalid CSRF token', 403);
 
       const { url } = (await request.json()) as any;
       if (!url) return error('Missing Google Maps URL', 400);

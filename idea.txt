@@ -17,7 +17,7 @@ python hexstrike_mcp.py
   "inputs": []
 }
 
-mimo -s ses_06b1c496cffeaz7YEf7UHGYBuD
+mimo -s ses_05e595a65ffejHARTd3kHwNTM6
 npx @mimo-ai/cli
 
 
@@ -27,6 +27,14 @@ cargo tauri build
 # Android debug
 cd android && .\gradlew.bat assembleDebug
 
+New Site Survey Client link with Customers (AMC and individual ) and can add new 
+New Site Survey Survey Type when choose cctv and other field Est. Cameras and Est. Cable (m) is good but choose other Est. Cameras and Est. Cable (m) no change i want to change such as accesspoint or hdd or some other
+Quotation Add Item Add Line Item link with inventory 
+Quotation Discount can make amount and %
+Quotation can update and edit and download pdf and excel
+and Receipt Builder more functional and customization .quotation and invoice for customer 
+
+* http://127.0.0.1:8787/app show Error pulling remote data: (intermediate value).filter is not a function
 
 **Toast Notifications** - Replaced 80+ browser alerts with non-blocking toast messages " make show in center"
 
