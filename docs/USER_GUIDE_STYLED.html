@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KosAI Field Service Management — User Guide</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.6;
+    color: #1e293b;
+    background: #fff;
+  }
+
+  /* ── Cover Page ─────────────────────────────────────── */
+  .cover {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    color: white;
+    padding: 60px 40px;
+  }
+  .cover-logo {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; font-weight: 900; color: #0f172a;
+    margin-bottom: 32px;
+    box-shadow: 0 20px 60px rgba(245,158,11,0.3);
+  }
+  .cover h1 {
+    font-size: 36pt;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover .subtitle {
+    font-size: 14pt;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-bottom: 40px;
+  }
+  .cover .version-badge {
+    display: inline-block;
+    padding: 6px 20px;
+    border: 1px solid rgba(245,158,11,0.4);
+    border-radius: 999px;
+    font-size: 10pt;
+    color: #f59e0b;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 60px;
+  }
+  .cover .meta {
+    font-size: 9pt;
+    color: #64748b;
+    margin-top: 40px;
+  }
+  .cover .meta span { color: #94a3b8; }
+
+  /* ── Table of Contents ──────────────────────────────── */
+  .toc {
+    page-break-after: always;
+    padding: 40px 0;
+  }
+  .toc h2 {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #f59e0b;
+  }
+  .toc-list {
+    list-style: none;
+    columns: 2;
+    column-gap: 40px;
+  }
+  .toc-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 10pt;
+    break-inside: avoid;
+  }
+  .toc-list .num {
+    display: inline-block;
+    width: 28px;
+    font-weight: 700;
+    color: #f59e0b;
+  }
+  .toc-list .title { color: #1e293b; font-weight: 500; }
+
+  /* ── Section Headers ────────────────────────────────── */
+  h2.section-title {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 40px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #f59e0b;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 24px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }
+  h4 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+
+  /* ── Paragraphs ─────────────────────────────────────── */
+  p { margin-bottom: 8px; }
+
+  /* ── Tables ─────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  thead th {
+    background: #0f172a;
+    color: #f8fafc;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 8pt;
+    letter-spacing: 0.5px;
+    padding: 8px 10px;
+    text-align: left;
+  }
+  tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody tr:hover { background: #fffbeb; }
+
+  /* ── Code / Inline ──────────────────────────────────── */
+  code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    background: #f1f5f9;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 9pt;
+    color: #be185d;
+  }
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 9pt;
+    line-height: 1.5;
+    overflow-x: auto;
+    margin: 12px 0;
+    page-break-inside: avoid;
+  }
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+
+  /* ── Callout Boxes ──────────────────────────────────── */
+  .callout {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  .callout-info {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    color: #1e40af;
+  }
+  .callout-warn {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    color: #92400e;
+  }
+  .callout-danger {
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    color: #991b1b;
+  }
+  .callout-success {
+    background: #f0fdf4;
+    border-left: 4px solid #22c55e;
+    color: #166534;
+  }
+  .callout strong { display: block; margin-bottom: 4px; }
+
+  /* ── Lists ──────────────────────────────────────────── */
+  ul, ol {
+    margin: 8px 0 12px 20px;
+  }
+  li {
+    margin-bottom: 4px;
+  }
+
+  /* ── Steps / Workflow ───────────────────────────────── */
+  .step {
+    display: flex;
+    gap: 12px;
+    margin: 10px 0;
+    page-break-inside: avoid;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0f172a;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 11pt;
+  }
+  .step-content {
+    flex: 1;
+    padding-top: 3px;
+  }
+
+  /* ── Flow Diagrams ──────────────────────────────────── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  .flow-box {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 9pt;
+  }
+  .flow-arrow {
+    color: #94a3b8;
+    font-size: 14pt;
+    line-height: 1;
+  }
+  .flow-pending { background: #fef3c7; color: #92400e; }
+  .flow-progress { background: #dbeafe; color: #1e40af; }
+  .flow-done { background: #dcfce7; color: #166534; }
+  .flow-cancel { background: #fee2e2; color: #991b1b; }
+
+  /* ── KPI Cards ──────────────────────────────────────── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .kpi {
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+  .kpi-value {
+    font-size: 18pt;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .kpi-label {
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    opacity: 0.8;
+  }
+  .kpi-blue { background: #eff6ff; color: #1e40af; }
+  .kpi-green { background: #f0fdf4; color: #166534; }
+  .kpi-amber { background: #fffbeb; color: #92400e; }
+  .kpi-red { background: #fef2f2; color: #991b1b; }
+
+  /* ── Section Divider ────────────────────────────────── */
+  .section-divider {
+    page-break-before: always;
+  }
+
+  /* ── Badge ──────────────────────────────────────────── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-admin { background: #fef3c7; color: #92400e; }
+  .badge-tech { background: #dbeafe; color: #1e40af; }
+  .badge-client { background: #f3e8ff; color: #6b21a8; }
+  .badge-all { background: #f0fdf4; color: #166534; }
+
+  /* ── Footer ─────────────────────────────────────────── */
+  .page-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 20px;
+    font-size: 8pt;
+    color: #94a3b8;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  /* ── Print Adjustments ──────────────────────────────── */
+  @media print {
+    .page-footer { position: fixed; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- COVER PAGE                                              -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">K</div>
+  <h1>KosAI</h1>
+  <p class="subtitle">Field Service Management System</p>
+  <div class="version-badge">User Guide v2.0</div>
+  <p style="color:#64748b; font-size:11pt; max-width:500px; line-height:1.7;">
+    Complete guide for administrators, technicians, and clients.<br>
+    Covering job dispatch, inventory, attendance, POS, AI copilot, and more.
+  </p>
+  <div class="meta">
+    <span>Awesome Myanmar CCTV &amp; Infrastructure</span><br>
+    August 2026
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- TABLE OF CONTENTS                                       -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ul class="toc-list">
+    <li><span class="num">1</span><span class="title">System Overview</span></li>
+    <li><span class="num">2</span><span class="title">Getting Started</span></li>
+    <li><span class="num">3</span><span class="title">Admin Dashboard</span></li>
+    <li><span class="num">4</span><span class="title">Service Tickets &amp; Job Dispatch</span></li>
+    <li><span class="num">5</span><span class="title">Dispatch Map</span></li>
+    <li><span class="num">6</span><span class="title">Site Surveys &amp; Quotations</span></li>
+    <li><span class="num">7</span><span class="title">Customer Management (AMC)</span></li>
+    <li><span class="num">8</span><span class="title">Attendance &amp; Time Tracking</span></li>
+    <li><span class="num">9</span><span class="title">Inventory &amp; Stock Management</span></li>
+    <li><span class="num">10</span><span class="title">POS Terminal &amp; Invoicing</span></li>
+    <li><span class="num">11</span><span class="title">Cash Ledger</span></li>
+    <li><span class="num">12</span><span class="title">Warranty &amp; RMA</span></li>
+    <li><span class="num">13</span><span class="title">Distributors</span></li>
+    <li><span class="num">14</span><span class="title">Service Fees</span></li>
+    <li><span class="num">15</span><span class="title">Reports &amp; Analytics</span></li>
+    <li><span class="num">16</span><span class="title">AI Copilot</span></li>
+    <li><span class="num">17</span><span class="title">User Management</span></li>
+    <li><span class="num">18</span><span class="title">System Settings</span></li>
+    <li><span class="num">19</span><span class="title">Landing Page Editor</span></li>
+    <li><span class="num">20</span><span class="title">Portfolio</span></li>
+    <li><span class="num">21</span><span class="title">Receipt Builder</span></li>
+    <li><span class="num">22</span><span class="title">Technician Mobile App</span></li>
+    <li><span class="num">23</span><span class="title">Client Portal</span></li>
+    <li><span class="num">24</span><span class="title">Telegram Bot</span></li>
+    <li><span class="num">25</span><span class="title">Keyboard Shortcuts</span></li>
+    <li><span class="num">26</span><span class="title">Troubleshooting</span></li>
+  </ul>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 1. SYSTEM OVERVIEW                                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<h2 class="section-title">1. System Overview</h2>
+
+<p>KosAI is a cloud-based field service management platform designed for CCTV, networking, WiFi, and NAS infrastructure companies. It connects office administrators, field technicians, and customers through a unified system.</p>
+
+<h3>User Roles</h3>
+<table>
+  <thead><tr><th>Role</th><th>Access</th><th>Login Method</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Admin</strong></td><td>Full system access — all modules</td><td>Username + Password or Google Sign-In</td></tr>
+    <tr><td><strong>Technician</strong></td><td>Mobile app — jobs, checklist, history, settings</td><td>Employee ID (<code>TECH-xxx</code>) + PIN</td></tr>
+    <tr><td><strong>Sales</strong></td><td>Limited admin — clients and jobs</td><td>Employee ID + PIN</td></tr>
+    <tr><td><strong>Client</strong></td><td>Portal — service history, warranty, invoices</td><td>Client ID lookup</td></tr>
+  </tbody>
+</table>
+
+<h3>Access Points</h3>
+<table>
+  <thead><tr><th>Platform</th><th>URL</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td>Admin Console</td><td><code>admin.html</code></td><td>Office management dashboard</td></tr>
+    <tr><td>Technician App</td><td><code>app.html</code></td><td>Field operations (mobile-first)</td></tr>
+    <tr><td>Client Portal</td><td><code>portal.html</code></td><td>Customer self-service</td></tr>
+    <tr><td>Landing Page</td><td><code>index.html</code></td><td>Public marketing site</td></tr>
+    <tr><td>Desktop App</td><td><code>.exe</code> (Tauri)</td><td>Offline-capable Windows application</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 2. GETTING STARTED                                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">2. Getting Started</h2>
+
+<h3>First-Time Admin Login</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Open <code>admin.html</code> in your browser (or launch the desktop app)</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Click <strong>"Sign In"</strong> on the lock screen</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Enter your <strong>Username</strong> and <strong>Password</strong></div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content">Click <strong>"Sign In"</strong></div></div>
+
+<div class="callout callout-info">
+  <strong>Default Admin Account</strong>
+  Username: <code>admin</code> | Password: <em>(set during initial setup)</em>. If you forgot your password, use System Settings &gt; Database Restore from a backup.
+</div>
+
+<h3>First-Time Technician Login</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Open <code>app.html</code> on your phone (or use the PWA install prompt)</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Enter your <strong>Employee ID</strong> (e.g., <code>TECH-001</code>) and <strong>PIN</strong> (default: <code>1234</code>)</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Tap <strong>"Sign In"</strong></div></div>
+
+<h3>Changing Your PIN (Technician)</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Go to <strong>Settings</strong> tab in the mobile app</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Tap <strong>"Change PIN"</strong></div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Enter your current PIN, then your new PIN twice</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content">Tap <strong>"Update PIN"</strong></div></div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 3. ADMIN DASHBOARD                                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">3. Admin Dashboard</h2>
+
+<p>The dashboard is your <strong>Command Center</strong> — the first screen you see after login.</p>
+
+<h3>Key Metrics</h3>
+<div class="kpi-grid">
+  <div class="kpi kpi-blue"><div class="kpi-value">N</div><div class="kpi-label">Total Jobs</div></div>
+  <div class="kpi kpi-amber"><div class="kpi-value">N</div><div class="kpi-label">Active Jobs</div></div>
+  <div class="kpi kpi-green"><div class="kpi-value">N</div><div class="kpi-label">Completed</div></div>
+  <div class="kpi kpi-green"><div class="kpi-value">$N</div><div class="kpi-label">Revenue</div></div>
+</div>
+
+<h3>Charts &amp; Visuals</h3>
+<ul>
+  <li><strong>Job Status Distribution</strong> — Pie chart of Pending / In Progress / Completed / Cancelled</li>
+  <li><strong>Weekly Activity</strong> — Bar chart of jobs created per day</li>
+  <li><strong>Revenue Trend</strong> — Line chart of income over time</li>
+</ul>
+
+<h3>Quick Actions</h3>
+<ul>
+  <li><strong>Create Job</strong> — Opens the ticket creation form</li>
+  <li><strong>Add Customer</strong> — Opens the client registration form</li>
+  <li><strong>Run Backup</strong> — Downloads a JSON backup of the entire database</li>
+  <li><strong>View Reports</strong> — Jumps to the Reports module</li>
+</ul>
+
+<div class="callout callout-info">
+  <strong>Auto-Refresh</strong>
+  The dashboard refreshes data every 10 seconds automatically. You'll see live updates without page reload.
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 4. SERVICE TICKETS                                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">4. Service Tickets &amp; Job Dispatch</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Service Tickets</code></p>
+
+<p>This is the core module for creating, managing, and dispatching field service jobs.</p>
+
+<h3>Creating a New Job</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Click <strong>"Create Job"</strong> or <strong>"+"</strong> button</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Fill in: Client, Service Type, Technician, Priority, Description, Scheduled Date</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Click <strong>"Create"</strong></div></div>
+
+<h3>Job Status Flow</h3>
+<div class="flow">
+  <span class="flow-box flow-pending">Pending</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-box flow-progress">In Progress</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-box flow-done">Completed</span>
+</div>
+<div class="flow">
+  <span class="flow-box flow-pending">Pending</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-box flow-cancel">Cancelled</span>
+</div>
+
+<h3>Job Card Fields</h3>
+<table>
+  <thead><tr><th>Field</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Job ID</strong></td><td>Auto-generated (e.g., <code>JOB-1001</code>)</td></tr>
+    <tr><td><strong>Client</strong></td><td>Company or individual name</td></tr>
+    <tr><td><strong>Service Type</strong></td><td>CCTV / Networking / WiFi / NAS / General</td></tr>
+    <tr><td><strong>Technician</strong></td><td>Assigned field worker</td></tr>
+    <tr><td><strong>Status</strong></td><td>Current job state</td></tr>
+    <tr><td><strong>Priority</strong></td><td>Low, Medium, High, Urgent</td></tr>
+    <tr><td><strong>Checklist</strong></td><td>Service checklist progress</td></tr>
+    <tr><td><strong>Before/After Photo</strong></td><td>Site photos</td></tr>
+    <tr><td><strong>Notes</strong></td><td>Technician field notes</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 5. DISPATCH MAP                                         -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">5. Dispatch Map</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Dispatch Map</code></p>
+
+<p>An interactive Leaflet.js map showing real-time technician locations.</p>
+
+<h3>Features</h3>
+<ul>
+  <li><strong>Technician Markers</strong> — Each technician appears as a colored marker on the map</li>
+  <li><strong>Click a Marker</strong> — Shows technician name, current status, and assigned job</li>
+  <li><strong>GPS Tracking</strong> — Technicians share location when they clock in</li>
+  <li><strong>HQ Marker</strong> — Your head office location is always shown</li>
+  <li><strong>Dark Mode</strong> — Map tiles automatically adjust to dark/light theme</li>
+</ul>
+
+<h3>HQ Configuration</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Go to <strong>System Settings</strong></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Scroll to <strong>"Head Office Location"</strong></div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Enter your office name, Google Maps URL, coordinates, and address</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content">Click <strong>"Save"</strong></div></div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 6. SURVEYS & QUOTATIONS                                 -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">6. Site Surveys &amp; Quotations</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Surveys</code></p>
+
+<h3>Survey Pipeline</h3>
+<div class="flow">
+  <span class="flow-box flow-pending">Draft</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-box flow-progress">Completed</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-box flow-done">Quoted</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-box flow-done">Job / Invoice</span>
+</div>
+
+<h3>Creating a Survey</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Click <strong>"New Survey"</strong></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Select Client, Site Address, Survey Type, add Notes</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Click <strong>"Create"</strong></div></div>
+
+<h3>Adding Site Photos</h3>
+<p>Photo types: <code>server_room</code>, <code>cable_path</code>, <code>power_source</code>, <code>camera_fov</code>, <code>exterior</code>, <code>general</code></p>
+
+<h3>Generating a Quotation</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Complete the survey (mark as <strong>"Completed"</strong>)</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Click <strong>"Generate Quotation"</strong> — AI estimates BOM, cable lengths, labor, software</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Review and edit line items</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content">Click <strong>"Create Quotation"</strong></div></div>
+
+<h3>Quotation Workflow</h3>
+<div class="step"><div class="step-num">5</div><div class="step-content">Click <strong>"Send to Client"</strong> — portal link generated, sent via Telegram</div></div>
+<div class="step"><div class="step-num">6</div><div class="step-content">Client views, approves with digital signature, or rejects</div></div>
+<div class="step"><div class="step-num">7</div><div class="step-content">Convert approved quotation to <strong>Job</strong> or <strong>Invoice</strong></div></div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 7. CUSTOMER MANAGEMENT                                  -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">7. Customer Management (AMC)</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Customers</code></p>
+
+<h3>Client Types</h3>
+<table>
+  <thead><tr><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Corporate</strong></td><td>Business clients with AMC contracts</td></tr>
+    <tr><td><strong>Individual</strong></td><td>One-time residential customers</td></tr>
+  </tbody>
+</table>
+
+<h3>AMC Status</h3>
+<table>
+  <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge badge-all">Active</span></td><td>AMC contract is current and paid</td></tr>
+    <tr><td>Inactive</td><td>Contract exists but not currently active</td></tr>
+    <tr><td><span class="badge badge-admin">Expired</span></td><td>Contract has passed its renewal date</td></tr>
+    <tr><td>No AMC</td><td>Client has no maintenance contract</td></tr>
+    <tr><td>Individual</td><td>One-time service customer</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 8. ATTENDANCE                                           -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">8. Attendance &amp; Time Tracking</h2>
+<p><span class="badge badge-admin">Admin</span> <span class="badge badge-tech">Technician</span></p>
+
+<h3>How Clock-In Works (Technician)</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Open the mobile app</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Tap the <strong>green clock icon</strong> in the header bar</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Tap <strong>"Clock In"</strong> — GPS coordinates are recorded</div></div>
+
+<h3>Attendance via Telegram</h3>
+<table>
+  <thead><tr><th>Command</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td><code>/checkin</code></td><td>Clock in for today</td></tr>
+    <tr><td><code>/checkout</code></td><td>Clock out</td></tr>
+    <tr><td><code>/status</code></td><td>Check current clock-in status</td></tr>
+    <tr><td><code>/report</code></td><td>Weekly attendance summary</td></tr>
+    <tr><td><code>/team</code></td><td>See who is currently clocked in</td></tr>
+    <tr><td><code>/leaderboard</code></td><td>Weekly hours leaderboard</td></tr>
+    <tr><td><code>/history</code></td><td>My clock-in/out history this week</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 9. INVENTORY                                            -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">9. Inventory &amp; Stock Management</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Stock &amp; Items</code></p>
+
+<h3>Three Sub-Modules</h3>
+<table>
+  <thead><tr><th>Module</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Stock Batches</strong></td><td>View imported batches, expand to see serial numbers</td></tr>
+    <tr><td><strong>Sales Pricing</strong></td><td>Price matrix with quick-edit, USD/MMK dual pricing</td></tr>
+    <tr><td><strong>Device Catalog</strong></td><td>Hardware SKU registration, categories, brands</td></tr>
+  </tbody>
+</table>
+
+<h3>Adding a Stock Batch</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Go to <strong>Stock Batches</strong>, click <strong>"Import Batch"</strong></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Enter Batch Code, Device Model, Buying Price, Supplier</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Paste serial numbers (one per line, supports barcode scanner)</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content">Click <strong>"Create Batch"</strong></div></div>
+
+<h3>Serial Number Status</h3>
+<table>
+  <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge badge-all">Active</span></td><td>In stock and available</td></tr>
+    <tr><td>Sold</td><td>Sold or assigned to a job</td></tr>
+    <tr><td>RMA</td><td>Returned to distributor</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 10. POS TERMINAL                                        -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">10. POS Terminal &amp; Invoicing</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; POS Terminal</code></p>
+
+<h3>Terminal Checkout Workflow</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Select items from inventory dropdown (shows stock, price, warranty)</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Set quantity, click <strong>"Add to Cart"</strong></div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Review cart — items show name, qty, unit price, line total</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content">Click <strong>"Checkout"</strong> — invoice created (<code>INV-xxx</code>), payment recorded</div></div>
+
+<h3>Outstanding Credits</h3>
+<p>View and manage unpaid invoices: client name, amount owed, days outstanding, <strong>"Mark as Paid"</strong> button, <strong>"Save to Google Drive"</strong> for PDF backup.</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 11. CASH LEDGER                                         -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">11. Cash Ledger</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Cash Ledger</code></p>
+
+<p>Track all cash flow — deposits, withdrawals, and running balance in dual currency (USD/MMK).</p>
+
+<h3>Making a Deposit</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Click <strong>"Deposit"</strong></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Enter amount (USD or MMK) and description</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Click <strong>"Confirm"</strong></div></div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 12. WARRANTY & RMA                                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">12. Warranty &amp; RMA</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Warranty &amp; RMA</code></p>
+
+<div class="kpi-grid">
+  <div class="kpi kpi-green"><div class="kpi-value">N</div><div class="kpi-label">Active Warranties</div></div>
+  <div class="kpi kpi-red"><div class="kpi-value">N</div><div class="kpi-label">Expired</div></div>
+  <div class="kpi kpi-amber"><div class="kpi-value">N</div><div class="kpi-label">Open RMA</div></div>
+  <div class="kpi kpi-green"><div class="kpi-value">N</div><div class="kpi-label">RMA Completed</div></div>
+</div>
+
+<h3>Registering a Warranty</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Click <strong>"Register Warranty"</strong></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Enter Serial Number, Device Name, Client, Installed Date, Warranty Months</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Click <strong>"Register"</strong></div></div>
+
+<h3>Raising an RMA Claim</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Click <strong>"Raise RMA Claim"</strong></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Select serial number, enter distributor, RMA tracking ID, date sent</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Click <strong>"Submit"</strong></div></div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 13-14. DISTRIBUTORS & SERVICE FEES                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">13. Distributors</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Distributors</code></p>
+<p>Manage hardware suppliers and procurement channels. Each distributor has: Name, Contact Person, Phone, Email, Product Lines. Linked to inventory batches and RMA claims.</p>
+
+<h2 class="section-title">14. Service Fees</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Service Fees</code></p>
+<p>Manage the catalog of service charges. Categories: CCTV Installation, Network Setup, WiFi Configuration, NAS Setup, General Maintenance, Emergency Repair, Consultation. Linked to the job dispatch form for auto-population.</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 15. REPORTS                                             -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">15. Reports &amp; Analytics</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Reports</code></p>
+
+<h3>Report Types</h3>
+<table>
+  <thead><tr><th>Report</th><th>Content</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Technician Performance Audit</strong></td><td>Completion rates, active tickets, workload per engineer</td></tr>
+    <tr><td><strong>Customer Service Audit</strong></td><td>Ticket history, AMC status, revenue per client</td></tr>
+    <tr><td><strong>Job History Ledger</strong></td><td>Job types, technicians, dates, statuses in audit grid</td></tr>
+  </tbody>
+</table>
+
+<h3>Timeframe Scopes</h3>
+<table>
+  <thead><tr><th>Scope</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>This Month / Last Month</td><td>Calendar month</td></tr>
+    <tr><td>This Year / Last Year</td><td>Calendar year</td></tr>
+    <tr><td>Last 30 Days / Last 90 Days</td><td>Rolling window</td></tr>
+    <tr><td>All-Time</td><td>Every record in the system</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 16. AI COPILOT                                          -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">16. AI Copilot</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; AI Copilot</code></p>
+
+<h3>Three Tools</h3>
+
+<h4>A. Chat with Data</h4>
+<p>Ask natural language questions about your business data. Examples:</p>
+<ul>
+  <li>"How many jobs were completed this month?"</li>
+  <li>"Which technician has the highest completion rate?"</li>
+  <li>"What is our total revenue this quarter?"</li>
+</ul>
+
+<h4>B. Auto-Dispatcher</h4>
+<p>AI matches technicians to jobs based on skills, workload, proximity, and past performance. Select a job &gt; click <strong>"Auto-Assign"</strong> &gt; review suggestion &gt; <strong>"Confirm"</strong>.</p>
+
+<h4>C. Route Optimizer</h4>
+<p>Select multiple jobs &gt; click <strong>"Optimize Route"</strong> &gt; view optimal visit sequence on the map.</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 17-18. USER MGMT & SETTINGS                             -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">17. User Management</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; User Management</code></p>
+
+<table>
+  <thead><tr><th>Role</th><th>Permissions</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Admin</strong></td><td>Full access to all modules, settings, and reports</td></tr>
+    <tr><td><strong>Technician</strong></td><td>Mobile app — jobs, checklist, history, own profile</td></tr>
+    <tr><td><strong>Sales</strong></td><td>View clients and jobs, limited admin access</td></tr>
+  </tbody>
+</table>
+
+<p>Each technician gets a <strong>Digital ID Card</strong> with: photo, name, role, employee ID, QR code, phone, active status, company details, emergency contact.</p>
+
+<h2 class="section-title">18. System Settings</h2>
+<p><span class="badge badge-admin">Admin</span> Module: <code>Dashboard &gt; Settings</code></p>
+
+<table>
+  <thead><tr><th>Setting</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>Exchange Rate</td><td>USD to MMK conversion rate</td></tr>
+    <tr><td>HQ Location</td><td>Head office coordinates for dispatch map</td></tr>
+    <tr><td>Timezone</td><td>System timezone</td></tr>
+    <tr><td>Database Backup</td><td>Download/restore JSON backup</td></tr>
+  </tbody>
+</table>
+
+<div class="callout callout-danger">
+  <strong>Database Restore Warning</strong>
+  This will erase all current data and replace it with the backup. Always create a backup before restoring. This action cannot be undone.
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 19-21. LANDING, PORTFOLIO, RECEIPT                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">19. Landing Page Editor</h2>
+<p><span class="badge badge-admin">Admin</span> Edit the public marketing page without code changes.</p>
+<p>Editable sections: Hero (eyebrow, headline, description, CTA), Services, Why Choose Us, Stats, Price List, CTA Banner, Footer. Changes are live immediately.</p>
+
+<h2 class="section-title">20. Portfolio</h2>
+<p><span class="badge badge-admin">Admin</span> Showcase completed projects on the public portfolio page.</p>
+<p>Add projects with title, category, description, images. Filter by: CCTV, Networking, WiFi, NAS, General Maintenance. View live at <code>/portfolio.html</code>.</p>
+
+<h2 class="section-title">21. Receipt Builder</h2>
+<p><span class="badge badge-admin">Admin</span> Design and generate PDF receipts for completed jobs.</p>
+<p>Visual designer with live preview, jsPDF-based generation, customizable template with company logo and details.</p>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 22. TECHNICIAN MOBILE APP                               -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">22. Technician Mobile App</h2>
+<p><span class="badge badge-tech">Technician</span> File: <code>app.html</code> — mobile-first Progressive Web App</p>
+
+<h3>Four Tabs</h3>
+<table>
+  <thead><tr><th>Tab</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Jobs</strong></td><td>View assigned active/pending jobs, pull-to-refresh</td></tr>
+    <tr><td><strong>Checklist</strong></td><td>Active job form — checklist, photos, hardware picker, notes, signature</td></tr>
+    <tr><td><strong>History</strong></td><td>Completed jobs with before/after photos</td></tr>
+    <tr><td><strong>Settings</strong></td><td>Profile, digital ID card (3D flip), PIN change, theme toggle</td></tr>
+  </tbody>
+</table>
+
+<h3>Checklist Workflow</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Complete service checklist items</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Take <strong>Before Photo</strong> (site condition on arrival)</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Select hardware used from inventory catalog</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content">Add technician notes (AI polish available)</div></div>
+<div class="step"><div class="step-num">5</div><div class="step-content">Get <strong>customer digital signature</strong></div></div>
+<div class="step"><div class="step-num">6</div><div class="step-content">Take <strong>After Photo</strong> (completed work)</div></div>
+<div class="step"><div class="step-num">7</div><div class="step-content">Tap <strong>"Submit Job"</strong> — status changes to Completed</div></div>
+
+<h3>PWA Installation</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Open <code>app.html</code> in Chrome/Safari</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Tap <strong>"Add to Home Screen"</strong> (or use install prompt)</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">App appears as native icon, opens full-screen</div></div>
+
+<div class="callout callout-info">
+  <strong>Offline Support</strong>
+  The app works offline via Service Worker. Jobs and checklists are cached locally. Photos are queued for upload when reconnected. Tap Sync when back online.
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 23. CLIENT PORTAL                                       -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">23. Client Portal</h2>
+<p><span class="badge badge-client">Client</span> File: <code>portal.html</code></p>
+
+<h3>How to Access</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content">Open <code>portal.html</code></div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content">Enter your <strong>Client ID</strong> (e.g., <code>CLI-001</code>)</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content">Click <strong>"Pull Logs"</strong></div></div>
+
+<h3>Available Sections</h3>
+<table>
+  <thead><tr><th>Section</th><th>Content</th></tr></thead>
+  <tbody>
+    <tr><td><strong>AMC Panel</strong></td><td>Contract status, start/end dates, days remaining</td></tr>
+    <tr><td><strong>Warranty Panel</strong></td><td>Active hardware warranties, expiry countdown</td></tr>
+    <tr><td><strong>Billing Panel</strong></td><td>Invoices, payments, outstanding balances, PDF export</td></tr>
+    <tr><td><strong>Service Log</strong></td><td>Paginated service records with before/after photos</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 24. TELEGRAM BOT                                        -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">24. Telegram Bot</h2>
+<p><span class="badge badge-all">All Roles</span> Webhook: <code>/api/telegram/webhook</code></p>
+
+<h3>Commands</h3>
+<table>
+  <thead><tr><th>Command</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>/start</code></td><td>Welcome message</td></tr>
+    <tr><td><code>/help</code></td><td>Show all commands</td></tr>
+    <tr><td><code>/clock</code></td><td>Quick clock status</td></tr>
+    <tr><td><code>/checkin</code></td><td>Clock in for today</td></tr>
+    <tr><td><code>/checkout</code></td><td>Clock out</td></tr>
+    <tr><td><code>/status</code></td><td>Clock-in status &amp; active jobs</td></tr>
+    <tr><td><code>/report</code></td><td>Weekly attendance summary</td></tr>
+    <tr><td><code>/team</code></td><td>Who is currently clocked in</td></tr>
+    <tr><td><code>/leaderboard</code></td><td>Weekly hours leaderboard</td></tr>
+    <tr><td><code>/history</code></td><td>My clock-in/out history</td></tr>
+    <tr><td><code>/jobs</code></td><td>List your active jobs</td></tr>
+    <tr><td><code>/completed</code></td><td>List your completed jobs</td></tr>
+    <tr><td><code>/today</code></td><td>Today's jobs &amp; attendance</td></tr>
+    <tr><td><code>/ticket JOB-xxx</code></td><td>View job details</td></tr>
+    <tr><td><code>/accept JOB-xxx</code></td><td>Accept job assignment</td></tr>
+    <tr><td><code>/assign JOB-xxx Tech</code></td><td>Assign technician (admin)</td></tr>
+    <tr><td><code>/cancel JOB-xxx</code></td><td>Cancel a job (admin)</td></tr>
+  </tbody>
+</table>
+
+<h3>AI Voice &amp; Photo Dispatch</h3>
+<ul>
+  <li><strong>Voice Message</strong> — Transcribed by Gemini AI, auto-creates job with best technician match</li>
+  <li><strong>Photo Message</strong> — Uploaded to Google Drive, creates job with photo attached</li>
+  <li><strong>Text Message</strong> — Auto-creates job ticket from any text</li>
+</ul>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- 25-26. SHORTCUTS & TROUBLESHOOTING                      -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">25. Keyboard Shortcuts</h2>
+<table>
+  <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td><code>Ctrl + K</code></td><td>Focus search bar</td></tr>
+    <tr><td><code>Ctrl + N</code></td><td>Open New Ticket form</td></tr>
+    <tr><td><code>Escape</code></td><td>Close any open modal</td></tr>
+  </tbody>
+</table>
+
+<h2 class="section-title">26. Troubleshooting</h2>
+
+<table>
+  <thead><tr><th>Issue</th><th>Solution</th></tr></thead>
+  <tbody>
+    <tr><td>Cannot log in (Admin)</td><td>Verify credentials, check role is "Admin", try Google Sign-In</td></tr>
+    <tr><td>Cannot log in (Technician)</td><td>Use format <code>TECH-xxx</code>, default PIN <code>1234</code>, check account is Active</td></tr>
+    <tr><td>Photos not uploading</td><td>Check internet, verify Google Drive integration, check Telegram bot token</td></tr>
+    <tr><td>Jobs not appearing</td><td>Pull to refresh, verify correct account, check job assignment</td></tr>
+    <tr><td>Attendance not recording</td><td>Enable GPS/location, check internet, try Telegram as backup</td></tr>
+    <tr><td>AI Copilot not responding</td><td>Check <code>GEMINI_API_KEY</code>, verify quota, dual-gateway fallback active</td></tr>
+    <tr><td>Telegram bot silent</td><td>Verify bot token and chat ID, test with <code>/start</code></td></tr>
+    <tr><td>Offline mode (Technician)</td><td>Jobs/checklists cached locally, photos queued, tap Sync when online</td></tr>
+  </tbody>
+</table>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<!-- QUICK REFERENCE                                         -->
+<!-- ════════════════════════════════════════════════════════ -->
+<div class="section-divider"></div>
+<h2 class="section-title">Quick Reference</h2>
+
+<h3>Admin Daily Workflow</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content"><strong>Morning:</strong> Check dashboard metrics, review overnight jobs</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content"><strong>Dispatch:</strong> Assign new jobs to technicians</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content"><strong>Monitor:</strong> Watch the dispatch map for technician locations</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content"><strong>Review:</strong> Check completed jobs and photos</div></div>
+<div class="step"><div class="step-num">5</div><div class="step-content"><strong>Finance:</strong> Process POS sales, update cash ledger</div></div>
+<div class="step"><div class="step-num">6</div><div class="step-content"><strong>Reports:</strong> Generate end-of-day reports</div></div>
+
+<h3>Technician Daily Workflow</h3>
+<div class="step"><div class="step-num">1</div><div class="step-content"><strong>Clock In</strong> — Tap the clock icon</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-content"><strong>Check Jobs</strong> — View assigned jobs</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-content"><strong>Accept</strong> — Tap a job and start working</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-content"><strong>Document</strong> — Take before photos, fill checklist</div></div>
+<div class="step"><div class="step-num">5</div><div class="step-content"><strong>Work</strong> — Complete the service</div></div>
+<div class="step"><div class="step-num">6</div><div class="step-content"><strong>Document</strong> — Take after photos, add notes</div></div>
+<div class="step"><div class="step-num">7</div><div class="step-content"><strong>Sign</strong> — Get customer signature</div></div>
+<div class="step"><div class="step-num">8</div><div class="step-content"><strong>Submit</strong> — Mark job as completed</div></div>
+<div class="step"><div class="step-num">9</div><div class="step-content"><strong>Clock Out</strong> — End of day</div></div>
+
+<br><br>
+<div style="text-align:center; padding: 40px 0; color: #94a3b8; font-size: 9pt; border-top: 2px solid #e2e8f0;">
+  <strong style="color:#f59e0b;">KosAI</strong> Field Service Management System v2.0<br>
+  Awesome Myanmar CCTV &amp; Infrastructure &mdash; August 2026
+</div>
+
+</body>
+</html>
