@@ -496,7 +496,7 @@
       function createToastContainer() {
         const container = document.createElement('div');
         container.id = 'toast-container';
-        container.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100] space-y-2 max-w-sm';
+            container.className = 'fixed top-4 left-1/2 -translate-x-1/2 z-[100] space-y-2 w-full max-w-md px-4 pointer-events-none';
         document.body.appendChild(container);
         return container;
       }
